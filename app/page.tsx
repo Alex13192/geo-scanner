@@ -180,8 +180,54 @@ export default function Home() {
               Place this content into your website’s <code className="text-slate-400">/llms.txt</code> file to help AI search engines cite your site accurately.
             </p>
           </div>
+          </div>
+    )}
+
+    {/* --- SEO & FAQ Section --- */}
+    <section className="mt-20 border-t border-slate-800 pt-12 space-y-10">
+      <div className="text-center space-y-3">
+        <h2 className="text-2xl font-bold text-slate-100">
+          Frequently Asked Questions
+        </h2>
+        <p className="text-slate-400 text-sm max-w-xl mx-auto">
+          Everything you need to know about Generative Engine Optimization (GEO) and AI search readiness.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto text-left">
+        <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-6 space-y-2">
+          <h3 className="font-semibold text-slate-200">What is Generative Engine Optimization (GEO)?</h3>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            GEO is the practice of optimizing website content so that AI search engines (like ChatGPT, Perplexity, and Claude) can easily crawl, understand, and cite your brand in generated answers.
+          </p>
         </div>
-      )}
-    </main>
-  );
+
+        <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-6 space-y-2">
+          <h3 className="font-semibold text-slate-200">Why do I need an `llms.txt` file?</h3>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Similar to `robots.txt`, `llms.txt` is an emerging standard that explicitly tells LLM crawlers which content is most relevant, helping models cite your official pages accurately.
+          </p>
+        </div>
+
+        <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-6 space-y-2">
+          <h3 className="font-semibold text-slate-200">How is the GEO Score calculated?</h3>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Our scanner evaluates AI crawler permissions in `robots.txt`, structured data compatibility, page title relevance, and the presence of markdown-friendly metadata.
+          </p>
+        </div>
+
+        <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-6 space-y-2">
+          <h3 className="font-semibold text-slate-200">How do I implement the generated `llms.txt`?</h3>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Simply copy the generated markdown code above, create a file named `llms.txt`, and upload it to the root directory of your website (e.g., `yourdomain.com/llms.txt`).
+          </p>
+        </div>
+      </div>
+
+      <footer className="text-center text-xs text-slate-500 pt-8 border-t border-slate-800/50">
+        <p>© {new Date().getFullYear()} GEO Readiness Scanner. Powered by Cloudflare Edge & Next.js.</p>
+      </footer>
+    </section>
+  </main>
+);
 }
