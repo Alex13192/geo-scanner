@@ -20,6 +20,7 @@ export default function Home() {
   const [urlInput, setUrlInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const dict = getDictionary(lang);
 
@@ -53,6 +54,20 @@ export default function Home() {
     if (score >= 85) return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
     if (score >= 60) return 'text-amber-400 border-amber-500/30 bg-amber-500/10';
     return 'text-rose-400 border-rose-500/30 bg-rose-500/10';
+  };
+
+  const generatedLlmsTxt = result
+    ? `# ${result.domain}\n\n> Automated LLM context description for ${result.domain}.\n\n## Core System Overview\n- Primary Business: AI Search and Engine Optimization Node\n- Primary Documentation: https://${result.domain}/docs\n\n## Key Resources\n- API Specification: https://${result.domain}/api\n- Contact & Support: support@${result.domain}`
+    : '';
+
+  const badgeMarkdown = result
+    ? `![GEO Score](https://geo-scanner.ccie13192.com/api/badge?score=${result.overallScore})`
+    : '';
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -118,7 +133,7 @@ export default function Home() {
           </div>
 
           {/* 4 维评估卡片 Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* 1. AI 爬虫通行度 */}
             <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
               <div className="flex justify-between items-center mb-3">
@@ -150,7 +165,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-lg">
-                  ⚠️ No /llms.txt found. Consider generating one for optimal LLM context parsing.
+                  ⚠️ No /llms.txt found. Consider generating one below for optimal LLM context parsing.
                 </div>
               )}
             </div>
@@ -177,6 +192,52 @@ export default function Home() {
               <div className="text-xs text-slate-300 bg-slate-800 p-2.5 rounded-lg flex justify-between">
                 <span>Text-to-Code Density:</span>
                 <span className="font-mono font-bold text-blue-400">{result.breakdown.aiExtractability.textToCodeRatio}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 解决方案工具箱 (Fix Suite & Growth Toolkit) */}
+          <div className="border-t border-slate-700/60 pt-8 flex flex-col gap-6">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              🛠️ Actionable Remediation & Growth Suite
+            </h3>
+
+            {/* 1. 一键生成 /llms.txt */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-semibold text-slate-200">Recommended /llms.txt Specification</span>
+                <button
+                  onClick={() => copyToClipboard(generatedLlmsTxt)}
+                  className="text-xs bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg transition"
+                >
+                  {copied ? 'Copied!' : 'Copy /llms.txt'}
+                </button>
+              </div>
+              <pre className="text-xs font-mono bg-slate-950 p-4 rounded-lg border border-slate-800/80 text-slate-300 overflow-x-auto whitespace-pre-wrap">
+                {generatedLlmsTxt}
+              </pre>
+            </div>
+
+            {/* 2. 嵌入式 Badge 徽章 */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-semibold text-slate-200">Embed Dynamic GEO Badge in README / Footer</span>
+                <button
+                  onClick={() => copyToClipboard(badgeMarkdown)}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition"
+                >
+                  Copy Markdown
+                </button>
+              </div>
+              <div className="flex items-center gap-4 bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                <img
+                  src={`/api/badge?score=${result.overallScore}`}
+                  alt="GEO Score Badge"
+                  className="h-5"
+                />
+                <code className="text-xs font-mono text-slate-400 flex-1 truncate">
+                  {badgeMarkdown}
+                </code>
               </div>
             </div>
           </div>

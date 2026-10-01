@@ -1,75 +1,46 @@
 export const runtime = 'edge';
+
 import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
-  try {
-    const { url } = await request.json();
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const score = searchParams.get('score') || '85';
+  const label = searchParams.get('label') || 'GEO Score';
 
-    if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
-    }
-
-    // 格式化 URL
-    let targetUrl = url.trim();
-    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
-      targetUrl = `https://${targetUrl}`;
-    }
-
-    const domain = new URL(targetUrl).hostname;
-
-    // 1. 模拟检查 robots.txt (AI 爬虫拦截)
-    let robotsScore = 100;
-    const blockedBots: string[] = [];
-    try {
-      const robotsRes = await fetch(`https://${domain}/robots.txt`, {
-        signal: AbortSignal.timeout(3000),
-      });
-      if (robotsRes.ok) {
-        const text = await robotsRes.text();
-        const aiBots = ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'CCBot', 'Google-Extended'];
-        aiBots.forEach((bot) => {
-          if (text.includes(bot) && text.includes('Disallow: /')) {
-            blockedBots.push(bot);
-            robotsScore -= 20;
-          }
-        });
-      }
-    } catch {
-      robotsScore = 90;
-    }
-
-    // 2. 检查 /llms.txt 是否存在
-    let llmsTxtScore = 0;
-    let hasLlmsTxt = false;
-    try {
-      const llmsRes = await fetch(`https://${domain}/llms.txt`, {
-        method: 'HEAD',
-        signal: AbortSignal.timeout(3000),
-      });
-      if (llmsRes.ok) {
-        hasLlmsTxt = true;
-        llmsTxtScore = 100;
-      }
-    } catch {
-      hasLlmsTxt = false;
-    }
-
-    // 3. 计算综合分值
-    const overallScore = Math.round(
-      robotsScore * 0.4 + llmsTxtScore * 0.3 + 85 * 0.15 + 80 * 0.15
-    );
-
-    return NextResponse.json({
-      domain,
-      overallScore,
-      breakdown: {
-        crawlerPassability: { score: robotsScore, blockedBots },
-        llmsCompliance: { score: llmsTxtScore, hasLlmsTxt },
-        schemaMetadata: { score: 85, hasJsonLd: true },
-        aiExtractability: { score: 80, textToCodeRatio: '32%' },
-      },
-    });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to scan target URL' }, { status: 500 });
+  const numericScore = parseInt(score, 10);
+  let color = '#10b981'; // 绿 (>=85)
+  if (numericScore < 60) {
+    color = '#f43f5e'; // 红 (<60)
+  } else if (numericScore < 85) {
+    color = '#f59e0b'; // 黄 (60-84)
   }
+
+  // 动态生成 SVG 徽章
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="130" height="20" role="img" aria-label="${label}: ${score}/100">
+      <linearGradient id="s" x2="0" y2="100%">
+        <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+        <stop offset="1" stop-opacity=".1"/>
+      </linearGradient>
+      <clipPath id="r">
+        <rect width="130" height="20" rx="3" fill="#fff"/>
+      </clipPath>
+      <g clip-path="url(#r)">
+        <rect width="75" height="20" fill="#1e293b"/>
+        <rect x="75" width="55" height="20" fill="${color}"/>
+        <rect width="130" height="20" fill="url(#s)"/>
+      </g>
+      <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
+        <text x="385" y="140" transform="scale(.1)" fill="#fff" textLength="650">${label}</text>
+        <text x="1015" y="140" transform="scale(.1)" fill="#fff" textLength="450">${score}/100</text>
+      </g>
+    </svg>
+  `.trim();
+
+  return new NextResponse(svg, {
+    headers: {
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+    },
+  });
 }
