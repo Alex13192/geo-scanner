@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -19,11 +19,7 @@ const guides: Guide[] = [
     title: "How to Generate and Deploy /llms.txt File",
     description: "Learn how to format, structure, and host a standardized /llms.txt file at your domain root so AI crawlers can digest your content cleanly.",
     readTime: "3 min read",
-    codeSnippet: `# adidas.com
-> Generative Engine Optimization (GEO) Context File
-
-## Core Business
-Enterprise athletic apparel and digital commerce solutions.`,
+    codeSnippet: `# adidas.com\n> Generative Engine Optimization (GEO) Context File\n\n## Core Business\nEnterprise athletic apparel and digital commerce solutions.`,
   },
   {
     id: "qa-style-headings",
@@ -31,11 +27,7 @@ Enterprise athletic apparel and digital commerce solutions.`,
     title: "Optimizing Headings for Direct AI Citation (Q&A Style)",
     description: "Transform generic H2/H3 headings into natural interrogative prompts that match real-world AI search engine user queries.",
     readTime: "4 min read",
-    codeSnippet: `<!-- Poor -->
-<h2>Features</h2>
-
-<!-- Optimized for GEO -->
-<h2>How Does AIO Pulse Measure Brand AI Visibility?</h2>`,
+    codeSnippet: `<!-- Poor -->\n<h2>Features</h2>\n\n<!-- Optimized for GEO -->\n<h2>How Does AIO Pulse Measure Brand AI Visibility?</h2>`,
   },
   {
     id: "schema-org-jsonld",
@@ -43,14 +35,7 @@ Enterprise athletic apparel and digital commerce solutions.`,
     title: "Implementing Schema.org JSON-LD for AI Entity Disambiguation",
     description: "Ensure ChatGPT and Claude accurately identify your brand name, products, and documentation via structured entity markup.",
     readTime: "5 min read",
-    codeSnippet: `<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "AIO Pulse",
-  "url": "https://aiopulse.com"
-}
-</script>`,
+    codeSnippet: `<script type="application/ld+json">\n{\n  "@context": "https://schema.org",\n  "@type": "Organization",\n  "name": "AIO Pulse",\n  "url": "https://aiopulse.com"\n}\n</script>`,
   },
   {
     id: "allow-ai-crawlers",
@@ -58,11 +43,7 @@ Enterprise athletic apparel and digital commerce solutions.`,
     title: "Configuring Robots.txt and WAF for GPTBot & PerplexityBot",
     description: "Prevent accidental 403 blocks on AI crawler user-agents without compromising your enterprise security firewall.",
     readTime: "3 min read",
-    codeSnippet: `# robots.txt
-User-agent: GPTBot
-Allow: /
-User-agent: PerplexityBot
-Allow: /`,
+    codeSnippet: `# robots.txt\nUser-agent: GPTBot\nAllow: /\nUser-agent: PerplexityBot\nAllow: /`,
   },
 ];
 
@@ -75,7 +56,6 @@ export default function DocsPage() {
 
   return (
     <div className="min-h-screen bg-[#070A10] text-white selection:bg-blue-500 selection:text-white font-sans pb-20">
-      {/* Header */}
       <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
@@ -93,7 +73,6 @@ export default function DocsPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-6xl mx-auto px-6 pt-12 space-y-10">
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
@@ -107,7 +86,6 @@ export default function DocsPage() {
           </p>
         </div>
 
-        {/* Category Filters */}
         <div className="flex items-center gap-2 border-b border-gray-800 pb-4 text-xs">
           {["All", "Setup", "Content", "Schema", "Technical"].map((cat) => (
             <button
@@ -124,7 +102,6 @@ export default function DocsPage() {
           ))}
         </div>
 
-        {/* Guides List */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredGuides.map((guide) => (
             <div
@@ -152,7 +129,6 @@ export default function DocsPage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="max-w-6xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
         © AIO Pulse Knowledge Base. Brand Generative Engine Optimization Intelligence.
       </footer>
