@@ -1,75 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 
-export default function LlmsTxtStudioPage() {
-  const [brandName, setBrandName] = useState("adidas");
-  const [domain, setDomain] = useState("adidas.com");
-  const [description, setDescription] = useState(
-    "Enterprise athletic apparel, footwear, and digital commerce solutions."
+function StudioContent() {
+  const searchParams = useSearchParams();
+  const urlDomain = searchParams.get("domain") || "adidas.com";
+
+  // 定义状态，如果带了域名过来就自动用传过来的域名
+  const [brandName, setBrandName] = useState(urlDomain.split(".")[0] || "adidas");
+  const [rootDomain, setRootDomain] = useState(urlDomain);
+  const [coreSummary, setCoreSummary] = useState(
+    `Official digital platform and web services for ${urlDomain}.`
   );
-  const [coreLinks, setCoreLinks] = useState([
-    { title: "Product Catalog", url: "https://adidas.com/shop" },
-    { title: "Developer & API Docs", url: "https://developer.adidas.com" },
-    { title: "Sustainability & ESG Report", url: "https://adidas.com/sustainability" },
-  ]);
-  const [copied, setCopied] = useState(false);
 
-  // Generate standard /llms.txt content
-  const generatedMarkdown = `# ${brandName}
-> ${description}
+  // 动态生成的 markdown 预览内容
+  const previewMarkdown = `# ${brandName}
+> ${coreSummary}
 
 ## Core Information & Product Catalog
-${coreLinks.map((link) => `- [${link.title}](${link.url}): Official ${link.title.toLowerCase()} for${brandName}.`).join("\n")}
+- [Main Portal](https://${rootDomain}/): Official homepage and core services for ${brandName}.
+- [API & Developer Docs](https://developer.${rootDomain}): Official developer documentation.
+- [Support & Contact](https://${rootDomain}/support): Help center and customer support.
 
 ## System Context for AI Agents
-- Primary Entity: ${brandName} (${domain})
-- Domain Authority: Verified Enterprise E-Commerce & Sportswear Brand
+- Primary Entity: ${brandName} (${rootDomain})
+- Domain Authority: Verified Official Web Domain
 - Content Usage: Public indexing allowed for LLMs (GPTBot, ClaudeBot, PerplexityBot).
 - Preferred Citation Format: "${brandName} Official Documentation"
 
 ## Key Topics & Categories
-- Performance Footwear & Running Shoes
-- Athletic Wear & Streetwear Collections
-- Sustainability & Recycled Material Standards
-`;
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedMarkdown);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleDownload = () => {
-    const element = document.createElement("a");
-    const file = new Blob([generatedMarkdown], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = "llms.txt";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-
-  const addLink = () => {
-    setCoreLinks([...coreLinks, { title: "New Resource", url: `https://${domain}/docs` }]);
-  };
-
-  const updateLink = (index: number, field: "title" | "url", value: string) => {
-    const updated = [...coreLinks];
-    updated[index][field] = value;
-    setCoreLinks(updated);
-  };
-
-  const removeLink = (index: number) => {
-    setCoreLinks(coreLinks.filter((_, i) => i !== index));
-  };
+- Core Services & Products
+- Documentation & Guides
+- Enterprise Solutions`;
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white selection:bg-blue-500 selection:text-white font-sans pb-20">
-      {/* Navbar */}
+    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
+      {/* 顶部导航栏 */}
       <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
@@ -77,162 +47,127 @@ ${coreLinks.map((link) => `- [${link.title}](${link.url}): Official ${link.title
               </div>
               <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
             </Link>
-
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
-              <Link href="/report?domain=adidas.com" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
-                Audit Overview
-              </Link>
-              <span className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">
-                /llms.txt Studio
-              </span>
-              <Link href="/docs" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
-                Docs & Guides
-              </Link>
+              <Link href={`/report?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Audit Overview</Link>
+              <Link href={`/llms-txt-studio?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">/llms.txt Studio</Link>
+              <Link href="/badge" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Readiness Badge</Link>
             </nav>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 font-medium px-4 py-2 rounded-xl transition-all"
-            >
-              ← Back to Scanner
+          <div>
+            <Link href={`/report?domain=${rootDomain}`} className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all">
+              ← Back to Report
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-6xl mx-auto px-6 pt-10 space-y-8">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+      {/* 主体内容区 */}
+      <main className="max-w-7xl mx-auto px-6 pt-10">
+        <div className="mb-8">
+          <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
             Generator Tool
-          </div>
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-            /llms.txt Studio & Builder
-          </h1>
-          <p className="text-gray-400 text-xs md:text-sm max-w-2xl leading-relaxed">
+          </span>
+          <h1 className="text-3xl font-extrabold text-white mt-2 tracking-tight">/llms.txt Studio & Builder</h1>
+          <p className="text-sm text-gray-400 mt-1">
             Generate a standardized Markdown context map for AI agents (GPTBot, ClaudeBot, PerplexityBot) to eliminate hallucinations and guide generative search crawlers.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          {/* Configurator Form */}
-          <div className="bg-gray-900/40 border border-gray-800/80 p-6 rounded-2xl space-y-6">
-            <h2 className="text-base font-bold text-white border-b border-gray-800 pb-3 flex items-center justify-between">
-              <span>Brand & Site Configuration</span>
-              <span className="text-xs font-mono text-gray-500 font-normal">Step 1 of 2</span>
-            </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* 左侧配置表单 */}
+          <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
+              <h2 className="text-sm font-bold text-white tracking-wide">Brand & Site Configuration</h2>
+              <span className="text-xs font-mono text-gray-500">Step 1 of 2</span>
+            </div>
 
-            <div className="space-y-4 text-xs">
+            <div className="space-y-4">
               <div>
-                <label className="block text-gray-400 font-medium mb-1.5">Brand / Entity Name</label>
+                <label className="block text-xs font-medium text-gray-300 mb-1.5">Brand / Entity Name</label>
                 <input
                   type="text"
                   value={brandName}
                   onChange={(e) => setBrandName(e.target.value)}
-                  className="w-full bg-[#070A10] border border-gray-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-white outline-none transition-all"
+                  className="w-full bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-400 font-medium mb-1.5">Root Domain</label>
+                <label className="block text-xs font-medium text-gray-300 mb-1.5">Root Domain</label>
                 <input
                   type="text"
-                  value={domain}
-                  onChange={(e) => setDomain(e.target.value)}
-                  className="w-full bg-[#070A10] border border-gray-800 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-white outline-none transition-all font-mono"
+                  value={rootDomain}
+                  onChange={(e) => setRootDomain(e.target.value)}
+                  className="w-full bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-400 font-medium mb-1.5">Core Summary (1-2 sentences for AI Context)</label>
+                <label className="block text-xs font-medium text-gray-300 mb-1.5">Core Summary (1-2 sentences for AI Context)</label>
                 <textarea
                   rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-[#070A10] border border-gray-800 focus:border-blue-500 rounded-xl p-3.5 text-white outline-none transition-all leading-relaxed"
+                  value={coreSummary}
+                  onChange={(e) => setCoreSummary(e.target.value)}
+                  className="w-full bg-[#070A10] border border-gray-800 rounded-xl p-4 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-mono resize-none"
                 />
-              </div>
-
-              {/* Resource Links */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-gray-400 font-medium">Core URLs / Documentation Links</label>
-                  <button
-                    onClick={addLink}
-                    className="text-blue-400 hover:text-blue-300 text-xs font-semibold"
-                  >
-                    + Add Link
-                  </button>
-                </div>
-
-                {coreLinks.map((link, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={link.title}
-                      placeholder="Title"
-                      onChange={(e) => updateLink(idx, "title", e.target.value)}
-                      className="w-1/3 bg-[#070A10] border border-gray-800 focus:border-blue-500 rounded-xl px-3 py-2 text-white outline-none text-xs"
-                    />
-                    <input
-                      type="text"
-                      value={link.url}
-                      placeholder="URL"
-                      onChange={(e) => updateLink(idx, "url", e.target.value)}
-                      className="w-2/3 bg-[#070A10] border border-gray-800 focus:border-blue-500 rounded-xl px-3 py-2 text-white outline-none text-xs font-mono"
-                    />
-                    <button
-                      onClick={() => removeLink(idx)}
-                      className="text-gray-600 hover:text-red-400 px-1 text-sm"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
 
-          {/* Live Preview Panel */}
-          <div className="bg-gray-900/40 border border-gray-800/80 p-6 rounded-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <h2 className="text-base font-bold text-white">Preview /llms.txt</h2>
+          {/* 右侧实时预览 */}
+          <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <h2 className="text-sm font-bold text-white tracking-wide">Preview /llms.txt</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(previewMarkdown)}
+                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium"
+                  >
+                    Copy Raw
+                  </button>
+                  <button
+                    onClick={() => {
+                      const blob = new Blob([previewMarkdown], { type: "text/plain" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "llms.txt";
+                      a.click();
+                    }}
+                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium"
+                  >
+                    Download .txt
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCopy}
-                  className="bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 px-3 py-1.5 rounded-xl text-xs font-medium transition-all"
-                >
-                  {copied ? "Copied! ✓" : "Copy Raw"}
-                </button>
-                <button
-                  onClick={handleDownload}
-                  className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all shadow-md"
-                >
-                  Download .txt
-                </button>
+              {/* 预览代码框 */}
+              <div className="bg-[#070A10] border border-gray-800/80 p-4 rounded-xl font-mono text-xs text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-[380px] leading-relaxed">
+                {previewMarkdown}
               </div>
             </div>
 
-            {/* Code Output */}
-            <pre className="bg-[#070A10] border border-gray-800 p-5 rounded-xl text-xs font-mono text-emerald-300 leading-relaxed overflow-x-auto min-h-[380px] whitespace-pre-wrap selection:bg-blue-600 selection:text-white">
-              {generatedMarkdown}
-            </pre>
-
-            <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl text-xs text-blue-300 space-y-1">
-              <div className="font-bold">🚀 Next Steps for Deployment:</div>
-              <p className="text-gray-400">
-                Upload the downloaded <code className="text-white font-mono">llms.txt</code> file directly to your website's root public directory (e.g., <code className="text-white font-mono">https://{domain}/llms.txt</code>).
+            <div className="bg-blue-950/20 border border-blue-500/20 p-4 rounded-xl mt-6 space-y-1">
+              <p className="text-xs font-bold text-blue-300">🚀 Next Steps for Deployment:</p>
+              <p className="text-xs text-gray-400">
+                Upload the downloaded <code className="text-blue-400 font-mono">llms.txt</code> file directly to your website&apos;s root public directory (e.g., <span className="text-gray-300 font-mono">https://{rootDomain}/llms.txt</span>).
               </p>
             </div>
           </div>
         </div>
       </main>
     </div>
+  );
+}
+
+export default function LlmsTxtStudioPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#070A10]"></div>}>
+      <StudioContent />
+    </Suspense>
   );
 }

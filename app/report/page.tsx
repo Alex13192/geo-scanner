@@ -25,47 +25,48 @@ function ReportContent() {
       setLoading(false);
     }, 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [domain]);
 
+  // 根据当前输入的 domain 动态生成贴切的诊断建议
   const actionItems: ActionItem[] = [
     {
       id: "GEO-109",
       priority: "HIGH",
-      title: "Deploy Standardized /llms.txt at Root Directory",
-      description: "AI agents like GPTBot and ClaudeBot require a clean Markdown context map to crawl complex domain hierarchies without hallucinating.",
-      action: "Download or copy the generated /llms.txt file below and deploy to your site's public root folder.",
+      title: `Deploy Standardized /llms.txt for ${domain}`,
+      description: `AI crawlers like GPTBot and ClaudeBot attempting to index ${domain} require a clean, structured Markdown context map to prevent hallucinations across deep directory trees.`,
+      action: `Generate and deploy the customized /llms.txt file to https://${domain}/llms.txt root directory.`,
       guideDocId: "llms-txt-deployment",
     },
     {
       id: "GEO-209",
       priority: "HIGH",
-      title: "Fix Robots.txt Disallow Rules for PerplexityBot",
-      description: "PerplexityBot is experiencing elevated 403 response rates due to overly aggressive WAF challenge rules on /api endpoints.",
-      action: "Update Cloudflare / WAF rules to whitelist PerplexityBot user-agents for public product catalog URLs.",
+      title: `Optimize Robots.txt & WAF Rules for AI User-Agents on ${domain}`,
+      description: `PerplexityBot and ChatGPT-User are encountering high verification blocks or 403 responses when fetching core pages on ${domain}.`,
+      action: `Update Cloudflare or WAF challenge settings to whitelist verified AI crawlers for ${domain}.`,
       guideDocId: "allow-ai-crawlers",
     },
     {
       id: "GEO-309",
       priority: "MEDIUM",
       title: "Adopt Direct Q&A Headings (H2/H3)",
-      description: "Transform generic subheadings into natural query phrases that mirror real user AI prompts (e.g., 'How does X integrate with Y?').",
-      action: "Restructure product documentation subheadings into precise interrogative formats.",
+      description: `Transform generic section titles across ${domain} into natural, question-based phrasing (e.g., 'What services does ${domain} offer?') that match LLM prompt patterns.`,
+      action: "Restructure documentation and landing page subheadings into precise interrogative formats.",
       guideDocId: "qa-style-headings",
     },
     {
       id: "GEO-409",
       priority: "MEDIUM",
       title: "Embed Self-Contained Quotable Summaries",
-      description: "Place concise 80-100 word summaries at the top of long-form pages. LLMs directly extract these blocks into generated answers.",
-      action: "Add executive summary blocks wrapped in <section itemprop='abstract'> tags.",
+      description: `Place concise 80-100 word executive summary blocks at the top of long-form articles on ${domain} so generative search engines can directly extract accurate answers.`,
+      action: "Add structured abstract summary tags (<section itemprop='abstract'>) to core landing pages.",
       guideDocId: "qa-style-headings",
     },
     {
       id: "GEO-509",
       priority: "LOW",
-      title: "Enhance Author Person Schema Markup",
-      description: "Improve E-E-A-T attribution signals by linking author profiles to external entity bases like Wikidata or LinkedIn.",
-      action: "Implement Schema.org JSON-LD Person and Organization properties across core landing pages.",
+      title: "Enhance Author and Organization Entity Schema",
+      description: `Strengthen E-E-A-T and entity recognition for ${domain} by linking brand and author metadata to authoritative knowledge graphs like Wikidata.`,
+      action: "Implement comprehensive Schema.org JSON-LD Organization and WebSite properties.",
       guideDocId: "schema-org-jsonld",
     },
   ];
@@ -141,7 +142,7 @@ function ReportContent() {
                 </span>
               </div>
               <p className="text-xs text-gray-400 pl-8">
-                Prioritized technical and content adjustments to boost AI agent indexing.
+                Prioritized technical and content adjustments to boost AI agent indexing for <span className="text-blue-400">{domain}</span>.
               </p>
             </div>
 
