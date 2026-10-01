@@ -1,12 +1,8 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-
-// 必填：告知静态导出框架此动态路由的默认预生成路径（可返回空数组或占位路径）
-export async function generateStaticParams() {
-  return [{ domain: "example.com" }];
-}
 
 interface ReportData {
   domain: string;
@@ -19,15 +15,14 @@ interface ReportData {
   recommendations: string[];
 }
 
-export default function ReportPage({ params }: { params: Promise<{ domain: string }> }) {
-  const resolvedParams = use(params);
-  const domain = decodeURIComponent(resolvedParams.domain || "example.com");
-  
+function ReportContent() {
+  const searchParams = useSearchParams();
+  const domain = searchParams.get("domain") || "example.com";
+
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<ReportData | null>(null);
 
   useEffect(() => {
-    // 模拟数据生成/异步加载
     const timer = setTimeout(() => {
       setReport({
         domain,
@@ -45,7 +40,7 @@ export default function ReportPage({ params }: { params: Promise<{ domain: strin
         ],
       });
       setLoading(false);
-    }, 1500);
+    }, 1200);
 
     return () => clearTimeout(timer);
   }, [domain]);
@@ -69,11 +64,15 @@ export default function ReportPage({ params }: { params: Promise<{ domain: strin
         <div style={styles.header}>
           <Link href="/" style={styles.backLink}>&larr; Back to Search</Link>
           <h1 style={styles.title}>GEO Visibility Report</h1>
-          <p style={styles.domainText}>Target Domain: <span style={{ color: "#60a5fa" }}>{report?.domain}</span></p>
+          <p style={styles.domainText}>
+            Target Domain: <span style={{ color: "#60a5fa" }}>{report?.domain}</span>
+          </p>
         </div>
 
         <div style={styles.scoreCard}>
-          <div style={styles.scoreValue}>{report?.score}<span style={{ fontSize: "24px" }}>/100</span></div>
+          <div style={styles.scoreValue}>
+            {report?.score}<span style={{ fontSize: "24px" }}>/100</span>
+          </div>
           <div style={styles.scoreLabel}>Overall AI Recommendation Index</div>
         </div>
 
@@ -106,6 +105,20 @@ export default function ReportPage({ params }: { params: Promise<{ domain: strin
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ReportPage() {
+  return (
+    <Suspense fallback={
+      <main style={styles.container}>
+        <div style={styles.loadingBox}>
+          <div style={styles.spinner}></div>
+        </div>
+      </main>
+    }>
+      <ReportContent />
+    </Suspense>
   );
 }
 

@@ -10,14 +10,14 @@ export default function HomePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!domain.trim()) return;
-    
-    // 清理域名输入（移除 http:// 或 https:// 以及末尾斜杠）
+
     const cleanDomain = domain
       .trim()
       .replace(/^https?:\/\//, "")
       .replace(/\/$/, "");
 
-    router.push(`/report/${encodeURIComponent(cleanDomain)}`);
+    // 使用 Query 参数跳转，避开动态路由静态导出的限制
+    router.push(`/report?domain=${encodeURIComponent(cleanDomain)}`);
   };
 
   return (
@@ -112,6 +112,5 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "15px",
     fontWeight: "bold",
     cursor: "pointer",
-    transition: "background-color 0.2s",
   },
 };
