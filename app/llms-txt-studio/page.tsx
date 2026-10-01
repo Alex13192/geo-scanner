@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 
 // 常见品牌域名映射表，提升 AI 智能感知
 const BRAND_MAPPING: Record<string, string> = {
@@ -25,21 +25,13 @@ const BRAND_MAPPING: Record<string, string> = {
 // 智能提取 Brand Name 的辅助函数
 function extractBrandName(domain: string): string {
   if (!domain) return "Brand";
-  
-  // 1. 清理协议和尾部斜杠，统一转小写
   let clean = domain.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
-  
-  // 2. 优先命中知名品牌字典
   if (BRAND_MAPPING[clean]) {
     return BRAND_MAPPING[clean];
   }
-  
-  // 3. 降级逻辑：提取主段并首字母大写
   const parts = clean.split(".");
   let brand = parts[0];
-  
   if (!brand) return "Brand";
-  
   return brand.charAt(0).toUpperCase() + brand.slice(1);
 }
 
@@ -53,12 +45,20 @@ function StudioContent() {
   const searchParams = useSearchParams();
   const rawDomain = searchParams.get("domain") || "cisco.com";
 
-  // 使用智能清洗与字典匹配函数进行初始化
   const [rootDomain, setRootDomain] = useState(cleanDomain(rawDomain));
   const [brandName, setBrandName] = useState(extractBrandName(rawDomain));
   const [coreSummary, setCoreSummary] = useState(
     `Official digital platform and web services for ${cleanDomain(rawDomain)}.`
   );
+  const [copied, setCopied] = useState(false);
+
+  // 参数动态变更时同步状态
+  useEffect(() => {
+    const cleaned = cleanDomain(rawDomain);
+    setRootDomain(cleaned);
+    setBrandName(extractBrandName(rawDomain));
+    setCoreSummary(`Official digital platform and web services for ${cleaned}.`);
+  }, [rawDomain]);
 
   const previewMarkdown = `# ${brandName}
 > ${coreSummary}
@@ -79,9 +79,24 @@ function StudioContent() {
 - Documentation & Guides
 - Enterprise Solutions`;
 
-  // 原生强制跳转，保证 Static Export 稳定
   const navigateTo = (path: string) => {
     window.location.href = path;
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(previewMarkdown);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([previewMarkdown], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "llms.txt";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -90,8 +105,8 @@ function StudioContent() {
       <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <button 
-              onClick={() => navigateTo("/")} 
+            <button
+              onClick={() => navigateTo("/")}
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
             >
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
@@ -108,7 +123,7 @@ function StudioContent() {
               </button>
               <button
                 onClick={() => navigateTo(`/llms-txt-studio/?domain=${rootDomain}`)}
-                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium"
+                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium shadow-sm"
               >
                 /llms.txt Studio
               </button>
@@ -134,7 +149,7 @@ function StudioContent() {
           <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
             Generator Tool
           </span>
-          <h1 className="text-3xl font-extrabold text-white mt-2 tracking-tight">/llms.txt Studio & Builder</h1>
+          <h1 className="text-3xl font-extrabold text-white mt-2 tracking-tight">/llms.txt Studio &amp; Builder</h1>
           <p className="text-sm text-gray-400 mt-1">
             Generate a standardized Markdown context map for AI agents (GPTBot, ClaudeBot, PerplexityBot) to eliminate hallucinations.
           </p>
@@ -144,7 +159,7 @@ function StudioContent() {
           {/* 左侧配置栏 */}
           <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl space-y-6">
             <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
-              <h2 className="text-sm font-bold text-white tracking-wide">Brand & Site Configuration</h2>
+              <h2 className="text-sm font-bold text-white tracking-wide">Brand &amp; Site Configuration</h2>
               <span className="text-xs font-mono text-gray-500">Step 1 of 2</span>
             </div>
 
@@ -170,7 +185,9 @@ function StudioContent() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-300 mb-1.5">Core Summary (1-2 sentences for AI Context)</label>
+                <label className="block text-xs font-medium text-gray-300 mb-1.5">
+                  Core Summary (1-2 sentences for AI Context)
+                </label>
                 <textarea
                   rows={3}
                   value={coreSummary}
@@ -191,20 +208,13 @@ function StudioContent() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => navigator.clipboard.writeText(previewMarkdown)}
-                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium"
+                    onClick={handleCopy}
+                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium min-w-[75px] text-center"
                   >
-                    Copy Raw
+                    {copied ? "✓ Copied!" : "Copy Raw"}
                   </button>
                   <button
-                    onClick={() => {
-                      const blob = new Blob([previewMarkdown], { type: "text/plain" });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = "llms.txt";
-                      a.click();
-                    }}
+                    onClick={handleDownload}
                     className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium"
                   >
                     Download .txt
@@ -232,7 +242,13 @@ function StudioContent() {
 
 export default function LlmsTxtStudioPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#070A10] flex items-center justify-center text-gray-500 text-sm">Loading Studio...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#070A10] flex items-center justify-center text-gray-500 text-sm">
+          Loading Studio...
+        </div>
+      }
+    >
       <StudioContent />
     </Suspense>
   );

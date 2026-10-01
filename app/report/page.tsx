@@ -3,15 +3,101 @@
 import { useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 
+// 定义 12 维指标数据类型
+interface MetricItem {
+  label: string;
+  score: number;
+  color: string;
+}
+
+// 定义优化建议数据类型
+interface AdviceItem {
+  id: string;
+  priority: "high" | "medium" | "low";
+  title: string;
+  description: string;
+  actionText: string;
+  buttonText?: string;
+  buttonPath?: string;
+}
+
+// 建议数据列表
+const adviceData: AdviceItem[] = [
+  {
+    id: "GEO-109",
+    priority: "high",
+    title: "Deploy Standardized /llms.txt at Root Directory",
+    description:
+      "AI agents like GPTBot and ClaudeBot require a clean Markdown context map to crawl complex domain hierarchies without hallucinating.",
+    actionText: "Generate or download your custom /llms.txt file and deploy to site root.",
+    buttonText: "Open Studio Builder →",
+    buttonPath: "/llms-txt-studio/",
+  },
+  {
+    id: "GEO-209",
+    priority: "high",
+    title: "Fix Robots.txt Disallow Rules for PerplexityBot",
+    description:
+      "PerplexityBot is experiencing elevated 403 response rates due to overly aggressive WAF challenge rules on /api endpoints.",
+    actionText: "Update Cloudflare / WAF rules to whitelist PerplexityBot user-agents for public product catalog URLs.",
+  },
+  {
+    id: "GEO-304",
+    priority: "medium",
+    title: "Enhance JSON-LD Schema for Product Entities",
+    description:
+      "Structured data coverage is missing explicit 'sameAs' cross-references and detailed technical specifications for LLM context aggregation.",
+    actionText: "Inject Schema.org/Product and Organization metadata into primary landing page templates.",
+  },
+  {
+    id: "GEO-402",
+    priority: "medium",
+    title: "Optimize Q&A Structure for Direct Answer Retrieval",
+    description:
+      "Content headers (H2/H3) lack conversational query matching, reducing citation probability in SearchGPT answer cards.",
+    actionText: "Restructure key product pages to feature direct 2-3 sentence answer paragraphs immediately after core questions.",
+  },
+  {
+    id: "GEO-501",
+    priority: "low",
+    title: "Accelerate Indexing for China AI Ecosystems",
+    description:
+      "Bot accessibility for Chinese LLM crawlers (e.g. Baiduspider-AI, Bytespider) shows higher latency and occasional timeout flags.",
+    actionText: "Ensure CDN edge nodes in Asia-Pacific correctly bypass strict challenge pages for verified crawler IP ranges.",
+  },
+];
+
+// 12 维 GEO 指标数据
+const metricsData: MetricItem[] = [
+  { label: "Crawlability & Bot Access", score: 85, color: "bg-emerald-500" },
+  { label: "Understandability (Schema/JSON-LD)", score: 72, color: "bg-amber-500" },
+  { label: "Answer Readiness & Q&A Formatting", score: 64, color: "bg-amber-500" },
+  { label: "Citability & Entity Authority", score: 78, color: "bg-emerald-500" },
+  { label: "Trust & Content E-E-A-T Signals", score: 68, color: "bg-amber-500" },
+  { label: "Content Depth & Context Density", score: 82, color: "bg-emerald-500" },
+  { label: "Freshness & Signal Velocity", score: 55, color: "bg-red-500" },
+  { label: "GEO Content Optimization Level", score: 60, color: "bg-amber-500" },
+  { label: "Competitive GEO Share of Voice", score: 70, color: "bg-amber-500" },
+  { label: "China AI Ecosystem Compatibility", score: 45, color: "bg-red-500" },
+  { label: "AI Native Agent Features", score: 62, color: "bg-amber-500" },
+  { label: "Technical Performance & TTFB", score: 94, color: "bg-emerald-500" },
+];
+
 function ReportContent() {
   const searchParams = useSearchParams();
   const domain = searchParams.get("domain") || "cisco.com";
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
 
   // 统一的跳转函数
   const navigateTo = (path: string) => {
     window.location.href = path;
   };
+
+  // 过滤建议列表
+  const filteredAdvice = adviceData.filter((item) => {
+    if (activeFilter === "all") return true;
+    return item.priority === activeFilter;
+  });
 
   return (
     <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
@@ -28,7 +114,7 @@ function ReportContent() {
               </div>
               <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
             </button>
-            
+
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
               <button
                 onClick={() => navigateTo(`/report/?domain=${domain}`)}
@@ -99,20 +185,7 @@ function ReportContent() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              {[
-                { label: "Crawlability & Bot Access", score: 85, color: "bg-emerald-500" },
-                { label: "Understandability (Schema/JSON-LD)", score: 72, color: "bg-amber-500" },
-                { label: "Answer Readiness & Q&A Formatting", score: 64, color: "bg-amber-500" },
-                { label: "Citability & Entity Authority", score: 78, color: "bg-emerald-500" },
-                { label: "Trust & Content E-E-A-T Signals", score: 68, color: "bg-amber-500" },
-                { label: "Content Depth & Context Density", score: 82, color: "bg-emerald-500" },
-                { label: "Freshness & Signal Velocity", score: 55, color: "bg-red-500" },
-                { label: "GEO Content Optimization Level", score: 60, color: "bg-amber-500" },
-                { label: "Competitive GEO Share of Voice", score: 70, color: "bg-amber-500" },
-                { label: "China AI Ecosystem Compatibility", score: 45, color: "bg-red-500" },
-                { label: "AI Native Agent Features", score: 62, color: "bg-amber-500" },
-                { label: "Technical Performance & TTFB", score: 94, color: "bg-emerald-500" },
-              ].map((item, index) => (
+              {metricsData.map((item, index) => (
                 <div key={index} className="space-y-1.5">
                   <div className="flex justify-between text-xs font-medium">
                     <span className="text-gray-300">{item.label}</span>
@@ -134,7 +207,7 @@ function ReportContent() {
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <span>💡</span> Strategic Optimization Advice
                 <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded-md font-mono font-normal">
-                  5 Action Items
+                  {filteredAdvice.length} Action {filteredAdvice.length === 1 ? "Item" : "Items"}
                 </span>
               </h3>
               <p className="text-xs text-gray-400 mt-1">
@@ -142,6 +215,7 @@ function ReportContent() {
               </p>
             </div>
 
+            {/* 筛选按钮组 */}
             <div className="flex items-center gap-1 bg-gray-900 p-1 rounded-xl border border-gray-800 text-xs">
               {["all", "high", "medium", "low"].map((filter) => (
                 <button
@@ -157,51 +231,48 @@ function ReportContent() {
             </div>
           </div>
 
+          {/* 建议列表展现 */}
           <div className="space-y-4">
-            {/* 卡片 GEO-109 */}
-            <div className="bg-[#070A10] border border-gray-800/80 p-5 rounded-xl space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded uppercase">
-                  HIGH PRIORITY
-                </span>
-                <span className="text-xs font-mono text-gray-500">ID: GEO-109</span>
-              </div>
-              <h4 className="text-sm font-bold text-white">Deploy Standardized /llms.txt at Root Directory</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                AI agents like GPTBot and ClaudeBot require a clean Markdown context map to crawl complex domain hierarchies without hallucinating.
-              </p>
-              
-              <div className="bg-blue-950/20 border border-blue-500/20 p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <span className="text-xs text-blue-300">
-                  <strong className="font-semibold text-blue-400">Action:</strong> Generate or download your custom <code className="font-mono text-white bg-blue-900/40 px-1 py-0.5 rounded">/llms.txt</code> file and deploy to site root.
-                </span>
-                <button
-                  onClick={() => navigateTo(`/llms-txt-studio/?domain=${domain}`)}
-                  className="whitespace-nowrap text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium px-3.5 py-1.5 rounded-lg transition-all shadow-sm"
-                >
-                  Open Studio Builder →
-                </button>
-              </div>
-            </div>
+            {filteredAdvice.length > 0 ? (
+              filteredAdvice.map((item) => (
+                <div key={item.id} className="bg-[#070A10] border border-gray-800/80 p-5 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase border ${
+                        item.priority === "high"
+                          ? "bg-red-500/10 text-red-400 border-red-500/20"
+                          : item.priority === "medium"
+                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                          : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      }`}
+                    >
+                      {item.priority} PRIORITY
+                    </span>
+                    <span className="text-xs font-mono text-gray-500">ID: {item.id}</span>
+                  </div>
+                  <h4 className="text-sm font-bold text-white">{item.title}</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed">{item.description}</p>
 
-            {/* 卡片 GEO-209 */}
-            <div className="bg-[#070A10] border border-gray-800/80 p-5 rounded-xl space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded uppercase">
-                  HIGH PRIORITY
-                </span>
-                <span className="text-xs font-mono text-gray-500">ID: GEO-209</span>
+                  <div className="bg-gray-900/60 border border-gray-800 p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <span className="text-xs text-gray-300">
+                      <strong className="font-semibold text-white">Action:</strong> {item.actionText}
+                    </span>
+                    {item.buttonText && item.buttonPath && (
+                      <button
+                        onClick={() => navigateTo(`${item.buttonPath}?domain=${domain}`)}
+                        className="whitespace-nowrap text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium px-3.5 py-1.5 rounded-lg transition-all shadow-sm"
+                      >
+                        {item.buttonText}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-12 text-gray-500 text-xs font-mono">
+                No optimization items found for this priority filter.
               </div>
-              <h4 className="text-sm font-bold text-white">Fix Robots.txt Disallow Rules for PerplexityBot</h4>
-              <p className="text-xs text-gray-400 leading-relaxed">
-                PerplexityBot is experiencing elevated 403 response rates due to overly aggressive WAF challenge rules on /api endpoints.
-              </p>
-              <div className="bg-gray-900/60 border border-gray-800 p-3 rounded-lg">
-                <span className="text-xs text-gray-300">
-                  <strong className="font-semibold text-white">Action:</strong> Update Cloudflare / WAF rules to whitelist PerplexityBot user-agents for public product catalog URLs.
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
@@ -211,7 +282,13 @@ function ReportContent() {
 
 export default function ReportPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#070A10] flex items-center justify-center text-gray-500 text-sm">Loading Report...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#070A10] flex items-center justify-center text-gray-500 text-sm">
+          Loading Report...
+        </div>
+      }
+    >
       <ReportContent />
     </Suspense>
   );
