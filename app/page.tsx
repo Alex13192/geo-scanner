@@ -1,8 +1,5 @@
 'use client';
 
-// ⚠️ 关键配置：Cloudflare Pages 部署必须显式指定 edge 运行时
-export const runtime = 'edge';
-
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -104,7 +101,7 @@ export default function HomePage() {
 
       {/* 页脚 */}
       <footer className="w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500">
-        © GEO Scanner. Powered by Cloudflare Pages & Next.js Edge Runtime.
+        © GEO Scanner. Powered by Next.js.
       </footer>
     </div>
   );
