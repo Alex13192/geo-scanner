@@ -1,7 +1,9 @@
 'use client';
 
+// Cloudflare Pages 部署必需配置
+export const runtime = 'edge';
 
-import React, { use, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface CheckItem {
   pass: boolean;
@@ -20,250 +22,259 @@ interface ReportData {
     aiContentExtractability: CheckItem;
   };
   llmsTxtContent: string;
-  markdownBadge: string;
 }
 
-export default function ReportPage({ params }: { params: Promise<{ domain: string }> }) {
-  // 解包 Next.js 15 的异步 params
-  const { domain: rawDomain } = use(params);
-  const domain = decodeURIComponent(rawDomain || 'example.com');
+export default function ReportPage({ params }: { params: { domain: string } }) {
+  const [domain, setDomain] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [data, setData] = useState<ReportData | null>(null);
+  const [error, setError] = useState<string>('');
 
-  const [loading, setLoading] = useState(true);
-  const [result, setResult] = useState<ReportData | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  // 邮箱订阅相关 State
+  // 邮箱订阅 Form 状态
   const [email, setEmail] = useState('');
-  const [subStatus, setSubStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [subMessage, setSubMessage] = useState('');
+  const [leadStatus, setLeadStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [leadMsg, setLeadMsg] = useState('');
+
+  // Badge 复制复制控制
+  const [copiedBadge, setCopiedBadge] = useState(false);
+  const [copiedLlms, setCopiedLlms] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function fetchScanData() {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/scan?url=${encodeURIComponent(domain)}`);
-
-        if (!res.ok) {
-          throw new Error(`HTTP Error: ${res.status}`);
-        }
-
-        const text = await res.text();
-        if (!text) throw new Error('Empty response body');
-
-        const data = JSON.parse(text);
-        if (isMounted) {
-          setResult(data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch scan results:', err);
-        // 防崩降级数据：保证就算 API 挂掉或数据格式不对，页面也能正常显示报告与订阅卡片
-        if (isMounted) {
-          setResult({
-            domain,
-            score: 55,
-            badgeUrl: `https://geo-scanner.ccie13192.com/api/badge?score=55`,
-            checks: {
-              crawlerPassability: { pass: true, score: 80, details: 'Standard AI Search Crawlers allowed.' },
-              llmsTxtCompliance: { pass: false, score: 0, details: 'No /llms.txt file found at domain root.' },
-              schemaMetadata: { pass: true, score: 70, details: 'Basic OpenGraph metadata detected.' },
-              aiContentExtractability: { pass: true, score: 50, details: 'Sufficient HTML text-to-DOM density.' },
-            },
-            llmsTxtContent: `# ${domain}\n> Managed context for AI Search Engine Optimization.\n\n## Core System Overview\n- Domain: ${domain}\n- Primary Service: Enterprise Systems Node`,
-            markdownBadge: `[![GEO Score](https://geo-scanner.ccie13192.com/api/badge?score=55)](https://geo-scanner.ccie13192.com/report/${domain})`,
-          });
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+    async function unwrapParams() {
+      const resolvedParams = await params;
+      const decodedDomain = decodeURIComponent(resolvedParams.domain);
+      setDomain(decodedDomain);
+      fetchReport(decodedDomain);
     }
+    unwrapParams();
+  }, [params]);
 
-    fetchScanData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [domain]);
-
-  // 处理邮箱订阅提交
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes('@')) {
-      setSubStatus('error');
-      setSubMessage('Please enter a valid email address.');
-      return;
-    }
-
-    setSubStatus('loading');
+  const fetchReport = async (targetDomain: string) => {
+    setLoading(true);
+    setError('');
     try {
-      const res = await fetch('/api/subscribe', {
+      const res = await fetch(`/api/scan?domain=${encodeURIComponent(targetDomain)}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch audit report.');
+      }
+      const json = await res.json();
+      setData(json);
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setLeadStatus('submitting');
+    setLeadMsg('');
+
+    try {
+      const res = await fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, domain }),
       });
 
-      if (res.ok) {
-        setSubStatus('success');
-        setSubMessage('Successfully subscribed to weekly GEO monitoring reports!');
-        setEmail('');
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-        setSubStatus('error');
-        setSubMessage(errorData.error || 'Subscription failed. Please try again.');
+      if (!res.ok) {
+        throw new Error('Failed to subscribe.');
       }
-    } catch {
-      setSubStatus('error');
-      setSubMessage('Network error. Please check connection and try again.');
+
+      setLeadStatus('success');
+      setLeadMsg('Subscribed successfully! We will monitor your GEO score.');
+      setEmail('');
+    } catch (err: any) {
+      setLeadStatus('error');
+      setLeadMsg(err.message || 'Subscription failed. Please try again.');
     }
   };
 
-  const handleCopyBadge = () => {
-    if (!result) return;
-    navigator.clipboard.writeText(result.markdownBadge);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyToClipboard = (text: string, type: 'badge' | 'llms') => {
+    navigator.clipboard.writeText(text);
+    if (type === 'badge') {
+      setCopiedBadge(true);
+      setTimeout(() => setCopiedBadge(false), 2000);
+    } else {
+      setCopiedLlms(true);
+      setTimeout(() => setCopiedLlms(false), 2000);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col items-center p-6 font-sans">
-      {/* 顶部 Navbar */}
-      <header className="w-full max-w-5xl flex justify-between items-center py-4 mb-8 border-b border-gray-800">
-        <a href="/" className="text-xl font-bold tracking-tight text-blue-400 flex items-center gap-2">
-          🌐 GEO Scanner
-        </a>
-        <a
-          href="/"
-          className="text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition"
-        >
-          Scan Another Site
-        </a>
-      </header>
-
-      {/* 主体容器 */}
-      <main className="w-full max-w-4xl space-y-8">
-        {loading ? (
-          /* Loading 骨架屏 */
-          <div className="text-center py-20 space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="text-gray-400">Analyzing GEO Readiness for <span className="text-blue-400 font-medium">{domain}</span>...</p>
-          </div>
-        ) : result ? (
-          <>
-            {/* 1. 得分 Header */}
-            <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl backdrop-blur-sm">
-              <div>
-                <span className="text-xs uppercase tracking-wider text-gray-500 font-semibold">GEO Readiness Report</span>
-                <h1 className="text-3xl font-extrabold mt-1 text-white">{result.domain}</h1>
-                <p className="text-sm text-gray-400 mt-2">Evaluated against AI Search Engine indexing standards.</p>
-              </div>
-
-              <div className="flex items-center gap-4 bg-gray-950/60 p-4 rounded-xl border border-gray-800/80">
-                <div className="text-right">
-                  <div className="text-xs text-gray-400">GEO Score</div>
-                  <div className="text-3xl font-black text-blue-400">{result.score}/100</div>
-                </div>
-                <div className={`w-4 h-12 rounded-full ${result.score >= 70 ? 'bg-green-500' : result.score >= 40 ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
-              </div>
-            </div>
-
-            {/* 2. 诊断 Check列表 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <CheckCard title="AI Crawler Accessibility" item={result.checks.crawlerPassability} />
-              <CheckCard title="/llms.txt Compliance" item={result.checks.llmsTxtCompliance} />
-              <CheckCard title="JSON-LD / Schema Metadata" item={result.checks.schemaMetadata} />
-              <CheckCard title="Content Extractability" item={result.checks.aiContentExtractability} />
-            </div>
-
-            {/* 3. Generated /llms.txt */}
-            <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6 space-y-4">
-              <h2 className="text-lg font-bold text-gray-200 flex items-center justify-between">
-                <span>📄 Generated /llms.txt Code</span>
-                <span className="text-xs font-normal text-gray-500">Copy to root /llms.txt</span>
-              </h2>
-              <pre className="bg-gray-950 p-4 rounded-xl text-xs font-mono text-green-400 overflow-x-auto border border-gray-800/50">
-                {result.llmsTxtContent}
-              </pre>
-            </div>
-
-            {/* 4. Dynamic Badge Embed */}
-            <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6 space-y-4">
-              <h2 className="text-lg font-bold text-gray-200">🏷️ Embed GEO Score Badge</h2>
-              <p className="text-xs text-gray-400">Add this markdown badge to your GitHub README or Website footer to display real-time GEO status.</p>
-              <div className="flex items-center gap-3 bg-gray-950 p-3 rounded-xl border border-gray-800">
-                <input
-                  type="text"
-                  readOnly
-                  value={result.markdownBadge}
-                  className="bg-transparent text-xs text-gray-300 flex-1 font-mono outline-none"
-                />
-                <button
-                  onClick={handleCopyBadge}
-                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg transition"
-                >
-                  {copied ? 'Copied!' : 'Copy Markdown'}
-                </button>
-              </div>
-            </div>
-
-            {/* 5. 📧 Email Subscription Card (Free GEO Health Monitoring) */}
-            <div className="bg-gradient-to-r from-blue-900/40 via-purple-900/40 to-indigo-900/40 border border-blue-500/30 rounded-2xl p-8 space-y-4 text-center shadow-2xl">
-              <div className="inline-block bg-blue-500/10 border border-blue-400/20 px-3 py-1 rounded-full text-blue-400 text-xs font-semibold uppercase tracking-wider">
-                Automated Health Check
-              </div>
-              <h2 className="text-2xl font-bold text-white">🔔 Free GEO Health Monitoring</h2>
-              <p className="text-sm text-gray-300 max-w-xl mx-auto">
-                Get weekly AI search visibility reports for <span className="text-blue-400 font-semibold">{domain}</span> and instant alerts when AI crawlers get blocked.
-              </p>
-
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mt-4">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
-                  required
-                  className="flex-1 bg-gray-950/80 border border-gray-700 focus:border-blue-500 text-sm text-white px-4 py-2.5 rounded-xl outline-none transition"
-                />
-                <button
-                  type="submit"
-                  disabled={subStatus === 'loading'}
-                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium text-sm px-6 py-2.5 rounded-xl transition shadow-lg shrink-0"
-                >
-                  {subStatus === 'loading' ? 'Subscribing...' : 'Subscribe Free'}
-                </button>
-              </form>
-
-              {subMessage && (
-                <p className={`text-xs mt-2 ${subStatus === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-                  {subMessage}
-                </p>
-              )}
-            </div>
-          </>
-        ) : null}
-      </main>
-    </div>
-  );
-}
-
-// 检查项组件
-function CheckCard({ title, item }: { title: string; item: CheckItem }) {
-  return (
-    <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-5 flex flex-col justify-between">
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-sm font-semibold text-gray-200">{title}</h3>
-        <span
-          className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-            item.pass ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
-          }`}
-        >
-          {item.pass ? 'Pass' : 'Fix Needed'}
-        </span>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col items-center justify-center p-6">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-400 text-sm animate-pulse">Scanning {domain} for GEO Readiness...</p>
+        </div>
       </div>
-      <p className="text-xs text-gray-400">{item.details}</p>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-6 rounded-2xl max-w-md space-y-4">
+          <div className="text-3xl">⚠️</div>
+          <h2 className="text-lg font-bold">Scan Error</h2>
+          <p className="text-xs text-gray-400">{error || 'Could not analyze domain.'}</p>
+          <a href="/" className="inline-block bg-gray-800 hover:bg-gray-700 text-white text-xs px-4 py-2 rounded-xl">
+            Try Another Domain
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  const badgeMarkdown = `![GEO Score](${window.location.origin}${data.badgeUrl})`;
+
+  return (
+    <div className="min-h-screen bg-[#0B0F17] text-white p-6 md:p-12 font-sans selection:bg-blue-500 selection:text-white">
+      <div className="max-w-5xl mx-auto space-y-10">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-800 pb-6 gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <a href="/" className="text-xs text-blue-400 hover:underline">← Back to Search</a>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-extrabold mt-2 text-white">
+              GEO Report: <span className="text-blue-400">{data.domain}</span>
+            </h1>
+          </div>
+          <div className="flex items-center gap-3 bg-gray-900 border border-gray-800 px-5 py-3 rounded-2xl shrink-0">
+            <span className="text-xs text-gray-400 uppercase font-semibold">GEO Score:</span>
+            <span className={`text-2xl font-black ${data.score >= 80 ? 'text-green-400' : data.score >= 50 ? 'text-amber-400' : 'text-red-400'}`}>
+              {data.score} / 100
+            </span>
+          </div>
+        </div>
+
+        {/* Checks Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Check 1 */}
+          <div className="bg-gray-900/60 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-200">1. AI Crawler Accessibility</h3>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${data.checks.crawlerPassability.pass ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                {data.checks.crawlerPassability.pass ? 'PASS' : 'BLOCKED'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">{data.checks.crawlerPassability.details}</p>
+          </div>
+
+          {/* Check 2 */}
+          <div className="bg-gray-900/60 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-200">2. /llms.txt Compliance</h3>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${data.checks.llmsTxtCompliance.pass ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                {data.checks.llmsTxtCompliance.pass ? 'FOUND' : 'MISSING'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">{data.checks.llmsTxtCompliance.details}</p>
+          </div>
+
+          {/* Check 3 */}
+          <div className="bg-gray-900/60 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-200">3. Schema.org Metadata</h3>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${data.checks.schemaMetadata.pass ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                {data.checks.schemaMetadata.pass ? 'VALID' : 'NO SCHEMA'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">{data.checks.schemaMetadata.details}</p>
+          </div>
+
+          {/* Check 4 */}
+          <div className="bg-gray-900/60 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-200">4. AI Extractability</h3>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${data.checks.aiContentExtractability.pass ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                {data.checks.aiContentExtractability.pass ? 'HIGH' : 'LOW'}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">{data.checks.aiContentExtractability.details}</p>
+          </div>
+        </div>
+
+        {/* /llms.txt Generator Box */}
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                <span>📄 Auto-generated /llms.txt Code</span>
+              </h2>
+              <p className="text-xs text-gray-400">Save this content to your website root folder at <code className="text-blue-400 font-mono">/llms.txt</code></p>
+            </div>
+            <button
+              onClick={() => copyToClipboard(data.llmsTxtContent, 'llms')}
+              className="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-xs px-4 py-2 rounded-xl transition-all"
+            >
+              {copiedLlms ? 'Copied! ✓' : 'Copy /llms.txt'}
+            </button>
+          </div>
+          <pre className="bg-[#070A0F] border border-gray-800/80 p-4 rounded-xl text-xs text-blue-200 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
+            {data.llmsTxtContent}
+          </pre>
+        </div>
+
+        {/* Dynamic Badge Embed Box */}
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                <span>🏷️ Embed GEO Score Badge</span>
+              </h2>
+              <p className="text-xs text-gray-400">Showcase your GEO readiness on GitHub or your footer.</p>
+            </div>
+            <button
+              onClick={() => copyToClipboard(badgeMarkdown, 'badge')}
+              className="bg-gray-800 hover:bg-gray-700 active:bg-gray-600 border border-gray-700 text-xs px-4 py-2 rounded-xl transition-all"
+            >
+              {copiedBadge ? 'Copied! ✓' : 'Copy Markdown'}
+            </button>
+          </div>
+          <div className="bg-[#070A0F] border border-gray-800/80 p-4 rounded-xl flex items-center justify-between gap-4">
+            <code className="text-xs text-gray-400 font-mono overflow-x-auto select-all">{badgeMarkdown}</code>
+            <img src={data.badgeUrl} alt="GEO Score Badge" className="h-6 shrink-0" />
+          </div>
+        </div>
+
+        {/* Lead Capture Box */}
+        <div className="bg-gradient-to-r from-blue-900/30 via-indigo-900/20 to-purple-900/30 border border-blue-500/20 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <h3 className="text-lg font-bold text-white">Free GEO Health Monitoring</h3>
+            <p className="text-xs text-gray-300 max-w-md leading-relaxed">
+              Subscribe to get notified if GPTBot or Perplexity rules change for <span className="text-blue-400 font-semibold">{data.domain}</span>.
+            </p>
+          </div>
+          <form onSubmit={handleLeadSubmit} className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your work email"
+              required
+              className="bg-gray-900/90 border border-gray-700 px-4 py-2.5 text-xs text-white placeholder-gray-500 rounded-xl outline-none focus:border-blue-500 transition-all w-full md:w-64"
+            />
+            <button
+              type="submit"
+              disabled={leadStatus === 'submitting'}
+              className="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium text-xs px-5 py-2.5 rounded-xl transition-all shrink-0 disabled:opacity-50"
+            >
+              {leadStatus === 'submitting' ? 'Subscribing...' : 'Subscribe'}
+            </button>
+          </form>
+        </div>
+        {leadMsg && (
+          <p className={`text-xs text-center ${leadStatus === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+            {leadMsg}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
