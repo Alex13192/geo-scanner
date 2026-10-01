@@ -3,25 +3,47 @@
 import { useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 
+// 常见品牌域名映射表，提升 AI 智能感知
+const BRAND_MAPPING: Record<string, string> = {
+  "163.com": "NetEase",
+  "126.com": "NetEase",
+  "qq.com": "Tencent",
+  "baidu.com": "Baidu",
+  "taobao.com": "Taobao",
+  "jd.com": "JD.com",
+  "bytedance.com": "ByteDance",
+  "tiktok.com": "TikTok",
+  "xiaomi.com": "Xiaomi",
+  "huawei.com": "Huawei",
+  "cisco.com": "Cisco",
+  "apple.com": "Apple",
+  "google.com": "Google",
+  "microsoft.com": "Microsoft",
+  "amazon.com": "Amazon",
+};
+
 // 智能提取 Brand Name 的辅助函数
 function extractBrandName(domain: string): string {
   if (!domain) return "Brand";
   
-  // 1. 清理协议和尾部斜杠
-  let clean = domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
+  // 1. 清理协议和尾部斜杠，统一转小写
+  let clean = domain.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
   
-  // 2. 提取核心品牌词（去除 .com, .org, .net, .com.cn 等后缀）
+  // 2. 优先命中知名品牌字典
+  if (BRAND_MAPPING[clean]) {
+    return BRAND_MAPPING[clean];
+  }
+  
+  // 3. 降级逻辑：提取主段并首字母大写
   const parts = clean.split(".");
   let brand = parts[0];
   
-  // 如果第一部分是空或只有特殊字符，兜底处理
   if (!brand) return "Brand";
   
-  // 3. 首字母大写格式化
   return brand.charAt(0).toUpperCase() + brand.slice(1);
 }
 
-// 清理 Domain 格式（去除 http/https/www，只保留干净的 root domain）
+// 清理 Domain 格式
 function cleanDomain(domain: string): string {
   if (!domain) return "example.com";
   return domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
@@ -31,7 +53,7 @@ function StudioContent() {
   const searchParams = useSearchParams();
   const rawDomain = searchParams.get("domain") || "cisco.com";
 
-  // 使用智能清洗函数进行初始化
+  // 使用智能清洗与字典匹配函数进行初始化
   const [rootDomain, setRootDomain] = useState(cleanDomain(rawDomain));
   const [brandName, setBrandName] = useState(extractBrandName(rawDomain));
   const [coreSummary, setCoreSummary] = useState(
