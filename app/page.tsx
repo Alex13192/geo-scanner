@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-// 多语言类型与字典定义
 type Language = "en" | "zh" | "es" | "de" | "fr" | "ja";
 
 const translations: Record<Language, {
@@ -124,8 +123,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white">
-      {/* 顶部 Header：全新 AIO Pulse 品牌，移除了版本号 */}
+    <div className="min-h-screen bg-[#070A10] text-white flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white">
+      {/* Header */}
       <header className="w-full max-w-6xl mx-auto flex justify-between items-center px-6 py-6 border-b border-gray-800/60">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-blue-500/20 border border-white/10">
@@ -159,8 +158,8 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* 主体 Hero 区域 */}
-      <main className="w-full max-w-4xl mx-auto px-6 py-8 flex flex-col items-center text-center space-y-6">
+      {/* Hero Section */}
+      <main className="w-full max-w-5xl mx-auto px-6 py-12 flex flex-col items-center text-center space-y-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
           <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
           {t.tag}
@@ -197,29 +196,89 @@ export default function HomePage() {
           </div>
         </form>
 
-        {/* 三卡片特性列表 */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full pt-8 text-left">
-          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
+        {/* 三卡片核心功能 */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full pt-6 text-left">
+          <div className="bg-gray-900/50 border border-gray-800/80 p-6 rounded-2xl space-y-2">
             <div className="text-2xl">🤖</div>
             <h3 className="text-sm font-bold text-gray-200">{t.crawlersTitle}</h3>
             <p className="text-xs text-gray-400 leading-relaxed">{t.crawlersDesc}</p>
           </div>
 
-          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
+          <div className="bg-gray-900/50 border border-gray-800/80 p-6 rounded-2xl space-y-2">
             <div className="text-2xl">📄</div>
             <h3 className="text-sm font-bold text-gray-200">{t.llmsTitle}</h3>
             <p className="text-xs text-gray-400 leading-relaxed">{t.llmsDesc}</p>
           </div>
 
-          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
+          <div className="bg-gray-900/50 border border-gray-800/80 p-6 rounded-2xl space-y-2">
             <div className="text-2xl">🏷️</div>
             <h3 className="text-sm font-bold text-gray-200">{t.badgeTitle}</h3>
             <p className="text-xs text-gray-400 leading-relaxed">{t.badgeDesc}</p>
           </div>
         </div>
+
+        {/* 新增模块 1：Supported AI Crawlers */}
+        <section className="w-full pt-10 text-left space-y-4">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center">
+            Supported AI Search & Crawler Agents
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-gray-900/30 border border-gray-800/60 p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-white">GPTBot</p>
+                <p className="text-[10px] text-gray-500">OpenAI / ChatGPT</p>
+              </div>
+              <span className="w-2 h-2 rounded-full bg-green-400"></span>
+            </div>
+            <div className="bg-gray-900/30 border border-gray-800/60 p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-white">PerplexityBot</p>
+                <p className="text-[10px] text-gray-500">Perplexity AI</p>
+              </div>
+              <span className="w-2 h-2 rounded-full bg-green-400"></span>
+            </div>
+            <div className="bg-gray-900/30 border border-gray-800/60 p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-white">ClaudeBot</p>
+                <p className="text-[10px] text-gray-500">Anthropic Claude</p>
+              </div>
+              <span className="w-2 h-2 rounded-full bg-green-400"></span>
+            </div>
+            <div className="bg-gray-900/30 border border-gray-800/60 p-4 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-white">Bytespider</p>
+                <p className="text-[10px] text-gray-500">ByteDance / Doubao</p>
+              </div>
+              <span className="w-2 h-2 rounded-full bg-green-400"></span>
+            </div>
+          </div>
+        </section>
+
+        {/* 新增模块 2：SEO vs GEO 对比 */}
+        <section className="w-full pt-8 text-left space-y-4">
+          <div className="bg-gradient-to-r from-blue-950/20 via-gray-900/60 to-purple-950/20 border border-gray-800 p-8 rounded-2xl space-y-6">
+            <div className="text-center space-y-1">
+              <h2 className="text-lg font-bold text-white">Why GEO Matters in 2026</h2>
+              <p className="text-xs text-gray-400">Generative Engine Optimization shifts focus from keywords to AI entity citation.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              <div className="bg-[#070A10]/60 p-5 rounded-xl border border-gray-800/60 space-y-2">
+                <span className="text-xs font-mono font-bold text-red-400 uppercase">Traditional SEO</span>
+                <h3 className="text-sm font-bold text-gray-200">Keyword Ranking & Backlinks</h3>
+                <p className="text-xs text-gray-400 leading-relaxed">Optimizes for SERP blue links, click-through rates, and Google PageRank algorithms.</p>
+              </div>
+              <div className="bg-[#070A10]/60 p-5 rounded-xl border border-blue-500/30 space-y-2">
+                <span className="text-xs font-mono font-bold text-blue-400 uppercase">Generative GEO</span>
+                <h3 className="text-sm font-bold text-gray-200">AI Citation & Share of Voice</h3>
+                <p className="text-xs text-gray-400 leading-relaxed">Optimizes for direct LLM synthesis, structured JSON-LD context, and /llms.txt file accessibility.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
 
-      {/* 页脚 */}
+      {/* Footer */}
       <footer className="w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500">
         © AIO Pulse. Brand Generative Engine Optimization Intelligence.
       </footer>
