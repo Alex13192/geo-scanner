@@ -1,27 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 
-export default function LlmsTxtStudioPage() {
-  const [domain, setDomain] = useState("adidas.com");
-  const [brandName, setBrandName] = useState("adidas");
-  const [rootDomain, setRootDomain] = useState("adidas.com");
+function StudioContent() {
+  const searchParams = useSearchParams();
+  const urlDomain = searchParams.get("domain") || "cisco.com";
+
+  // 根据传入的域名动态初始化
+  const [brandName, setBrandName] = useState(urlDomain.split(".")[0] || "cisco");
+  const [rootDomain, setRootDomain] = useState(urlDomain);
   const [coreSummary, setCoreSummary] = useState(
-    "Official digital platform and web services for adidas.com."
+    `Official digital platform and web services for ${urlDomain}.`
   );
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const urlDomain = params.get("domain");
-      if (urlDomain) {
-        setDomain(urlDomain);
-        setRootDomain(urlDomain);
-        setBrandName(urlDomain.split(".")[0]);
-        setCoreSummary(`Official digital platform and web services for ${urlDomain}.`);
-      }
-    }
-  }, []);
 
   const previewMarkdown = `# ${brandName}
 > ${coreSummary}
@@ -43,51 +35,39 @@ export default function LlmsTxtStudioPage() {
 - Enterprise Solutions`;
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20 selection:bg-blue-500 selection:text-white relative">
-      {/* 顶部导航栏：使用原生 <a> 标签，确保在 Cloudflare 静态托管下完美跳转 */}
-      <header className="fixed top-0 left-0 right-0 h-16 border-b border-gray-800/80 bg-[#070A10]/95 backdrop-blur-md z-[9999] px-6 flex items-center justify-between">
-        <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
+      {/* 顶部导航 */}
+      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <a href="/" className="flex items-center gap-2.5 cursor-pointer">
+            <Link href="/" className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
                 A
               </div>
               <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
-            </a>
+            </Link>
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
-              <a
-                href={`/report?domain=${domain}`}
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer inline-block"
-              >
+              <Link href={`/report?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
                 Audit Overview
-              </a>
-              <a
-                href={`/llms-txt-studio?domain=${domain}`}
-                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium cursor-pointer inline-block"
-              >
+              </Link>
+              <Link href={`/llms-txt-studio?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">
                 /llms.txt Studio
-              </a>
-              <a
-                href={`/badge?domain=${domain}`}
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer inline-block"
-              >
-                Readiness Badge
-              </a>
+              </Link>
+              <button className="px-3 py-1.5 rounded-lg text-gray-500 cursor-not-allowed">
+                Readiness Badge (Coming Soon)
+              </button>
             </nav>
           </div>
           <div>
-            <a
-              href={`/report?domain=${domain}`}
-              className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all cursor-pointer inline-block"
-            >
+            <Link href={`/report?domain=${rootDomain}`} className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all">
               ← Back to Report
-            </a>
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* 主体内容区 */}
-      <main className="max-w-7xl mx-auto px-6 pt-24">
+      {/* 主体区域 */}
+      <main className="max-w-7xl mx-auto px-6 pt-10">
         <div className="mb-8">
           <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
             Generator Tool
@@ -99,6 +79,7 @@ export default function LlmsTxtStudioPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* 左侧配置栏 */}
           <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl space-y-6">
             <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
               <h2 className="text-sm font-bold text-white tracking-wide">Brand & Site Configuration</h2>
@@ -138,6 +119,7 @@ export default function LlmsTxtStudioPage() {
             </div>
           </div>
 
+          {/* 右侧预览区 */}
           <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
@@ -148,7 +130,7 @@ export default function LlmsTxtStudioPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigator.clipboard.writeText(previewMarkdown)}
-                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
+                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium"
                   >
                     Copy Raw
                   </button>
@@ -161,7 +143,7 @@ export default function LlmsTxtStudioPage() {
                       a.download = "llms.txt";
                       a.click();
                     }}
-                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
+                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium"
                   >
                     Download .txt
                   </button>
@@ -183,5 +165,13 @@ export default function LlmsTxtStudioPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function LlmsTxtStudioPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#070A10] flex items-center justify-center text-gray-500 text-sm">Loading Studio...</div>}>
+      <StudioContent />
+    </Suspense>
   );
 }
