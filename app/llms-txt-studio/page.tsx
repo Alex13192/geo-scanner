@@ -3,15 +3,39 @@
 import { useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 
+// 智能提取 Brand Name 的辅助函数
+function extractBrandName(domain: string): string {
+  if (!domain) return "Brand";
+  
+  // 1. 清理协议和尾部斜杠
+  let clean = domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
+  
+  // 2. 提取核心品牌词（去除 .com, .org, .net, .com.cn 等后缀）
+  const parts = clean.split(".");
+  let brand = parts[0];
+  
+  // 如果第一部分是空或只有特殊字符，兜底处理
+  if (!brand) return "Brand";
+  
+  // 3. 首字母大写格式化
+  return brand.charAt(0).toUpperCase() + brand.slice(1);
+}
+
+// 清理 Domain 格式（去除 http/https/www，只保留干净的 root domain）
+function cleanDomain(domain: string): string {
+  if (!domain) return "example.com";
+  return domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
+}
+
 function StudioContent() {
   const searchParams = useSearchParams();
-  const urlDomain = searchParams.get("domain") || "cisco.com";
+  const rawDomain = searchParams.get("domain") || "cisco.com";
 
-  // 根据传入的域名动态初始化
-  const [brandName, setBrandName] = useState(urlDomain.split(".")[0] || "cisco");
-  const [rootDomain, setRootDomain] = useState(urlDomain);
+  // 使用智能清洗函数进行初始化
+  const [rootDomain, setRootDomain] = useState(cleanDomain(rawDomain));
+  const [brandName, setBrandName] = useState(extractBrandName(rawDomain));
   const [coreSummary, setCoreSummary] = useState(
-    `Official digital platform and web services for ${urlDomain}.`
+    `Official digital platform and web services for ${cleanDomain(rawDomain)}.`
   );
 
   const previewMarkdown = `# ${brandName}
@@ -33,7 +57,7 @@ function StudioContent() {
 - Documentation & Guides
 - Enterprise Solutions`;
 
-  // 原生强制跳转，防止 Cloudflare Pages 静态路由 404
+  // 原生强制跳转，保证 Static Export 稳定
   const navigateTo = (path: string) => {
     window.location.href = path;
   };
