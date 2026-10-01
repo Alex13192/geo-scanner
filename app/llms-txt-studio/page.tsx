@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
 
 export default function LlmsTxtStudioPage() {
@@ -11,7 +10,6 @@ export default function LlmsTxtStudioPage() {
     "Official digital platform and web services for adidas.com."
   );
 
-  // 客户端挂载后安全获取 URL 参数，避免 Suspense 导致的点击失效
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -45,39 +43,51 @@ export default function LlmsTxtStudioPage() {
 - Enterprise Solutions`;
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20 selection:bg-blue-500 selection:text-white">
-      {/* 顶部导航栏：使用标准定位和高层级 */}
-      <header className="border-b border-gray-800/80 bg-[#070A10]/95 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20 selection:bg-blue-500 selection:text-white relative">
+      {/* 顶部导航栏：使用原生 <a> 标签，确保在 Cloudflare 静态托管下完美跳转 */}
+      <header className="fixed top-0 left-0 right-0 h-16 border-b border-gray-800/80 bg-[#070A10]/95 backdrop-blur-md z-[9999] px-6 flex items-center justify-between">
+        <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5">
+            <a href="/" className="flex items-center gap-2.5 cursor-pointer">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
                 A
               </div>
               <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
-            </Link>
+            </a>
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
-              <Link href={`/report?domain=${domain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
+              <a
+                href={`/report?domain=${domain}`}
+                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer inline-block"
+              >
                 Audit Overview
-              </Link>
-              <Link href={`/llms-txt-studio?domain=${domain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">
+              </a>
+              <a
+                href={`/llms-txt-studio?domain=${domain}`}
+                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium cursor-pointer inline-block"
+              >
                 /llms.txt Studio
-              </Link>
-              <Link href={`/badge?domain=${domain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
+              </a>
+              <a
+                href={`/badge?domain=${domain}`}
+                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer inline-block"
+              >
                 Readiness Badge
-              </Link>
+              </a>
             </nav>
           </div>
           <div>
-            <Link href={`/report?domain=${domain}`} className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all inline-block">
+            <a
+              href={`/report?domain=${domain}`}
+              className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all cursor-pointer inline-block"
+            >
               ← Back to Report
-            </Link>
+            </a>
           </div>
         </div>
       </header>
 
       {/* 主体内容区 */}
-      <main className="max-w-7xl mx-auto px-6 pt-10">
+      <main className="max-w-7xl mx-auto px-6 pt-24">
         <div className="mb-8">
           <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
             Generator Tool
@@ -138,7 +148,7 @@ export default function LlmsTxtStudioPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigator.clipboard.writeText(previewMarkdown)}
-                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium"
+                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
                   >
                     Copy Raw
                   </button>
@@ -151,7 +161,7 @@ export default function LlmsTxtStudioPage() {
                       a.download = "llms.txt";
                       a.click();
                     }}
-                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium"
+                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
                   >
                     Download .txt
                   </button>
