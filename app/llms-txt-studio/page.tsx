@@ -2,20 +2,19 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 
 function StudioContent() {
   const searchParams = useSearchParams();
   const urlDomain = searchParams.get("domain") || "adidas.com";
 
-  // 定义状态，如果带了域名过来就自动用传过来的域名
+  // 根据传入的域名动态初始化
   const [brandName, setBrandName] = useState(urlDomain.split(".")[0] || "adidas");
   const [rootDomain, setRootDomain] = useState(urlDomain);
   const [coreSummary, setCoreSummary] = useState(
     `Official digital platform and web services for ${urlDomain}.`
   );
 
-  // 动态生成的 markdown 预览内容
   const previewMarkdown = `# ${brandName}
 > ${coreSummary}
 
@@ -37,7 +36,6 @@ function StudioContent() {
 
   return (
     <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
-      {/* 顶部导航栏 */}
       <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -50,7 +48,7 @@ function StudioContent() {
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
               <Link href={`/report?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Audit Overview</Link>
               <Link href={`/llms-txt-studio?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">/llms.txt Studio</Link>
-              <Link href="/badge" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Readiness Badge</Link>
+              <Link href={`/badge?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Readiness Badge</Link>
             </nav>
           </div>
           <div>
@@ -61,7 +59,6 @@ function StudioContent() {
         </div>
       </header>
 
-      {/* 主体内容区 */}
       <main className="max-w-7xl mx-auto px-6 pt-10">
         <div className="mb-8">
           <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
@@ -69,12 +66,11 @@ function StudioContent() {
           </span>
           <h1 className="text-3xl font-extrabold text-white mt-2 tracking-tight">/llms.txt Studio & Builder</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Generate a standardized Markdown context map for AI agents (GPTBot, ClaudeBot, PerplexityBot) to eliminate hallucinations and guide generative search crawlers.
+            Generate a standardized Markdown context map for AI agents (GPTBot, ClaudeBot, PerplexityBot) to eliminate hallucinations.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* 左侧配置表单 */}
           <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl space-y-6">
             <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
               <h2 className="text-sm font-bold text-white tracking-wide">Brand & Site Configuration</h2>
@@ -114,7 +110,6 @@ function StudioContent() {
             </div>
           </div>
 
-          {/* 右侧实时预览 */}
           <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
@@ -145,7 +140,6 @@ function StudioContent() {
                 </div>
               </div>
 
-              {/* 预览代码框 */}
               <div className="bg-[#070A10] border border-gray-800/80 p-4 rounded-xl font-mono text-xs text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-[380px] leading-relaxed">
                 {previewMarkdown}
               </div>

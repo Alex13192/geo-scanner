@@ -2,98 +2,42 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState, useEffect } from "react";
+import { useState, Suspense } from "react";
 
-interface ActionItem {
-  id: string;
-  priority: "HIGH" | "MEDIUM" | "LOW";
-  title: string;
-  description: string;
-  action: string;
-  guideDocId: string;
-}
-
-function ReportContent() {
+function StudioContent() {
   const searchParams = useSearchParams();
-  const domain = searchParams.get("domain") || "adidas.com";
+  const urlDomain = searchParams.get("domain") || "adidas.com";
 
-  const [loading, setLoading] = useState(true);
-  const [selectedPriority, setSelectedPriority] = useState<string>("All Priority");
+  // 根据传入的域名动态初始化
+  const [brandName, setBrandName] = useState(urlDomain.split(".")[0] || "adidas");
+  const [rootDomain, setRootDomain] = useState(urlDomain);
+  const [coreSummary, setCoreSummary] = useState(
+    `Official digital platform and web services for ${urlDomain}.`
+  );
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [domain]);
+  const previewMarkdown = `# ${brandName}
+> ${coreSummary}
 
-  // 根据当前输入的 domain 动态生成贴切的诊断建议
-  const actionItems: ActionItem[] = [
-    {
-      id: "GEO-109",
-      priority: "HIGH",
-      title: `Deploy Standardized /llms.txt for ${domain}`,
-      description: `AI crawlers like GPTBot and ClaudeBot attempting to index ${domain} require a clean, structured Markdown context map to prevent hallucinations across deep directory trees.`,
-      action: `Generate and deploy the customized /llms.txt file to https://${domain}/llms.txt root directory.`,
-      guideDocId: "llms-txt-deployment",
-    },
-    {
-      id: "GEO-209",
-      priority: "HIGH",
-      title: `Optimize Robots.txt & WAF Rules for AI User-Agents on ${domain}`,
-      description: `PerplexityBot and ChatGPT-User are encountering high verification blocks or 403 responses when fetching core pages on ${domain}.`,
-      action: `Update Cloudflare or WAF challenge settings to whitelist verified AI crawlers for ${domain}.`,
-      guideDocId: "allow-ai-crawlers",
-    },
-    {
-      id: "GEO-309",
-      priority: "MEDIUM",
-      title: "Adopt Direct Q&A Headings (H2/H3)",
-      description: `Transform generic section titles across ${domain} into natural, question-based phrasing (e.g., 'What services does ${domain} offer?') that match LLM prompt patterns.`,
-      action: "Restructure documentation and landing page subheadings into precise interrogative formats.",
-      guideDocId: "qa-style-headings",
-    },
-    {
-      id: "GEO-409",
-      priority: "MEDIUM",
-      title: "Embed Self-Contained Quotable Summaries",
-      description: `Place concise 80-100 word executive summary blocks at the top of long-form articles on ${domain} so generative search engines can directly extract accurate answers.`,
-      action: "Add structured abstract summary tags (<section itemprop='abstract'>) to core landing pages.",
-      guideDocId: "qa-style-headings",
-    },
-    {
-      id: "GEO-509",
-      priority: "LOW",
-      title: "Enhance Author and Organization Entity Schema",
-      description: `Strengthen E-E-A-T and entity recognition for ${domain} by linking brand and author metadata to authoritative knowledge graphs like Wikidata.`,
-      action: "Implement comprehensive Schema.org JSON-LD Organization and WebSite properties.",
-      guideDocId: "schema-org-jsonld",
-    },
-  ];
+## Core Information & Product Catalog
+- [Main Portal](https://${rootDomain}/): Official homepage and core services for ${brandName}.
+- [API & Developer Docs](https://developer.${rootDomain}): Official developer documentation.
+- [Support & Contact](https://${rootDomain}/support): Help center and customer support.
 
-  const filteredItems = actionItems.filter((item) => {
-    if (selectedPriority === "High Priority") return item.priority === "HIGH";
-    if (selectedPriority === "Medium Priority") return item.priority === "MEDIUM";
-    if (selectedPriority === "Low Priority") return item.priority === "LOW";
-    return true;
-  });
+## System Context for AI Agents
+- Primary Entity: ${brandName} (${rootDomain})
+- Domain Authority: Verified Official Web Domain
+- Content Usage: Public indexing allowed for LLMs (GPTBot, ClaudeBot, PerplexityBot).
+- Preferred Citation Format: "${brandName} Official Documentation"
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#070A10] text-white flex flex-col items-center justify-center space-y-4">
-        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs text-gray-400 font-mono tracking-wider uppercase">
-          EVALUATING GENERATIVE INDEXING FOR {domain}...
-        </p>
-      </div>
-    );
-  }
+## Key Topics & Categories
+- Core Services & Products
+- Documentation & Guides
+- Enterprise Solutions`;
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white selection:bg-blue-500 selection:text-white font-sans pb-20">
-      {/* Top Navbar */}
+    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
       <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
@@ -101,112 +45,112 @@ function ReportContent() {
               </div>
               <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
             </Link>
-
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
-              <Link href={`/report?domain=${domain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">
-                Audit Overview
-              </Link>
-              <Link href="/llms-txt-studio" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
-                /llms.txt Studio
-              </Link>
-              <Link href="/badge" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
-                Readiness Badge
-              </Link>
+              <Link href={`/report?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Audit Overview</Link>
+              <Link href={`/llms-txt-studio?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">/llms.txt Studio</Link>
+              <Link href={`/badge?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Readiness Badge</Link>
             </nav>
           </div>
-
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-mono bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-lg text-gray-300">
-              Target: <span className="text-blue-400 font-bold">{domain}</span>
-            </span>
-            <Link
-              href="/"
-              className="text-xs bg-blue-600 hover:bg-blue-500 font-medium px-3.5 py-1.5 rounded-lg transition-all"
-            >
-              New Scan
+          <div>
+            <Link href={`/report?domain=${rootDomain}`} className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all">
+              ← Back to Report
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Main Advice Section */}
-      <main className="max-w-6xl mx-auto px-6 pt-10 space-y-8">
-        <div className="bg-gray-900/40 border border-gray-800/80 p-8 rounded-2xl space-y-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-gray-800/80 pb-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <span className="text-lg">💡</span>
-                <h2 className="text-xl font-bold text-white tracking-tight">Strategic Optimization Advice</h2>
-                <span className="text-xs font-mono bg-gray-800 text-gray-300 border border-gray-700 px-2.5 py-0.5 rounded-full font-semibold">
-                  {actionItems.length} Action Items
-                </span>
-              </div>
-              <p className="text-xs text-gray-400 pl-8">
-                Prioritized technical and content adjustments to boost AI agent indexing for <span className="text-blue-400">{domain}</span>.
-              </p>
+      <main className="max-w-7xl mx-auto px-6 pt-10">
+        <div className="mb-8">
+          <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
+            Generator Tool
+          </span>
+          <h1 className="text-3xl font-extrabold text-white mt-2 tracking-tight">/llms.txt Studio & Builder</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Generate a standardized Markdown context map for AI agents (GPTBot, ClaudeBot, PerplexityBot) to eliminate hallucinations.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
+              <h2 className="text-sm font-bold text-white tracking-wide">Brand & Site Configuration</h2>
+              <span className="text-xs font-mono text-gray-500">Step 1 of 2</span>
             </div>
 
-            {/* Priority Filter */}
-            <div className="flex items-center gap-1.5 bg-gray-950 p-1 rounded-xl border border-gray-800/80 text-xs">
-              {["All Priority", "High Priority", "Medium Priority", "Low Priority"].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setSelectedPriority(p)}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                    selectedPriority === p
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1.5">Brand / Entity Name</label>
+                <input
+                  type="text"
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                  className="w-full bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1.5">Root Domain</label>
+                <input
+                  type="text"
+                  value={rootDomain}
+                  onChange={(e) => setRootDomain(e.target.value)}
+                  className="w-full bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-300 mb-1.5">Core Summary (1-2 sentences for AI Context)</label>
+                <textarea
+                  rows={3}
+                  value={coreSummary}
+                  onChange={(e) => setCoreSummary(e.target.value)}
+                  className="w-full bg-[#070A10] border border-gray-800 rounded-xl p-4 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-mono resize-none"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Action List */}
-          <div className="space-y-4">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-[#070A10]/80 border border-gray-800/80 hover:border-gray-700 p-6 rounded-xl space-y-4 transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                        item.priority === "HIGH"
-                          ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                          : item.priority === "MEDIUM"
-                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                          : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                      }`}
-                    >
-                      {item.priority} PRIORITY
-                    </span>
-                  </div>
-                  <span className="text-xs font-mono text-gray-500">{item.id}</span>
+          <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <h2 className="text-sm font-bold text-white tracking-wide">Preview /llms.txt</h2>
                 </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-white">{item.title}</h3>
-                  <p className="text-xs text-gray-400 leading-relaxed">{item.description}</p>
-                </div>
-
-                {/* Action Block with Guide Link */}
-                <div className="bg-gray-900/90 border border-gray-800/90 p-3.5 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                  <div className="font-mono text-gray-300 flex-1">
-                    <span className="text-blue-400 font-bold">Action:</span> {item.action}
-                  </div>
-                  <Link
-                    href={`/docs#${item.guideDocId}`}
-                    className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 hover:text-blue-200 border border-blue-500/30 px-3 py-1.5 rounded-lg font-medium transition-all text-xs flex items-center gap-1 whitespace-nowrap"
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(previewMarkdown)}
+                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium"
                   >
-                    View Guide →
-                  </Link>
+                    Copy Raw
+                  </button>
+                  <button
+                    onClick={() => {
+                      const blob = new Blob([previewMarkdown], { type: "text/plain" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "llms.txt";
+                      a.click();
+                    }}
+                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium"
+                  >
+                    Download .txt
+                  </button>
                 </div>
               </div>
-            ))}
+
+              <div className="bg-[#070A10] border border-gray-800/80 p-4 rounded-xl font-mono text-xs text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-[380px] leading-relaxed">
+                {previewMarkdown}
+              </div>
+            </div>
+
+            <div className="bg-blue-950/20 border border-blue-500/20 p-4 rounded-xl mt-6 space-y-1">
+              <p className="text-xs font-bold text-blue-300">🚀 Next Steps for Deployment:</p>
+              <p className="text-xs text-gray-400">
+                Upload the downloaded <code className="text-blue-400 font-mono">llms.txt</code> file directly to your website&apos;s root public directory (e.g., <span className="text-gray-300 font-mono">https://{rootDomain}/llms.txt</span>).
+              </p>
+            </div>
           </div>
         </div>
       </main>
@@ -214,10 +158,10 @@ function ReportContent() {
   );
 }
 
-export default function ReportPage() {
+export default function LlmsTxtStudioPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#070A10]"></div>}>
-      <ReportContent />
+      <StudioContent />
     </Suspense>
   );
 }
