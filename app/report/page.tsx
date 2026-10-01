@@ -17,6 +17,15 @@ interface IssueItem {
   recommendation: string;
 }
 
+interface Metrics {
+  crawlability: number;
+  understandability: number;
+  answerReadiness: number;
+  citability: number;
+  trustAuthority: number;
+  contentDepth: number;
+}
+
 function ReportContent() {
   const searchParams = useSearchParams();
   const rawDomain = searchParams.get("domain") || "cisco.com";
@@ -25,128 +34,46 @@ function ReportContent() {
   const [loading, setLoading] = useState(true);
   const [overallScore, setOverallScore] = useState<number>(0);
   const [issues, setIssues] = useState<IssueItem[]>([]);
+  const [metrics, setMetrics] = useState<Metrics>({
+    crawlability: 0,
+    understandability: 0,
+    answerReadiness: 0,
+    citability: 0,
+    trustAuthority: 0,
+    contentDepth: 0,
+  });
   const [siteUnreachable, setSiteUnreachable] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "high" | "medium" | "low">("all");
 
   useEffect(() => {
-    async function runLiveAudit() {
+    async function runServerAudit() {
       setLoading(true);
       setSiteUnreachable(false);
 
-      let calculatedScore = 0;
-      const detectedIssues: IssueItem[] = [];
+      try {
+        // 请求我们自己的后端 API 接口进行真实服务端扫描
+        const res = await fetch(`/api/scan?domain=${encodeURIComponent(rootDomain)}`);
+        const data = await res.json();
 
-      // 使用免费跨域代理绕过浏览器的 CORS 限制，获取目标网站真实数据
-      const corsProxy = "https://corsproxy.io/?";
-
-      // 辅助函数：安全抓取内容
-      async function safeFetch(targetUrl: string, timeoutMs = 6000) {
-        try {
-          const res = await fetch(`${corsProxy}${encodeURIComponent(targetUrl)}`, {
-            signal: AbortSignal.timeout(timeoutMs),
-          });
-          if (res.ok) {
-            const text = await res.text();
-            return { ok: true, text, status: res.status };
+        if (!data.reachable) {
+          setSiteUnreachable(true);
+          setOverallScore(0);
+        } else {
+          setOverallScore(data.score);
+          setIssues(data.issues || []);
+          if (data.metrics) {
+            setMetrics(data.metrics);
           }
-          return { ok: false, text: "", status: res.status };
-        } catch (e) {
-          return { ok: false, text: "", status: 0 };
         }
-      }
-
-      // 1. 真实请求探测首页 HTML (首先验证网站是否能打通)
-      const homeRes = await safeFetch(`https://${rootDomain}`);
-      if (!homeRes.ok && homeRes.status === 0) {
-        // 如果首页完全连不上（域名无效或死链），直接判 0 分！
-        setOverallScore(0);
+      } catch (e) {
+        console.error("Scan error:", e);
         setSiteUnreachable(true);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // 2. 真实解析 /llms.txt
-      const llmsRes = await safeFetch(`https://${rootDomain}/llms.txt`);
-      let hasLlmsTxt = false;
-      if (llmsRes.ok && llmsRes.text.trim().length > 20) {
-        hasLlmsTxt = true;
-        calculatedScore += 35;
-      } else {
-        detectedIssues.push({
-          id: "llms-missing",
-          category: "Crawler Access",
-          title: "Missing /llms.txt standard file",
-          severity: "high",
-          summary: `AI Agents visiting https://${rootDomain}/llms.txt received a 404 or missing content.`,
-          recommendation: "Create and publish a valid /llms.txt file at your site root.",
-        });
-      }
-
-      // 3. 真实解析 robots.txt
-      const robotsRes = await safeFetch(`https://${rootDomain}/robots.txt`);
-      let isAiBotAllowed = true;
-      if (robotsRes.ok) {
-        const robotsText = robotsRes.text;
-        if (/Disallow:\s*\/\s*$/m.test(robotsText) && /GPTBot|PerplexityBot|ClaudeBot/i.test(robotsText)) {
-          isAiBotAllowed = false;
-        } else {
-          calculatedScore += 25;
-        }
-      } else {
-        // 未显式配置 robots.txt 默认给分，但不给全额高分
-        calculatedScore += 15;
-      }
-
-      if (!isAiBotAllowed) {
-        detectedIssues.push({
-          id: "robots-blocked",
-          category: "Robots Directives",
-          title: "AI Bots explicitly blocked in robots.txt",
-          severity: "high",
-          summary: "Robots.txt restricts major AI crawlers (GPTBot/PerplexityBot) from indexing site content.",
-          recommendation: "Update User-agent directives in robots.txt to allow official search/RAG crawlers.",
-        });
-      }
-
-      // 4. 真实解析首页中的 Schema 和 语义化标签
-      if (homeRes.ok) {
-        const html = homeRes.text;
-        
-        // 检查 JSON-LD
-        if (html.includes("application/ld+json")) {
-          calculatedScore += 20;
-        } else {
-          detectedIssues.push({
-            id: "schema-missing",
-            category: "Schema Metadata",
-            title: "Missing JSON-LD Structured Data",
-            severity: "medium",
-            summary: `Generative search engines cannot automatically construct entity graph for ${rootDomain}.`,
-            recommendation: "Add structured JSON-LD schema (Organization / WebSite) in your home page <head>.",
-          });
-        }
-
-        // 检查 HTML5 语义标签
-        if (/<(main|article|section|header|nav|footer)/i.test(html)) {
-          calculatedScore += 20;
-        } else {
-          detectedIssues.push({
-            id: "semantic-missing",
-            category: "Content Structure",
-            title: "Low semantic element density",
-            severity: "low",
-            summary: "Page heavily relies on generic <div> tags instead of HTML5 semantic containers.",
-            recommendation: "Wrap main components inside <main>, <article>, and <section> tags for better LLM chunking.",
-          });
-        }
-      }
-
-      setOverallScore(calculatedScore);
-      setIssues(detectedIssues);
-      setLoading(false);
     }
 
-    runLiveAudit();
+    runServerAudit();
   }, [rootDomain]);
 
   const navigateTo = (path: string) => {
@@ -206,51 +133,76 @@ function ReportContent() {
         </div>
       </header>
 
-      {/* 主体报告 */}
+      {/* 主体内容 */}
       <main className="max-w-7xl mx-auto px-6 pt-10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 bg-gray-950/60 border border-gray-800/80 p-8 rounded-2xl">
+        {/* 顶部 Domain 概览 */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-gray-950/60 border border-gray-800/80 p-8 rounded-2xl">
           <div>
             <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
-              GEO Audit Report
+              GEO Server Scanner
             </span>
             <h1 className="text-3xl font-extrabold text-white mt-3 tracking-tight">
               Analysis for <span className="text-blue-400">{rootDomain}</span>
             </h1>
             <p className="text-xs text-gray-400 mt-1">
-              Live evaluated against active Generative Engine Optimization vectors.
+              Live scanned via backend edge crawler across multi-dimensional AI optimization vectors.
             </p>
           </div>
 
           <div className="flex items-center gap-6 bg-[#070A10] p-4 rounded-xl border border-gray-800">
             <div className="text-center">
               {loading ? (
-                <div className="text-sm text-blue-400 animate-pulse font-mono py-2">Scanning site...</div>
+                <div className="text-sm text-blue-400 animate-pulse font-mono py-2">Scanning via Edge...</div>
               ) : (
-                <div className="text-3xl font-black text-amber-400 font-mono">{overallScore}/100</div>
+                <div className="text-4xl font-black text-amber-400 font-mono">{overallScore}/100</div>
               )}
-              <div className="text-[11px] text-gray-400 mt-0.5">Readiness Score</div>
+              <div className="text-[11px] text-gray-400 mt-0.5">Overall GEO Score</div>
             </div>
             <div className="h-8 w-px bg-gray-800"></div>
             <button
               disabled={loading || siteUnreachable}
               onClick={() => navigateTo(`/readiness-badge/?domain=${rootDomain}&score=${overallScore}`)}
-              className="text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 px-3 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
+              className="text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 px-3.5 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
             >
-              Get Badge 🛡️
+              Get Badge 🛡️️
             </button>
           </div>
         </div>
 
-        {/* 如果域名连不上 */}
         {siteUnreachable ? (
           <div className="text-center py-16 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm">
-            ❌ Unable to reach <span className="font-mono font-bold">{rootDomain}</span>. Please verify the domain name is valid and online.
+            ❌ Unable to reach <span className="font-mono font-bold">{rootDomain}</span>. Please check if the domain is valid and live.
           </div>
         ) : (
           <>
-            {/* 筛选与问题展示 */}
+            {/* 多维度评分面板 (参考竞品样式) */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+              {[
+                { name: "Crawlability", score: metrics.crawlability },
+                { name: "Understandability", score: metrics.understandability },
+                { name: "Answer Readiness", score: metrics.answerReadiness },
+                { name: "Citability", score: metrics.citability },
+                { name: "Trust & Authority", score: metrics.trustAuthority },
+                { name: "Content Depth", score: metrics.contentDepth },
+              ].map((m) => (
+                <div key={m.name} className="bg-gray-950/40 border border-gray-800/80 p-4 rounded-xl">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs text-gray-400 font-medium">{m.name}</span>
+                    <span className="text-sm font-bold font-mono text-blue-400">{loading ? "--" : m.score}</span>
+                  </div>
+                  <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-indigo-500 h-1.5 rounded-full transition-all duration-500"
+                      style={{ width: loading ? "0%" : `${m.score}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 优化建议列表 Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white tracking-tight">Identified Issues</h2>
+              <h2 className="text-lg font-bold text-white tracking-tight">Optimization Advice</h2>
               <div className="flex items-center gap-1 bg-gray-950 p-1 rounded-xl border border-gray-800 text-xs">
                 {(["all", "high", "medium", "low"] as const).map((filter) => (
                   <button
@@ -268,15 +220,15 @@ function ReportContent() {
               </div>
             </div>
 
-            {/* 扫描状态展示 */}
+            {/* 加载中与问题列表 */}
             {loading ? (
               <div className="text-center py-20 bg-gray-950/20 rounded-2xl border border-gray-800/40">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
-                <p className="text-sm text-gray-400 font-mono">Auditing https://{rootDomain} in real-time...</p>
+                <p className="text-sm text-gray-400 font-mono">Crawling and analyzing https://{rootDomain} via edge nodes...</p>
               </div>
             ) : issues.length === 0 ? (
               <div className="text-center py-16 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-400 text-sm font-mono">
-                🎉 Perfect Score! No critical GEO optimization issues found for this domain.
+                🎉 Perfect Score! No major GEO issues found for this domain.
               </div>
             ) : (
               <div className="space-y-4">
