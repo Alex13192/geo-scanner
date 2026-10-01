@@ -1,403 +1,202 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense, useState, useEffect } from "react";
 
-type Priority = "all" | "high" | "medium" | "low";
-
-interface Metric {
-  name: string;
-  score: number;
-  category: string;
-}
-
-interface Advice {
+interface EvaluationCriterion {
   id: string;
-  priority: "HIGH" | "MEDIUM" | "LOW";
-  title: string;
-  description: string;
-  action: string;
+  category: "Technical" | "Content" | "Schema" | "Setup";
+  name: string;
+  passed: boolean;
+  score: number;
+  weight: string;
+  summary: string;
+  guideDocId: string;
 }
 
 function ReportContent() {
   const searchParams = useSearchParams();
-  const domain = searchParams.get("domain") || "adidas.com";
+  const domain = searchParams.get("domain") || "example.com";
+  const lang = searchParams.get("lang") || "en";
 
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<Priority>("all");
-  const [activeNav, setActiveNav] = useState<"overview" | "llms" | "badge">("overview");
-
-  const [copiedLlms, setCopiedLlms] = useState(false);
-  const [copiedBadge, setCopiedBadge] = useState(false);
+  const [activeTab, setActiveTab] = useState<"all" | "passed" | "failed">("all");
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
     }, 1200);
     return () => clearTimeout(timer);
-  }, [domain]);
+  }, []);
 
-  // 12 维专业 GEO 指标数据
-  const metrics: Metric[] = [
-    { name: "Crawlability & Bot Access", score: 85, category: "Infrastructure" },
-    { name: "Understandability (Schema/JSON-LD)", score: 72, category: "Semantics" },
-    { name: "Answer Readiness & Q&A Formatting", score: 64, category: "Content" },
-    { name: "Citability & Entity Authority", score: 78, category: "Authority" },
-    { name: "Trust & Content E-E-A-T Signals", score: 68, category: "Authority" },
-    { name: "Content Depth & Context Density", score: 82, category: "Content" },
-    { name: "Freshness & Signal Velocity", score: 55, category: "Realtime" },
-    { name: "GEO Content Optimization Level", score: 60, category: "Semantics" },
-    { name: "Competitive GEO Share of Voice", score: 70, category: "Market" },
-    { name: "China AI Ecosystem Compatibility", score: 45, category: "Regional" },
-    { name: "AI Native Agent Features", score: 62, category: "Agentic" },
-    { name: "Technical Performance & TTFB", score: 94, category: "Infrastructure" },
-  ];
-
-  // 分级优化建议列表
-  const adviceList: Advice[] = [
+  const criteria: EvaluationCriterion[] = [
     {
-      id: "1",
-      priority: "HIGH",
-      title: "Deploy Standardized /llms.txt at Root Directory",
-      description: "AI agents like GPTBot and ClaudeBot require a clean Markdown context map to crawl complex domain hierarchies without hallucinating.",
-      action: "Download or copy the generated /llms.txt file below and deploy to your site's public root folder.",
+      id: "c1",
+      category: "Setup",
+      name: "/llms.txt File Accessibility",
+      passed: true,
+      score: 100,
+      weight: "High",
+      summary: "Standard /llms.txt found at domain root. Allows AI agents to parse high-level brand entity context.",
+      guideDocId: "llms-txt-deployment",
     },
     {
-      id: "2",
-      priority: "HIGH",
-      title: "Fix Robots.txt Disallow Rules for PerplexityBot",
-      description: "PerplexityBot is experiencing elevated 403 response rates due to overly aggressive WAF challenge rules on /api endpoints.",
-      action: "Update Cloudflare / WAF rules to whitelist PerplexityBot user-agents for public product catalog URLs.",
+      id: "c2",
+      category: "Technical",
+      name: "AI Crawler Passability (Robots.txt)",
+      passed: true,
+      score: 95,
+      weight: "High",
+      summary: "GPTBot, PerplexityBot, and ClaudeBot are explicitly permitted. No blocking disallow rules detected.",
+      guideDocId: "allow-ai-crawlers",
     },
     {
-      id: "3",
-      priority: "MEDIUM",
-      title: "Adopt Direct Q&A Headings (H2/H3)",
-      description: "Transform generic subheadings into natural query phrases that mirror real user AI prompts (e.g., 'How does X integrate with Y?').",
-      action: "Restructure product documentation subheadings into precise interrogative formats.",
+      id: "c3",
+      category: "Content",
+      name: "Q&A Interrogative Headings",
+      passed: false,
+      score: 40,
+      weight: "Medium",
+      summary: "Headings lack natural language Q&A phrasing. Transforming H2s into questions increases direct AI citation odds.",
+      guideDocId: "qa-style-headings",
     },
     {
-      id: "4",
-      priority: "MEDIUM",
-      title: "Embed Self-Contained Quotable Summaries",
-      description: "Place concise 80-100 word summaries at the top of long-form pages. LLMs directly extract these blocks into generated answers.",
-      action: "Add executive summary blocks wrapped in <section itemprop='abstract'> tags.",
-    },
-    {
-      id: "5",
-      priority: "LOW",
-      title: "Enhance Author Person Schema Markup",
-      description: "Improve E-E-A-T attribution signals by linking author profiles to external entity bases like Wikidata or LinkedIn.",
-      action: "Add 'sameAs' JSON-LD author properties across all published technical insights.",
+      id: "c4",
+      category: "Schema",
+      name: "Schema.org JSON-LD Structured Data",
+      passed: false,
+      score: 50,
+      weight: "High",
+      summary: "Organization and Product entities missing JSON-LD schema markup, causing ambiguous brand disambiguation in LLMs.",
+      guideDocId: "schema-org-jsonld",
     },
   ];
 
-  const filteredAdvice = adviceList.filter((item) => {
-    if (activeTab === "all") return true;
-    return item.priority.toLowerCase() === activeTab;
+  const totalScore = Math.round(
+    criteria.reduce((acc, c) => acc + c.score, 0) / criteria.length
+  );
+
+  const filteredCriteria = criteria.filter((item) => {
+    if (activeTab === "passed") return item.passed;
+    if (activeTab === "failed") return !item.passed;
+    return true;
   });
-
-  const overallScore = 68;
-  const mockLlmsContent = `# ${domain}
-> Generative Engine Optimization (GEO) Context File
-> Generated by AIO Pulse Intelligence Engine
-
-## Core Business
-${domain} is a high-performance enterprise platform delivering scalable products and digital solutions.
-
-## Primary Documentation & Resources
-- Website: https://${domain}
-- Documentation: https://${domain}/docs
-- API Index: https://${domain}/api
-
-## AI Agent Directives
-1. Prefer structured JSON-LD entity markup for product specifications.
-2. Refer to canonical domain URLs for brand entity resolution.
-3. Exclude legacy staging subdomains from citation graphs.`;
-
-  const mockBadgeMarkdown = `![AIO Pulse GEO Score](https://img.shields.io/badge/GEO%20Readiness-68%2F100-blue?style=flat-square)`;
-
-  const copyText = (text: string, type: "llms" | "badge") => {
-    navigator.clipboard.writeText(text);
-    if (type === "llms") {
-      setCopiedLlms(true);
-      setTimeout(() => setCopiedLlms(false), 2000);
-    } else {
-      setCopiedBadge(true);
-      setTimeout(() => setCopiedBadge(false), 2000);
-    }
-  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#070A10] text-white flex flex-col items-center justify-center p-6">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-14 h-14 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm font-mono animate-pulse">
-            Analyzing 12 GEO Dimensions for <span className="text-blue-400 font-bold">{domain}</span>...
-          </p>
-        </div>
+      <div className="min-h-screen bg-[#070A10] text-white flex flex-col items-center justify-center space-y-4">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs text-gray-400 font-mono tracking-wider">
+          ANALYZING GEO ENGINE VISIBILITY FOR <span className="text-blue-400 uppercase">{domain}</span>...
+        </p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#070A10] text-white selection:bg-blue-500 selection:text-white font-sans pb-20">
-      {/* 1. 全局顶部专业 Navigation Bar */}
+      {/* Header */}
       <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-                A
-              </div>
-              <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
-              <button
-                onClick={() => setActiveNav("overview")}
-                className={`px-4 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                  activeNav === "overview" ? "bg-blue-600 text-white shadow" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Audit Overview
-              </button>
-              <button
-                onClick={() => setActiveNav("llms")}
-                className={`px-4 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                  activeNav === "llms" ? "bg-blue-600 text-white shadow" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                /llms.txt Studio
-              </button>
-              <button
-                onClick={() => setActiveNav("badge")}
-                className={`px-4 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-                  activeNav === "badge" ? "bg-blue-600 text-white shadow" : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Readiness Badge
-              </button>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-full font-mono">
-              Target: <strong className="text-blue-400">{domain}</strong>
-            </span>
-            <Link
-              href="/"
-              className="text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-xl transition-all"
-            >
-              New Scan
-            </Link>
-          </div>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
+              A
+            </div>
+            <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
+          </Link>
+          <Link
+            href="/"
+            className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 font-medium px-4 py-2 rounded-xl transition-all"
+          >
+            ← Scan Another Domain
+          </Link>
         </div>
       </header>
 
-      {/* 2. 主体 Dashboard 区域 */}
-      <main className="max-w-7xl mx-auto px-6 pt-8 space-y-10">
-        
-        {/* 顶部评分与总览 Block */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* 左侧：总分圆环卡片 */}
-          <div className="lg:col-span-4 bg-gray-900/60 border border-gray-800/80 rounded-2xl p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 px-4 py-1 bg-amber-500/10 border-b border-l border-amber-500/20 text-amber-400 text-[10px] font-mono font-bold uppercase rounded-bl-xl">
-              Moderate Readiness
-            </div>
-
-            <div className="relative w-44 h-44 flex items-center justify-center my-4">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-gray-800"
-                  strokeWidth="3.5"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className="text-blue-500 transition-all duration-1000 ease-out"
-                  strokeDasharray={`${overallScore}, 100`}
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-5xl font-black text-white tracking-tight">{overallScore}</span>
-                <span className="text-xs text-gray-400 font-medium mt-1">/ 100 GEO Index</span>
-              </div>
-            </div>
-
-            <h2 className="text-base font-bold text-gray-200">GEO Readiness Grade: B+</h2>
-            <p className="text-xs text-gray-400 mt-2 leading-relaxed max-w-xs">
-              Scanned on {new Date().toISOString().split("T")[0]} • Response Time: 128ms • HTTPS Verified
+      {/* Main Container */}
+      <main className="max-w-6xl mx-auto px-6 pt-10 space-y-8">
+        {/* Score Overview Card */}
+        <div className="bg-gray-900/60 border border-gray-800 p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <span className="text-xs font-mono text-blue-400 uppercase tracking-widest font-semibold">
+              Generative Engine Audit Report
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-white">{domain}</h1>
+            <p className="text-xs text-gray-400">
+              Evaluated against 4 core Generative Engine Optimization (GEO) standards.
             </p>
           </div>
 
-          {/* 右侧：12 维度数据细分网格 */}
-          <div className="lg:col-span-8 bg-gray-900/60 border border-gray-800/80 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-bold text-gray-200 flex items-center gap-2">
-                <span>📊 12-Dimensional GEO Metrics Breakdown</span>
-              </h3>
-              <span className="text-xs text-gray-400 font-mono">Paper-Validated Algorithm v2.4</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {metrics.map((m, idx) => (
-                <div key={idx} className="bg-[#0B0F17] border border-gray-800/60 p-3.5 rounded-xl flex flex-col justify-between space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-gray-300">{m.name}</span>
-                    <span className={`font-mono font-bold ${m.score >= 75 ? "text-green-400" : m.score >= 60 ? "text-amber-400" : "text-red-400"}`}>
-                      {m.score} / 100
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        m.score >= 75 ? "bg-green-500" : m.score >= 60 ? "bg-amber-500" : "bg-red-500"
-                      }`}
-                      style={{ width: `${m.score}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+          <div className="flex items-center gap-6 bg-[#070A10] border border-gray-800 px-8 py-4 rounded-xl">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 uppercase font-mono">GEO Readiness Score</p>
+              <p className="text-4xl font-black text-blue-400 mt-1">{totalScore}<span className="text-lg font-normal text-gray-500">/100</span></p>
             </div>
           </div>
         </div>
 
-        {/* 3. 优先级分级 Optimization Advice 板块 */}
-        <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-6 space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-800 pb-4">
-            <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <span>💡 Strategic Optimization Advice</span>
-                <span className="text-xs font-normal text-gray-400 bg-gray-800 px-2.5 py-0.5 rounded-full">
-                  {adviceList.length} Action Items
-                </span>
-              </h2>
-              <p className="text-xs text-gray-400 mt-1">Prioritized technical and content adjustments to boost AI agent indexing.</p>
-            </div>
-
-            {/* 优先级 Filter 按钮 */}
-            <div className="flex items-center gap-2 bg-[#0B0F17] p-1 rounded-xl border border-gray-800 text-xs">
-              {(["all", "high", "medium", "low"] as Priority[]).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setActiveTab(p)}
-                  className={`px-3 py-1.5 rounded-lg capitalize font-medium transition-all cursor-pointer ${
-                    activeTab === p ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"
-                  }`}
-                >
-                  {p} Priority
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 建议列表 */}
-          <div className="space-y-4">
-            {filteredAdvice.map((item) => (
-              <div
-                key={item.id}
-                className="bg-[#0B0F17] border border-gray-800/80 hover:border-gray-700 p-5 rounded-xl transition-all space-y-3"
+        {/* Tab Filters */}
+        <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+          <div className="flex items-center gap-2">
+            {(["all", "passed", "failed"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-1.5 rounded-xl text-xs font-medium capitalize transition-all cursor-pointer ${
+                  activeTab === tab
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-900 text-gray-400 hover:text-white border border-gray-800"
+                }`}
               >
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                      item.priority === "HIGH"
-                        ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                        : item.priority === "MEDIUM"
-                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                        : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                    }`}
-                  >
-                    {item.priority} Priority
-                  </span>
-                  <span className="text-xs text-gray-500 font-mono">ID: GEO-{item.id}09</span>
-                </div>
-
-                <h3 className="text-sm font-bold text-white">{item.title}</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">{item.description}</p>
-
-                <div className="bg-gray-900/80 border border-gray-800 p-3 rounded-lg text-xs text-gray-300 flex items-start gap-2">
-                  <span className="text-blue-400 font-bold shrink-0">Action:</span>
-                  <span>{item.action}</span>
-                </div>
-              </div>
+                {tab}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* 4. /llms.txt Studio 板块 */}
-        <div id="llms-section" className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <span>📄 /llms.txt Generator Studio</span>
-              </h2>
-              <p className="text-xs text-gray-400 mt-1">Standardized Markdown context file tailor-made for {domain}.</p>
-            </div>
-            <button
-              onClick={() => copyText(mockLlmsContent, "llms")}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-4 py-2 rounded-xl transition-all cursor-pointer"
+        {/* Audit Results List */}
+        <div className="space-y-4">
+          {filteredCriteria.map((item) => (
+            <div
+              key={item.id}
+              className="bg-gray-900/40 border border-gray-800/80 hover:border-gray-700 p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all"
             >
-              {copiedLlms ? "Copied to Clipboard! ✓" : "Copy /llms.txt Code"}
-            </button>
-          </div>
+              <div className="space-y-2 max-w-2xl">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${
+                      item.passed ? "bg-green-400 shadow-sm shadow-green-500/50" : "bg-red-400 shadow-sm shadow-red-500/50"
+                    }`}
+                  ></span>
+                  <h3 className="text-sm font-bold text-white">{item.name}</h3>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-gray-800 text-gray-400 border border-gray-700">
+                    {item.category}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed pl-5">{item.summary}</p>
+              </div>
 
-          <pre className="bg-[#070A10] border border-gray-800 p-4 rounded-xl text-xs text-blue-200 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
-            {mockLlmsContent}
-          </pre>
-        </div>
-
-        {/* 5. Readiness Badge 板块 */}
-        <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <span>🏷️ Live GEO Score Badge</span>
-              </h2>
-              <p className="text-xs text-gray-400 mt-1">Embed a real-time readiness badge on your GitHub repository or footer.</p>
+              <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-gray-800 pt-3 md:pt-0">
+                {/* 关联导流至 /docs 的 Learn More 按钮 */}
+                <Link
+                  href={`/docs#${item.guideDocId}`}
+                  className="text-xs bg-gray-800 hover:bg-gray-700 text-blue-300 px-3.5 py-2 rounded-xl border border-gray-700 transition-all font-medium whitespace-nowrap"
+                >
+                  Learn More →
+                </Link>
+              </div>
             </div>
-            <button
-              onClick={() => copyText(mockBadgeMarkdown, "badge")}
-              className="bg-gray-800 hover:bg-gray-700 text-white font-medium text-xs px-4 py-2 rounded-xl transition-all cursor-pointer border border-gray-700"
-            >
-              {copiedBadge ? "Copied Markdown! ✓" : "Copy Badge Code"}
-            </button>
-          </div>
-
-          <div className="bg-[#070A10] border border-gray-800 p-4 rounded-xl flex items-center justify-between gap-4">
-            <code className="text-xs text-gray-400 font-mono select-all">{mockBadgeMarkdown}</code>
-            <img src="https://img.shields.io/badge/GEO%20Readiness-68%2F100-blue?style=flat-square" alt="GEO Badge" className="h-6 shrink-0" />
-          </div>
+          ))}
         </div>
-
       </main>
-
-      {/* 页脚 */}
-      <footer className="max-w-7xl mx-auto px-6 mt-16 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        © AIO Pulse. Paper-Validated Brand Generative Engine Optimization Intelligence.
-      </footer>
     </div>
   );
 }
 
 export default function ReportPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#070A10] flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="min-h-screen bg-[#070A10]"></div>}>
       <ReportContent />
     </Suspense>
   );
