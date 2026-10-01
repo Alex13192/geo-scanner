@@ -33,6 +33,12 @@ export default function ReportPage({
   const [copied, setCopied] = useState(false);
   const [copyBadge, setCopyBadge] = useState(false);
 
+  // Email Lead State
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [subError, setSubError] = useState('');
+
   useEffect(() => {
     let isMounted = true;
     async function fetchScanData() {
@@ -62,6 +68,40 @@ export default function ReportPage({
     navigator.clipboard.writeText(text);
     setFn(true);
     setTimeout(() => setFn(false), 2000);
+  };
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      setSubError('Please enter a valid email address.');
+      return;
+    }
+
+    setSubmitting(true);
+    setSubError('');
+
+    try {
+      const res = await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          domain,
+          score: result?.score || 0,
+        }),
+      });
+
+      if (res.ok) {
+        setSubscribed(true);
+        setEmail('');
+      } else {
+        setSubError('Failed to subscribe. Please try again.');
+      }
+    } catch {
+      setSubError('Network error. Please try again later.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -135,6 +175,50 @@ export default function ReportPage({
             <pre className="bg-slate-900/90 border border-slate-800 rounded-lg p-3 text-xs text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap">
               {result.markdownBadge}
             </pre>
+          </div>
+
+          {/* Lead Capture Card: Free GEO Alert & Monitor */}
+          <div className="bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-purple-900/40 border border-blue-500/30 rounded-2xl p-6 md:p-8">
+            <div className="max-w-2xl">
+              <div className="inline-block bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs px-2.5 py-1 rounded-md font-semibold mb-3">
+                🔔 Free GEO Health Monitoring
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Get monthly GEO health reports for {domain}
+              </h3>
+              <p className="text-slate-300 text-xs md:text-sm mb-6 leading-relaxed">
+                Receive automated alerts if AI crawlers (GPTBot, ClaudeBot) are blocked or if your GEO readiness score drops. Zero spam, unsubscribe anytime.
+              </p>
+
+              {subscribed ? (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-xl text-xs sm:text-sm flex items-center gap-2">
+                  <span>🎉</span>
+                  <span><strong>Subscribed!</strong> We will send monthly GEO audits for {domain} to your inbox.</span>
+                </div>
+              ) : (
+                <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your work email..."
+                    className="flex-1 bg-slate-950/80 border border-slate-700 focus:border-blue-500 text-white text-xs sm:text-sm rounded-xl px-4 py-3 outline-none transition"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm rounded-xl px-5 py-3 transition disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {submitting ? 'Activating...' : 'Activate Free Monitoring 🚀'}
+                  </button>
+                </form>
+              )}
+
+              {subError && (
+                <p className="text-rose-400 text-xs mt-2">{subError}</p>
+              )}
+            </div>
           </div>
         </div>
       )}
