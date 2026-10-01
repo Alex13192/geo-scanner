@@ -60,7 +60,7 @@ export default function Home() {
             type="submit"
             className="bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl px-6 py-3.5 transition flex items-center justify-center gap-2 text-sm"
           >
-            {dict.hero.button} 🚀
+            {dict.hero.scanButton || 'Scan Website'} 🚀
           </button>
         </form>
       </section>
