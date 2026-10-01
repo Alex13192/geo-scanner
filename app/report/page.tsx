@@ -25,63 +25,76 @@ function ReportContent() {
   const [loading, setLoading] = useState(true);
   const [overallScore, setOverallScore] = useState<number>(0);
   const [issues, setIssues] = useState<IssueItem[]>([]);
+  const [siteUnreachable, setSiteUnreachable] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "high" | "medium" | "low">("all");
 
-  // 前端直接对目标域名发起真实探测与计算
   useEffect(() => {
     async function runLiveAudit() {
       setLoading(true);
+      setSiteUnreachable(false);
+
       let calculatedScore = 0;
       const detectedIssues: IssueItem[] = [];
 
-      // 1. 真实请求探测 /llms.txt
-      let hasLlmsTxt = false;
-      try {
-        const llmsRes = await fetch(`https://${rootDomain}/llms.txt`, {
-          method: "GET",
-          signal: AbortSignal.timeout(4000),
-        });
-        if (llmsRes.ok) {
-          const text = await llmsRes.text();
-          if (text && text.length > 20) {
-            hasLlmsTxt = true;
-            calculatedScore += 35;
+      // 使用免费跨域代理绕过浏览器的 CORS 限制，获取目标网站真实数据
+      const corsProxy = "https://corsproxy.io/?";
+
+      // 辅助函数：安全抓取内容
+      async function safeFetch(targetUrl: string, timeoutMs = 6000) {
+        try {
+          const res = await fetch(`${corsProxy}${encodeURIComponent(targetUrl)}`, {
+            signal: AbortSignal.timeout(timeoutMs),
+          });
+          if (res.ok) {
+            const text = await res.text();
+            return { ok: true, text, status: res.status };
           }
+          return { ok: false, text: "", status: res.status };
+        } catch (e) {
+          return { ok: false, text: "", status: 0 };
         }
-      } catch (e) {
-        // 请求失败，视为缺失
       }
 
-      if (!hasLlmsTxt) {
+      // 1. 真实请求探测首页 HTML (首先验证网站是否能打通)
+      const homeRes = await safeFetch(`https://${rootDomain}`);
+      if (!homeRes.ok && homeRes.status === 0) {
+        // 如果首页完全连不上（域名无效或死链），直接判 0 分！
+        setOverallScore(0);
+        setSiteUnreachable(true);
+        setLoading(false);
+        return;
+      }
+
+      // 2. 真实解析 /llms.txt
+      const llmsRes = await safeFetch(`https://${rootDomain}/llms.txt`);
+      let hasLlmsTxt = false;
+      if (llmsRes.ok && llmsRes.text.trim().length > 20) {
+        hasLlmsTxt = true;
+        calculatedScore += 35;
+      } else {
         detectedIssues.push({
           id: "llms-missing",
           category: "Crawler Access",
           title: "Missing /llms.txt standard file",
           severity: "high",
-          summary: `AI Agents visiting https://${rootDomain}/llms.txt received a 404 or connection error.`,
+          summary: `AI Agents visiting https://${rootDomain}/llms.txt received a 404 or missing content.`,
           recommendation: "Create and publish a valid /llms.txt file at your site root.",
         });
       }
 
-      // 2. 真实请求探测 robots.txt
+      // 3. 真实解析 robots.txt
+      const robotsRes = await safeFetch(`https://${rootDomain}/robots.txt`);
       let isAiBotAllowed = true;
-      try {
-        const robotsRes = await fetch(`https://${rootDomain}/robots.txt`, {
-          method: "GET",
-          signal: AbortSignal.timeout(4000),
-        });
-        if (robotsRes.ok) {
-          const robotsText = await robotsRes.text();
-          if (/Disallow:\s*\/\s*$/m.test(robotsText) && /GPTBot|PerplexityBot|ClaudeBot/i.test(robotsText)) {
-            isAiBotAllowed = false;
-          } else {
-            calculatedScore += 25;
-          }
+      if (robotsRes.ok) {
+        const robotsText = robotsRes.text;
+        if (/Disallow:\s*\/\s*$/m.test(robotsText) && /GPTBot|PerplexityBot|ClaudeBot/i.test(robotsText)) {
+          isAiBotAllowed = false;
         } else {
           calculatedScore += 25;
         }
-      } catch (e) {
-        calculatedScore += 25;
+      } else {
+        // 未显式配置 robots.txt 默认给分，但不给全额高分
+        calculatedScore += 15;
       }
 
       if (!isAiBotAllowed) {
@@ -95,49 +108,37 @@ function ReportContent() {
         });
       }
 
-      // 3. 真实探测首页 HTML
-      let hasSchema = false;
-      let hasSemanticHTML = false;
-      try {
-        const htmlRes = await fetch(`https://${rootDomain}`, {
-          method: "GET",
-          signal: AbortSignal.timeout(5000),
-        });
-        if (htmlRes.ok) {
-          const html = await htmlRes.text();
-          if (html.includes("application/ld+json")) {
-            hasSchema = true;
-            calculatedScore += 20;
-          }
-          if (/<(main|article|section|header|nav|footer)/i.test(html)) {
-            hasSemanticHTML = true;
-            calculatedScore += 20;
-          }
+      // 4. 真实解析首页中的 Schema 和 语义化标签
+      if (homeRes.ok) {
+        const html = homeRes.text;
+        
+        // 检查 JSON-LD
+        if (html.includes("application/ld+json")) {
+          calculatedScore += 20;
+        } else {
+          detectedIssues.push({
+            id: "schema-missing",
+            category: "Schema Metadata",
+            title: "Missing JSON-LD Structured Data",
+            severity: "medium",
+            summary: `Generative search engines cannot automatically construct entity graph for ${rootDomain}.`,
+            recommendation: "Add structured JSON-LD schema (Organization / WebSite) in your home page <head>.",
+          });
         }
-      } catch (e) {
-        // 跨域或抓取失败
-      }
 
-      if (!hasSchema) {
-        detectedIssues.push({
-          id: "schema-missing",
-          category: "Schema Metadata",
-          title: "Missing JSON-LD Structured Data",
-          severity: "medium",
-          summary: `Generative search engines cannot automatically construct entity graph for ${rootDomain}.`,
-          recommendation: "Add structured JSON-LD schema (Organization / WebSite) in your home page <head>.",
-        });
-      }
-
-      if (!hasSemanticHTML) {
-        detectedIssues.push({
-          id: "semantic-missing",
-          category: "Content Structure",
-          title: "Low semantic element density",
-          severity: "low",
-          summary: "Page heavily relies on generic <div> tags instead of HTML5 semantic containers.",
-          recommendation: "Wrap main components inside <main>, <article>, and <section> tags for better LLM chunking.",
-        });
+        // 检查 HTML5 语义标签
+        if (/<(main|article|section|header|nav|footer)/i.test(html)) {
+          calculatedScore += 20;
+        } else {
+          detectedIssues.push({
+            id: "semantic-missing",
+            category: "Content Structure",
+            title: "Low semantic element density",
+            severity: "low",
+            summary: "Page heavily relies on generic <div> tags instead of HTML5 semantic containers.",
+            recommendation: "Wrap main components inside <main>, <article>, and <section> tags for better LLM chunking.",
+          });
+        }
       }
 
       setOverallScore(calculatedScore);
@@ -231,7 +232,7 @@ function ReportContent() {
             </div>
             <div className="h-8 w-px bg-gray-800"></div>
             <button
-              disabled={loading}
+              disabled={loading || siteUnreachable}
               onClick={() => navigateTo(`/readiness-badge/?domain=${rootDomain}&score=${overallScore}`)}
               className="text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 px-3 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
             >
@@ -240,69 +241,78 @@ function ReportContent() {
           </div>
         </div>
 
-        {/* 筛选与问题展示 */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-white tracking-tight">Identified Issues</h2>
-          <div className="flex items-center gap-1 bg-gray-950 p-1 rounded-xl border border-gray-800 text-xs">
-            {(["all", "high", "medium", "low"] as const).map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`px-3 py-1.5 rounded-lg capitalize font-medium transition-all ${
-                  activeFilter === filter
-                    ? "bg-gray-800 text-white shadow-sm"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                {filter}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 渲染扫描结果 */}
-        {loading ? (
-          <div className="text-center py-20 bg-gray-950/20 rounded-2xl border border-gray-800/40">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
-            <p className="text-sm text-gray-400 font-mono">Auditing https://{rootDomain} in real-time...</p>
-          </div>
-        ) : issues.length === 0 ? (
-          <div className="text-center py-16 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-400 text-sm font-mono">
-            🎉 Perfect Score! No critical GEO optimization issues found for this domain.
+        {/* 如果域名连不上 */}
+        {siteUnreachable ? (
+          <div className="text-center py-16 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm">
+            ❌ Unable to reach <span className="font-mono font-bold">{rootDomain}</span>. Please verify the domain name is valid and online.
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredIssues.map((issue) => (
-              <div
-                key={issue.id}
-                className="bg-gray-950/40 border border-gray-800/80 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase ${
-                        issue.severity === "high"
-                          ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                          : issue.severity === "medium"
-                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                          : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                      }`}
-                    >
-                      {issue.severity}
-                    </span>
-                    <span className="text-xs text-gray-400 font-mono">{issue.category}</span>
-                  </div>
-                  <h3 className="text-base font-bold text-white">{issue.title}</h3>
-                  <p className="text-xs text-gray-400">{issue.summary}</p>
-                </div>
-
-                <div className="bg-[#070A10] p-3 rounded-xl border border-gray-800 text-xs text-gray-300 md:max-w-xs">
-                  <span className="text-blue-400 font-bold block mb-1">Recommendation:</span>
-                  {issue.recommendation}
-                </div>
+          <>
+            {/* 筛选与问题展示 */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-white tracking-tight">Identified Issues</h2>
+              <div className="flex items-center gap-1 bg-gray-950 p-1 rounded-xl border border-gray-800 text-xs">
+                {(["all", "high", "medium", "low"] as const).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setActiveFilter(filter)}
+                    className={`px-3 py-1.5 rounded-lg capitalize font-medium transition-all ${
+                      activeFilter === filter
+                        ? "bg-gray-800 text-white shadow-sm"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+
+            {/* 扫描状态展示 */}
+            {loading ? (
+              <div className="text-center py-20 bg-gray-950/20 rounded-2xl border border-gray-800/40">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
+                <p className="text-sm text-gray-400 font-mono">Auditing https://{rootDomain} in real-time...</p>
+              </div>
+            ) : issues.length === 0 ? (
+              <div className="text-center py-16 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-400 text-sm font-mono">
+                🎉 Perfect Score! No critical GEO optimization issues found for this domain.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredIssues.map((issue) => (
+                  <div
+                    key={issue.id}
+                    className="bg-gray-950/40 border border-gray-800/80 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase ${
+                            issue.severity === "high"
+                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                              : issue.severity === "medium"
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          }`}
+                        >
+                          {issue.severity}
+                        </span>
+                        <span className="text-xs text-gray-400 font-mono">{issue.category}</span>
+                      </div>
+                      <h3 className="text-base font-bold text-white">{issue.title}</h3>
+                      <p className="text-xs text-gray-400">{issue.summary}</p>
+                    </div>
+
+                    <div className="bg-[#070A10] p-3 rounded-xl border border-gray-800 text-xs text-gray-300 md:max-w-xs">
+                      <span className="text-blue-400 font-bold block mb-1">Recommendation:</span>
+                      {issue.recommendation}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
