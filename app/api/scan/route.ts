@@ -1,7 +1,8 @@
 // app/api/scan/route.ts
 import { NextResponse } from "next/server";
 
-export const runtime = "edge"; // 在 Cloudflare Edge 节点上运行
+export const runtime = "edge"; // 必须在 Cloudflare Edge 上运行
+export const dynamic = "force-dynamic"; // 强制声明为动态接口，防止静态编译拦截
 
 function cleanDomain(domain: string): string {
   if (!domain) return "example.com";
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
   let homeHtml = "";
   let siteReachable = false;
 
-  // 1. 服务端抓取首页
+  // 1. 服务端真实抓取首页
   try {
     const homeRes = await fetch(`https://${domain}`, {
       headers: { "User-Agent": userAgent },
@@ -41,7 +42,6 @@ export async function GET(request: Request) {
       homeHtml = await homeRes.text();
     }
   } catch (e) {
-    // 尝试 http
     try {
       const homeRes = await fetch(`http://${domain}`, {
         headers: { "User-Agent": userAgent },
@@ -130,9 +130,8 @@ export async function GET(request: Request) {
     crawlabilityScore += 20;
   }
 
-  // 4. 分析 HTML 内容 (Understandability & Citability & Content Depth)
+  // 4. 分析 HTML 内容
   if (homeHtml) {
-    // 检查 JSON-LD 结构化数据
     if (homeHtml.includes("application/ld+json")) {
       understandabilityScore += 50;
       trustAuthorityScore += 30;
@@ -147,7 +146,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // 检查 HTML5 语义标签
     if (/<(main|article|section|header|nav|footer)/i.test(homeHtml)) {
       understandabilityScore += 40;
     } else {
@@ -161,7 +159,6 @@ export async function GET(request: Request) {
       });
     }
 
-    // 检查 FAQ / 问答结构 (Answer Readiness)
     if (/FAQPage|faq|question|answer/i.test(homeHtml)) {
       answerReadinessScore += 60;
     } else {
@@ -175,12 +172,10 @@ export async function GET(request: Request) {
       });
     }
 
-    // 检查 引用与权威性 (Citability & Trust)
     if (homeHtml.includes("https://") || homeHtml.includes("rel=\"canonical\"")) {
       citabilityScore += 50;
     }
 
-    // 内容长度 (Content Depth)
     const textOnly = homeHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
     if (textOnly.length > 2000) {
       contentDepthScore += 70;
@@ -197,7 +192,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // 基础兜底打分计算
   crawlabilityScore = Math.min(100, Math.max(30, crawlabilityScore));
   understandabilityScore = Math.min(100, Math.max(20, understandabilityScore));
   answerReadinessScore = Math.min(100, Math.max(15, answerReadinessScore));

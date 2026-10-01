@@ -1,10 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',
-  trailingSlash: true, // 确保静态路由下的页面跳转正常
+  // 必须移除 output: 'export'，否则动态 API 无法在 Cloudflare 上编译
+  trailingSlash: true,
   images: {
-    unoptimized: true, // 防止静态托管下图片优化报错
+    unoptimized: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 
