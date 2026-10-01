@@ -3,39 +3,6 @@
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 
-// 常见品牌域名映射表，提升 AI 智能感知
-const BRAND_MAPPING: Record<string, string> = {
-  "163.com": "NetEase",
-  "126.com": "NetEase",
-  "qq.com": "Tencent",
-  "baidu.com": "Baidu",
-  "taobao.com": "Taobao",
-  "jd.com": "JD.com",
-  "bytedance.com": "ByteDance",
-  "tiktok.com": "TikTok",
-  "xiaomi.com": "Xiaomi",
-  "huawei.com": "Huawei",
-  "cisco.com": "Cisco",
-  "apple.com": "Apple",
-  "google.com": "Google",
-  "microsoft.com": "Microsoft",
-  "amazon.com": "Amazon",
-};
-
-// 智能提取 Brand Name 的辅助函数
-function extractBrandName(domain: string): string {
-  if (!domain) return "Brand";
-  let clean = domain.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
-  if (BRAND_MAPPING[clean]) {
-    return BRAND_MAPPING[clean];
-  }
-  const parts = clean.split(".");
-  let brand = parts[0];
-  if (!brand) return "Brand";
-  return brand.charAt(0).toUpperCase() + brand.slice(1);
-}
-
-// 清理 Domain 格式
 function cleanDomain(domain: string): string {
   if (!domain) return "example.com";
   return domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
@@ -44,64 +11,51 @@ function cleanDomain(domain: string): string {
 function StudioContent() {
   const searchParams = useSearchParams();
   const rawDomain = searchParams.get("domain") || "cisco.com";
+  const rootDomain = cleanDomain(rawDomain);
 
-  const [rootDomain, setRootDomain] = useState(cleanDomain(rawDomain));
-  const [brandName, setBrandName] = useState(extractBrandName(rawDomain));
-  const [coreSummary, setCoreSummary] = useState(
-    `Official digital platform and web services for ${cleanDomain(rawDomain)}.`
-  );
+  const [domain, setDomain] = useState(rootDomain);
+  const [llmsTextContent, setLlmsTextContent] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // 参数动态变更时同步状态
   useEffect(() => {
-    const cleaned = cleanDomain(rawDomain);
-    setRootDomain(cleaned);
-    setBrandName(extractBrandName(rawDomain));
-    setCoreSummary(`Official digital platform and web services for ${cleaned}.`);
-  }, [rawDomain]);
+    setDomain(rootDomain);
+    setLlmsTextContent(
+      `# ${rootDomain}
 
-  const previewMarkdown = `# ${brandName}
-> ${coreSummary}
+> Enterprise Networking & Security Documentation for AI Agents.
 
-## Core Information & Product Catalog
-- [Main Portal](https://${rootDomain}/): Official homepage and core services for ${brandName}.
-- [API & Developer Docs](https://developer.${rootDomain}): Official developer documentation.
-- [Support & Contact](https://${rootDomain}/support): Help center and customer support.
+## Core Documentation
+- [Product Overview](https://${rootDomain}/docs/overview): Comprehensive guide to enterprise solutions.
+- [API Reference](https://${rootDomain}/docs/api): REST and GraphQL endpoints for automated integrations.
 
-## System Context for AI Agents
-- Primary Entity: ${brandName} (${rootDomain})
-- Domain Authority: Verified Official Web Domain
-- Content Usage: Public indexing allowed for LLMs (GPTBot, ClaudeBot, PerplexityBot).
-- Preferred Citation Format: "${brandName} Official Documentation"
-
-## Key Topics & Categories
-- Core Services & Products
-- Documentation & Guides
-- Enterprise Solutions`;
+## Policy & Compliance
+- [Privacy Policy](https://${rootDomain}/privacy): Data protection standards and AI crawler usage limits.`
+    );
+  }, [rootDomain]);
 
   const navigateTo = (path: string) => {
     window.location.href = path;
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(previewMarkdown);
+    navigator.clipboard.writeText(llmsTextContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
-    const blob = new Blob([previewMarkdown], { type: "text/plain" });
+    const blob = new Blob([llmsTextContent], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "llms.txt";
-    a.click();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "llms.txt";
+    link.click();
     URL.revokeObjectURL(url);
   };
 
   return (
     <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
-      {/* 顶部导航 */}
+      {/* 顶部导航 Header */}
       <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -116,25 +70,28 @@ function StudioContent() {
             </button>
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
               <button
-                onClick={() => navigateTo(`/report/?domain=${rootDomain}`)}
+                onClick={() => navigateTo(`/report/?domain=${domain}`)}
                 className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
               >
                 Audit Overview
               </button>
               <button
-                onClick={() => navigateTo(`/llms-txt-studio/?domain=${rootDomain}`)}
+                onClick={() => navigateTo(`/llms-txt-studio/?domain=${domain}`)}
                 className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium shadow-sm"
               >
                 /llms.txt Studio
               </button>
-              <button className="px-3 py-1.5 rounded-lg text-gray-500 cursor-not-allowed">
-                Readiness Badge (Coming Soon)
+              <button
+                onClick={() => navigateTo(`/readiness-badge/?domain=${domain}&score=68`)}
+                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+              >
+                Readiness Badge
               </button>
             </nav>
           </div>
           <div>
             <button
-              onClick={() => navigateTo(`/report/?domain=${rootDomain}`)}
+              onClick={() => navigateTo(`/report/?domain=${domain}`)}
               className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all"
             >
               ← Back to Report
@@ -143,112 +100,53 @@ function StudioContent() {
         </div>
       </header>
 
-      {/* 主体区域 */}
+      {/* 主体构建器 */}
       <main className="max-w-7xl mx-auto px-6 pt-10">
         <div className="mb-8">
-          <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
-            Generator Tool
+          <span className="text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
+            Markdown Studio
           </span>
-          <h1 className="text-3xl font-extrabold text-white mt-2 tracking-tight">/llms.txt Studio &amp; Builder</h1>
+          <h1 className="text-3xl font-extrabold text-white mt-2 tracking-tight">
+            /llms.txt Generator for <span className="text-blue-400">{domain}</span>
+          </h1>
           <p className="text-sm text-gray-400 mt-1">
-            Generate a standardized Markdown context map for AI agents (GPTBot, ClaudeBot, PerplexityBot) to eliminate hallucinations.
+            Generate and customize standard Markdown structure optimized for AI crawlers and agents.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* 左侧配置栏 */}
-          <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl space-y-6">
-            <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
-              <h2 className="text-sm font-bold text-white tracking-wide">Brand &amp; Site Configuration</h2>
-              <span className="text-xs font-mono text-gray-500">Step 1 of 2</span>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-300 mb-1.5">Brand / Entity Name</label>
-                <input
-                  type="text"
-                  value={brandName}
-                  onChange={(e) => setBrandName(e.target.value)}
-                  className="w-full bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-300 mb-1.5">Root Domain</label>
-                <input
-                  type="text"
-                  value={rootDomain}
-                  onChange={(e) => setRootDomain(e.target.value)}
-                  className="w-full bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-300 mb-1.5">
-                  Core Summary (1-2 sentences for AI Context)
-                </label>
-                <textarea
-                  rows={3}
-                  value={coreSummary}
-                  onChange={(e) => setCoreSummary(e.target.value)}
-                  className="w-full bg-[#070A10] border border-gray-800 rounded-xl p-4 text-xs text-white focus:outline-none focus:border-blue-500 transition-all font-mono resize-none"
-                />
-              </div>
+        <div className="bg-gray-950/60 border border-gray-800/80 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4 border-b border-gray-800/80 pb-4">
+            <span className="text-xs font-mono text-gray-400">Preview: /llms.txt</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleCopy}
+                className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 px-3 py-1.5 rounded-lg font-medium transition-all"
+              >
+                {copied ? "✓ Copied" : "Copy Raw"}
+              </button>
+              <button
+                onClick={handleDownload}
+                className="text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium px-3.5 py-1.5 rounded-lg shadow-sm transition-all"
+              >
+                Download .txt
+              </button>
             </div>
           </div>
 
-          {/* 右侧预览区 */}
-          <div className="lg:col-span-6 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-800/80 pb-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <h2 className="text-sm font-bold text-white tracking-wide">Preview /llms.txt</h2>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleCopy}
-                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium min-w-[75px] text-center"
-                  >
-                    {copied ? "✓ Copied!" : "Copy Raw"}
-                  </button>
-                  <button
-                    onClick={handleDownload}
-                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium"
-                  >
-                    Download .txt
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-[#070A10] border border-gray-800/80 p-4 rounded-xl font-mono text-xs text-emerald-400 whitespace-pre-wrap overflow-x-auto max-h-[380px] leading-relaxed">
-                {previewMarkdown}
-              </div>
-            </div>
-
-            <div className="bg-blue-950/20 border border-blue-500/20 p-4 rounded-xl mt-6 space-y-1">
-              <p className="text-xs font-bold text-blue-300">🚀 Next Steps for Deployment:</p>
-              <p className="text-xs text-gray-400">
-                Upload the downloaded <code className="text-blue-400 font-mono">llms.txt</code> file directly to your website&apos;s root public directory (e.g., <span className="text-gray-300 font-mono">https://{rootDomain}/llms.txt</span>).
-              </p>
-            </div>
-          </div>
+          <textarea
+            value={llmsTextContent}
+            onChange={(e) => setLlmsTextContent(e.target.value)}
+            className="w-full h-96 bg-[#070A10] border border-gray-800 rounded-xl p-4 text-xs font-mono text-gray-300 focus:outline-none focus:border-blue-500 transition-all resize-none leading-relaxed"
+          />
         </div>
       </main>
     </div>
   );
 }
 
-export default function LlmsTxtStudioPage() {
+export default function StudioPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#070A10] flex items-center justify-center text-gray-500 text-sm">
-          Loading Studio...
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="min-h-screen bg-[#070A10] flex items-center justify-center text-gray-500 text-sm">Loading Studio...</div>}>
       <StudioContent />
     </Suspense>
   );
