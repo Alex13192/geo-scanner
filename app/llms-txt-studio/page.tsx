@@ -8,7 +8,6 @@ function StudioContent() {
   const searchParams = useSearchParams();
   const urlDomain = searchParams.get("domain") || "adidas.com";
 
-  // 根据传入的域名动态初始化
   const [brandName, setBrandName] = useState(urlDomain.split(".")[0] || "adidas");
   const [rootDomain, setRootDomain] = useState(urlDomain);
   const [coreSummary, setCoreSummary] = useState(
@@ -35,8 +34,9 @@ function StudioContent() {
 - Enterprise Solutions`;
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20 relative">
+      {/* 顶部导航栏：加高 z-index 和固定定位确保可点击 */}
+      <header className="border-b border-gray-800/80 bg-[#070A10]/95 backdrop-blur-md sticky top-0 z-[100] px-6 py-4 pointer-events-auto">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5">
@@ -46,19 +46,26 @@ function StudioContent() {
               <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
-              <Link href={`/report?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Audit Overview</Link>
-              <Link href={`/llms-txt-studio?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">/llms.txt Studio</Link>
-              <Link href={`/badge?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Readiness Badge</Link>
+              <Link href={`/report?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer">
+                Audit Overview
+              </Link>
+              <Link href={`/llms-txt-studio?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium cursor-pointer">
+                /llms.txt Studio
+              </Link>
+              <Link href={`/badge?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer">
+                Readiness Badge
+              </Link>
             </nav>
           </div>
           <div>
-            <Link href={`/report?domain=${rootDomain}`} className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all">
+            <Link href={`/report?domain=${rootDomain}`} className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all cursor-pointer inline-block">
               ← Back to Report
             </Link>
           </div>
         </div>
       </header>
 
+      {/* 主体内容区 */}
       <main className="max-w-7xl mx-auto px-6 pt-10">
         <div className="mb-8">
           <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
@@ -120,7 +127,7 @@ function StudioContent() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigator.clipboard.writeText(previewMarkdown)}
-                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium"
+                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
                   >
                     Copy Raw
                   </button>
@@ -133,7 +140,7 @@ function StudioContent() {
                       a.download = "llms.txt";
                       a.click();
                     }}
-                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium"
+                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
                   >
                     Download .txt
                   </button>
