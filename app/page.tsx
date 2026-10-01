@@ -1,111 +1,117 @@
-'use client';
+"use client";
 
-// Cloudflare Pages 部署必需配置
-export const runtime = 'edge';
-
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
-  const [url, setUrl] = useState('');
+  const [domain, setDomain] = useState("");
   const router = useRouter();
 
-  const handleScan = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url) return;
-
-    let cleanDomain = url.trim().toLowerCase();
-    cleanDomain = cleanDomain.replace(/^(https?:\/\/)/, '').replace(/\/.*$/, '');
+    if (!domain.trim()) return;
+    
+    // 清理域名输入（移除 http:// 或 https:// 以及末尾斜杠）
+    const cleanDomain = domain
+      .trim()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/$/, "");
 
     router.push(`/report/${encodeURIComponent(cleanDomain)}`);
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white">
-      {/* 顶部 Header */}
-      <header className="w-full max-w-6xl mx-auto flex justify-between items-center px-6 py-6 border-b border-gray-800/60">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🌐</span>
-          <span className="text-lg font-bold tracking-tight text-white">GEO Scanner</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-full">
-            v1.0.0
-          </span>
-        </div>
-      </header>
-
-      {/* 主体 Hero 区域 */}
-      <main className="w-full max-w-4xl mx-auto px-6 py-8 flex flex-col items-center text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-          Generative Engine Optimization
-        </div>
-
-        <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
-          Is Your Site Optimized for <br />
-          <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">
-            AI Search Engines?
-          </span>
-        </h1>
-
-        <p className="text-gray-400 text-base sm:text-lg max-w-2xl leading-relaxed">
-          Check if ChatGPT, Perplexity, and Claude can crawl your website. Audit your AI visibility and auto-generate <code className="text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded text-sm font-mono">/llms.txt</code> files instantly.
+    <main style={styles.container}>
+      <div style={styles.card}>
+        <div style={styles.badge}>GEO Visibility Engine</div>
+        <h1 style={styles.title}>Brand GEO Visibility Scanner</h1>
+        <p style={styles.subtitle}>
+          Analyze your brand’s AI search share and recommendations across ChatGPT, Perplexity, Gemini, and Claude.
         </p>
 
-        {/* 搜索框 */}
-        <form onSubmit={handleScan} className="w-full max-w-2xl pt-2">
-          <div className="flex flex-col sm:flex-row gap-3 p-2 bg-gray-900/90 border border-gray-800 rounded-2xl shadow-2xl focus-within:border-blue-500/60 transition-all">
-            <input
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="Enter domain or URL (e.g., openai.com)"
-              required
-              className="flex-1 bg-transparent px-4 py-3 text-sm text-white placeholder-gray-500 outline-none"
-            />
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium text-sm px-6 py-3 rounded-xl transition-all shadow-lg shrink-0 flex items-center justify-center gap-2"
-            >
-              <span>Scan Website</span>
-              <span>🚀</span>
-            </button>
-          </div>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <input
+            type="text"
+            placeholder="Enter brand domain (e.g., adidas.com)"
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+            style={styles.input}
+            required
+          />
+          <button type="submit" style={styles.button}>
+            Scan Visibility
+          </button>
         </form>
-
-        {/* 特性介绍网格 */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full pt-8 text-left">
-          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
-            <div className="text-2xl">🤖</div>
-            <h3 className="text-sm font-bold text-gray-200">AI Crawler Passability</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Scan robots.txt and WAF rules to ensure GPTBot, PerplexityBot, and ClaudeBot are not blocked.
-            </p>
-          </div>
-
-          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
-            <div className="text-2xl">📄</div>
-            <h3 className="text-sm font-bold text-gray-200">/llms.txt Generation</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Auto-generate standardized markdown context files so LLMs can digest your domain's content cleanly.
-            </p>
-          </div>
-
-          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
-            <div className="text-2xl">🏷️</div>
-            <h3 className="text-sm font-bold text-gray-200">Dynamic Score Badge</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Embed real-time GEO readiness badges directly in your GitHub README or site footer.
-            </p>
-          </div>
-        </div>
-      </main>
-
-      {/* 页脚 */}
-      <footer className="w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500">
-        © GEO Scanner. Powered by Cloudflare Pages & Edge Runtime.
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }
+
+const styles: Record<string, React.CSSProperties> = {
+  container: {
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px",
+    background: "radial-gradient(circle at top, #1e293b 0%, #0b0f19 100%)",
+  },
+  card: {
+    maxWidth: "600px",
+    width: "100%",
+    textAlign: "center",
+    padding: "40px",
+    borderRadius: "16px",
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
+  },
+  badge: {
+    display: "inline-block",
+    padding: "6px 12px",
+    borderRadius: "20px",
+    backgroundColor: "rgba(59, 130, 246, 0.15)",
+    color: "#60a5fa",
+    fontSize: "12px",
+    fontWeight: "bold",
+    marginBottom: "16px",
+    border: "1px solid rgba(96, 165, 250, 0.3)",
+  },
+  title: {
+    fontSize: "32px",
+    fontWeight: "bold",
+    marginBottom: "12px",
+    color: "#ffffff",
+  },
+  subtitle: {
+    fontSize: "14px",
+    color: "#94a3b8",
+    marginBottom: "32px",
+    lineHeight: "1.6",
+  },
+  form: {
+    display: "flex",
+    gap: "10px",
+  },
+  input: {
+    flex: 1,
+    padding: "14px 18px",
+    borderRadius: "8px",
+    border: "1px solid rgba(255, 255, 255, 0.15)",
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    color: "#ffffff",
+    fontSize: "15px",
+    outline: "none",
+  },
+  button: {
+    padding: "14px 24px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#2563eb",
+    color: "#ffffff",
+    fontSize: "15px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+  },
+};
