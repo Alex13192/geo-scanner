@@ -1,18 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, useEffect } from "react";
 
-function StudioContent() {
-  const searchParams = useSearchParams();
-  const urlDomain = searchParams.get("domain") || "adidas.com";
-
-  const [brandName, setBrandName] = useState(urlDomain.split(".")[0] || "adidas");
-  const [rootDomain, setRootDomain] = useState(urlDomain);
+export default function LlmsTxtStudioPage() {
+  const [domain, setDomain] = useState("adidas.com");
+  const [brandName, setBrandName] = useState("adidas");
+  const [rootDomain, setRootDomain] = useState("adidas.com");
   const [coreSummary, setCoreSummary] = useState(
-    `Official digital platform and web services for ${urlDomain}.`
+    "Official digital platform and web services for adidas.com."
   );
+
+  // 客户端挂载后安全获取 URL 参数，避免 Suspense 导致的点击失效
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlDomain = params.get("domain");
+      if (urlDomain) {
+        setDomain(urlDomain);
+        setRootDomain(urlDomain);
+        setBrandName(urlDomain.split(".")[0]);
+        setCoreSummary(`Official digital platform and web services for ${urlDomain}.`);
+      }
+    }
+  }, []);
 
   const previewMarkdown = `# ${brandName}
 > ${coreSummary}
@@ -34,39 +45,39 @@ function StudioContent() {
 - Enterprise Solutions`;
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20 pointer-events-auto">
-      {/* 顶部导航栏：使用绝对高层级并确保强制响应点击 */}
-      <div className="w-full border-b border-gray-800/80 bg-[#070A10] sticky top-0 z-[99999] px-6 py-4 pointer-events-auto">
+    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20 selection:bg-blue-500 selection:text-white">
+      {/* 顶部导航栏：使用标准定位和高层级 */}
+      <header className="border-b border-gray-800/80 bg-[#070A10]/95 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5 cursor-pointer">
+            <Link href="/" className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
                 A
               </div>
               <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
-              <Link href={`/report?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer">
+              <Link href={`/report?domain=${domain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
                 Audit Overview
               </Link>
-              <Link href={`/llms-txt-studio?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium cursor-pointer">
+              <Link href={`/llms-txt-studio?domain=${domain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">
                 /llms.txt Studio
               </Link>
-              <Link href={`/badge?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all cursor-pointer">
+              <Link href={`/badge?domain=${domain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
                 Readiness Badge
               </Link>
             </nav>
           </div>
           <div>
-            <Link href={`/report?domain=${rootDomain}`} className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all cursor-pointer inline-block">
+            <Link href={`/report?domain=${domain}`} className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all inline-block">
               ← Back to Report
             </Link>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* 主体内容区 */}
-      <main className="max-w-7xl mx-auto px-6 pt-10 pointer-events-auto">
+      <main className="max-w-7xl mx-auto px-6 pt-10">
         <div className="mb-8">
           <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
             Generator Tool
@@ -127,7 +138,7 @@ function StudioContent() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigator.clipboard.writeText(previewMarkdown)}
-                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
+                    className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-all font-medium"
                   >
                     Copy Raw
                   </button>
@@ -140,7 +151,7 @@ function StudioContent() {
                       a.download = "llms.txt";
                       a.click();
                     }}
-                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
+                    className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium"
                   >
                     Download .txt
                   </button>
@@ -162,13 +173,5 @@ function StudioContent() {
         </div>
       </main>
     </div>
-  );
-}
-
-export default function LlmsTxtStudioPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-[#070A10]"></div>}>
-      <StudioContent />
-    </Suspense>
   );
 }
