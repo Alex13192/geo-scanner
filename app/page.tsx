@@ -11,6 +11,7 @@ export default function Home() {
   const router = useRouter();
 
   const dict = getDictionary(lang);
+  const heroData = dict.hero as Record<string, string>;
 
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,10 +42,10 @@ export default function Home() {
       {/* 核心搜索区 */}
       <section className="w-full max-w-3xl text-center my-16">
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
-          {dict.hero.title}
+          {heroData.title}
         </h1>
         <p className="text-slate-400 text-lg mb-8 max-w-2xl mx-auto">
-          {dict.hero.subtitle}
+          {heroData.subtitle}
         </p>
 
         <form onSubmit={handleScan} className="flex flex-col sm:flex-row gap-3 justify-center max-w-xl mx-auto">
@@ -52,7 +53,7 @@ export default function Home() {
             type="text"
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
-            placeholder={dict.hero.inputPlaceholder}
+            placeholder={heroData.inputPlaceholder || 'https://yourwebsite.com'}
             className="flex-1 bg-slate-800/80 border border-slate-700 focus:border-blue-500 text-white rounded-xl px-4 py-3.5 outline-none transition text-sm"
             required
           />
@@ -60,7 +61,7 @@ export default function Home() {
             type="submit"
             className="bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl px-6 py-3.5 transition flex items-center justify-center gap-2 text-sm"
           >
-            {dict.hero.scanButton || 'Scan Website'} 🚀
+            {heroData.button || heroData.scanButton || 'Scan Website'} 🚀
           </button>
         </form>
       </section>
