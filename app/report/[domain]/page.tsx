@@ -1,5 +1,8 @@
 'use client';
 
+// 必须导出 Cloudflare Pages Edge Runtime 选项
+export const runtime = 'edge';
+
 import React, { use, useState, useEffect } from 'react';
 
 interface CheckItem {
