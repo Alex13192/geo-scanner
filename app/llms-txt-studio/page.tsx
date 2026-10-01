@@ -34,12 +34,12 @@ function StudioContent() {
 - Enterprise Solutions`;
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20 relative">
-      {/* 顶部导航栏：加高 z-index 和固定定位确保可点击 */}
-      <header className="border-b border-gray-800/80 bg-[#070A10]/95 backdrop-blur-md sticky top-0 z-[100] px-6 py-4 pointer-events-auto">
+    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20 pointer-events-auto">
+      {/* 顶部导航栏：使用绝对高层级并确保强制响应点击 */}
+      <div className="w-full border-b border-gray-800/80 bg-[#070A10] sticky top-0 z-[99999] px-6 py-4 pointer-events-auto">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2.5 cursor-pointer">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
                 A
               </div>
@@ -63,10 +63,10 @@ function StudioContent() {
             </Link>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* 主体内容区 */}
-      <main className="max-w-7xl mx-auto px-6 pt-10">
+      <main className="max-w-7xl mx-auto px-6 pt-10 pointer-events-auto">
         <div className="mb-8">
           <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
             Generator Tool
