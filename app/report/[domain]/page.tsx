@@ -3,6 +3,11 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 
+// 必填：告知静态导出框架此动态路由的默认预生成路径（可返回空数组或占位路径）
+export async function generateStaticParams() {
+  return [{ domain: "example.com" }];
+}
+
 interface ReportData {
   domain: string;
   score: number;
@@ -16,7 +21,7 @@ interface ReportData {
 
 export default function ReportPage({ params }: { params: Promise<{ domain: string }> }) {
   const resolvedParams = use(params);
-  const domain = decodeURIComponent(resolvedParams.domain);
+  const domain = decodeURIComponent(resolvedParams.domain || "example.com");
   
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<ReportData | null>(null);
@@ -50,7 +55,9 @@ export default function ReportPage({ params }: { params: Promise<{ domain: strin
       <main style={styles.container}>
         <div style={styles.loadingBox}>
           <div style={styles.spinner}></div>
-          <p style={{ marginTop: "20px", color: "#94a3b8" }}>Scanning GEO AI Share for <strong style={{ color: "#fff" }}>{domain}</strong>...</p>
+          <p style={{ marginTop: "20px", color: "#94a3b8" }}>
+            Scanning GEO AI Share for <strong style={{ color: "#fff" }}>{domain}</strong>...
+          </p>
         </div>
       </main>
     );
