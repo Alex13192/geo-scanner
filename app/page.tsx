@@ -1,5 +1,6 @@
 'use client';
 
+// ⚠️ 关键配置：Cloudflare Pages 部署必须显式指定 edge 运行时
 export const runtime = 'edge';
 
 import React, { useState } from 'react';
@@ -20,9 +21,9 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col items-center justify-between font-sans">
-      {/* 顶部 Navbar */}
-      <header className="w-full max-w-6xl flex justify-between items-center px-6 py-6 border-b border-gray-800/60">
+    <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white">
+      {/* 顶部 Header */}
+      <header className="w-full max-w-6xl mx-auto flex justify-between items-center px-6 py-6 border-b border-gray-800/60">
         <div className="flex items-center gap-2">
           <span className="text-xl">🌐</span>
           <span className="text-lg font-bold tracking-tight text-white">GEO Scanner</span>
@@ -34,15 +35,13 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* 主体区域 */}
-      <main className="w-full max-w-4xl px-6 py-10 flex flex-col items-center text-center space-y-6">
-        {/* 顶部标签 */}
+      {/* 主体 Hero 区域 */}
+      <main className="w-full max-w-4xl mx-auto px-6 py-8 flex flex-col items-center text-center space-y-6">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
           <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
           Generative Engine Optimization
         </div>
 
-        {/* 标题 */}
         <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
           Is Your Site Optimized for <br />
           <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">
@@ -50,7 +49,6 @@ export default function HomePage() {
           </span>
         </h1>
 
-        {/* 副标题 */}
         <p className="text-gray-400 text-base sm:text-lg max-w-2xl leading-relaxed">
           Check if ChatGPT, Perplexity, and Claude can crawl your website. Audit your AI visibility and auto-generate <code className="text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded text-sm font-mono">/llms.txt</code> files instantly.
         </p>
@@ -76,8 +74,8 @@ export default function HomePage() {
           </div>
         </form>
 
-        {/* 核心卡片展示 */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full pt-10 text-left">
+        {/* 特性介绍网格 */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full pt-8 text-left">
           <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
             <div className="text-2xl">🤖</div>
             <h3 className="text-sm font-bold text-gray-200">AI Crawler Passability</h3>
