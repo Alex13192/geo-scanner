@@ -11,8 +11,9 @@ interface ReportData {
     name: string;
     visibility: number;
     status: string;
+    mentions: string;
   }[];
-  recommendations: string[];
+  insights: string[];
 }
 
 function ReportContent() {
@@ -26,222 +27,112 @@ function ReportContent() {
     const timer = setTimeout(() => {
       setReport({
         domain,
-        score: Math.floor(Math.random() * 30) + 65,
+        score: Math.floor(Math.random() * 25) + 68,
         engines: [
-          { name: "ChatGPT (SearchGPT)", visibility: 82, status: "High Visibility" },
-          { name: "Perplexity AI", visibility: 74, status: "Moderate" },
-          { name: "Google Gemini", visibility: 68, status: "Moderate" },
-          { name: "Claude 3.5", visibility: 55, status: "Needs Improvement" },
+          { name: "ChatGPT (SearchGPT)", visibility: 85, status: "Strong Recommendation", mentions: "Frequent citation in domain queries" },
+          { name: "Perplexity AI", visibility: 72, status: "Moderate Citation", mentions: "Listed in top comparison answers" },
+          { name: "Google Gemini", visibility: 68, status: "Moderate Citation", mentions: "Secondary source citation" },
+          { name: "Claude 3.5", visibility: 58, status: "Needs Improvement", mentions: "Limited domain entity recognition" },
         ],
-        recommendations: [
-          "Optimize brand entity citations across Wikipedia and Crunchbase.",
-          "Increase structured data coverage for core product features.",
-          "Improve domain sentiment signals in recent tech publications.",
+        insights: [
+          "Knowledge Graph entity coverage is optimal across Wikidata & Crunchbase.",
+          "Add schema.org structured markup for primary service pages to improve Perplexity indexing.",
+          "Boost brand mentions in reputable industry news sources to increase Claude entity awareness.",
         ],
       });
       setLoading(false);
-    }, 1200);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [domain]);
 
   if (loading) {
     return (
-      <main style={styles.container}>
-        <div style={styles.loadingBox}>
-          <div style={styles.spinner}></div>
-          <p style={{ marginTop: "20px", color: "#94a3b8" }}>
-            Scanning GEO AI Share for <strong style={{ color: "#fff" }}>{domain}</strong>...
-          </p>
+      <div className="min-h-screen bg-[#090D16] text-white flex flex-col items-center justify-center">
+        <div className="relative flex flex-col items-center">
+          <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-6" />
+          <h2 className="text-xl font-semibold text-gray-200">Analyzing GEO Search Signals...</h2>
+          <p className="text-sm text-gray-500 mt-2">Querying AI models for <span className="text-blue-400 font-medium">{domain}</span></p>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main style={styles.container}>
-      <div style={styles.wrapper}>
-        <div style={styles.header}>
-          <Link href="/" style={styles.backLink}>&larr; Back to Search</Link>
-          <h1 style={styles.title}>GEO Visibility Report</h1>
-          <p style={styles.domainText}>
-            Target Domain: <span style={{ color: "#60a5fa" }}>{report?.domain}</span>
-          </p>
-        </div>
-
-        <div style={styles.scoreCard}>
-          <div style={styles.scoreValue}>
-            {report?.score}<span style={{ fontSize: "24px" }}>/100</span>
+    <div className="min-h-screen bg-[#090D16] text-white selection:bg-blue-500 selection:text-white pb-20">
+      {/* Header */}
+      <header className="border-b border-white/5 bg-[#090D16]/80 backdrop-blur-md px-6 py-4 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="text-sm text-gray-400 hover:text-white flex items-center gap-2 transition-colors">
+            &larr; Back to Scanner
+          </Link>
+          <div className="text-xs px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-300">
+            Target: <span className="text-blue-400 font-medium">{report?.domain}</span>
           </div>
-          <div style={styles.scoreLabel}>Overall AI Recommendation Index</div>
+        </div>
+      </header>
+
+      {/* Main Dashboard */}
+      <main className="max-w-5xl mx-auto px-6 pt-10">
+        {/* Top Summary Card */}
+        <div className="p-8 rounded-2xl bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/10 shadow-2xl mb-8 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-2">GEO Visibility Score</div>
+            <h1 className="text-3xl font-bold text-white mb-2">AI Search Recommendation Index</h1>
+            <p className="text-sm text-gray-400 max-w-lg">
+              Calculated based on brand presence, citation frequency, and recommendation preference across major generative search engines.
+            </p>
+          </div>
+          <div className="flex flex-col items-center justify-center p-6 rounded-xl bg-blue-600/10 border border-blue-500/20 min-w-[160px]">
+            <div className="text-5xl font-extrabold text-blue-400">{report?.score}</div>
+            <div className="text-xs text-gray-400 mt-1">Out of 100</div>
+          </div>
         </div>
 
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>Engine Breakdown</h2>
-          <div style={styles.grid}>
+        {/* Engine Breakdown */}
+        <div className="mb-10">
+          <h2 className="text-lg font-semibold text-white mb-4">Generative Engine Performance</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {report?.engines.map((item, idx) => (
-              <div key={idx} style={styles.engineCard}>
-                <div style={styles.engineHeader}>
-                  <span style={styles.engineName}>{item.name}</span>
-                  <span style={styles.engineVisibility}>{item.visibility}%</span>
+              <div key={idx} className="p-5 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-gray-200">{item.name}</span>
+                  <span className="text-sm font-bold text-blue-400">{item.visibility}%</span>
                 </div>
-                <div style={styles.progressBarBg}>
-                  <div style={{ ...styles.progressBarFill, width: `${item.visibility}%` }} />
+                <p className="text-xs text-gray-500 mb-4">{item.mentions}</p>
+                <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full" style={{ width: `${item.visibility}%` }} />
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>Key Optimization Insights</h2>
-          <ul style={styles.recsList}>
-            {report?.recommendations.map((rec, idx) => (
-              <li key={idx} style={styles.recItem}>
-                <span style={{ color: "#3b82f6", marginRight: "10px" }}>✓</span> {rec}
-              </li>
+        {/* Insights & Recommendations */}
+        <div>
+          <h2 className="text-lg font-semibold text-white mb-4">Strategic Action Items</h2>
+          <div className="space-y-3">
+            {report?.insights.map((insight, idx) => (
+              <div key={idx} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-start gap-3">
+                <span className="text-blue-400 font-bold text-base">&bull;</span>
+                <p className="text-sm text-gray-300 leading-relaxed">{insight}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
 export default function ReportPage() {
   return (
     <Suspense fallback={
-      <main style={styles.container}>
-        <div style={styles.loadingBox}>
-          <div style={styles.spinner}></div>
-        </div>
-      </main>
+      <div className="min-h-screen bg-[#090D16] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+      </div>
     }>
       <ReportContent />
     </Suspense>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: "100vh",
-    padding: "40px 20px",
-    background: "#0b0f19",
-    color: "#ffffff",
-  },
-  wrapper: {
-    maxWidth: "800px",
-    margin: "0 auto",
-  },
-  loadingBox: {
-    height: "80vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  spinner: {
-    width: "40px",
-    height: "40px",
-    border: "4px solid rgba(255,255,255,0.1)",
-    borderTop: "4px solid #3b82f6",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-  },
-  header: {
-    marginBottom: "30px",
-  },
-  backLink: {
-    color: "#94a3b8",
-    textDecoration: "none",
-    fontSize: "14px",
-    display: "inline-block",
-    marginBottom: "16px",
-  },
-  title: {
-    fontSize: "28px",
-    fontWeight: "bold",
-    margin: "0 0 8px 0",
-  },
-  domainText: {
-    color: "#94a3b8",
-    margin: 0,
-  },
-  scoreCard: {
-    backgroundColor: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: "12px",
-    padding: "30px",
-    textAlign: "center",
-    marginBottom: "30px",
-  },
-  scoreValue: {
-    fontSize: "56px",
-    fontWeight: "bold",
-    color: "#60a5fa",
-  },
-  scoreLabel: {
-    color: "#94a3b8",
-    fontSize: "14px",
-    marginTop: "8px",
-  },
-  section: {
-    marginBottom: "30px",
-  },
-  sectionTitle: {
-    fontSize: "18px",
-    fontWeight: "bold",
-    marginBottom: "16px",
-    borderLeft: "4px solid #3b82f6",
-    paddingLeft: "10px",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
-  },
-  engineCard: {
-    backgroundColor: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    padding: "16px",
-    borderRadius: "8px",
-  },
-  engineHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "10px",
-    fontSize: "14px",
-  },
-  engineName: {
-    color: "#e2e8f0",
-  },
-  engineVisibility: {
-    fontWeight: "bold",
-    color: "#60a5fa",
-  },
-  progressBarBg: {
-    height: "6px",
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: "3px",
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: "#3b82f6",
-    borderRadius: "3px",
-  },
-  recsList: {
-    listStyle: "none",
-    padding: 0,
-    margin: 0,
-  },
-  recItem: {
-    backgroundColor: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    padding: "14px 18px",
-    borderRadius: "8px",
-    marginBottom: "10px",
-    fontSize: "14px",
-    color: "#cbd5e1",
-  },
-};
