@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 
@@ -34,34 +33,51 @@ function StudioContent() {
 - Documentation & Guides
 - Enterprise Solutions`;
 
+  // 原生强制跳转，防止 Cloudflare Pages 静态路由 404
+  const navigateTo = (path: string) => {
+    window.location.href = path;
+  };
+
   return (
     <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
       {/* 顶部导航 */}
       <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5">
+            <button 
+              onClick={() => navigateTo("/")} 
+              className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+            >
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
                 A
               </div>
               <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
-            </Link>
+            </button>
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
-              <Link href={`/report?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
+              <button
+                onClick={() => navigateTo(`/report/?domain=${rootDomain}`)}
+                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+              >
                 Audit Overview
-              </Link>
-              <Link href={`/llms-txt-studio?domain=${rootDomain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">
+              </button>
+              <button
+                onClick={() => navigateTo(`/llms-txt-studio/?domain=${rootDomain}`)}
+                className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium"
+              >
                 /llms.txt Studio
-              </Link>
+              </button>
               <button className="px-3 py-1.5 rounded-lg text-gray-500 cursor-not-allowed">
                 Readiness Badge (Coming Soon)
               </button>
             </nav>
           </div>
           <div>
-            <Link href={`/report?domain=${rootDomain}`} className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all">
+            <button
+              onClick={() => navigateTo(`/report/?domain=${rootDomain}`)}
+              className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 px-3.5 py-2 rounded-lg transition-all"
+            >
               ← Back to Report
-            </Link>
+            </button>
           </div>
         </div>
       </header>
