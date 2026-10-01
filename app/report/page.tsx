@@ -102,9 +102,15 @@ function ReportContent() {
             </Link>
 
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
-              <button className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">Audit Overview</button>
-              <button className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">/llms.txt Studio</button>
-              <button className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">Readiness Badge</button>
+              <Link href={`/report?domain=${domain}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">
+                Audit Overview
+              </Link>
+              <Link href="/llms-txt-studio" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
+                /llms.txt Studio
+              </Link>
+              <Link href="/badge" className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all">
+                Readiness Badge
+              </Link>
             </nav>
           </div>
 
