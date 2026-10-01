@@ -1,222 +1,35 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-// 1. 多语言字典定义
-type Language = "en" | "zh" | "es" | "de" | "fr" | "ja";
-
-const translations: Record<Language, {
-  tag: string;
-  title1: string;
-  title2: string;
-  subtitle: string;
-  placeholder: string;
-  button: string;
-  crawlersTitle: string;
-  crawlersDesc: string;
-  llmsTitle: string;
-  llmsDesc: string;
-  badgeTitle: string;
-  badgeDesc: string;
-}> = {
-  en: {
-    tag: "Generative Engine Optimization",
-    title1: "Is Your Site Optimized for",
-    title2: "AI Search Engines?",
-    subtitle: "Check if ChatGPT, Perplexity, and Claude can crawl your website. Audit your AI visibility and auto-generate /llms.txt files instantly.",
-    placeholder: "Enter domain or URL (e.g., adidas.com)",
-    button: "Scan Website 🚀",
-    crawlersTitle: "AI Crawler Passability",
-    crawlersDesc: "Scan robots.txt and WAF rules to ensure GPTBot, PerplexityBot, and ClaudeBot are not blocked.",
-    llmsTitle: "/llms.txt Generation",
-    llmsDesc: "Auto-generate standardized markdown context files so LLMs can digest your domain's content cleanly.",
-    badgeTitle: "Dynamic Score Badge",
-    badgeDesc: "Embed real-time GEO readiness badges directly in your GitHub README or site footer.",
-  },
-  zh: {
-    tag: "生成式引擎优化 (GEO)",
-    title1: "您的网站是否已针对",
-    title2: "AI 搜索引擎进行优化？",
-    subtitle: "检查 ChatGPT、Perplexity 和 Claude 是否能够抓取您的网站。审计您的 AI 能见度并即时生成 /llms.txt 文件。",
-    placeholder: "输入域名或 URL (例如 adidas.com)",
-    button: "立即扫描 🚀",
-    crawlersTitle: "AI 爬虫可达性",
-    crawlersDesc: "扫描 robots.txt 与 WAF 防火墙规则，确保 GPTBot、PerplexityBot 等未被封禁。",
-    llmsTitle: "/llms.txt 自动生成",
-    llmsDesc: "自动生成标准 Markdown 上下文文件，让大语言模型更清晰地理解您的网站内容。",
-    badgeTitle: "动态评分徽章",
-    badgeDesc: "生成实时 GEO 准备度徽章，可直接嵌入 GitHub README 或网站页脚。",
-  },
-  es: {
-    tag: "Optimización para Motores Generativos",
-    title1: "¿Está su sitio optimizado para",
-    title2: "Motores de Búsqueda de IA?",
-    subtitle: "Compruebe si ChatGPT, Perplexity y Claude pueden rastrear su sitio web. Audite su visibilidad de IA y genere archivos /llms.txt al instante.",
-    placeholder: "Ingrese dominio o URL (ej. adidas.com)",
-    button: "Escanear Sitio 🚀",
-    crawlersTitle: "Accesibilidad de Rastreadores IA",
-    crawlersDesc: "Escanee robots.txt y reglas WAF para garantizar que GPTBot y PerplexityBot no estén bloqueados.",
-    llmsTitle: "Generación de /llms.txt",
-    llmsDesc: "Genere automáticamente archivos Markdown estandarizados para que los LLM digieran su contenido.",
-    badgeTitle: "Insignia de Puntuación Dinámica",
-    badgeDesc: "Incruste insignias de estado GEO en tiempo real directamente en su GitHub o pie de página.",
-  },
-  de: {
-    tag: "Generative Engine Optimization",
-    title1: "Ist Ihre Website optimiert für",
-    title2: "KI-Suchmaschinen?",
-    subtitle: "Überprüfen Sie, ob ChatGPT, Perplexity und Claude Ihre Website crawlen können. Auditieren Sie Ihre KI-Sichtbarkeit und erstellen Sie /llms.txt.",
-    placeholder: "Domain oder URL eingeben (z. B. adidas.com)",
-    button: "Website Scannen 🚀",
-    crawlersTitle: "KI-Crawler-Erreichbarkeit",
-    crawlersDesc: "Überprüfen Sie robots.txt und WAF-Regeln, um sicherzustellen, dass GPTBot nicht blockiert ist.",
-    llmsTitle: "/llms.txt Erstellung",
-    llmsDesc: "Erstellen Sie automatisch standardisierte Markdown-Dateien für eine saubere LLM-Erfassung.",
-    badgeTitle: "Dynamisches Score-Badge",
-    badgeDesc: "Binden Sie Echtzeit-GEO-Badges direkt in Ihre GitHub README oder Fußzeile ein.",
-  },
-  fr: {
-    tag: "Optimisation pour Moteurs Génératifs",
-    title1: "Votre site est-il optimisé pour",
-    title2: "les Moteurs de Recherche IA ?",
-    subtitle: "Vérifiez si ChatGPT, Perplexity et Claude peuvent explorer votre site. Auditez votre visibilité IA et générez des fichiers /llms.txt.",
-    placeholder: "Entrez le domaine (ex. adidas.com)",
-    button: "Analyser le Site 🚀",
-    crawlersTitle: "Accessibilité des Robots IA",
-    crawlersDesc: "Analysez robots.txt et les règles WAF pour vous assurer que GPTBot et PerplexityBot ne sont pas bloqués.",
-    llmsTitle: "Génération de /llms.txt",
-    llmsDesc: "Générez automatiquement des fichiers Markdown structurés pour permettre aux LLM de comprendre votre contenu.",
-    badgeTitle: "Badge de Score Dynamique",
-    badgeDesc: "Intégrez des badges d'état GEO en temps réel directement dans votre README GitHub ou votre pied de page.",
-  },
-  ja: {
-    tag: "生成AIエンジン最適化 (GEO)",
-    title1: "あなたのウェブサイトは",
-    title2: "AI検索エンジンに最適化されていますか？",
-    subtitle: "ChatGPT、Perplexity、Claudeがサイトをクロールできるか確認。AIの可視性を監査し、/llms.txtを即座に生成します。",
-    placeholder: "ドメインまたはURLを入力 (例: adidas.com)",
-    button: "サイトをスキャン 🚀",
-    crawlersTitle: "AIクローラーのアクセシビリティ",
-    crawlersDesc: "robots.txtとWAFルールをスキャンし、GPTBotやPerplexityBotがブロックされていないか確認します。",
-    llmsTitle: "/llms.txtの自動生成",
-    llmsDesc: "LLMがコンテンツを正確に理解できるよう、標準化されたMarkdownファイルを自動生成します。",
-    badgeTitle: "動的スコアバッジ",
-    badgeDesc: "リアルタイムのGEOスコアバッジをGitHubのREADMEやサイトフッターに直接埋め込めます。",
-  },
-};
-
-export default function HomePage() {
-  const [lang, setLang] = useState<Language>("en");
-  const [url, setUrl] = useState("");
-  const router = useRouter();
-
-  const t = translations[lang];
-
-  const handleScan = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!url.trim()) return;
-
-    let cleanDomain = url.trim().toLowerCase();
-    cleanDomain = cleanDomain.replace(/^(https?:\/\/)/, "").replace(/\/.*$/, "");
-
-    router.push(`/report?domain=${encodeURIComponent(cleanDomain)}&lang=${lang}`);
-  };
-
-  return (
-    <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white">
-      {/* 顶部 Header + 语言切换下拉框 */}
-      <header className="w-full max-w-6xl mx-auto flex justify-between items-center px-6 py-6 border-b border-gray-800/60">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🌐</span>
-          <span className="text-lg font-bold tracking-tight text-white">GEO Scanner</span>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* 多语言 Selector */}
-          <div className="relative inline-block">
-            <select
-              value={lang}
-              onChange={(e) => setLang(e.target.value as Language)}
-              className="bg-gray-900 border border-gray-800 text-xs text-gray-200 font-medium px-3 py-1.5 rounded-full outline-none focus:border-blue-500 cursor-pointer transition-all"
-            >
-              <option value="en">🇬🇧 English</option>
-              <option value="zh">🇨🇳 简体中文</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="de">🇩🇪 Deutsch</option>
-              <option value="fr">🇫🇷 Français</option>
-              <option value="ja">🇯🇵 日本語</option>
-            </select>
-          </div>
-          <span className="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-full">
-            v1.0.0
-          </span>
-        </div>
-      </header>
-
-      {/* 主体 Hero 区域 */}
-      <main className="w-full max-w-4xl mx-auto px-6 py-8 flex flex-col items-center text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-          {t.tag}
-        </div>
-
-        <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
-          {t.title1} <br />
-          <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">
-            {t.title2}
-          </span>
-        </h1>
-
-        <p className="text-gray-400 text-base sm:text-lg max-w-2xl leading-relaxed">
-          {t.subtitle}
-        </p>
-
-        {/* 搜索框 */}
-        <form onSubmit={handleScan} className="w-full max-w-2xl pt-2">
-          <div className="flex flex-col sm:flex-row gap-3 p-2 bg-gray-900/90 border border-gray-800 rounded-2xl shadow-2xl focus-within:border-blue-500/60 transition-all">
-            <input
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder={t.placeholder}
-              required
-              className="flex-1 bg-transparent px-4 py-3 text-sm text-white placeholder-gray-500 outline-none"
-            />
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium text-sm px-6 py-3 rounded-xl transition-all shadow-lg shrink-0 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>{t.button}</span>
-            </button>
-          </div>
-        </form>
-
-        {/* 三卡片特性列表 */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full pt-8 text-left">
-          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
-            <div className="text-2xl">🤖</div>
-            <h3 className="text-sm font-bold text-gray-200">{t.crawlersTitle}</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">{t.crawlersDesc}</p>
-          </div>
-
-          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
-            <div className="text-2xl">📄</div>
-            <h3 className="text-sm font-bold text-gray-200">{t.llmsTitle}</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">{t.llmsDesc}</p>
-          </div>
-
-          <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
-            <div className="text-2xl">🏷️</div>
-            <h3 className="text-sm font-bold text-gray-200">{t.badgeTitle}</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">{t.badgeDesc}</p>
-          </div>
-        </div>
-      </main>
-
-      {/* 页脚 */}
-      <footer className="w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500">
-        © GEO Scanner. Powered by Cloudflare Pages.
-      </footer>
+{/* 顶部 Header：移除版本号，保持极简高级感 */}
+<header className="w-full max-w-6xl mx-auto flex justify-between items-center px-6 py-6 border-b border-gray-800/60">
+  <div className="flex items-center gap-3">
+    {/* 独家品牌 Icon */}
+    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-blue-500/20 border border-white/10">
+      A
     </div>
-  );
-}
+    <div className="flex flex-col text-left">
+      <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent leading-none">
+        AIO Pulse
+      </span>
+      <span className="text-[10px] text-gray-400 font-mono tracking-wider uppercase mt-1">
+        Brand GEO Intelligence
+      </span>
+    </div>
+  </div>
+
+  <div className="flex items-center gap-3">
+    {/* 仅保留多语言选择器 */}
+    <div className="relative inline-block">
+      <select
+        value={lang}
+        onChange={(e) => setLang(e.target.value as Language)}
+        className="bg-gray-900 border border-gray-800 text-xs text-gray-200 font-medium px-3.5 py-1.5 rounded-full outline-none focus:border-blue-500 cursor-pointer transition-all"
+      >
+        <option value="en">🇬🇧 English</option>
+        <option value="zh">🇨🇳 简体中文</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="ja">🇯🇵 日本語</option>
+      </select>
+    </div>
+  </div>
+</header>
