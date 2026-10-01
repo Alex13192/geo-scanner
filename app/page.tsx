@@ -1,6 +1,5 @@
 'use client';
 
-// 必须导出 Cloudflare Pages Edge Runtime 选项
 export const runtime = 'edge';
 
 import React, { useState } from 'react';
@@ -21,8 +20,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col items-center font-sans">
-      {/* 1. 顶部 Navbar */}
+    <div className="min-h-screen bg-[#0B0F17] text-white flex flex-col items-center justify-between font-sans">
+      {/* 顶部 Navbar */}
       <header className="w-full max-w-6xl flex justify-between items-center px-6 py-6 border-b border-gray-800/60">
         <div className="flex items-center gap-2">
           <span className="text-xl">🌐</span>
@@ -35,8 +34,8 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* 2. 主体 Content - 自然顶部对齐 (pt-12)，防止大屏被强制拉开上下巨型空白 */}
-      <main className="w-full max-w-4xl px-6 pt-12 pb-16 flex flex-col items-center text-center space-y-6">
+      {/* 主体区域 */}
+      <main className="w-full max-w-4xl px-6 py-10 flex flex-col items-center text-center space-y-6">
         {/* 顶部标签 */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
           <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
@@ -56,7 +55,7 @@ export default function HomePage() {
           Check if ChatGPT, Perplexity, and Claude can crawl your website. Audit your AI visibility and auto-generate <code className="text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded text-sm font-mono">/llms.txt</code> files instantly.
         </p>
 
-        {/* 搜索框表单 */}
+        {/* 搜索框 */}
         <form onSubmit={handleScan} className="w-full max-w-2xl pt-2">
           <div className="flex flex-col sm:flex-row gap-3 p-2 bg-gray-900/90 border border-gray-800 rounded-2xl shadow-2xl focus-within:border-blue-500/60 transition-all">
             <input
@@ -77,8 +76,8 @@ export default function HomePage() {
           </div>
         </form>
 
-        {/* 3. 填补下方大片空白：核心功能与特性卡片 (3 Column Grid) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full pt-12 text-left">
+        {/* 核心卡片展示 */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full pt-10 text-left">
           <div className="bg-gray-900/50 border border-gray-800 p-6 rounded-2xl space-y-2">
             <div className="text-2xl">🤖</div>
             <h3 className="text-sm font-bold text-gray-200">AI Crawler Passability</h3>
@@ -105,9 +104,9 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* 4. 底部 Footer */}
-      <footer className="mt-auto w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500">
-        © {new Date().getFullYear()} GEO Scanner. Powered by Cloudflare Pages & Next.js Edge Runtime.
+      {/* 页脚 */}
+      <footer className="w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500">
+        © GEO Scanner. Powered by Cloudflare Pages & Next.js Edge Runtime.
       </footer>
     </div>
   );
