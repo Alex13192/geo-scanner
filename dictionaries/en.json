@@ -1,0 +1,24 @@
+{
+    "hero": {
+      "badge": "GEO & AI Search Audit Engine",
+      "title": "GEO Readiness Scanner",
+      "subtitle": "Is Your Site Optimized for AI Search Engines?",
+      "description": "Comprehensive audit for ChatGPT, Perplexity, Claude, and Gemini crawlers. Analyze robots.txt, metadata, and generate standardized /llms.txt files.",
+      "inputPlaceholder": "Enter domain or URL (e.g., example.com)",
+      "scanBtn": "Scan Website",
+      "scanning": "Analyzing GEO Readiness..."
+    },
+    "nav": {
+      "scanner": "Scanner",
+      "methodology": "Methodology",
+      "whitepaper": "GEO Whitepaper",
+      "badges": "Dynamic Badges"
+    },
+    "score": {
+      "title": "GEO Health Score",
+      "excellent": "Excellent AI Readability",
+      "good": "Good - Minor Fixes Needed",
+      "warning": "Warning - Major AI Blockers Detected",
+      "poor": "Poor - Completely Invisible to AI Search"
+    }
+  }
