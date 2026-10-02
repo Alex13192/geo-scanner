@@ -31,35 +31,86 @@ export async function GET(request: Request) {
   let homeHtml = "";
   let siteReachable = false;
 
-  // 1. 服务端真实抓取首页
-  try {
-    const homeRes = await fetch(`https://${domain}`, {
-      headers: { "User-Agent": userAgent },
-      next: { revalidate: 0 },
-    });
-    if (homeRes.ok) {
-      siteReachable = true;
-      homeHtml = await homeRes.text();
-    }
-  } catch (e) {
+  // 1. Fetch the homepage the way an AI crawler would.
+  //
+  // IMPORTANT: a non-2xx response does NOT mean the domain is unreachable.
+  // A 403/429/503 usually means bot protection (Cloudflare Bot Fight Mode, WAF
+  // rules, rate limiting) is refusing the crawler - which is exactly the finding
+  // this product exists to surface. Only a thrown fetch (DNS failure, refused
+  // connection, TLS error) means the domain genuinely could not be reached.
+  //
+  // The previous version treated every non-2xx as "unreachable", so a site that
+  // was actively blocking AI crawlers was reported as a non-existent domain.
+  const probe = async (url: string) => {
     try {
-      const homeRes = await fetch(`http://${domain}`, {
-        headers: { "User-Agent": userAgent },
+      const res = await fetch(url, {
+        headers: { "User-Agent": userAgent, Accept: "text/html,application/xhtml+xml,*/*" },
+        redirect: "follow",
+        cache: "no-store",
       });
-      if (homeRes.ok) {
-        siteReachable = true;
-        homeHtml = await homeRes.text();
+      let body = "";
+      try {
+        body = await res.text();
+      } catch {
+        body = "";
       }
-    } catch (err) {
-      siteReachable = false;
+      return { gotResponse: true, status: res.status, body };
+    } catch {
+      return { gotResponse: false, status: 0, body: "" };
     }
+  };
+
+  let attempt = await probe(`https://${domain}`);
+  if (!attempt.gotResponse) {
+    attempt = await probe(`http://${domain}`);
   }
 
-  if (!siteReachable) {
+  // No HTTP response on either scheme => genuinely unreachable.
+  if (!attempt.gotResponse) {
     return NextResponse.json({
       reachable: false,
       score: 0,
       issues: [],
+      metrics: {
+        crawlability: 0,
+        understandability: 0,
+        answerReadiness: 0,
+        citability: 0,
+        trustAuthority: 0,
+        contentDepth: 0,
+      },
+    });
+  }
+
+  // We got an HTTP response, so the domain is live.
+  siteReachable = true;
+  const homeStatus = attempt.status;
+  homeHtml = attempt.body;
+
+  // The homepage answered with an error status. Report that as the headline
+  // finding instead of inventing downstream issues from an error page.
+  if (homeStatus >= 400) {
+    const likelyBotBlocked = [401, 403, 406, 429, 451, 503].includes(homeStatus);
+
+    issues.push({
+      id: "homepage-non-200",
+      category: "AI Agent Access",
+      title: `Homepage returned HTTP ${homeStatus} to an AI crawler`,
+      severity: "high",
+      summary: likelyBotBlocked
+        ? `Requesting https://${domain} with the GPTBot user-agent returned HTTP ${homeStatus}. Bot protection, a WAF rule or a rate limit is refusing AI crawlers before they can read the page.`
+        : `Requesting https://${domain} returned HTTP ${homeStatus}, so there is no content available for AI engines to read or cite.`,
+      recommendation: likelyBotBlocked
+        ? "Allow verified AI crawlers (GPTBot, ClaudeBot, PerplexityBot) in your bot-management and firewall settings, then re-scan."
+        : "Make sure your homepage returns HTTP 200 for crawler user-agents. An entry point that returns an error cannot be cited by any AI engine.",
+    });
+
+    return NextResponse.json({
+      reachable: true,
+      blocked: likelyBotBlocked,
+      status: homeStatus,
+      score: 5,
+      issues,
       metrics: {
         crawlability: 0,
         understandability: 0,
