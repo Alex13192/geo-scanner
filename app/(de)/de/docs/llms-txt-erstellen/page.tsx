@@ -101,7 +101,10 @@ export default function Page() {
       </ol>
       <p>
         Die Konvention selbst ist unter <a href="https://llmstxt.org/" target="_blank" rel="noopener noreferrer">llmstxt.org</a>{" "}
-        dokumentiert. Der <a href="/de/">Scanner</a> prüft Erreichbarkeit, Aufbau und Verlinkung
+        dokumentiert. Den Entwurf einer Datei erstellt der{" "}
+        <a href="/de/llms-txt-studio/">llms.txt-Generator</a>, der Ihre Startseite liest und
+        Titel, Beschreibung und interne Links übernimmt. Der{" "}
+        <a href="/de/">Scanner</a> prüft anschließend Erreichbarkeit, Aufbau und Verlinkung
         automatisch.
       </p>
     </ArticleShell>

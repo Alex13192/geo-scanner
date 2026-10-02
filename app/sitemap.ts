@@ -95,6 +95,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/llms-txt-studio/`,
+          de: `${SITE_URL}/de/llms-txt-studio/`,
+        },
+      },
     },
     {
       url: `${SITE_URL}/readiness-badge/`,
@@ -167,6 +173,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
         languages: {
           en: `${SITE_URL}/docs/llms-txt-deployment/`,
           de: `${SITE_URL}/de/docs/llms-txt-erstellen/`,
+        },
+      },
+    },
+    {
+      url: `${SITE_URL}/de/llms-txt-studio/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/llms-txt-studio/`,
+          de: `${SITE_URL}/de/llms-txt-studio/`,
         },
       },
     },
