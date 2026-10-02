@@ -150,8 +150,13 @@ export default function PricingPage() {
 
           <h2>Do you offer refunds?</h2>
           <p>
-            Yes. If the audit does not identify anything actionable on the pages you submitted,
-            it is refunded in full. See the refund policy for details.
+            Yes, and without a form to fill in. If the audit does not identify anything actionable
+            on the pages you submitted, reply to the delivery email within 14 days and it is
+            refunded in full to the original payment method. The terms are set out on the{" "}
+            <a href="/refund/" className="text-blue-400 hover:text-blue-300 underline">
+              refund policy
+            </a>{" "}
+            page.
           </p>
         </div>
       </main>

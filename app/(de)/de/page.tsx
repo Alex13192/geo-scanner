@@ -394,11 +394,41 @@ export default function GermanHomePage() {
               niedrig gewichtet statt als Rankingfaktor beworben.
             </p>
             <p className="text-xs text-gray-500">
-              Gepflegt vom LLMention-Team. Weiterf&uuml;hrende Leitf&auml;den und die
-              Methodik sind derzeit auf Englisch verf&uuml;gbar.
+              Verantwortet vom LLMention-Team.{" "}
+              <a href="/about/" hrefLang="en" className="text-blue-400 hover:text-blue-300 underline">
+                Mehr &uuml;ber das Projekt
+              </a>
+              , oder{" "}
+              <a
+                href="mailto:hello@ccie13192.com"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                schreiben Sie uns
+              </a>
+              , wenn der Scanner etwas meldet, das Sie f&uuml;r falsch halten. Weiterf&uuml;hrende
+              Leitf&auml;den und die Methodik sind derzeit auf Englisch verf&uuml;gbar.
             </p>
           </div>
         </section>
+
+        {/* Built from the same faqItems array that renders the visible FAQ above, so
+            the markup and the page cannot drift apart. The English page has had this
+            from the start; the German page was missing it and lost the points. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              inLanguage: "de",
+              mainEntity: faqItems.map((item) => ({
+                "@type": "Question",
+                name: item.q,
+                acceptedAnswer: { "@type": "Answer", text: item.a },
+              })),
+            }),
+          }}
+        />
       </main>
 
       {/* Footer */}

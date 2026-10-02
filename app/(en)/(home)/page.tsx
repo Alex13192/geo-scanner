@@ -555,6 +555,9 @@ export default function HomePage() {
           <a href="/pricing/" className="hover:text-gray-300 transition-colors">
             Pricing
           </a>
+          <a href="/refund/" className="hover:text-gray-300 transition-colors">
+            Refund policy
+          </a>
           <a href="/llms.txt" className="hover:text-gray-300 transition-colors">
             llms.txt
           </a>

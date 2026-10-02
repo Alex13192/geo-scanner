@@ -6,10 +6,11 @@ import { useState, useEffect, useCallback, Suspense } from "react";
 /**
  * German llms.txt studio.
  *
- * Calls the same /api/llms-txt endpoint as the English page: the endpoint
- * fetches the submitted site and builds the file from its real title,
- * description and internal links. Only the surrounding chrome is translated,
- * so both locales always produce identical output for the same domain.
+ * Calls the same /api/llms-txt endpoint as the English page. Only the chrome is
+ * translated by this file; the generated document's scaffolding comes from the
+ * endpoint, which localises it from the lang parameter. The two studios do NOT
+ * produce identical bytes: lang=de also asks the target site for its German
+ * version via Accept-Language, which is the point of having a German studio.
  */
 function cleanDomain(domain: string): string {
   if (!domain) return "";

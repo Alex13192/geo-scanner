@@ -121,6 +121,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${SITE_URL}/refund/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.4,
+    },
+    {
       url: `${SITE_URL}/about/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
