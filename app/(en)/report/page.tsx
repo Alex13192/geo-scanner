@@ -4,7 +4,10 @@ import { useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo, Suspense } from "react";
 
 function cleanDomain(domain: string): string {
-  if (!domain) return "example.com";
+  // Never invent a domain. This returned "example.com" for empty input, which
+  // turned a missing parameter into a confident report about a site the visitor
+  // never asked about.
+  if (!domain) return "";
   return domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
 }
 
@@ -73,7 +76,9 @@ function legacyDimensions(m: Metrics): Dimension[] {
 
 function ReportContent() {
   const searchParams = useSearchParams();
-  const rawDomain = searchParams.get("domain") || "cisco.com";
+  // No default domain. Landing here without one used to run a full scan of
+  // cisco.com and present the result as the visitor's own report.
+  const rawDomain = searchParams.get("domain") || "";
   const rootDomain = cleanDomain(rawDomain);
 
   const [loading, setLoading] = useState(true);
@@ -96,6 +101,13 @@ function ReportContent() {
   const [activeFilter, setActiveFilter] = useState<"all" | "high" | "medium" | "low">("all");
 
   useEffect(() => {
+    // Nothing to audit. Do not call the API at all: an empty report full of
+    // zeroes looks like a real result, which is worse than saying nothing.
+    if (!rootDomain) {
+      setLoading(false);
+      return;
+    }
+
     async function runServerAudit() {
       setLoading(true);
       setSiteUnreachable(false);
@@ -145,6 +157,50 @@ function ReportContent() {
     if (activeFilter === "all") return issues;
     return issues.filter((item) => item.severity === activeFilter);
   }, [activeFilter, issues]);
+
+  if (!rootDomain) {
+    return (
+      <div className="min-h-screen bg-[#070A10] text-white font-sans flex items-center justify-center px-6">
+        <div className="max-w-md w-full bg-gray-950/60 border border-gray-800/80 rounded-2xl p-8 space-y-5 text-center">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-lg">
+            L
+          </div>
+          <h1 className="text-lg font-bold text-white">No domain to audit</h1>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            This page reports on one site at a time and has to be told which one. Enter a domain
+            below, or start from the homepage.
+          </p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const value = String(new FormData(e.currentTarget).get("domain") || "");
+              const target = cleanDomain(value);
+              if (target) {
+                window.location.href = `/report/?domain=${encodeURIComponent(target)}`;
+              }
+            }}
+            className="flex flex-col sm:flex-row gap-2"
+          >
+            <input
+              name="domain"
+              type="text"
+              placeholder="your-domain.com"
+              className="flex-1 bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-all font-mono"
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-all whitespace-nowrap"
+            >
+              Run audit
+            </button>
+          </form>
+          <a href="/" className="inline-block text-xs text-blue-400 hover:text-blue-300 underline">
+            ← Back to the scanner
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">

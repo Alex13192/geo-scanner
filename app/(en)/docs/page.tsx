@@ -19,7 +19,11 @@ const guides: Guide[] = [
     title: "How to Generate and Deploy /llms.txt File",
     description: "Learn how to format, structure, and host a standardized /llms.txt file at your domain root so AI crawlers can digest your content cleanly.",
     readTime: "3 min read",
-    codeSnippet: `# adidas.com\n> Generative Engine Optimization (GEO) Context File\n\n## Core Business\nEnterprise athletic apparel and digital commerce solutions.`,
+    // Neutral example. This previously used a real company's domain paired with
+    // invented copy about its business, which is a poor thing to put in a
+    // documentation example and teaches the format less clearly than a
+    // placeholder does.
+    codeSnippet: `# your-domain.com\n> One factual sentence on what the company does.\n\n## Core business\nA short description an AI system can quote directly.`,
   },
   {
     id: "qa-style-headings",
