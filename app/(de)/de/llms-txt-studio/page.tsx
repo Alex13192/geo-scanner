@@ -215,7 +215,9 @@ function StudioContent() {
           <p className="text-[11px] text-gray-500 leading-relaxed pt-4">
             Vor dem Veröffentlichen prüfen. Dieser Entwurf entsteht aus einer einzigen Seite und
             listet daher nur, worauf die Startseite verlinkt; die Beschreibungen sind die
-            Linktexte wie geschrieben. Laden Sie das Ergebnis so hoch, dass es unter{" "}
+            Linktexte wie geschrieben. Websites, die Besucher nach Standort weiterleiten, liefern
+            möglicherweise eine regionale Fassung – prüfen Sie die Links daher vor der
+            Veröffentlichung. Laden Sie das Ergebnis so hoch, dass es unter{" "}
             <code className="text-gray-400">https://ihre-domain.de/llms.txt</code> erreichbar ist.
             Beachten Sie, dass llms.txt eine Konvention und kein Standard ist und Google erklärt
             hat, sie nicht in der Suche zu verwenden – siehe{" "}

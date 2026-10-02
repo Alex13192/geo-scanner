@@ -213,8 +213,9 @@ function StudioContent() {
 
           <p className="text-[11px] text-gray-500 leading-relaxed pt-4">
             Edit before publishing. This draft is built from one page, so it only lists what the
-            homepage links to, and the descriptions are the link texts as written. Upload the
-            result so it is reachable at{" "}
+            homepage links to, and the descriptions are the link texts as written. Sites that
+            redirect visitors by location may return a regional version, so check the links
+            before you ship this. Upload the result so it is reachable at{" "}
             <code className="text-gray-400">https://your-domain.com/llms.txt</code>. Note that
             llms.txt is a convention rather than a standard, and Google has said it does not use
             it in Search — see{" "}

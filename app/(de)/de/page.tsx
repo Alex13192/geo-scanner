@@ -124,30 +124,40 @@ export default function GermanHomePage() {
 
         {/* Feature cards */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gray-900/50 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+          <a
+            href="/de/docs/gptbot-robots-txt/"
+            className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
+          >
             <div className="text-2xl">🤖</div>
             <h2 className="text-sm font-bold text-gray-200">KI-Crawler-Zugang</h2>
             <p className="text-xs text-gray-400 leading-relaxed">
               Pr&uuml;ft robots.txt und WAF-Regeln, damit GPTBot, PerplexityBot und ClaudeBot
-              nicht blockiert werden.
+              nicht blockiert werden. Anleitung auf Deutsch.
             </p>
-          </div>
-          <div className="bg-gray-900/50 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+          </a>
+          <a
+            href="/de/llms-txt-studio/"
+            className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
+          >
             <div className="text-2xl">📄</div>
             <h2 className="text-sm font-bold text-gray-200">/llms.txt-Erzeugung</h2>
             <p className="text-xs text-gray-400 leading-relaxed">
               Erzeugt standardisierte Markdown-Kontextdateien, damit LLMs Ihre Inhalte sauber
               erfassen k&ouml;nnen.
             </p>
-          </div>
-          <div className="bg-gray-900/50 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+          </a>
+          <a
+            href="/readiness-badge/"
+            hrefLang="en"
+            className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
+          >
             <div className="text-2xl">🏷️</div>
             <h2 className="text-sm font-bold text-gray-200">Sichtbarkeits-Badge</h2>
             <p className="text-xs text-gray-400 leading-relaxed">
               Bettet GEO-Bereitschafts-Badges direkt in Ihr GitHub-README oder Ihren
-              Website-Footer ein.
+              Website-Footer ein. Der Badge-Generator ist derzeit englischsprachig.
             </p>
-          </div>
+          </a>
         </section>
 
         {/* Verifiable self-audit */}

@@ -241,23 +241,32 @@ export default function HomePage() {
 
         {/* 三卡片核心功能 */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full pt-6 text-left">
-          <div className="bg-gray-900/50 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+          <a
+            href="/docs/allow-ai-crawlers/"
+            className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
+          >
             <div className="text-2xl">🤖</div>
             <h3 className="text-sm font-bold text-gray-200">{t.crawlersTitle}</h3>
             <p className="text-xs text-gray-400 leading-relaxed">{t.crawlersDesc}</p>
-          </div>
+          </a>
 
-          <div className="bg-gray-900/50 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+          <a
+            href="/llms-txt-studio/"
+            className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
+          >
             <div className="text-2xl">📄</div>
             <h3 className="text-sm font-bold text-gray-200">{t.llmsTitle}</h3>
             <p className="text-xs text-gray-400 leading-relaxed">{t.llmsDesc}</p>
-          </div>
+          </a>
 
-          <div className="bg-gray-900/50 border border-gray-800/80 p-6 rounded-2xl space-y-2">
+          <a
+            href="/readiness-badge/"
+            className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
+          >
             <div className="text-2xl">🏷️</div>
             <h3 className="text-sm font-bold text-gray-200">{t.badgeTitle}</h3>
             <p className="text-xs text-gray-400 leading-relaxed">{t.badgeDesc}</p>
-          </div>
+          </a>
         </div>
 
         {/* Verifiable self-audit, placed directly under the feature cards so it is
