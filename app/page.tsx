@@ -251,6 +251,34 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Verifiable self-audit, placed directly under the feature cards so it is
+            visible without scrolling. The figure is dated rather than presented as
+            a permanent claim, so it stays a true statement about a point in time
+            even after the page changes, and the button runs the live check.
+            Re-run the scan after any homepage edit and update the date and figure. */}
+        <section className="w-full pt-10 text-left">
+          <div className="bg-[#070A10]/60 border border-blue-500/30 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <h2 className="text-sm font-bold text-white">
+                This site is measured by the same 38 checks
+              </h2>
+              <p className="text-xs text-gray-400 leading-relaxed max-w-2xl">
+                LLMention audits its own homepage with the rules it applies to yours, and links
+                the result rather than quoting a number you have to take on trust. Last verified
+                on 2 October 2026: 98 out of 100, grade A, with 37 of 38 checks passing and no
+                score floor applied. Re-run it yourself — the report names the one check this
+                site still fails, and why.
+              </p>
+            </div>
+            <a
+              href="/report/?domain=geo-scanner.ccie13192.com"
+              className="text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white px-5 py-3 rounded-xl transition-all shrink-0 text-center"
+            >
+              Scan this site →
+            </a>
+          </div>
+        </section>
+
         {/* 新增模块 1：Supported AI Crawlers */}
         <section className="w-full pt-10 text-left space-y-4">
           <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center">
@@ -285,33 +313,6 @@ export default function HomePage() {
               </div>
               <span className="w-2 h-2 rounded-full bg-green-400"></span>
             </div>
-          </div>
-        </section>
-
-        {/* Verifiable self-audit. The figure is dated rather than presented as a
-            permanent claim, so it stays a true statement about a point in time
-            even after the page changes, and the button runs the live check.
-            Re-run the scan after any homepage edit and update the date+figure. */}
-        <section className="w-full pt-8 text-left">
-          <div className="bg-[#070A10]/60 border border-blue-500/30 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <h2 className="text-sm font-bold text-white">
-                This site is measured by the same 38 checks
-              </h2>
-              <p className="text-xs text-gray-400 leading-relaxed max-w-2xl">
-                LLMention audits its own homepage with the rules it applies to yours, and links
-                the result rather than quoting a number you have to take on trust. Last verified
-                on 2 October 2026: 98 out of 100, grade A, with 37 of 38 checks passing and no
-                score floor applied. Re-run it yourself — the report names the one check this
-                site still fails, and why.
-              </p>
-            </div>
-            <a
-              href="/report/?domain=geo-scanner.ccie13192.com"
-              className="text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white px-5 py-3 rounded-xl transition-all shrink-0 text-center"
-            >
-              Scan this site →
-            </a>
           </div>
         </section>
 
