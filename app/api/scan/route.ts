@@ -133,7 +133,9 @@ export async function GET(request: Request) {
     reachable: true,
     status: home.status,
     scheme,
-    scoreBasis: home.status === 200 ? "homepage" : `HTTP ${home.status} response`,
+    // Phrased to read correctly inside "This score describes ...": a leading
+    // "HTTP" would make the banner say "describes a HTTP 403 response".
+    scoreBasis: home.status === 200 ? "homepage" : `${home.status} error response`,
     truncated: home.truncated,
     score: result.score,
     grade: result.grade,
