@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "../globals.css";
 
 /**
- * Single source of truth for the site origin.
+ * Canonical site origin.
  * Keep this in sync with app/sitemap.ts and public/robots.txt.
  */
 const SITE_URL = "https://geo-scanner.ccie13192.com";
@@ -16,17 +16,30 @@ const BRAND = "LLMention";
  */
 const LAST_UPDATED = "2026-10-02";
 
-const TAGLINE = `${BRAND} — GEO Scanner for AI Search Visibility`;
+const TAGLINE = `${BRAND} \u2014 GEO Scanner for AI Search Visibility`;
 const DESCRIPTION =
   "Check whether ChatGPT, Claude and Perplexity can crawl, read and cite your website. Free AI crawler audit and /llms.txt generator, no signup required.";
+
+/**
+ * Language alternates for this route group.
+ *
+ * English is served from the site root. Every other locale lives under its own
+ * prefix, so `de` is declared here as soon as the German pages exist; declaring
+ * a language that has no page would be a broken hreflang, which is worse than
+ * omitting it.
+ */
+const LANGUAGE_ALTERNATES: Record<string, string> = {
+  en: "/",
+  "x-default": "/",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
     default: TAGLINE,
-    // Per-route layouts (app/docs/layout.tsx, etc.) export their own title,
-    // which renders as "<page title> | LLMention".
+    // Per-route layouts (docs, pricing, ...) export their own title, which
+    // renders as "<page title> | LLMention".
     template: `%s | ${BRAND}`,
   },
   description: DESCRIPTION,
@@ -34,6 +47,7 @@ export const metadata: Metadata = {
 
   alternates: {
     canonical: "/",
+    languages: LANGUAGE_ALTERNATES,
   },
 
   openGraph: {
@@ -72,10 +86,6 @@ export const metadata: Metadata = {
  * entity by LLMs, so this site must itself be a working example. Consistent
  * `name` across <title>, <h1>, llms.txt and this JSON-LD is what lets an LLM
  * bind the string "LLMention" to this domain.
- *
- * NOTE: FAQPage schema is deliberately NOT included yet. Google requires
- * structured data to match content that is actually visible on the page.
- * Add a visible FAQ section first, then the matching schema.
  */
 const jsonLd = {
   "@context": "https://schema.org",
