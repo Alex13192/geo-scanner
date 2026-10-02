@@ -29,7 +29,7 @@ export default function GermanDocsIndex() {
               L
             </div>
             <span className="font-extrabold text-base tracking-tight text-white">
-              LLMention Leitfäden
+              LLMention-Leitfäden
             </span>
           </Link>
           <Link
@@ -51,8 +51,9 @@ export default function GermanDocsIndex() {
           </h1>
           <p className="text-gray-400 text-sm md:text-base max-w-2xl leading-relaxed">
             Schritt-für-Schritt-Anleitungen für Technik- und Marketingteams, die in ChatGPT,
-            Perplexity und Claude zitiert werden wollen. Diese Leitfäden sind auf Deutsch
-            geschrieben und nicht aus dem Englischen übersetzt.
+            Perplexity und Claude zitiert werden wollen. Die Leitfäden sind für deutschsprachige
+            Teams geschrieben und folgen inhaltlich den englischen Leitfäden, sind aber
+            eigenständig formuliert.
           </p>
         </div>
 
@@ -81,9 +82,9 @@ export default function GermanDocsIndex() {
         <div className="bg-[#070A10]/60 border border-gray-800/60 rounded-2xl p-6 space-y-2">
           <h2 className="text-sm font-bold text-white">Weitere Leitfäden</h2>
           <p className="text-xs text-gray-400 leading-relaxed">
-            Die weiterführenden Leitfäden zu Schema.org JSON-LD, zu antwortförmigen Überschriften
-            und zur Funktionsweise der Bewertung liegen derzeit auf Englisch vor. Eine deutsche
-            Fassung folgt, sobald die ersten beiden Artikel geprüft sind.
+            Die weiterführenden Leitfäden zu Schema.org JSON-LD, zu Überschriften im
+            Frage-Antwort-Stil und zur Funktionsweise der Bewertung liegen derzeit auf Englisch
+            vor. Eine deutsche Fassung folgt, sobald die ersten beiden Artikel geprüft sind.
           </p>
           <p className="text-xs text-gray-400">
             <a href="/docs/" hrefLang="en" className="text-blue-400 hover:text-blue-300 underline">

@@ -47,7 +47,7 @@ export default function GermanHomePage() {
     },
     {
       q: "Ersetzt GEO das klassische SEO?",
-      a: "Nein. GEO und SEO teilen die meisten Grundlagen: crawlbar, klar strukturiert, sachlich korrekt und mit echter Autorit\u00e4t. GEO erg\u00e4nzt den Schwerpunkt auf antwortf\u00f6rmige Inhalte, Entit\u00e4ts-Markup wie Schema.org JSON-LD und maschinenlesbare Kontextdateien. Wer SEO bereits gut beherrscht, startet beim GEO mit Vorsprung.",
+      a: "Nein. GEO und SEO beruhen auf denselben Grundlagen: crawlbar, klar strukturiert, sachlich korrekt und mit echter Autorit\u00e4t. GEO erg\u00e4nzt den Schwerpunkt auf Inhalte im Frage-Antwort-Stil, Entit\u00e4ts-Markup wie Schema.org JSON-LD und maschinenlesbare Kontextdateien. Wer SEO bereits gut beherrscht, hat mit GEO einen Vorsprung.",
     },
   ];
 
@@ -247,9 +247,11 @@ export default function GermanHomePage() {
                     <td className="px-4 py-2.5">Einen Satz, der in einer Antwort zitiert wird</td>
                   </tr>
                   <tr className="border-t border-gray-800/60">
-                    <td className="px-4 py-2.5 text-gray-500">Wettbewerbseinheit</td>
-                    <td className="px-4 py-2.5">Die Seite, gegen andere Seiten gerankt</td>
-                    <td className="px-4 py-2.5">Der Absatz, gegen andere Abs&auml;tze abgerufen</td>
+                    <td className="px-4 py-2.5 text-gray-500">Vergleichseinheit</td>
+                    <td className="px-4 py-2.5">Die Seite, die gegen andere Seiten gerankt wird</td>
+                    <td className="px-4 py-2.5">
+                      Der Absatz, der gegen andere Abs&auml;tze abgerufen wird
+                    </td>
                   </tr>
                   <tr className="border-t border-gray-800/60">
                     <td className="px-4 py-2.5 text-gray-500">Wichtigster Hebel</td>
@@ -266,9 +268,11 @@ export default function GermanHomePage() {
                     </td>
                   </tr>
                   <tr className="border-t border-gray-800/60">
-                    <td className="px-4 py-2.5 text-gray-500">Typisches Scheitern</td>
+                    <td className="px-4 py-2.5 text-gray-500">Typischer Fehlerfall</td>
                     <td className="px-4 py-2.5">Position 11, keine Klicks</td>
-                    <td className="px-4 py-2.5">Die Antwort wird gegeben &ndash; ohne Sie</td>
+                    <td className="px-4 py-2.5">
+                      Die Antwort wird gegeben &ndash; und Sie kommen darin nicht vor
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -312,8 +316,9 @@ export default function GermanHomePage() {
             <blockquote className="border-l-2 border-blue-500 pl-4 space-y-2">
               <p className="text-sm text-gray-300 leading-relaxed">
                 Das Hinzuf&uuml;gen von Quellenangaben erzielte den gr&ouml;&szlig;ten gemessenen
-                Sichtbarkeitsgewinn f&uuml;r schwach rankende Websites (+115&nbsp;%), vor der
-                Erg&auml;nzung von Expertenzitaten (+41&nbsp;%) und Statistiken (+30&ndash;40&nbsp;%).
+                Sichtbarkeitsgewinn f&uuml;r schlecht rankende Websites (+115&nbsp;%), vor
+                Expertenzitaten (+41&nbsp;%) und Statistiken (+30&ndash;40&nbsp;%) &ndash;
+                gemessen an den Strategien, die auf generativen Engines getestet wurden.
               </p>
               <footer className="text-xs text-gray-500">
                 &ndash; Zusammenfassung der Ergebnisse,{" "}
@@ -388,10 +393,10 @@ export default function GermanHomePage() {
             </p>
             <p className="text-xs text-gray-400 leading-relaxed">
               Das Projekt ver&ouml;ffentlicht seine Bewertungsmethode vollst&auml;ndig: die
-              ausgef&uuml;hrten Pr&uuml;fungen, ihre Gewichtung und die Teile des Bildes, die es
-              nicht sehen kann. Es gibt keine Mindestpunktzahl &ndash; eine Seite, die keine
-              Pr&uuml;fung besteht, landet nahe null. Signale mit schwacher Beweislage werden
-              niedrig gewichtet statt als Rankingfaktor beworben.
+              ausgef&uuml;hrten Pr&uuml;fungen, ihre Gewichtung und ausdr&uuml;cklich das, was die
+              Bewertung nicht erkennen kann. Es gibt keine Mindestpunktzahl &ndash; eine Seite,
+              die keine Pr&uuml;fung besteht, landet nahe null. Signale mit schwacher Beweislage
+              werden niedrig gewichtet statt als Rankingfaktor beworben.
             </p>
             <p className="text-xs text-gray-500">
               Verantwortet vom LLMention-Team.{" "}

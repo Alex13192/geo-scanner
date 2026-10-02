@@ -45,8 +45,8 @@ export default function Page() {
 
       <h2>Wie ist eine llms.txt aufgebaut?</h2>
       <p>
-        Die Konvention ist bewusst einfach: eine H1 mit dem Namen, ein Blockquote als
-        Zusammenfassung, danach H2-Abschnitte mit kommentierten Links.
+        Die Konvention ist bewusst einfach: eine H1-Überschrift mit dem Seitennamen, ein
+        Zitatblock als Zusammenfassung, danach H2-Abschnitte mit kommentierten Links.
       </p>
       <pre>{`# Ihr Unternehmen
 
@@ -85,7 +85,7 @@ export default function Page() {
         zugesagt.
       </p>
       <p>
-        Real hilft sie heute an zwei Stellen: Dokumentationsseiten und Coding-Agenten, die
+        Tatsächlich hilft sie heute an zwei Stellen: Dokumentationsseiten und Coding-Agenten, die
         Kontext gezielt abrufen, sowie Abrufsysteme, die einen kuratierten Einstiegspunkt
         akzeptieren. Die ehrliche Einordnung lautet daher: <strong>ein kleines, günstiges
         Signal</strong> – sinnvoll, aber kein Rankingfaktor. Aus diesem Grund trägt die
@@ -94,9 +94,9 @@ export default function Page() {
 
       <h2>Wie prüfe ich die Datei?</h2>
       <ol>
-        <li>Rufen Sie <code>https://ihre-domain.de/llms.txt</code> im Browser auf. Sie sollte als Klartext erscheinen, nicht heruntergeladen werden und nicht 404 liefern.</li>
+        <li>Rufen Sie <code>https://ihre-domain.de/llms.txt</code> im Browser auf. Sie sollte als Klartext angezeigt werden, nicht als Download erscheinen und keinen 404-Fehler liefern.</li>
         <li>Prüfen Sie Statuscode <code>200</code> und Content-Type <code>text/plain</code>.</li>
-        <li>Stellen Sie sicher, dass <code>robots.txt</code> den Pfad nicht aussperrt und Ihre Firewall keine Crawler-Agents blockiert.</li>
+        <li>Stellen Sie sicher, dass <code>robots.txt</code> den Pfad nicht aussperrt und Ihre Firewall keine KI-Crawler blockiert.</li>
         <li>Klicken Sie jeden Link in der Datei einmal an. Tote Links sind der häufigste Fehler.</li>
       </ol>
       <p>
@@ -104,8 +104,9 @@ export default function Page() {
         dokumentiert. Den Entwurf einer Datei erstellt der{" "}
         <a href="/de/llms-txt-studio/">llms.txt-Generator</a>, der Ihre Startseite liest und
         Titel, Beschreibung und interne Links übernimmt. Der{" "}
-        <a href="/de/">Scanner</a> prüft anschließend Erreichbarkeit, Aufbau und Verlinkung
-        automatisch.
+        <a href="/de/">Scanner</a> prüft anschließend Erreichbarkeit, Statuscode und Aufbau der
+        Datei automatisch. Ob die verlinkten Seiten erreichbar sind, prüft er nicht &ndash;
+        klicken Sie die Links selbst durch.
       </p>
     </ArticleShell>
   );

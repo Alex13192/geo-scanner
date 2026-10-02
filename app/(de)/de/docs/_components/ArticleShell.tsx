@@ -35,7 +35,7 @@ export default function ArticleShell({
               L
             </div>
             <span className="font-extrabold text-base tracking-tight text-white">
-              LLMention Leitf&auml;den
+              LLMention-Leitf&auml;den
             </span>
           </Link>
           <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export default function ArticleShell({
           </h1>
           <p className="text-gray-400 text-sm md:text-base leading-relaxed">{description}</p>
           <p className="text-xs text-gray-500 font-mono">
-            {readTime} &middot; Aktualisiert {updated}
+            {readTime} &middot; Zuletzt aktualisiert: {updated}
           </p>
         </div>
 
