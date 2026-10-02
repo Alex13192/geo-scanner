@@ -106,11 +106,19 @@ const translations: Record<Language, {
 };
 
 export default function HomePage() {
-  const [lang, setLang] = useState<Language>("en");
   const [url, setUrl] = useState("");
   const router = useRouter();
 
-  const t = translations[lang];
+  /**
+   * Pinned to English deliberately.
+   *
+   * This page previously offered a six-language dropdown that swapped only the
+   * strings in `translations` and left every other sentence in English, so
+   * choosing "Deutsch" produced a half-translated page. That is worse than not
+   * offering the option at all. Real localisation needs a URL per language;
+   * German now lives at /de and is linked from the header instead.
+   */
+  const t = translations.en;
 
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,7 +127,7 @@ export default function HomePage() {
     let cleanDomain = url.trim().toLowerCase();
     cleanDomain = cleanDomain.replace(/^(https?:\/\/)/, "").replace(/\/.*$/, "");
 
-    router.push(`/report?domain=${encodeURIComponent(cleanDomain)}&lang=${lang}`);
+    router.push(`/report/?domain=${encodeURIComponent(cleanDomain)}`);
   };
 
   /**
@@ -175,20 +183,21 @@ export default function HomePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="relative inline-block">
-            <select
-              value={lang}
-              onChange={(e) => setLang(e.target.value as Language)}
-              className="bg-gray-900 border border-gray-800 text-xs text-gray-200 font-medium px-3.5 py-1.5 rounded-full outline-none focus:border-blue-500 cursor-pointer transition-all"
+          {/* Only languages that exist as complete pages are listed. A switcher
+              that offers a language the site cannot serve in full is a broken
+              promise, and this product is positioned against exactly that. */}
+          <nav className="flex items-center gap-1 bg-gray-900/80 p-1 rounded-full border border-gray-800 text-xs">
+            <span className="px-3 py-1 rounded-full bg-blue-600 text-white font-medium">
+              🇬🇧 English
+            </span>
+            <a
+              href="/de/"
+              hrefLang="de"
+              className="px-3 py-1 rounded-full text-gray-400 hover:text-white transition-all"
             >
-              <option value="en">🇬🇧 English</option>
-              <option value="zh">🇨🇳 简体中文</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="de">🇩🇪 Deutsch</option>
-              <option value="fr">🇫🇷 Français</option>
-              <option value="ja">🇯🇵 日本語</option>
-            </select>
-          </div>
+              🇩🇪 Deutsch
+            </a>
+          </nav>
         </div>
       </header>
 
