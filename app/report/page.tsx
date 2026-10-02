@@ -8,6 +8,24 @@ function cleanDomain(domain: string): string {
   return domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
 }
 
+function scoreTextColor(score: number): string {
+  if (score >= 80) return "text-emerald-400";
+  if (score >= 50) return "text-amber-400";
+  return "text-red-400";
+}
+
+function scoreBarColor(score: number): string {
+  if (score >= 80) return "bg-gradient-to-r from-emerald-500 to-teal-500";
+  if (score >= 50) return "bg-gradient-to-r from-amber-500 to-orange-500";
+  return "bg-gradient-to-r from-red-500 to-rose-500";
+}
+
+function gradeBadgeClass(score: number): string {
+  if (score >= 80) return "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+  if (score >= 60) return "text-amber-400 bg-amber-500/10 border-amber-500/30";
+  return "text-red-400 bg-red-500/10 border-red-500/30";
+}
+
 interface IssueItem {
   id: string;
   category: string;
@@ -15,6 +33,18 @@ interface IssueItem {
   severity: "high" | "medium" | "low";
   summary: string;
   recommendation: string;
+  evidence?: string;
+}
+
+interface Dimension {
+  id: string;
+  label: string;
+  /** Share of the total score, in percent. */
+  weight: number;
+  score: number;
+  earned: number;
+  possible: number;
+  rationale: string;
 }
 
 interface Metrics {
@@ -26,6 +56,21 @@ interface Metrics {
   contentDepth: number;
 }
 
+/**
+ * Fallback used only if the API response predates the weighted dimension
+ * breakdown, so the page degrades to the old six-card view instead of breaking.
+ */
+function legacyDimensions(m: Metrics): Dimension[] {
+  return [
+    { id: "ai-crawler-access", label: "AI Crawler Access", score: m.crawlability, weight: 16, earned: 0, possible: 0, rationale: "" },
+    { id: "semantic-structure", label: "Semantic Structure", score: m.understandability, weight: 8, earned: 0, possible: 0, rationale: "" },
+    { id: "answer-readiness", label: "Answer Readiness", score: m.answerReadiness, weight: 10, earned: 0, possible: 0, rationale: "" },
+    { id: "citability", label: "Citability & Evidence", score: m.citability, weight: 11, earned: 0, possible: 0, rationale: "" },
+    { id: "trust-authority", label: "Trust & Authority", score: m.trustAuthority, weight: 10, earned: 0, possible: 0, rationale: "" },
+    { id: "content-depth", label: "Content Depth", score: m.contentDepth, weight: 11, earned: 0, possible: 0, rationale: "" },
+  ];
+}
+
 function ReportContent() {
   const searchParams = useSearchParams();
   const rawDomain = searchParams.get("domain") || "cisco.com";
@@ -33,6 +78,11 @@ function ReportContent() {
 
   const [loading, setLoading] = useState(true);
   const [overallScore, setOverallScore] = useState<number>(0);
+  const [grade, setGrade] = useState<string>("");
+  const [gradeLabel, setGradeLabel] = useState<string>("");
+  const [dimensions, setDimensions] = useState<Dimension[]>([]);
+  const [checksRun, setChecksRun] = useState<number>(0);
+  const [checksPassed, setChecksPassed] = useState<number>(0);
   const [issues, setIssues] = useState<IssueItem[]>([]);
   const [metrics, setMetrics] = useState<Metrics>({
     crawlability: 0,
@@ -49,6 +99,12 @@ function ReportContent() {
     async function runServerAudit() {
       setLoading(true);
       setSiteUnreachable(false);
+      setDimensions([]);
+      setGrade("");
+      setGradeLabel("");
+      setChecksRun(0);
+      setChecksPassed(0);
+      setIssues([]);
 
       try {
         // 请求我们自己的后端 API 接口进行真实服务端扫描
@@ -59,7 +115,12 @@ function ReportContent() {
           setSiteUnreachable(true);
           setOverallScore(0);
         } else {
-          setOverallScore(data.score);
+          setOverallScore(data.score ?? 0);
+          setGrade(data.grade || "");
+          setGradeLabel(data.gradeLabel || "");
+          setDimensions(Array.isArray(data.dimensions) ? data.dimensions : []);
+          setChecksRun(data.checksRun ?? 0);
+          setChecksPassed(data.checksPassed ?? 0);
           setIssues(data.issues || []);
           if (data.metrics) {
             setMetrics(data.metrics);
@@ -153,10 +214,32 @@ function ReportContent() {
             <div className="text-center">
               {loading ? (
                 <div className="text-sm text-blue-400 animate-pulse font-mono py-2">Scanning via Edge...</div>
+              ) : siteUnreachable ? (
+                <div className="text-4xl font-black text-red-400 font-mono py-1">--</div>
               ) : (
-                <div className="text-4xl font-black text-amber-400 font-mono">{overallScore}/100</div>
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className={`text-4xl font-black font-mono ${scoreTextColor(overallScore)}`}>
+                    {overallScore}
+                  </span>
+                  <span className="text-sm text-gray-500 font-mono">/100</span>
+                  {grade && (
+                    <span
+                      className={`text-base font-black font-mono px-2 py-0.5 rounded-lg border ${gradeBadgeClass(overallScore)}`}
+                    >
+                      {grade}
+                    </span>
+                  )}
+                </div>
               )}
-              <div className="text-[11px] text-gray-400 mt-0.5">Overall GEO Score</div>
+              <div className="text-[11px] text-gray-400 mt-1">Overall GEO Score</div>
+              {!loading && !siteUnreachable && gradeLabel && (
+                <div className="text-[11px] text-gray-500 mt-0.5">{gradeLabel}</div>
+              )}
+              {!loading && !siteUnreachable && checksRun > 0 && (
+                <div className="text-[10px] text-gray-600 font-mono mt-1">
+                  {checksPassed}/{checksRun} checks passed
+                </div>
+              )}
             </div>
             <div className="h-8 w-px bg-gray-800"></div>
             <button
@@ -175,25 +258,35 @@ function ReportContent() {
           </div>
         ) : (
           <>
-            {/* 多维度评分面板 (参考竞品样式) */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
-              {[
-                { name: "Crawlability", score: metrics.crawlability },
-                { name: "Understandability", score: metrics.understandability },
-                { name: "Answer Readiness", score: metrics.answerReadiness },
-                { name: "Citability", score: metrics.citability },
-                { name: "Trust & Authority", score: metrics.trustAuthority },
-                { name: "Content Depth", score: metrics.contentDepth },
-              ].map((m) => (
-                <div key={m.name} className="bg-gray-950/40 border border-gray-800/80 p-4 rounded-xl">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs text-gray-400 font-medium">{m.name}</span>
-                    <span className="text-sm font-bold font-mono text-blue-400">{loading ? "--" : m.score}</span>
+            {/* Weighted dimension breakdown. Weights are published at /methodology. */}
+            <div className="mb-4 flex items-baseline justify-between gap-4">
+              <h2 className="text-lg font-bold text-white tracking-tight">Score breakdown</h2>
+              <span className="text-[11px] text-gray-500">
+                {dimensions.length > 0
+                  ? `${dimensions.length} weighted dimensions · 100 points total`
+                  : "6 weighted dimensions"}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+              {(dimensions.length > 0 ? dimensions : legacyDimensions(metrics)).map((d) => (
+                <div
+                  key={d.id}
+                  className="bg-gray-950/40 border border-gray-800/80 p-4 rounded-xl"
+                  title={d.rationale || undefined}
+                >
+                  <div className="flex justify-between items-center mb-2 gap-3">
+                    <span className="text-xs text-gray-300 font-medium">{d.label}</span>
+                    <span className="flex items-baseline gap-2 shrink-0">
+                      <span className="text-[10px] text-gray-600 font-mono">{d.weight}%</span>
+                      <span className={`text-sm font-bold font-mono ${scoreTextColor(d.score)}`}>
+                        {loading ? "--" : d.score}
+                      </span>
+                    </span>
                   </div>
                   <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-indigo-500 h-1.5 rounded-full transition-all duration-500"
-                      style={{ width: loading ? "0%" : `${m.score}%` }}
+                      className={`h-1.5 rounded-full transition-all duration-500 ${scoreBarColor(d.score)}`}
+                      style={{ width: loading ? "0%" : `${d.score}%` }}
                     ></div>
                   </div>
                 </div>
@@ -253,7 +346,10 @@ function ReportContent() {
                         <span className="text-xs text-gray-400 font-mono">{issue.category}</span>
                       </div>
                       <h3 className="text-base font-bold text-white">{issue.title}</h3>
-                      <p className="text-xs text-gray-400">{issue.summary}</p>
+                      <p className="text-xs text-gray-400">
+                        <span className="text-gray-500">What we found: </span>
+                        {issue.summary}
+                      </p>
                     </div>
 
                     <div className="bg-[#070A10] p-3 rounded-xl border border-gray-800 text-xs text-gray-300 md:max-w-xs">
