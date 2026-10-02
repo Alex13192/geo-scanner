@@ -400,8 +400,8 @@ export default function GermanHomePage() {
           <a href="/methodology/" hrefLang="en" className="hover:text-gray-300 transition-colors">
             Methodik (EN)
           </a>
-          <a href="/docs/" hrefLang="en" className="hover:text-gray-300 transition-colors">
-            Leitf&auml;den (EN)
+          <a href="/de/docs/" className="hover:text-gray-300 transition-colors">
+            Leitf&auml;den
           </a>
           <a href="/pricing/" hrefLang="en" className="hover:text-gray-300 transition-colors">
             Preise (EN)
