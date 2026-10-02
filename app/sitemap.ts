@@ -33,6 +33,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 1,
+      // Declared as a pair: hreflang has to be reciprocal, and a sitemap entry
+      // that names an alternate without that alternate naming it back is the
+      // most common way this markup gets ignored.
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/`,
+          de: `${SITE_URL}/de/`,
+        },
+      },
+    },
+    {
+      url: `${SITE_URL}/de/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/`,
+          de: `${SITE_URL}/de/`,
+        },
+      },
     },
     {
       url: `${SITE_URL}/about/`,

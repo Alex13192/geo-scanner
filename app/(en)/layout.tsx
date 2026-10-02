@@ -20,19 +20,6 @@ const TAGLINE = `${BRAND} \u2014 GEO Scanner for AI Search Visibility`;
 const DESCRIPTION =
   "Check whether ChatGPT, Claude and Perplexity can crawl, read and cite your website. Free AI crawler audit and /llms.txt generator, no signup required.";
 
-/**
- * Language alternates for this route group.
- *
- * English is served from the site root. Every other locale lives under its own
- * prefix, so `de` is declared here as soon as the German pages exist; declaring
- * a language that has no page would be a broken hreflang, which is worse than
- * omitting it.
- */
-const LANGUAGE_ALTERNATES: Record<string, string> = {
-  en: "/",
-  "x-default": "/",
-};
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
@@ -45,9 +32,15 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   applicationName: BRAND,
 
+  // NOTE: `languages` is deliberately NOT set here.
+  //
+  // Next.js merges nested metadata objects, so an alternates block declared on
+  // this root layout is inherited by every child route - which would make
+  // /docs/<slug>/ claim that its English alternate is the homepage, and later
+  // that its German alternate is /de. Alternates are declared only where they
+  // are true: see app/(en)/(home)/layout.tsx for the homepage.
   alternates: {
     canonical: "/",
-    languages: LANGUAGE_ALTERNATES,
   },
 
   openGraph: {
