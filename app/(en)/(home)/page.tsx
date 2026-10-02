@@ -265,9 +265,8 @@ export default function HomePage() {
               <p className="text-xs text-gray-400 leading-relaxed max-w-2xl">
                 LLMention audits its own homepage with the rules it applies to yours, and links
                 the result rather than quoting a number you have to take on trust. Last verified
-                on 2 October 2026: 98 out of 100, grade A, with 37 of 38 checks passing and no
-                score floor applied. Re-run it yourself — the report names the one check this
-                site still fails, and why.
+                on 2 October 2026: 100 out of 100, grade A, all 38 checks passing. Re-run it
+                yourself — the report lists every check, not only the failures.
               </p>
             </div>
             <a

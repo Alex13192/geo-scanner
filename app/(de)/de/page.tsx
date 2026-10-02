@@ -160,9 +160,9 @@ export default function GermanHomePage() {
               <p className="text-xs text-gray-400 leading-relaxed max-w-2xl">
                 LLMention pr&uuml;ft die eigene Startseite mit genau den Regeln, die auch f&uuml;r
                 Ihre Website gelten, und verlinkt das Ergebnis, statt eine Zahl zu behaupten. Zuletzt
-                gepr&uuml;ft am 2. Oktober 2026: 98 von 100 Punkten, Note A, 37 von 38 Pr&uuml;fungen
-                bestanden, ohne Mindestpunktzahl. Pr&uuml;fen Sie es selbst &ndash; der Bericht nennt
-                die eine Pr&uuml;fung, die diese Website noch nicht besteht, und warum.
+                gepr&uuml;ft am 2. Oktober 2026: 100 von 100 Punkten, Note A, alle 38 Pr&uuml;fungen
+                bestanden. Pr&uuml;fen Sie es selbst &ndash; der Bericht listet jede Pr&uuml;fung auf,
+                nicht nur die Fehler.
               </p>
             </div>
             <a
