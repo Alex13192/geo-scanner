@@ -123,6 +123,30 @@ export async function GET(request: Request) {
     lastModifiedHeader: home.lastModified,
   });
 
+  // `brief=1` returns the headline numbers without the twelve dimension objects
+  // or the issue list, so a caller collecting many sites at once does not have
+  // to pull roughly 8 KB per domain. It is also how the published study over a
+  // set of well-known sites is gathered, which is why it exists.
+  if (searchParams.get("brief") === "1") {
+    return NextResponse.json({
+      domain,
+      status: home.status,
+      scoreBasis: home.status === 200 ? "homepage" : `${home.status} error response`,
+      truncated: home.truncated,
+      score: result.score,
+      grade: result.grade,
+      checksRun: result.checksRun,
+      checksPassed: result.checksPassed,
+      // The handful of booleans a study actually cites, so the raw data does
+      // not depend on re-deriving them from the issue list downstream.
+      aiCrawlersBlocked: result.issues.some((i) => i.id === "robots-ai-blocked"),
+      hasJsonLdEntity: !result.issues.some((i) => i.id === "jsonld-entity"),
+      hasSameAs: !result.issues.some((i) => i.id === "sameas"),
+      hasRobotsTxt: !result.issues.some((i) => i.id === "robots-present"),
+      topIssue: result.issues[0]?.id ?? null,
+    });
+  }
+
   // Note: a non-200 homepage is NOT treated as unreachable. The analyser scores
   // it accordingly, and robots.txt - not the homepage response - decides whether
   // AI crawlers are actually blocked. But the caller has to be able to tell that
