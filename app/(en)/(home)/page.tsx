@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ScoreRing from "@/app/components/ScoreRing";
 
 type Language = "en" | "zh" | "es" | "de" | "fr" | "ja";
 
@@ -202,7 +203,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <main className="w-full max-w-5xl mx-auto px-6 py-12 flex flex-col items-center text-center space-y-8">
+      <main className="w-full max-w-6xl mx-auto px-6 py-12 flex flex-col items-center text-center space-y-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
           <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
           {t.tag}
@@ -288,12 +289,15 @@ export default function HomePage() {
                 them is published.
               </p>
             </div>
-            <a
-              href="/report/?domain=geo-scanner.ccie13192.com"
-              className="text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white px-5 py-3 rounded-xl transition-all shrink-0 text-center"
-            >
-              Scan this site →
-            </a>
+            <div className="flex flex-col sm:flex-row items-center gap-5 shrink-0 self-center">
+              <ScoreRing value={100} label="This site scores 100 out of 100" />
+              <a
+                href="/report/?domain=geo-scanner.ccie13192.com"
+                className="text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white px-5 py-3 rounded-xl transition-all text-center"
+              >
+                Scan this site →
+              </a>
+            </div>
           </div>
         </section>
 
@@ -413,7 +417,7 @@ export default function HomePage() {
             are deliberate: citing primary sources is the intervention with the
             largest measured effect in the literature, so the site does it. */}
         <section className="w-full pt-8 text-left space-y-4">
-          <div className="bg-gradient-to-r from-blue-950/20 via-gray-900/60 to-purple-950/20 border border-gray-800 p-8 rounded-2xl space-y-5">
+          <div className="bg-gradient-to-r from-blue-950/20 via-gray-900/60 to-purple-950/20 border border-gray-800 p-8 md:px-14 rounded-2xl space-y-5">
             <h2 className="text-2xl font-bold text-white">What the published research found</h2>
 
             <blockquote className="border-l-2 border-blue-500 pl-4 space-y-2">
@@ -488,7 +492,7 @@ export default function HomePage() {
         {/* About: the publisher has to be identifiable, and the contact route has
             to exist, before an engine treats a claim as attributable. */}
         <section className="w-full pt-8 text-left space-y-4">
-          <div className="bg-[#070A10]/60 border border-gray-800/60 p-8 rounded-2xl space-y-4">
+          <div className="bg-[#070A10]/60 border border-gray-800/60 p-8 md:px-14 rounded-2xl space-y-4">
             <h2 className="text-2xl font-bold text-white">About LLMention</h2>
             <p className="text-sm text-gray-400 leading-relaxed">
               LLMention is an independent tool that audits whether AI search engines can reach,
