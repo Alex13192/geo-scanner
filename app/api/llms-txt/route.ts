@@ -99,19 +99,26 @@ function extractLinks(html: string, origin: string, host: string): LinkEntry[] {
     if (IGNORED_PATH.test(url.pathname)) continue;
 
     const path = url.pathname.replace(/\/+$/, "") || "/";
-    if (LOCALE_ONLY.test(path)) continue;
     if (seen.has(path)) continue;
-    seen.add(path);
 
     // Anchors that wrap only an image carry no text. Falling back to a
     // humanised path beats emitting a raw "/nl/products" as a label, and beats
     // dropping a page that may well be worth listing.
-    const label = truncate(stripTags(match[2]), 80) || pathLabel(path);
+    const rawLabel = truncate(stripTags(match[2]), 80);
+
+    // A bare language prefix with no link text is a language switcher rather
+    // than a destination. With text - "Deutsch", "Nederlands" - it points at a
+    // real localised page, and dropping those would omit exactly the pages a
+    // multilingual site most wants listed.
+    if (LOCALE_ONLY.test(path) && !rawLabel) continue;
+
+    seen.add(path);
+    const label = rawLabel || pathLabel(path);
 
     // Only directories get a trailing slash. Appending one to /llms.txt turns a
     // valid file URL into a 404, which is the exact failure this file is meant
     // to help people avoid.
-    const suffix = path === "/" ? "" : FILE_LIKE.test(path) ? "" : "/";
+    const suffix = FILE_LIKE.test(path) ? "" : "/";
     out.push({ path, url: `${origin}${path}${suffix}`, label });
   }
   return out;
