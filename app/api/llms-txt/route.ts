@@ -59,6 +59,20 @@ function truncate(input: string, max: number): string {
 /** Paths that are navigation or plumbing rather than content. */
 const IGNORED_PATH = /\/(login|signin|sign-in|signup|sign-up|register|cart|checkout|account|search|tag|tags|category|categories|page\/\d+)(\/|$)/i;
 
+/** A bare language prefix such as /nl or /en-gb is a switcher, not a page. */
+const LOCALE_ONLY = /^\/[a-z]{2}(-[a-z]{2})?$/i;
+
+/** If the last segment looks like a file, it must not get a trailing slash. */
+const FILE_LIKE = /\.[a-z0-9]{2,5}$/i;
+
+/** Turn "/customer-stories" into "Customer stories" for anchors with no text. */
+function pathLabel(path: string): string {
+  if (path === "/") return "Home";
+  const segment = path.split("/").filter(Boolean).pop() || "";
+  const words = segment.replace(/[-_]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 type LinkEntry = { path: string; url: string; label: string };
 
 function extractLinks(html: string, origin: string, host: string): LinkEntry[] {
@@ -85,11 +99,20 @@ function extractLinks(html: string, origin: string, host: string): LinkEntry[] {
     if (IGNORED_PATH.test(url.pathname)) continue;
 
     const path = url.pathname.replace(/\/+$/, "") || "/";
+    if (LOCALE_ONLY.test(path)) continue;
     if (seen.has(path)) continue;
     seen.add(path);
 
-    const label = truncate(stripTags(match[2]), 80);
-    out.push({ path, url: `${origin}${path === "/" ? "/" : path + "/"}`, label });
+    // Anchors that wrap only an image carry no text. Falling back to a
+    // humanised path beats emitting a raw "/nl/products" as a label, and beats
+    // dropping a page that may well be worth listing.
+    const label = truncate(stripTags(match[2]), 80) || pathLabel(path);
+
+    // Only directories get a trailing slash. Appending one to /llms.txt turns a
+    // valid file URL into a 404, which is the exact failure this file is meant
+    // to help people avoid.
+    const suffix = path === "/" ? "" : FILE_LIKE.test(path) ? "" : "/";
+    out.push({ path, url: `${origin}${path}${suffix}`, label });
   }
   return out;
 }
@@ -97,6 +120,19 @@ function extractLinks(html: string, origin: string, host: string): LinkEntry[] {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const domain = cleanDomain(searchParams.get("domain") || "");
+
+  /**
+   * Content is requested in the language of the page the user is on.
+   *
+   * Without this the edge worker's own location decides: requesting stripe.com
+   * from a Netherlands-based edge node returned Stripe's Dutch homepage, so the
+   * generated file described the site in a language its owner may not publish
+   * in. Sending Accept-Language makes the result predictable and lets the
+   * German studio produce German copy for German sites.
+   */
+  const langParam = (searchParams.get("lang") || "en").toLowerCase();
+  const lang = /^[a-z]{2}$/.test(langParam) ? langParam : "en";
+  const acceptLanguage = lang === "en" ? "en-US,en;q=0.9" : `${lang},en;q=0.5`;
 
   if (!domain || !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) {
     return NextResponse.json({ error: "Invalid domain" }, { status: 400 });
@@ -113,6 +149,7 @@ export async function GET(request: Request) {
       headers: {
         "User-Agent": UA,
         Accept: "text/html,application/xhtml+xml,*/*",
+        "Accept-Language": acceptLanguage,
       },
       redirect: "follow",
       signal: controller.signal,

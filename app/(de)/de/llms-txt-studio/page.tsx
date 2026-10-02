@@ -43,7 +43,9 @@ function StudioContent() {
     setLinkCount(null);
 
     try {
-      const res = await fetch(`/api/llms-txt?domain=${encodeURIComponent(target)}`);
+      const res = await fetch(
+        `/api/llms-txt?domain=${encodeURIComponent(target)}&lang=de`
+      );
       const data = await res.json();
       if (!data.reachable) {
         setError(
