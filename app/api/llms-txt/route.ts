@@ -10,6 +10,8 @@
 // It is deliberately conservative: it only claims what it can see on one page,
 // and it says so in the generated file.
 import { NextResponse } from "next/server";
+import { fetchText, inspectTarget } from "@/lib/net/fetch-safe";
+import { clientKey, takeToken } from "@/lib/net/rate-limit";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -187,6 +189,19 @@ function extractLinks(html: string, origin: string, host: string): LinkEntry[] {
 }
 
 export async function GET(request: Request) {
+  // Before any parsing or fetching. See lib/net/rate-limit.ts for what this
+  // does and does not enforce.
+  const limit = takeToken(clientKey(request));
+  if (!limit.allowed) {
+    return NextResponse.json(
+      {
+        error: "Too many requests from this address. Please wait a moment and try again.",
+        retryAfter: limit.retryAfter,
+      },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const domain = cleanDomain(searchParams.get("domain") || "");
 
@@ -207,29 +222,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid domain" }, { status: 400 });
   }
 
-  const origin = `https://${domain}`;
-  let html = "";
-  let status = 0;
-
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    const res = await fetch(origin, {
-      headers: {
-        "User-Agent": UA,
-        Accept: "text/html,application/xhtml+xml,*/*",
-        "Accept-Language": acceptLanguage,
-      },
-      redirect: "follow",
-      signal: controller.signal,
-      cache: "no-store",
-    });
-    clearTimeout(timer);
-    status = res.status;
-    if (res.ok) html = await res.text();
-  } catch {
-    status = 0;
+  // Reject targets that point at a network rather than a website, and say why.
+  const target = inspectTarget(`https://${domain}`);
+  if (!target.ok) {
+    return NextResponse.json({ reachable: false, error: target.reason }, { status: 400 });
   }
+
+  const origin = `https://${domain}`;
+  const fetched = await fetchText(origin, {
+    userAgent: UA,
+    accept: "text/html,application/xhtml+xml,*/*",
+    acceptLanguage,
+    timeoutMs: FETCH_TIMEOUT_MS,
+  });
+
+  const status = fetched?.status ?? 0;
+  const html = fetched && fetched.status >= 200 && fetched.status < 300 ? fetched.body : "";
 
   if (!html) {
     return NextResponse.json(

@@ -8,6 +8,7 @@
  */
 import { analyze, parseRobots } from "../lib/geo/analyze.ts";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "../lib/geo/catalog.ts";
+import { inspectTarget } from "../lib/net/fetch-safe.ts";
 
 /** Every check id the analyser produced during this run. */
 const emittedCheckIds = new Set<string>();
@@ -262,5 +263,40 @@ for (const [label, html, id, expected, extra] of guards) {
   }
   const ok = got === expected;
   console.log(`  ${ok ? "PASS" : "FAIL"}  ${label} (expected ${expected}, got ${got})`);
+  if (!ok) process.exitCode = 1;
+}
+
+/* 7. Fetch guard. Both endpoints take a hostname straight from the query string
+      and fetch it, which makes them an open fetch proxy. These are the targets
+      that must never reach fetch, and the ordinary domains that still must. */
+console.log("\n=== fetch guard ===");
+
+const guardCases: Array<[string, boolean]> = [
+  ["https://example.com", true],
+  ["https://www.example.com/path?q=1", true],
+  ["https://sub.domain.co.uk", true],
+  ["http://example.com", true],
+  // Wildcard-DNS services turn the hostname itself into an address.
+  ["https://127.0.0.1.nip.io", false],
+  ["https://10-0-0-1.sslip.io", false],
+  ["https://192.168.1.1.xip.io", false],
+  // Names that point inside a network.
+  ["https://localhost", false],
+  ["https://printer.local", false],
+  ["https://intranet", false],
+  // Addresses, including the cloud metadata endpoint.
+  ["https://127.0.0.1", false],
+  ["https://169.254.169.254", false],
+  ["https://[::1]", false],
+  // Schemes and strings that are not a website.
+  ["ftp://example.com", false],
+  ["file:///etc/passwd", false],
+  ["not a url", false],
+];
+
+for (const [url, expected] of guardCases) {
+  const got = inspectTarget(url).ok;
+  const ok = got === expected;
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${expected ? "accepts" : "refuses"}  ${url}`);
   if (!ok) process.exitCode = 1;
 }

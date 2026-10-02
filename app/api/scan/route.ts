@@ -2,8 +2,14 @@
 //
 // Thin controller: fetch the four resources a GEO audit needs, then hand them
 // to the analyser in lib/geo/analyze.ts. All scoring rules live there.
+//
+// Every outbound request goes through lib/net/fetch-safe.ts, which is the single
+// place allowed to call fetch with a hostname supplied by the caller. Read that
+// file before adding another one here.
 import { NextResponse } from "next/server";
 import { analyze } from "@/lib/geo/analyze";
+import { fetchText, inspectTarget, type SafeFetchResult } from "@/lib/net/fetch-safe";
+import { clientKey, takeToken } from "@/lib/net/rate-limit";
 
 export const runtime = "edge"; // 必须在 Cloudflare Edge 上运行
 export const dynamic = "force-dynamic"; // 强制声明为动态接口，防止静态编译拦截
@@ -33,40 +39,6 @@ function cleanDomain(domain: string): string {
     .toLowerCase();
 }
 
-type Fetched = {
-  status: number;
-  body: string;
-  lastModified: string | null;
-};
-
-async function get(url: string): Promise<Fetched | null> {
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": CRAWLER_UA,
-        Accept: "text/html,application/xhtml+xml,application/xml,text/plain,*/*",
-        "Accept-Language": "en;q=0.9,*;q=0.5",
-      },
-      redirect: "follow",
-      signal: controller.signal,
-      cache: "no-store",
-    });
-    clearTimeout(timer);
-
-    let body = "";
-    try {
-      body = await res.text();
-    } catch {
-      body = "";
-    }
-    return { status: res.status, body, lastModified: res.headers.get("last-modified") };
-  } catch {
-    return null;
-  }
-}
-
 const emptyMetrics = {
   crawlability: 0,
   understandability: 0,
@@ -77,6 +49,19 @@ const emptyMetrics = {
 };
 
 export async function GET(request: Request) {
+  // Before any parsing or fetching. See lib/net/rate-limit.ts for what this
+  // does and does not enforce.
+  const limit = takeToken(clientKey(request));
+  if (!limit.allowed) {
+    return NextResponse.json(
+      {
+        error: "Too many scans from this address. Please wait a moment and try again.",
+        retryAfter: limit.retryAfter,
+      },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const domain = cleanDomain(searchParams.get("domain") || "");
 
@@ -84,15 +69,29 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid domain" }, { status: 400 });
   }
 
+  // Reject targets that point at a network rather than a website, and say why,
+  // instead of letting them fail as an unreachable domain.
+  const target = inspectTarget(`https://${domain}`);
+  if (!target.ok) {
+    return NextResponse.json({ error: target.reason }, { status: 400 });
+  }
+
+  const options = {
+    userAgent: CRAWLER_UA,
+    acceptLanguage: "en;q=0.9,*;q=0.5",
+    timeoutMs: FETCH_TIMEOUT_MS,
+  };
+
   // 1. Homepage, over https first and http as a fallback. Remember which scheme
   //    worked: it decides the HTTPS check, and the support files have to be
   //    requested over the same scheme. Fetching robots.txt, llms.txt and
   //    sitemap.xml over https:// for an http-only site invented three failures.
   let scheme: "https" | "http" = "https";
-  let home = await get(`${scheme}://${domain}`);
-  if (!home) {
+  let home: SafeFetchResult | null = await fetchText(`${scheme}://${domain}`, options);
+
+  if (!home && inspectTarget(`http://${domain}`).ok) {
     scheme = "http";
-    home = await get(`${scheme}://${domain}`);
+    home = await fetchText(`${scheme}://${domain}`, options);
   }
 
   // No HTTP response at all on either scheme: the domain really is unreachable.
@@ -108,9 +107,9 @@ export async function GET(request: Request) {
   // 2. The three support files, fetched in parallel. A failure here is itself
   //    a finding, so each returns null rather than throwing.
   const [robots, llms, sitemap] = await Promise.all([
-    get(`${scheme}://${domain}/robots.txt`),
-    get(`${scheme}://${domain}/llms.txt`),
-    get(`${scheme}://${domain}/sitemap.xml`),
+    fetchText(`${scheme}://${domain}/robots.txt`, options),
+    fetchText(`${scheme}://${domain}/llms.txt`, options),
+    fetchText(`${scheme}://${domain}/sitemap.xml`, options),
   ]);
 
   const result = analyze({
@@ -130,6 +129,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     reachable: true,
     status: home.status,
+    scheme,
     score: result.score,
     grade: result.grade,
     gradeLabel: result.gradeLabel,
