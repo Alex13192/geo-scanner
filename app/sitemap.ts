@@ -16,11 +16,15 @@ const LAST_MODIFIED = new Date('2026-10-02');
 /**
  * NOTE ON TRAILING SLASHES
  * next.config.ts sets `trailingSlash: true`, so `/docs` redirects to `/docs/`.
- * The canonical URL therefore has a trailing slash - keep it that way here.
+ * Canonical URLs therefore carry a trailing slash - keep it that way here.
  *
  * NOTE ON /report/
  * The scan result page is user-specific and thin content. It is deliberately
  * NOT listed here, and is disallowed in robots.txt.
+ *
+ * NOTE ON THE GUIDES
+ * The four guides live at their own URLs rather than as cards on /docs/.
+ * Each one targets a distinct long-tail query and is independently rankable.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
@@ -37,10 +41,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${SITE_URL}/docs/llms-txt-deployment/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/docs/allow-ai-crawlers/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${SITE_URL}/llms-txt-studio/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/docs/qa-style-headings/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/docs/schema-org-jsonld/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
     },
     {
       url: `${SITE_URL}/readiness-badge/`,

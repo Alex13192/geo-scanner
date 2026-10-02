@@ -104,8 +104,9 @@ export default function DocsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredGuides.map((guide) => (
-            <div
+            <Link
               key={guide.id}
+              href={`/docs/${guide.id}/`}
               className="bg-gray-900/60 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl transition-all space-y-4 flex flex-col justify-between"
             >
               <div className="space-y-3">
@@ -124,7 +125,9 @@ export default function DocsPage() {
                   {guide.codeSnippet}
                 </pre>
               )}
-            </div>
+
+              <span className="text-xs text-blue-400 font-medium">Read guide →</span>
+            </Link>
           ))}
         </div>
       </main>

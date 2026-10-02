@@ -23,10 +23,18 @@ an AI-generated answer, and produces a shareable readiness score.
 
 ## Documentation
 
-- [GEO knowledge hub](https://geo-scanner.ccie13192.com/docs/): Step-by-step
-  technical guides covering /llms.txt deployment, Q&A-style headings for direct AI
-  citation, Schema.org JSON-LD for entity disambiguation, and robots.txt / WAF
-  configuration for AI crawlers.
+- [GEO knowledge hub](https://geo-scanner.ccie13192.com/docs/): Index of all guides.
+- [How to generate and deploy an llms.txt file](https://geo-scanner.ccie13192.com/docs/llms-txt-deployment/):
+  File format, hosting location, verification steps, and an honest assessment of
+  what llms.txt does and does not do for AI visibility.
+- [Configuring robots.txt and WAF for GPTBot and PerplexityBot](https://geo-scanner.ccie13192.com/docs/allow-ai-crawlers/):
+  Which user-agents AI search engines send, and how to stop a firewall from
+  silently returning 403 to them.
+- [Optimizing headings for direct AI citation](https://geo-scanner.ccie13192.com/docs/qa-style-headings/):
+  Rewriting H2 and H3 headings as real questions and pairing them with
+  answer-first paragraphs.
+- [Implementing Schema.org JSON-LD for entity disambiguation](https://geo-scanner.ccie13192.com/docs/schema-org-jsonld/):
+  Connecting Organization, WebSite and SoftwareApplication nodes into one entity.
 
 ## Supported AI crawlers
 
