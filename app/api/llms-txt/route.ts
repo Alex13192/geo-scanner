@@ -119,6 +119,22 @@ function pathLabel(path: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/**
+ * The text a reader would call the link.
+ *
+ * When a whole card is wrapped in one anchor, the raw text is the entire card -
+ * emoji, heading and paragraph together - which fills the file with truncated
+ * 80-character labels. The heading or bold run inside the anchor is what the
+ * link is actually called, so it wins when present.
+ */
+function anchorLabel(inner: string): string {
+  const heading = inner.match(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/i)?.[1];
+  if (heading) return truncate(stripTags(heading), 60);
+  const bold = inner.match(/<(strong|b)\b[^>]*>([\s\S]*?)<\/\1>/i)?.[2];
+  if (bold) return truncate(stripTags(bold), 60);
+  return truncate(stripTags(inner), 60);
+}
+
 type LinkEntry = { path: string; url: string; label: string };
 
 function extractLinks(html: string, origin: string, host: string): LinkEntry[] {
@@ -150,7 +166,7 @@ function extractLinks(html: string, origin: string, host: string): LinkEntry[] {
     // Anchors that wrap only an image carry no text. Falling back to a
     // humanised path beats emitting a raw "/nl/products" as a label, and beats
     // dropping a page that may well be worth listing.
-    const rawLabel = truncate(stripTags(match[2]), 80);
+    const rawLabel = anchorLabel(match[2]);
 
     // A bare language prefix with no link text is a language switcher rather
     // than a destination. With text - "Deutsch", "Nederlands" - it points at a
