@@ -68,6 +68,13 @@ function BadgeContent() {
             ? `That site answered with HTTP ${data.status}, so no score could be produced.`
             : "That site could not be reached, so no score could be produced."
         );
+      } else if (typeof data.scoreBasis === "string" && data.scoreBasis !== "homepage") {
+        // The score describes a block page or an error document rather than the
+        // site. A badge carrying it would assert something about a response
+        // nobody intended to publish, so no badge is offered.
+        setError(
+          `The homepage answered with a ${data.scoreBasis} rather than the page itself, so there is no honest score to put on a badge. Resolve the access issue first, then check again.`
+        );
       } else {
         setScore(data.score);
         setGrade(data.grade || "");

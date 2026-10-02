@@ -98,6 +98,15 @@ function ReportContent() {
     contentDepth: 0,
   });
   const [siteUnreachable, setSiteUnreachable] = useState(false);
+  /**
+   * What the score actually describes. "homepage" is the normal case; anything
+   * else means the server answered with an error or a challenge page and the
+   * analyser scored that response body. Twelve dimension scores imply a real
+   * page was read, so when they do not describe one, the page has to say so.
+   */
+  const [scoreBasis, setScoreBasis] = useState("homepage");
+  /** True when the response was larger than the read cap and was truncated. */
+  const [truncated, setTruncated] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "high" | "medium" | "low">("all");
 
   useEffect(() => {
@@ -111,6 +120,8 @@ function ReportContent() {
     async function runServerAudit() {
       setLoading(true);
       setSiteUnreachable(false);
+      setScoreBasis("homepage");
+      setTruncated(false);
       setDimensions([]);
       setGrade("");
       setGradeLabel("");
@@ -127,6 +138,8 @@ function ReportContent() {
           setSiteUnreachable(true);
           setOverallScore(0);
         } else {
+          setScoreBasis(typeof data.scoreBasis === "string" ? data.scoreBasis : "homepage");
+          setTruncated(data.truncated === true);
           setOverallScore(data.score ?? 0);
           setGrade(data.grade || "");
           setGradeLabel(data.gradeLabel || "");
@@ -307,6 +320,38 @@ function ReportContent() {
             </button>
           </div>
         </div>
+
+        {/* What the score describes. Twelve dimension scores imply that a real
+            page was read, so when the analyser actually scored an error or
+            challenge response, this has to be said before the numbers are. */}
+        {!loading && !siteUnreachable && scoreBasis !== "homepage" && (
+          <div className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 space-y-2">
+            <span className="inline-block text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded uppercase tracking-wider">
+              Read this first
+            </span>
+            <h2 className="text-sm font-bold text-amber-200">
+              This score describes a {scoreBasis}, not your page
+            </h2>
+            <p className="text-xs text-amber-100/80 leading-relaxed">
+              The homepage did not return HTTP 200, so what was analysed is the body your server
+              sent &mdash; a block page, a challenge or an error document. Every dimension below
+              describes that response. It is not a verdict on your content, and a low score here
+              usually points at a bot-protection rule rather than a GEO problem. Resolve the
+              access issue, then scan again.
+            </p>
+          </div>
+        )}
+
+        {!loading && !siteUnreachable && truncated && (
+          <div className="mb-8 bg-gray-800/40 border border-gray-700 rounded-2xl p-6 space-y-2">
+            <h2 className="text-sm font-bold text-gray-200">The response was truncated</h2>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              The homepage exceeded the 2&nbsp;MB read limit, so scoring stopped partway through
+              the document. Checks about content length, structure and extraction are therefore
+              measured against an incomplete page and may understate the real result.
+            </p>
+          </div>
+        )}
 
         {siteUnreachable ? (
           <div className="text-center py-16 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm">

@@ -125,11 +125,16 @@ export async function GET(request: Request) {
 
   // Note: a non-200 homepage is NOT treated as unreachable. The analyser scores
   // it accordingly, and robots.txt - not the homepage response - decides whether
-  // AI crawlers are actually blocked.
+  // AI crawlers are actually blocked. But the caller has to be able to tell that
+  // the score describes an error response rather than a page, so the basis is
+  // stated explicitly instead of leaving twelve dimension scores to imply that
+  // a real page was read.
   return NextResponse.json({
     reachable: true,
     status: home.status,
     scheme,
+    scoreBasis: home.status === 200 ? "homepage" : `HTTP ${home.status} response`,
+    truncated: home.truncated,
     score: result.score,
     grade: result.grade,
     gradeLabel: result.gradeLabel,
