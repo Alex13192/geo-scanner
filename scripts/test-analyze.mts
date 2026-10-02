@@ -197,3 +197,70 @@ console.log("\n=== single-language hreflang guard ===");
   );
   if (!ok) process.exitCode = 1;
 }
+
+/* 6. Measurement guards. Each of these pins a check that used to award points
+      for input which did not satisfy the published rule. They are the specific
+      errors an adversarial read of the engine turned up, and without a test
+      each one would come back the next time somebody "simplified" a regex. */
+console.log("\n=== measurement guards ===");
+
+const guards: Array<[string, string, string, "pass" | "fail", Record<string, unknown>?]> = [
+  [
+    "an empty JSON-LD object ({}) is not valid markup",
+    `<html lang="en"><head><script type="application/ld+json">{}</script></head><body><h1>x</h1></body></html>`,
+    "jsonld-valid",
+    "fail",
+  ],
+  [
+    "<table> inside a script string does not satisfy extractables",
+    `<html lang="en"><body><h1>x</h1><script>var s = "<table><tr><td>";</script></body></html>`,
+    "extractables",
+    "fail",
+  ],
+  [
+    "a bare four-digit year is not a quantified claim",
+    `<html lang="en"><body><h1>x</h1><p>Copyright 2026. Model 2024. Reference 2025.</p></body></html>`,
+    "statistics",
+    "fail",
+  ],
+  [
+    "an empty robots.txt is not a served robots.txt",
+    `<html lang="en"><body><h1>x</h1></body></html>`,
+    "robots-present",
+    "fail",
+    { robotsText: "   \n  " },
+  ],
+  [
+    "an empty author value does not satisfy the author check",
+    `<html lang="en"><head><script type="application/ld+json">{"@context":"https://schema.org","author":""}</script></head><body><h1>x</h1></body></html>`,
+    "author",
+    "fail",
+  ],
+  [
+    "a bare lang without a region does not satisfy lang-region",
+    `<html lang="en"><body><h1>x</h1></body></html>`,
+    "lang-region",
+    "fail",
+  ],
+  [
+    "og:locale with a region does satisfy lang-region",
+    `<html lang="en"><head><meta property="og:locale" content="en_GB"></head><body><h1>x</h1></body></html>`,
+    "lang-region",
+    "pass",
+  ],
+];
+
+for (const [label, html, id, expected, extra] of guards) {
+  let got = "crashed";
+  try {
+    const result = analyze({ ...base, html, ...(extra ?? {}) } as Parameters<typeof analyze>[0]);
+    got = result.checks.find((c) => c.id === id)?.status ?? "not-run";
+  } catch (e) {
+    console.log(`  FAIL  ${label} threw: ${(e as Error).message}`);
+    process.exitCode = 1;
+    continue;
+  }
+  const ok = got === expected;
+  console.log(`  ${ok ? "PASS" : "FAIL"}  ${label} (expected ${expected}, got ${got})`);
+  if (!ok) process.exitCode = 1;
+}

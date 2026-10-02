@@ -156,7 +156,7 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "robots-present",
     dimension: "ai-crawler-access",
     points: 2,
-    rule: "A request for /robots.txt returns HTTP 200 with a readable body.",
+    rule: "A request for /robots.txt returns HTTP 200 with a non-empty body. A 200 with an empty or whitespace-only body counts as not served, because it publishes no policy at all.",
     onFail: "No readable robots.txt at the domain root.",
   },
   {
@@ -207,7 +207,7 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "jsonld-valid",
     dimension: "machine-readability",
     points: 5,
-    rule: "At least one <script type=\"application/ld+json\"> block parses as JSON. Which blocks failed to parse is reported.",
+    rule: 'At least one <script type="application/ld+json"> block parses as JSON and declares at least one @-keyword (@context, @type, @graph or @id). A block containing only {} parses but declares nothing, so it does not count.',
   },
   {
     id: "jsonld-entity",
@@ -239,7 +239,7 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "extractables",
     dimension: "content-depth",
     points: 3,
-    rule: "The page contains both a <ul>/<ol> and a <table>. Having only one is a partial pass.",
+    rule: "The page contains both a <ul>/<ol> and a <table>. Having only one is a partial pass. Script and style bodies are excluded first, so markup that only appears inside a string does not count.",
   },
 
   /* ---- Citability & Evidence ---- */
@@ -247,7 +247,8 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "statistics",
     dimension: "citability",
     points: 4,
-    rule: "Body text contains at least 5 numeric claims: percentages, currency amounts, multipliers of the form 3.2x, or bare numbers of three digits or more.",
+    rule: "Body text contains at least 5 numeric claims: percentages, currency amounts, multipliers of the form 3.2x, thousands-separated figures, or raw numbers of five digits or more. A bare four-digit number is not counted, because it is a year far more often than it is a finding.",
+    note: "Counting bare three-digit numbers used to make any page with a copyright line or a product ID look quantified, which is the opposite of what the check is for.",
   },
   {
     id: "quotations",
@@ -307,13 +308,13 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "author",
     dimension: "trust-authority",
     points: 3,
-    rule: "Authorship is signalled by any of: a Person node in JSON-LD, an author property, rel=\"author\", or a visible byline matching \"by Firstname Lastname\".",
+    rule: "Authorship is signalled by any of: a Person node in parsed JSON-LD, an author property with a non-empty value in parsed JSON-LD, rel=\"author\", or a visible byline matching \"by Firstname Lastname\".",
   },
   {
     id: "sameas",
     dimension: "trust-authority",
     points: 2,
-    rule: "JSON-LD contains a sameAs property.",
+    rule: "Parsed JSON-LD contains a sameAs property with a non-empty value.",
   },
 
   /* ---- Semantic Structure ---- */
@@ -401,7 +402,8 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "lang-region",
     dimension: "multilingual",
     points: 1,
-    rule: "An hreflang-style language tag is declared on the document.",
+    rule: "A language tag carrying a region subtag appears in <html lang>, in og:locale or in an hreflang attribute - for example en-GB, en_GB or de-AT. A bare language such as \"en\" does not satisfy this; that is what html-lang checks.",
+    note: "This check previously ran the identical <html lang> regex as html-lang, so one attribute earned points in two dimensions while the rule promised a region.",
   },
 
   /* ---- Delivery & Mobile ---- */

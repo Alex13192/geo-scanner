@@ -175,19 +175,51 @@ function getHeadings(html: string): { level: number; text: string }[] {
   return out;
 }
 
-function getJsonLdTypes(html: string): { types: string[]; valid: number; invalid: number } {
+/** A property only counts if it actually carries something. */
+function isMeaningfulValue(v: unknown): boolean {
+  if (v === null || v === undefined) return false;
+  if (typeof v === "string") return v.trim().length > 0;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === "object") return Object.keys(v as Record<string, unknown>).length > 0;
+  return true;
+}
+
+function getJsonLdTypes(html: string): {
+  types: string[];
+  valid: number;
+  invalid: number;
+  /** Property names found inside blocks that actually parsed. */
+  keys: string[];
+} {
   const blocks = html.match(
     /<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
   );
   const types: string[] = [];
+  const keys: string[] = [];
   let valid = 0;
   let invalid = 0;
-  if (!blocks) return { types, valid, invalid };
+  if (!blocks) return { types, valid, invalid, keys };
 
   for (const block of blocks.slice(0, 20)) {
     const inner = block.replace(/^[\s\S]*?>/, "").replace(/<\/script>$/i, "");
     try {
-      const parsed = JSON.parse(inner.trim());
+      const parsed: unknown = JSON.parse(inner.trim());
+
+      // An empty object parses, and used to be counted as valid JSON-LD, which
+      // handed out the full 5 points for markup that declares nothing at all.
+      const objectKeys = Array.isArray(parsed)
+        ? []
+        : parsed !== null && typeof parsed === "object"
+          ? Object.keys(parsed as Record<string, unknown>)
+          : [];
+      const meaningful = Array.isArray(parsed)
+        ? parsed.length > 0
+        : objectKeys.some((k) => k.startsWith("@"));
+      if (!meaningful) {
+        invalid += 1;
+        continue;
+      }
+
       valid += 1;
       const visit = (node: unknown) => {
         if (!node || typeof node !== "object") return;
@@ -199,14 +231,25 @@ function getJsonLdTypes(html: string): { types: string[]; valid: number; invalid
         const t = obj["@type"];
         if (typeof t === "string") types.push(t);
         else if (Array.isArray(t)) t.forEach((x) => typeof x === "string" && types.push(x));
-        Object.values(obj).forEach(visit);
+
+        // Record property names with values, so authorship and sameAs are
+        // judged on parsed structured data rather than on a substring match
+        // anywhere in the raw HTML.
+        for (const [k, v] of Object.entries(obj)) {
+          if (k.startsWith("@")) {
+            visit(v);
+            continue;
+          }
+          if (isMeaningfulValue(v)) keys.push(k);
+          visit(v);
+        }
       };
       visit(parsed);
     } catch {
       invalid += 1;
     }
   }
-  return { types: [...new Set(types)], valid, invalid };
+  return { types: [...new Set(types)], valid, invalid, keys: [...new Set(keys)] };
 }
 
 function getHrefs(html: string): string[] {
@@ -226,10 +269,18 @@ function isQuestionHeading(text: string): boolean {
   return /^(how|what|why|which|when|who|where|is|are|do|does|can|should|will)\b/i.test(t);
 }
 
-/** Counts numeric claims: percentages, money, multipliers, large raw numbers. */
+/**
+ * Counts numeric claims: percentages, money, multipliers, thousands-separated
+ * figures, and raw numbers of five digits or more.
+ *
+ * The bare `\b\d{3,}\b` alternative is deliberately gone. It counted years,
+ * product IDs, phone fragments and copyright lines as evidence, so any page
+ * with a footer could claim "quantified claims are present" - which is the
+ * opposite of what the check is for.
+ */
 function countStatistics(text: string): number {
   const re =
-    /(\d+(?:[.,]\d+)?\s?%|\$\s?\d[\d,.]*|£\s?\d[\d,.]*|€\s?\d[\d,.]*|\d+(?:\.\d+)?\s?x\b|\b\d{3,}\b)/gi;
+    /(\d+(?:[.,]\d+)?\s?%|\$\s?\d[\d,.]*|£\s?\d[\d,.]*|€\s?\d[\d,.]*|\d+(?:\.\d+)?\s?x\b|\b\d{1,3}(?:[.,]\d{3})+\b|\b\d{5,}\b)/gi;
   const found = text.match(re);
   return found ? found.length : 0;
 }
@@ -460,7 +511,12 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
   const h1s = headings.filter((h) => h.level === 1);
   const h2s = headings.filter((h) => h.level === 2);
   const jsonLd = getJsonLdTypes(html);
-  const robots = input.robotsText ? parseRobots(input.robotsText) : null;
+  const robotsText =
+    input.robotsText && input.robotsText.trim().length > 0 ? input.robotsText : null;
+  // A 200 response with an empty body publishes no policy at all, so it is
+  // treated as no robots.txt. It used to pass both "robots.txt is served" and
+  // "a crawler policy is published" while containing nothing.
+  const robots = robotsText ? parseRobots(robotsText) : null;
   const authority = countAuthorityLinks(html, domain);
   const statistics = countStatistics(text);
 
@@ -470,7 +526,7 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
   {
     const c: Check[] = [];
     if (robots) {
-      c.push(pass("robots-present", 2, "robots.txt is served", `Fetched ${input.robotsText!.length} bytes.`));
+      c.push(pass("robots-present", 2, "robots.txt is served", `Fetched ${robotsText!.length} bytes.`));
       if (robots.blocked.length === 0) {
         c.push(pass("robots-ai-allowed", 6, "No AI crawler is blocked", "gptbot, claudebot, perplexitybot, oai-searchbot and google-extended are all permitted at the site root."));
       } else {
@@ -590,8 +646,13 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
     else if (sections >= 2) c.push(partial("sections", 3, 2, "Few sections", `${sections} H2 sections.`, "Split the content into question-shaped sections so each can be retrieved independently."));
     else c.push(fail("sections", 3, "Content is not sectioned", `${sections} H2 sections found.`, "Add H2 sections that each answer one question."));
 
-    const hasList = /<(ul|ol)\b/i.test(html);
-    const hasTable = /<table\b/i.test(html);
+    // Strip script and style bodies first. A JSON-LD string containing "<table"
+    // satisfied the table test without a table existing anywhere on the page.
+    const structural = html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ");
+    const hasList = /<(ul|ol)\b/i.test(structural);
+    const hasTable = /<table\b/i.test(structural);
     if (hasList && hasTable) c.push(pass("extractables", 3, "Lists and tables are present", "Both <ul>/<ol> and <table> markup found."));
     else if (hasList || hasTable) c.push(partial("extractables", 3, 2, "Only one extractable format", hasList ? "Lists found, no tables." : "Tables found, no lists.", "Lists and tables are the formats engines extract most reliably. Add both where they fit."));
     else c.push(fail("extractables", 3, "No lists or tables", "Neither list nor table markup found.", "Convert comparisons and steps into lists or tables."));
@@ -695,9 +756,12 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
     else if (hasAbout || hasContact) c.push(partial("about-contact", 3, 1, "Only one of About or Contact is linked", hasAbout ? "An about page is linked; no contact path found." : "A contact path is linked; no about page found.", "Models weigh who is responsible for a claim. Link both."));
     else c.push(fail("about-contact", 3, "No About or Contact path", "Neither an about-style nor a contact-style link was found.", "Link an about page and a contact route so the publisher is identifiable."));
 
+    // Authorship is judged on parsed structured data, on an explicit rel=author,
+    // or on a visible byline. It used to substring-match `"author":` anywhere in
+    // the raw HTML, so `"author": ""` in an unrelated script earned the points.
     const hasAuthor =
       jsonLd.types.includes("Person") ||
-      /"author"\s*:/i.test(html) ||
+      jsonLd.keys.includes("author") ||
       /rel\s*=\s*["']author["']/i.test(html) ||
       /\bby\s+[A-Z][a-z]+\s+[A-Z][a-z]+/m.test(text);
     c.push(
@@ -706,7 +770,7 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
         : fail("author", 3, "No authorship signal", "No Person node, author property, rel=author or visible byline found.", "Attribute content to a named person or organisation.")
     );
 
-    const hasSameAs = /"sameAs"\s*:/i.test(html);
+    const hasSameAs = jsonLd.keys.includes("sameAs");
     c.push(
       hasSameAs
         ? pass("sameas", 2, "Entity is cross-referenced", "A sameAs list is present in structured data.")
@@ -875,11 +939,32 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
             "Declare hreflang for each language version you actually serve, so every version can be retrieved in its own market."
           )
     );
-    const lang = html.match(/<html[^>]+lang\s*=\s*["']([^"']+)["']/i);
+    // A region subtag is what makes a language market-specific: de-DE is not the
+    // same target as de. This check used to run the identical <html lang> regex
+    // as html-lang, so a single attribute earned points in two different
+    // dimensions while the id promised a region that was never required.
+    const htmlLang = html.match(/<html[^>]+lang\s*=\s*["']([^"']+)["']/i)?.[1] ?? "";
+    const ogLocale =
+      html.match(/<meta\b[^>]*property\s*=\s*["']og:locale["'][^>]*>/i)?.[0].match(
+        /content\s*=\s*["']([^"']+)["']/i
+      )?.[1] ?? "";
+    const hreflangValues = Array.from(
+      html.matchAll(/hreflang\s*=\s*["']([^"']+)["']/gi)
+    ).map((m) => m[1]);
+    const regionTag = [htmlLang, ogLocale, ...hreflangValues]
+      .map((t) => t.trim())
+      .find((t) => /^[a-z]{2,3}[-_][a-z0-9]{2,4}$/i.test(t));
+
     c.push(
-      lang
-        ? pass("lang-region", 1, "Language tag is present", `lang="${lang[1]}".`)
-        : fail("lang-region", 1, "Language tag missing", "No lang attribute found.", "Set a language tag, optionally with a region such as en-GB.")
+      regionTag
+        ? pass("lang-region", 1, "A region-specific locale is declared", `Region subtag found: "${regionTag}".`)
+        : fail(
+            "lang-region",
+            1,
+            "No region-specific locale",
+            "No language tag carrying a region subtag was found in <html lang>, og:locale or hreflang.",
+            'Declare a region where it matters, for example lang="en-GB", og:locale="en_GB" or hreflang="de-AT".'
+          )
     );
     checks["multilingual"] = c;
   }
