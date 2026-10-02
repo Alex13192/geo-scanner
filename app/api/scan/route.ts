@@ -9,6 +9,66 @@ function cleanDomain(domain: string): string {
   return domain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
 }
 
+/**
+ * Does this robots.txt block `agent` from the site root?
+ *
+ * This parses real user-agent groups rather than searching the file for
+ * "Disallow: /" and an agent name independently. That distinction matters:
+ * a file that mentions GPTBot in one group and disallows "/" for a completely
+ * different agent is NOT blocking GPTBot, and reporting it as such is a false
+ * positive that destroys trust in the report.
+ *
+ * Matching follows the parts of the spec crawlers actually implement:
+ * an exact agent match wins over the "*" group, and the last matching rule wins.
+ */
+function robotsBlocksAgent(robotsText: string, agent: string): boolean {
+  const target = agent.toLowerCase();
+  const groups: { agents: string[]; rules: { allow: boolean; path: string }[] }[] = [];
+  let current: { agents: string[]; rules: { allow: boolean; path: string }[] } | null = null;
+  let previousLineWasAgent = false;
+
+  for (const rawLine of robotsText.split(/\r?\n/)) {
+    const line = rawLine.replace(/#.*$/, "").trim();
+    if (!line) continue;
+    const separator = line.indexOf(":");
+    if (separator < 0) continue;
+
+    const field = line.slice(0, separator).trim().toLowerCase();
+    const value = line.slice(separator + 1).trim();
+
+    if (field === "user-agent") {
+      if (!current || !previousLineWasAgent) {
+        current = { agents: [], rules: [] };
+        groups.push(current);
+      }
+      current.agents.push(value.toLowerCase());
+      previousLineWasAgent = true;
+    } else if (field === "allow" || field === "disallow") {
+      if (current) current.rules.push({ allow: field === "allow", path: value });
+      previousLineWasAgent = false;
+    } else {
+      previousLineWasAgent = false;
+    }
+  }
+
+  const exactGroups = groups.filter((g) => g.agents.includes(target));
+  const chosenGroups = exactGroups.length ? exactGroups : groups.filter((g) => g.agents.includes("*"));
+  if (!chosenGroups.length) return false;
+
+  let blockedFromRoot = false;
+  for (const group of chosenGroups) {
+    for (const rule of group.rules) {
+      if (rule.path === "/" || rule.path === "") {
+        blockedFromRoot = !rule.allow;
+      }
+    }
+  }
+  return blockedFromRoot;
+}
+
+/** Crawler user-agents this scanner checks for explicit robots.txt blocks. */
+const TRACKED_AI_AGENTS = ["gptbot", "claudebot", "perplexitybot"];
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawDomain = searchParams.get("domain") || "";
@@ -87,32 +147,64 @@ export async function GET(request: Request) {
   const homeStatus = attempt.status;
   homeHtml = attempt.body;
 
-  // The homepage answered with an error status. Report that as the headline
-  // finding instead of inventing downstream issues from an error page.
+  // The homepage answered with an error status.
+  //
+  // Before concluding anything, cross-check robots.txt. It is a static file and
+  // is almost never behind the same bot protection, so it tells us what the site
+  // INTENDS to do with AI crawlers - whereas a 403 only reports what happened to
+  // this one request. Large sites verify crawlers by IP address, so a request
+  // carrying a spoofed GPTBot user-agent from our infrastructure is routinely
+  // refused even when real GPTBot traffic is welcome. Reporting that as "you
+  // block AI crawlers" would be a false positive on exactly the domains users
+  // test first, which is the fastest way to lose their trust.
   if (homeStatus >= 400) {
     const likelyBotBlocked = [401, 403, 406, 429, 451, 503].includes(homeStatus);
 
+    const robotsBlockedAgents: string[] = [];
+    try {
+      const robotsRes = await fetch(`https://${domain}/robots.txt`, {
+        headers: { "User-Agent": userAgent },
+        cache: "no-store",
+      });
+      if (robotsRes.ok) {
+        const robotsText = await robotsRes.text();
+        for (const agent of TRACKED_AI_AGENTS) {
+          if (robotsBlocksAgent(robotsText, agent)) robotsBlockedAgents.push(agent);
+        }
+      }
+    } catch {
+      // Cannot cross-check. Fall through to the deliberately inconclusive wording.
+    }
+
+    const explicitlyBlocked = robotsBlockedAgents.length > 0;
+
     issues.push({
-      id: "homepage-non-200",
+      id: explicitlyBlocked ? "ai-crawler-blocked" : "crawler-request-refused",
       category: "AI Agent Access",
-      title: `Homepage returned HTTP ${homeStatus} to an AI crawler`,
-      severity: "high",
-      summary: likelyBotBlocked
-        ? `Requesting https://${domain} with the GPTBot user-agent returned HTTP ${homeStatus}. Bot protection, a WAF rule or a rate limit is refusing AI crawlers before they can read the page.`
-        : `Requesting https://${domain} returned HTTP ${homeStatus}, so there is no content available for AI engines to read or cite.`,
-      recommendation: likelyBotBlocked
-        ? "Allow verified AI crawlers (GPTBot, ClaudeBot, PerplexityBot) in your bot-management and firewall settings, then re-scan."
-        : "Make sure your homepage returns HTTP 200 for crawler user-agents. An entry point that returns an error cannot be cited by any AI engine.",
+      title: explicitlyBlocked
+        ? "AI crawlers are explicitly blocked in robots.txt"
+        : `A crawler-shaped request was refused with HTTP ${homeStatus}`,
+      severity: explicitlyBlocked ? "high" : "medium",
+      summary: explicitlyBlocked
+        ? `robots.txt disallows the site root for: ${robotsBlockedAgents.join(", ")}. Those engines cannot read or cite ${domain}. The homepage also returned HTTP ${homeStatus} to our request.`
+        : likelyBotBlocked
+          ? `Requesting https://${domain} with the GPTBot user-agent returned HTTP ${homeStatus}, but robots.txt does not block AI crawlers. This normally means the site verifies crawlers by IP address rather than user-agent alone - standard anti-spoofing that does NOT by itself mean real GPTBot traffic is blocked.`
+          : `Requesting https://${domain} returned HTTP ${homeStatus}, so there is no content available for AI engines to read or cite.`,
+      recommendation: explicitlyBlocked
+        ? "Remove the Disallow rule for the AI crawlers you want citations from, then re-scan."
+        : likelyBotBlocked
+          ? "Treat this result as inconclusive. Check your CDN or WAF logs for requests from OpenAI, Anthropic and Perplexity address ranges to see whether real AI crawlers are being served."
+          : "Make sure your homepage returns HTTP 200 for crawler user-agents. An entry point that returns an error cannot be cited by any AI engine.",
     });
 
     return NextResponse.json({
       reachable: true,
-      blocked: likelyBotBlocked,
+      blocked: explicitlyBlocked,
       status: homeStatus,
-      score: 5,
+      score: explicitlyBlocked ? 5 : 25,
       issues,
       metrics: {
-        crawlability: 0,
+        crawlability: explicitlyBlocked ? 0 : 20,
         understandability: 0,
         answerReadiness: 0,
         citability: 0,
@@ -159,17 +251,28 @@ export async function GET(request: Request) {
   try {
     const robotsRes = await fetch(`https://${domain}/robots.txt`, {
       headers: { "User-Agent": userAgent },
+      cache: "no-store",
     });
     if (robotsRes.ok) {
       const robotsText = await robotsRes.text();
-      if (/Disallow:\s*\/\s*$/m.test(robotsText) && /GPTBot|PerplexityBot|ClaudeBot/i.test(robotsText)) {
+
+      // Parse actual user-agent groups. The previous version tested for
+      // "Disallow: /" and an agent name independently across the whole file, so a
+      // site that merely MENTIONED GPTBot while disallowing some unrelated agent
+      // was reported as blocking AI crawlers.
+      const blockedAgents: string[] = [];
+      for (const agent of TRACKED_AI_AGENTS) {
+        if (robotsBlocksAgent(robotsText, agent)) blockedAgents.push(agent);
+      }
+
+      if (blockedAgents.length > 0) {
         issues.push({
           id: "robots-blocked",
           category: "Crawler Directives",
-          title: "AI Bots Explicitly Blocked in robots.txt",
+          title: "AI crawlers are explicitly blocked in robots.txt",
           severity: "high",
-          summary: "Your robots.txt blocks major AI crawlers (GPTBot/PerplexityBot).",
-          recommendation: "Allow trusted AI User-Agents in robots.txt for AI indexation.",
+          summary: `robots.txt disallows the site root for: ${blockedAgents.join(", ")}. Those engines cannot read or cite this site.`,
+          recommendation: "Remove the Disallow rule for the AI crawlers you want citations from, then re-scan.",
         });
       } else {
         crawlabilityScore += 40;
