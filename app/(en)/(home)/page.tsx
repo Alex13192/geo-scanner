@@ -546,6 +546,9 @@ export default function HomePage() {
           <a href="/about/" className="hover:text-gray-300 transition-colors">
             About
           </a>
+          <a href="/study/" className="hover:text-gray-300 transition-colors">
+            Study
+          </a>
           <a href="/methodology/" className="hover:text-gray-300 transition-colors">
             Methodology
           </a>
