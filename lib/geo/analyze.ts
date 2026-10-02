@@ -789,11 +789,37 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
   /* ---- International Readiness (3) ---- */
   {
     const c: Check[] = [];
-    const hreflang = (html.match(/hreflang\s*=/gi) || []).length;
+
+    // Count DISTINCT language codes, not hreflang attributes.
+    //
+    // `en` plus `x-default` is a single-language site declaring its default -
+    // it is not a multilingual site. Counting raw attributes let exactly that
+    // pass a check about serving more than one language, which is the sort of
+    // measurement error this project exists to avoid.
+    const hreflangCodes = new Set(
+      Array.from(html.matchAll(/hreflang\s*=\s*["']([^"']+)["']/gi))
+        .map((m) => m[1].trim().toLowerCase())
+        .filter((code) => code.length > 0 && code !== "x-default")
+    );
+    const codes = Array.from(hreflangCodes);
+
     c.push(
-      hreflang >= 2
-        ? pass("hreflang", 2, "Alternate language versions are declared", `${hreflang} hreflang attributes found.`)
-        : fail("hreflang", 2, "No alternate language versions", "No hreflang attributes found.", "Declare hreflang so each language version is retrievable in its own market.")
+      codes.length >= 2
+        ? pass(
+            "hreflang",
+            2,
+            "Alternate language versions are declared",
+            `${codes.length} distinct language codes: ${codes.join(", ")}.`
+          )
+        : fail(
+            "hreflang",
+            2,
+            "No alternate language versions",
+            codes.length === 1
+              ? `Only one language is declared (${codes[0]}); x-default does not count as a language.`
+              : "No hreflang attributes found.",
+            "Declare hreflang for each language version you actually serve, so every version can be retrieved in its own market."
+          )
     );
     const lang = html.match(/<html[^>]+lang\s*=\s*["']([^"']+)["']/i);
     c.push(

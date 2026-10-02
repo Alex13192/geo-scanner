@@ -388,7 +388,7 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "hreflang",
     dimension: "multilingual",
     points: 2,
-    rule: "At least 2 hreflang attributes are present.",
+    rule: "At least 2 distinct hreflang language codes are declared. Repeated attributes for the same language do not count, and x-default is a default marker rather than a language, so a single-language site declaring `en` plus `x-default` does not satisfy this.",
   },
   {
     id: "lang-region",

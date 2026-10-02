@@ -166,3 +166,20 @@ if (unexercised.length === 0) {
   for (const c of unexercised) console.log(`        - ${c.id}`);
   process.exitCode = 1;
 }
+
+/* 5. A single-language site must not pass the multilingual check just because it
+      declares a default. This is the measurement error the project exists to
+      avoid, so it is pinned down explicitly. */
+console.log("\n=== single-language hreflang guard ===");
+{
+  const single = analyze({
+    ...base,
+    html: `<html lang="en"><head><link rel="alternate" hreflang="en" href="https://example.com/"><link rel="alternate" hreflang="x-default" href="https://example.com/"></head><body><h1>Only English here</h1></body></html>`,
+  });
+  const status = single.checks.find((c) => c.id === "hreflang")?.status;
+  const ok = status === "fail";
+  console.log(
+    `  ${ok ? "PASS" : "FAIL"}  en + x-default alone does NOT satisfy the hreflang check (got "${status}")`
+  );
+  if (!ok) process.exitCode = 1;
+}
