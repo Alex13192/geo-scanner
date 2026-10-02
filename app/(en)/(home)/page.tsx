@@ -31,7 +31,7 @@ const translations: Record<Language, {
     llmsTitle: "/llms.txt Generation",
     llmsDesc: "Auto-generate standardized markdown context files so LLMs can digest your domain's content cleanly.",
     badgeTitle: "Dynamic Score Badge",
-    badgeDesc: "Embed real-time GEO readiness badges directly in your GitHub README or site footer.",
+    badgeDesc: "Embed a badge carrying your verified GEO score in your GitHub README or site footer.",
   },
   zh: {
     tag: "生成式引擎优化 (GEO)",
@@ -45,7 +45,7 @@ const translations: Record<Language, {
     llmsTitle: "/llms.txt 自动生成",
     llmsDesc: "自动生成标准 Markdown 上下文文件，让大语言模型更清晰地理解您的网站内容。",
     badgeTitle: "动态评分徽章",
-    badgeDesc: "生成实时 GEO 准备度徽章，可直接嵌入 GitHub README 或网站页脚。",
+    badgeDesc: "生成带有真实扫描分数的 GEO 徽章，可嵌入 GitHub README 或网站页脚。",
   },
   es: {
     tag: "Optimización para Motores Generativos",
@@ -59,7 +59,7 @@ const translations: Record<Language, {
     llmsTitle: "Generación de /llms.txt",
     llmsDesc: "Genere automáticamente archivos Markdown estandarizados para que los LLM digieran su contenido.",
     badgeTitle: "Insignia de Puntuación Dinámica",
-    badgeDesc: "Incruste insignias de estado GEO en tiempo real directamente en su GitHub o pie de página.",
+    badgeDesc: "Incruste una insignia con su puntuación GEO verificada en su GitHub o pie de página.",
   },
   de: {
     tag: "Generative Engine Optimization",
@@ -73,7 +73,7 @@ const translations: Record<Language, {
     llmsTitle: "/llms.txt Erstellung",
     llmsDesc: "Erstellen Sie automatisch standardisierte Markdown-Dateien für eine saubere LLM-Erfassung.",
     badgeTitle: "Dynamisches Score-Badge",
-    badgeDesc: "Binden Sie Echtzeit-GEO-Badges direkt in Ihre GitHub README oder Fußzeile ein.",
+    badgeDesc: "Binden Sie ein Badge mit Ihrer geprüften GEO-Punktzahl in Ihre GitHub-README oder Ihren Website-Footer ein.",
   },
   fr: {
     tag: "Optimisation pour Moteurs Génératifs",
@@ -87,7 +87,7 @@ const translations: Record<Language, {
     llmsTitle: "Génération de /llms.txt",
     llmsDesc: "Générez automatiquement des fichiers Markdown structurés pour permettre aux LLM de comprendre votre contenu.",
     badgeTitle: "Badge de Score Dynamique",
-    badgeDesc: "Intégrez des badges d'état GEO en temps réel directement dans votre README GitHub ou votre pied de page.",
+    badgeDesc: "Intégrez un badge affichant votre score GEO vérifié dans votre README GitHub ou votre pied de page.",
   },
   ja: {
     tag: "生成AIエンジン最適化 (GEO)",
@@ -101,7 +101,7 @@ const translations: Record<Language, {
     llmsTitle: "/llms.txtの自動生成",
     llmsDesc: "LLMがコンテンツを正確に理解できるよう、標準化されたMarkdownファイルを自動生成します。",
     badgeTitle: "動的スコアバッジ",
-    badgeDesc: "リアルタイムのGEOスコアバッジをGitHubのREADMEやサイトフッターに直接埋め込めます。",
+    badgeDesc: "実際のスキャンで得たGEOスコアのバッジをGitHubのREADMEやサイトフッターに埋め込めます。",
   },
 };
 
