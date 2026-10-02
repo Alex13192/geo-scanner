@@ -128,11 +128,11 @@ export default function HomePage() {
       <header className="w-full max-w-6xl mx-auto flex justify-between items-center px-6 py-6 border-b border-gray-800/60">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-blue-500/20 border border-white/10">
-            A
+            L
           </div>
           <div className="flex flex-col text-left">
             <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent leading-none">
-              AIO Pulse
+              LLMention
             </span>
             <span className="text-[10px] text-gray-400 font-mono tracking-wider uppercase mt-1">
               Brand GEO Intelligence
@@ -280,7 +280,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500">
-        © AIO Pulse. Brand Generative Engine Optimization Intelligence.
+        © LLMention. Brand Generative Engine Optimization Intelligence.
       </footer>
     </div>
   );

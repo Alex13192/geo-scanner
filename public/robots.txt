@@ -1,0 +1,86 @@
+# robots.txt
+# https://geo-scanner.ccie13192.com
+#
+# NOTE: This site is itself a Generative Engine Optimization (GEO) product.
+# AI crawlers are explicitly welcome here - being readable by LLMs is the point.
+
+# ---------------------------------------------------------------
+# AI / LLM crawlers - explicitly allowed
+# Keep this list up to date. It doubles as the crawler list our
+# own scanner checks against.
+# ---------------------------------------------------------------
+
+# OpenAI
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Google (AI training / grounding opt-in; Googlebot itself follows *)
+User-agent: Google-Extended
+Allow: /
+
+# Apple
+User-agent: Applebot-Extended
+Allow: /
+
+# ByteDance / Doubao
+User-agent: Bytespider
+Allow: /
+
+# Common Crawl
+User-agent: CCBot
+Allow: /
+
+# Meta
+User-agent: meta-externalagent
+Allow: /
+
+# ---------------------------------------------------------------
+# Traditional search engines
+# ---------------------------------------------------------------
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# ---------------------------------------------------------------
+# Everything else
+# ---------------------------------------------------------------
+
+User-agent: *
+Allow: /
+
+# Scan result pages are user-specific and thin - keep them out of the index.
+Disallow: /report/
+
+# API endpoints
+Disallow: /api/
+
+Sitemap: https://geo-scanner.ccie13192.com/sitemap.xml

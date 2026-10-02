@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -27,7 +27,7 @@ const guides: Guide[] = [
     title: "Optimizing Headings for Direct AI Citation (Q&A Style)",
     description: "Transform generic H2/H3 headings into natural interrogative prompts that match real-world AI search engine user queries.",
     readTime: "4 min read",
-    codeSnippet: `<!-- Poor -->\n<h2>Features</h2>\n\n<!-- Optimized for GEO -->\n<h2>How Does AIO Pulse Measure Brand AI Visibility?</h2>`,
+    codeSnippet: `<!-- Poor -->\n<h2>Features</h2>\n\n<!-- Optimized for GEO -->\n<h2>How Does Your Company Measure Brand AI Visibility?</h2>`,
   },
   {
     id: "schema-org-jsonld",
@@ -35,7 +35,7 @@ const guides: Guide[] = [
     title: "Implementing Schema.org JSON-LD for AI Entity Disambiguation",
     description: "Ensure ChatGPT and Claude accurately identify your brand name, products, and documentation via structured entity markup.",
     readTime: "5 min read",
-    codeSnippet: `<script type="application/ld+json">\n{\n  "@context": "https://schema.org",\n  "@type": "Organization",\n  "name": "AIO Pulse",\n  "url": "https://aiopulse.com"\n}\n</script>`,
+    codeSnippet: `<script type="application/ld+json">\n{\n  "@context": "https://schema.org",\n  "@type": "Organization",\n  "name": "Your Brand Name",\n  "url": "https://your-domain.com"\n}\n</script>`,
   },
   {
     id: "allow-ai-crawlers",
@@ -60,9 +60,9 @@ export default function DocsPage() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-              A
+              L
             </div>
-            <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse Docs</span>
+            <span className="font-extrabold text-base tracking-tight text-white">LLMention Docs</span>
           </Link>
           <Link
             href="/"
@@ -76,7 +76,7 @@ export default function DocsPage() {
       <main className="max-w-6xl mx-auto px-6 pt-12 space-y-10">
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-            AIO Pulse Knowledge Hub
+            LLMention Knowledge Hub
           </div>
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
             Generative Engine Optimization Guides
@@ -130,7 +130,7 @@ export default function DocsPage() {
       </main>
 
       <footer className="max-w-6xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        © AIO Pulse Knowledge Base. Brand Generative Engine Optimization Intelligence.
+        © LLMention Knowledge Base. Brand Generative Engine Optimization Intelligence.
       </footer>
     </div>
   );

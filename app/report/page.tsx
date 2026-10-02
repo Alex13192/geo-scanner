@@ -96,9 +96,9 @@ function ReportContent() {
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
             >
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-                A
+                L
               </div>
-              <span className="font-extrabold text-base tracking-tight text-white">AIO Pulse</span>
+              <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
             </button>
             <nav className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs">
               <button
