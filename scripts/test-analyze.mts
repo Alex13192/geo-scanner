@@ -6,12 +6,16 @@
  * throw inside analyze() would return HTTP 500 for every scan, so the three
  * cases below are exercised before anything is deployed.
  */
-import { analyze } from "../lib/geo/analyze.ts";
-import { parseRobots } from "../lib/geo/analyze.ts";
+import { analyze, parseRobots } from "../lib/geo/analyze.ts";
+import { CHECK_CATALOG, DIMENSION_CATALOG } from "../lib/geo/catalog.ts";
+
+/** Every check id the analyser produced during this run. */
+const emittedCheckIds = new Set<string>();
 
 function show(label: string, input: Parameters<typeof analyze>[0]) {
   try {
     const r = analyze(input);
+    for (const c of r.checks) emittedCheckIds.add(c.id);
     console.log(`\n=== ${label} ===`);
     console.log(`score ${r.score} (${r.grade}) — ${r.gradeLabel}`);
     console.log(`checks ${r.checksPassed}/${r.checksRun} passed, ${r.issues.length} issues`);
@@ -108,4 +112,39 @@ for (const [label, text, expected] of parserCases) {
   const ok = got === expected;
   console.log(`  ${ok ? "PASS" : "FAIL"}  ${label} (expected ${expected}, got ${got})`);
   if (!ok) process.exitCode = 1;
+}
+
+/* 4. Drift guard: the published method at /methodology must describe the rules
+      the analyser actually runs. This is the whole reason the catalog is data
+      rather than prose. */
+console.log("\n=== methodology catalog coverage ===");
+
+const documented = new Set(CHECK_CATALOG.map((c) => c.id));
+const undocumented = [...emittedCheckIds].filter((id) => !documented.has(id));
+if (undocumented.length === 0) {
+  console.log(
+    `  PASS  all ${emittedCheckIds.size} emitted checks are documented in lib/geo/catalog.ts`
+  );
+} else {
+  console.log(`  FAIL  ${undocumented.length} emitted check(s) missing from the catalog:`);
+  for (const id of undocumented) console.log(`        - ${id}`);
+  process.exitCode = 1;
+}
+
+const dimensionIds = new Set(DIMENSION_CATALOG.map((d) => d.id));
+const orphans = CHECK_CATALOG.filter((c) => !dimensionIds.has(c.dimension));
+if (orphans.length === 0) {
+  console.log(`  PASS  all ${CHECK_CATALOG.length} catalog checks map to a known dimension`);
+} else {
+  console.log("  FAIL  catalog checks referencing an unknown dimension:");
+  for (const c of orphans) console.log(`        - ${c.id} -> ${c.dimension}`);
+  process.exitCode = 1;
+}
+
+const totalWeight = DIMENSION_CATALOG.reduce((s, d) => s + d.weight, 0);
+if (totalWeight === 100) {
+  console.log("  PASS  published dimension weights sum to 100");
+} else {
+  console.log(`  FAIL  published dimension weights sum to ${totalWeight}, expected 100`);
+  process.exitCode = 1;
 }

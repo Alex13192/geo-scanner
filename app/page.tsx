@@ -355,8 +355,22 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500">
-        © LLMention. Brand Generative Engine Optimization Intelligence.
+      <footer className="w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500 space-y-2">
+        <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <a href="/methodology/" className="hover:text-gray-300 transition-colors">
+            Methodology
+          </a>
+          <a href="/docs/" className="hover:text-gray-300 transition-colors">
+            Guides
+          </a>
+          <a href="/pricing/" className="hover:text-gray-300 transition-colors">
+            Pricing
+          </a>
+          <a href="/llms.txt" className="hover:text-gray-300 transition-colors">
+            llms.txt
+          </a>
+        </nav>
+        <div>© LLMention. Brand Generative Engine Optimization Intelligence.</div>
       </footer>
     </div>
   );

@@ -23,6 +23,10 @@ an AI-generated answer, and produces a shareable readiness score.
 
 ## Documentation
 
+- [Methodology](https://geo-scanner.ccie13192.com/methodology/): The complete scoring
+  method - twelve weighted dimensions, every check with its exact rule, the A-F
+  grade bands, the primary research behind the weighting, and a statement of what
+  the score cannot tell you. Generated from the same data the analyser runs on.
 - [GEO knowledge hub](https://geo-scanner.ccie13192.com/docs/): Index of all guides.
 - [How to generate and deploy an llms.txt file](https://geo-scanner.ccie13192.com/docs/llms-txt-deployment/):
   File format, hosting location, verification steps, and an honest assessment of

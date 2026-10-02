@@ -75,6 +75,8 @@ export type AnalyzeResult = {
   /** Legacy six-key view so the existing report UI keeps working. */
   metrics: Record<string, number>;
   issues: Issue[];
+  /** Every check that ran, including the ones that passed. */
+  checks: { id: string; dimension: string; status: CheckStatus; weight: number; title: string }[];
   checksRun: number;
   checksPassed: number;
 };
@@ -794,6 +796,7 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
   /* ---- Aggregate ---- */
   const dimensions: Dimension[] = [];
   const issues: Issue[] = [];
+  const allChecks: { id: string; dimension: string; status: CheckStatus; weight: number; title: string }[] = [];
   let checksRun = 0;
   let checksPassed = 0;
 
@@ -816,6 +819,13 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
     for (const check of list) {
       checksRun += 1;
       if (check.status === "pass") checksPassed += 1;
+      allChecks.push({
+        id: check.id,
+        dimension: meta.id,
+        status: check.status,
+        weight: check.weight,
+        title: check.title,
+      });
       if (check.status === "pass") continue;
       issues.push({
         id: check.id,
@@ -868,6 +878,7 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
       contentDepth: metric("content-depth"),
     },
     issues,
+    checks: allChecks,
     checksRun,
     checksPassed,
   };
