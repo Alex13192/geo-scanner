@@ -104,8 +104,11 @@ Sitemap: https://your-domain.com/sitemap.xml`}</pre>
         <li>Review your edge security event log for blocked requests from Google, OpenAI or Perplexity address ranges.</li>
       </ol>
       <p>
-        The <a href="/">LLMention scanner</a> runs steps 1 to 3 automatically and reports which
-        agents are blocked and why.
+        The <a href="/">LLMention scanner</a> runs step 1 automatically and reports which of
+        gptbot, claudebot, perplexitybot, oai-searchbot and google-extended are disallowed at the
+        site root. It does <strong>not</strong> run steps 2 or 3: it fetches your site as itself,
+        from its own address, so a request it makes can never show you what your firewall does to
+        a real AI crawler. Those two steps are yours to run.
       </p>
     </ArticleShell>
   );

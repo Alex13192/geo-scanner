@@ -34,6 +34,9 @@ function show(label: string, input: Parameters<typeof analyze>[0]) {
 
 const base = {
   domain: "example.com",
+  // The scheme the fetch layer used. The HTTPS check reads this, so it is part
+  // of every fixture rather than a constant inside the analyser.
+  scheme: "https" as "https" | "http",
   homeStatus: 200,
   robotsText: null as string | null,
   llmsText: null as string | null,
@@ -108,9 +111,20 @@ const parserCases: [string, string, boolean][] = [
   ],
   ["GPTBot explicitly disallowed", "User-agent: GPTBot\nDisallow: /\n", true],
   ["wildcard disallow with no GPTBot group", "User-agent: *\nDisallow: /\n", true],
-  ["GPTBot allowed then disallowed later in its group", "User-agent: GPTBot\nAllow: /\nDisallow: /\n", true],
+  // Google resolves conflicting rules of equal length in favour of the least
+  // restrictive one, so an Allow of the same length as a Disallow is not a
+  // block. The previous expectation here encoded "the last rule wins", which is
+  // not the published spec - the parser and the catalog now both follow the
+  // spec instead.
+  ["equal-length Allow beats Disallow (least restrictive wins)", "User-agent: GPTBot\nAllow: /\nDisallow: /\n", false],
   ["comment mentioning GPTBot only", "# GPTBot is welcome\nUser-agent: *\nAllow: /\n", false],
   ["partial path disallow does not block root", "User-agent: GPTBot\nDisallow: /private/\n", false],
+  // The two cases the parser used to get backwards. An empty Disallow is the
+  // standard "allow everything" idiom and must not be read as a block; /* is a
+  // full block and must not be missed.
+  ["empty Disallow value means allow, not block", "User-agent: *\nDisallow:\n", false],
+  ["wildcard /* disallow IS a full block", "User-agent: *\nDisallow: /*\n", true],
+  ["explicit Allow outranks a same-length Disallow", "User-agent: GPTBot\nDisallow: /\nAllow: /\n", false],
 ];
 
 console.log("\n=== robots.txt parser ===");

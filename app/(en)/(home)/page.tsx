@@ -27,7 +27,7 @@ const translations: Record<Language, {
     placeholder: "Enter domain or URL (e.g., adidas.com)",
     button: "Scan Website 🚀",
     crawlersTitle: "AI Crawler Passability",
-    crawlersDesc: "Scan robots.txt and WAF rules to ensure GPTBot, PerplexityBot, and ClaudeBot are not blocked.",
+    crawlersDesc: "Reads robots.txt and reports which of GPTBot, PerplexityBot and ClaudeBot are disallowed at your root.",
     llmsTitle: "/llms.txt Generation",
     llmsDesc: "Auto-generate standardized markdown context files so LLMs can digest your domain's content cleanly.",
     badgeTitle: "Dynamic Score Badge",
@@ -148,7 +148,7 @@ export default function HomePage() {
     },
     {
       q: "How do I check whether AI crawlers can read my website?",
-      a: "Check your robots.txt for rules that block AI crawler user-agents such as GPTBot, ClaudeBot, PerplexityBot and Bytespider, then confirm your firewall does not return 403 to those agents. LLMention scans both automatically and reports exactly what is blocked.",
+      a: "Check your robots.txt for rules that block AI crawler user-agents such as GPTBot, ClaudeBot, PerplexityBot and Bytespider. LLMention reads robots.txt automatically and names exactly which of them are disallowed at your root. It cannot see your firewall rules — a request it makes comes from its own address, so check those in your CDN yourself.",
     },
     {
       q: "Do I need an llms.txt file?",
@@ -284,7 +284,8 @@ export default function HomePage() {
                 LLMention audits its own homepage with the rules it applies to yours, and links
                 the result rather than quoting a number you have to take on trust. Last verified
                 on 2 October 2026: 100 out of 100, grade A, all 38 checks passing. Re-run it
-                yourself — the report lists every check, not only the failures.
+                yourself — the report shows all twelve dimension scores, and every rule behind
+                them is published.
               </p>
             </div>
             <a

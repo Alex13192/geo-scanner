@@ -84,10 +84,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid domain" }, { status: 400 });
   }
 
-  // 1. Homepage, over https first and http as a fallback.
-  let home = await get(`https://${domain}`);
-  if (!home || home.status === 0) {
-    home = await get(`http://${domain}`);
+  // 1. Homepage, over https first and http as a fallback. Remember which scheme
+  //    worked: it decides the HTTPS check, and the support files have to be
+  //    requested over the same scheme. Fetching robots.txt, llms.txt and
+  //    sitemap.xml over https:// for an http-only site invented three failures.
+  let scheme: "https" | "http" = "https";
+  let home = await get(`${scheme}://${domain}`);
+  if (!home) {
+    scheme = "http";
+    home = await get(`${scheme}://${domain}`);
   }
 
   // No HTTP response at all on either scheme: the domain really is unreachable.
@@ -103,13 +108,14 @@ export async function GET(request: Request) {
   // 2. The three support files, fetched in parallel. A failure here is itself
   //    a finding, so each returns null rather than throwing.
   const [robots, llms, sitemap] = await Promise.all([
-    get(`https://${domain}/robots.txt`),
-    get(`https://${domain}/llms.txt`),
-    get(`https://${domain}/sitemap.xml`),
+    get(`${scheme}://${domain}/robots.txt`),
+    get(`${scheme}://${domain}/llms.txt`),
+    get(`${scheme}://${domain}/sitemap.xml`),
   ]);
 
   const result = analyze({
     domain,
+    scheme,
     homeStatus: home.status,
     html: home.body,
     robotsText: robots && robots.status === 200 ? robots.body : null,

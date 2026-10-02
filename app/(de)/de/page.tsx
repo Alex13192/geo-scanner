@@ -35,7 +35,7 @@ export default function GermanHomePage() {
     },
     {
       q: "Wie pr\u00fcfe ich, ob KI-Crawler meine Website lesen k\u00f6nnen?",
-      a: "Pr\u00fcfen Sie Ihre robots.txt auf Regeln, die KI-Crawler wie GPTBot, ClaudeBot, PerplexityBot oder Bytespider aussperren, und stellen Sie sicher, dass Ihre Firewall diesen Agenten kein 403 zur\u00fcckgibt. LLMention pr\u00fcft beides automatisch und benennt genau, was blockiert wird.",
+      a: "Pr\u00fcfen Sie Ihre robots.txt auf Regeln, die KI-Crawler wie GPTBot, ClaudeBot, PerplexityBot oder Bytespider aussperren. LLMention liest die robots.txt automatisch aus und benennt genau, welche davon am Wurzelverzeichnis ausgesperrt sind. Firewall-Regeln kann der Scanner nicht erkennen \u2013 eine Anfrage von ihm kommt aus seiner eigenen Adresse. Pr\u00fcfen Sie das in Ihrem CDN selbst.",
     },
     {
       q: "Brauche ich eine llms.txt-Datei?",
@@ -131,8 +131,8 @@ export default function GermanHomePage() {
             <div className="text-2xl">🤖</div>
             <h2 className="text-sm font-bold text-gray-200">KI-Crawler-Zugang</h2>
             <p className="text-xs text-gray-400 leading-relaxed">
-              Pr&uuml;ft robots.txt und WAF-Regeln, damit GPTBot, PerplexityBot und ClaudeBot
-              nicht blockiert werden. Anleitung auf Deutsch.
+              Liest robots.txt aus und zeigt, welche KI-Crawler dort am Wurzelverzeichnis
+              ausgesperrt sind. Anleitung auf Deutsch.
             </p>
           </a>
           <a
@@ -171,8 +171,8 @@ export default function GermanHomePage() {
                 LLMention pr&uuml;ft die eigene Startseite mit genau den Regeln, die auch f&uuml;r
                 Ihre Website gelten, und verlinkt das Ergebnis, statt eine Zahl zu behaupten. Zuletzt
                 gepr&uuml;ft am 2. Oktober 2026: 100 von 100 Punkten, Note A, alle 38 Pr&uuml;fungen
-                bestanden. Pr&uuml;fen Sie es selbst &ndash; der Bericht listet jede Pr&uuml;fung auf,
-                nicht nur die Fehler.
+                bestanden. Pr&uuml;fen Sie es selbst &ndash; der Bericht zeigt alle zw&ouml;lf
+                Dimensionen, und die Regeln dahinter sind ver&ouml;ffentlicht.
               </p>
             </div>
             <a

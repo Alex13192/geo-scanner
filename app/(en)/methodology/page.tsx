@@ -190,6 +190,11 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
                           Not satisfied: {check.onFail}
                         </div>
                       )}
+                      {check.note && (
+                        <div className="text-gray-500 pl-10 pt-0.5 border-l border-gray-800 ml-10 pl-3">
+                          Note: {check.note}
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -20,6 +20,12 @@ export type CatalogCheck = {
   /** What a non-pass result means. */
   onFail?: string;
   /**
+   * A reading of the rule that a user would not guess from the rule text alone,
+   * published because leaving it out makes the methodology page misleading. The
+   * missing-robots.txt case is the reason this field exists.
+   */
+  note?: string;
+  /**
    * True when this entry documents the other outcome of the same check rather
    * than an additional check. Alias entries never run alongside their
    * counterpart, so they are excluded from the per-scan check count.
@@ -157,8 +163,9 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "robots-ai-allowed",
     dimension: "ai-crawler-access",
     points: 6,
-    rule: "Parsing robots.txt into user-agent groups, none of gptbot, claudebot, perplexitybot, oai-searchbot or google-extended is disallowed from /. An exact agent group takes precedence over the * group, and the last matching rule wins.",
+    rule: "Parsing robots.txt into user-agent groups, none of gptbot, claudebot, perplexitybot, oai-searchbot or google-extended is disallowed from /. An exact agent group takes precedence over the * group, the longest matching pattern wins and Allow wins ties, an empty Disallow value matches nothing, and * is treated as a wildcard.",
     onFail: "At least one AI crawler is disallowed from the site root.",
+    note: "A site with no robots.txt at all passes this check, because with no file no crawler is disallowed by it. That is a deliberate reading: absence of robots.txt is a policy gap, not a block. The gap is reported separately by robots-present.",
   },
   {
     id: "robots-ai-blocked",
@@ -288,7 +295,7 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "https",
     dimension: "trust-authority",
     points: 2,
-    rule: "The homepage was retrieved over https://.",
+    rule: "The homepage was retrieved over https://, rather than only over plain http://.",
   },
   {
     id: "about-contact",

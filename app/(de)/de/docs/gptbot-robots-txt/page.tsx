@@ -96,25 +96,33 @@ Sitemap: https://ihre-domain.de/sitemap.xml`}</pre>
 
       <h2>Warum sehe ich trotzdem eine 403-Antwort?</h2>
       <p>
-        <strong>Weil große Websites Crawler nicht am User-Agent, sondern an der IP-Adresse
-        prüfen.</strong> Ein Scan-Werkzeug, das sich als GPTBot ausgibt, wird dann als Fälschung
-        erkannt und abgewiesen – obwohl echter GPTBot-Verkehr problemlos bedient wird. Eine
-        403-Antwort gegenüber einem fremden Rechner beweist also nichts über echte KI-Crawler.
-        Verlässlich ist allein die <code>robots.txt</code>: Sie ist die erklärte Absicht der
-        Website.
+        <strong>Weil Bot-Management nicht am User-Agent entscheidet, sondern an der Herkunft der
+        Anfrage.</strong> Cloudflare Bot Fight Mode, AWS WAF, Akamai und Fastly prüfen IP-Adresse,
+        TLS-Fingerabdruck und Verhalten. Ein Werkzeug, das sich als GPTBot ausgibt und aus einem
+        Rechenzentrum anfragt, wird als Fälschung abgewiesen – obwohl echter GPTBot-Verkehr
+        problemlos bedient wird. Prüfen Sie deshalb in Ihrem CDN gezielt den Bot-Fight-Modus, die
+        Sicherheitsstufe, eigene WAF-Regeln auf den User-Agent und Rate-Limits.
+      </p>
+      <p>
+        Zur Auswertung von <code>robots.txt</code>: Eine exakte Agent-Gruppe hat Vorrang vor{" "}
+        <code>*</code>. Innerhalb einer Gruppe gewinnt das längste passende Muster, bei gleicher
+        Länge gewinnt <code>Allow</code>, und ein leerer <code>Disallow</code>-Wert erlaubt alles.
       </p>
 
       <h2>Wie prüfe ich, was tatsächlich blockiert ist?</h2>
       <ol>
         <li>Rufen Sie <code>https://ihre-domain.de/robots.txt</code> auf und suchen Sie die Gruppen der genannten Agents.</li>
-        <li>Beachten Sie, dass eine exakte Agent-Gruppe Vorrang vor <code>*</code> hat und die letzte passende Regel gewinnt.</li>
-        <li>Prüfen Sie, ob Ihre Firewall den Agents ein <code>403</code> zurückgibt und ob der Header <code>cf-mitigated</code> auftaucht.</li>
+        <li>Prüfen Sie in Ihrer WAF oder Ihrem CDN, ob Regelwerk oder Bot-Schutz diese Agents abweist und ob die Antwort den Header <code>cf-mitigated</code> trägt.</li>
         <li>Suchen Sie im Sicherheitsprotokoll Ihres CDN nach abgewiesenen Anfragen aus den Adressbereichen von OpenAI, Anthropic und Perplexity.</li>
       </ol>
       <p>
-        Die ersten drei Schritte führt der <a href="/de/">LLMention-Scanner</a> automatisch aus
-        und benennt, welcher Agent blockiert wird und warum. Die vollständige Bewertungslogik
-        steht in der <a href="/methodology/" hrefLang="en">Methodik (EN)</a>.
+        Schritt 1 führt der <a href="/de/">LLMention-Scanner</a> automatisch aus und benennt, welche
+        der Agents gptbot, claudebot, perplexitybot, oai-searchbot und google-extended am
+        Wurzelverzeichnis ausgesperrt sind. <strong>Die Schritte 2 und 3 führt er nicht aus:</strong>{" "}
+        Er ruft Ihre Website als er selbst von seiner eigenen Adresse ab. Eine Anfrage von dort kann
+        daher nie zeigen, wie Ihre Firewall auf einen echten KI-Crawler reagiert. Die vollständige
+        Bewertungslogik steht in der{" "}
+        <a href="/methodology/" hrefLang="en">Methodik (EN)</a>.
       </p>
     </ArticleShell>
   );

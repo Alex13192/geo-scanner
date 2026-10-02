@@ -59,6 +59,14 @@ export type Issue = {
 
 export type AnalyzeInput = {
   domain: string;
+  /**
+   * The scheme the homepage was actually retrieved over.
+   *
+   * This has to be passed in rather than assumed. The HTTPS check below used to
+   * be an unconditional pass, so a site reachable only over plain HTTP was told
+   * it was "served over HTTPS" and collected the points for saying so.
+   */
+  scheme: "https" | "http";
   homeStatus: number;
   html: string;
   robotsText: string | null;
@@ -305,13 +313,47 @@ export function parseRobots(text: string): ParsedRobots {
   }
 
   const blocked: string[] = [];
+
+  /**
+   * Does a robots pattern disallow the site root?
+   *
+   * The previous version compared the pattern to "/" or "" exactly, and got
+   * both directions wrong. `Disallow:` with an empty value is the standard
+   * "allow everything" idiom and was read as a block, so a site that blocks
+   * nothing was told it blocks AI crawlers. `Disallow: /*` - one of the most
+   * common full blocks there is - matched neither form and was missed, so a
+   * site that blocks everything was reported clean. A checker that accuses the
+   * innocent and clears the guilty is worse than no checker.
+   */
+  function blocksRoot(pattern: string): boolean {
+    const p = pattern.trim();
+    // An empty value matches nothing; it is how a site says "allow everything".
+    if (p === "") return false;
+    const escaped = p.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+    try {
+      return new RegExp(`^${escaped}`).test("/");
+    } catch {
+      return false;
+    }
+  }
+
   for (const agent of ["gptbot", "claudebot", "perplexitybot", "oai-searchbot", "google-extended"]) {
     const exact = groups.filter((g) => g.agents.includes(agent));
     const chosen = exact.length ? exact : groups.filter((g) => g.agents.includes("*"));
+
+    // Longest matching pattern wins, and Allow wins ties. That is the
+    // precedence the published rule states, so the parser implements it rather
+    // than only honouring rules written as exactly "/".
     let isBlocked = false;
+    let best = -1;
     for (const g of chosen) {
       for (const r of g.rules) {
-        if (r.path === "/" || r.path === "") isBlocked = !r.allow;
+        if (!blocksRoot(r.path)) continue;
+        const len = r.path.trim().length;
+        if (len > best || (len === best && r.allow)) {
+          best = len;
+          isBlocked = !r.allow;
+        }
       }
     }
     if (isBlocked) blocked.push(agent);
@@ -631,8 +673,20 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
   /* ---- Trust & Authority (10) ---- */
   {
     const c: Check[] = [];
-    // HTTPS is asserted by the fetch layer having succeeded over https://.
-    c.push(pass("https", 2, "Served over HTTPS", "The homepage was retrieved over https://."));
+    // HTTPS is decided by the scheme the fetch layer actually used. This was an
+    // unconditional pass, which meant the rule could not fail and a site served
+    // only over http:// was congratulated for serving over https://.
+    c.push(
+      input.scheme === "https"
+        ? pass("https", 2, "Served over HTTPS", "The homepage was retrieved over https://.")
+        : fail(
+            "https",
+            2,
+            "Only reachable over plain HTTP",
+            "The homepage was retrieved over http://.",
+            "Serve the site over HTTPS. Browsers mark plain HTTP as not secure, and crawlers increasingly decline to fetch it."
+          )
+    );
 
     const hrefs = getHrefs(html);
     const hasAbout = hrefs.some((h) => /(^|\/)(about|company|team|who-we-are)/i.test(h));
