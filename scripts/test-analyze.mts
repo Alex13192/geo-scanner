@@ -92,7 +92,14 @@ show("well-optimised page", {
   lastModifiedHeader: new Date().toUTCString(),
 });
 
-/* 3. robots.txt parser edge cases: the false positives we set out to fix. */
+/* 3. A site that actually disallows an AI crawler: exercises the blocked path. */
+show("site that disallows GPTBot", {
+  ...base,
+  html: "<html><body><h1>Hello</h1><p>Some visible content that a crawler would like to read.</p></body></html>",
+  robotsText: "User-agent: GPTBot\nDisallow: /\n\nUser-agent: *\nAllow: /\n",
+});
+
+/* 4. robots.txt parser edge cases: the false positives we set out to fix. */
 const parserCases: [string, string, boolean][] = [
   [
     "GPTBot mentioned but a DIFFERENT agent disallowed",
@@ -146,5 +153,16 @@ if (totalWeight === 100) {
   console.log("  PASS  published dimension weights sum to 100");
 } else {
   console.log(`  FAIL  published dimension weights sum to ${totalWeight}, expected 100`);
+  process.exitCode = 1;
+}
+
+const unexercised = CHECK_CATALOG.filter((c) => !emittedCheckIds.has(c.id));
+if (unexercised.length === 0) {
+  console.log(`  PASS  the fixtures exercised all ${CHECK_CATALOG.length} catalog checks`);
+} else {
+  console.log(
+    `  FAIL  only ${emittedCheckIds.size}/${CHECK_CATALOG.length} catalog checks were exercised:`
+  );
+  for (const c of unexercised) console.log(`        - ${c.id}`);
   process.exitCode = 1;
 }

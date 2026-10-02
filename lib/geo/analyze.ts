@@ -448,8 +448,37 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
         c.push(fail("robots-sitemap", 1, "robots.txt declares no sitemap", "No Sitemap: line found.", "Add a Sitemap: line pointing at your sitemap.xml."));
       }
     } else {
+      // Absence of robots.txt is a policy gap, NOT a block: with no file, no
+      // crawler is disallowed by it. The previous version collapsed this branch
+      // into a single 9-point failure, which both punished a site whose AI
+      // crawlers are in fact unblocked and made the number of checks vary
+      // between scans. Emitting the same three checks in both branches keeps the
+      // count stable at 39 and the reading honest.
       c.push(
-        fail("robots-present", 9, "robots.txt could not be read", "The request for /robots.txt did not return a readable response.", "Serve a plain-text robots.txt at the domain root.")
+        fail(
+          "robots-present",
+          2,
+          "robots.txt is not served",
+          "The request for /robots.txt did not return a readable response.",
+          "Publish robots.txt. With no robots.txt every crawler is permitted by default, so this is a policy gap rather than a block."
+        )
+      );
+      c.push(
+        pass(
+          "robots-ai-allowed",
+          6,
+          "No AI crawler is blocked",
+          "No robots.txt is served, so nothing disallows gptbot, claudebot, perplexitybot, oai-searchbot or google-extended."
+        )
+      );
+      c.push(
+        fail(
+          "robots-sitemap",
+          1,
+          "No sitemap declared in robots.txt",
+          "robots.txt is unavailable, so it cannot declare a sitemap.",
+          "Publish robots.txt with a Sitemap: line pointing at your sitemap."
+        )
       );
     }
 

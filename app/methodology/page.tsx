@@ -31,7 +31,9 @@ export default function MethodologyPage() {
     byDimension.set(check.dimension, list);
   }
 
-  const totalChecks = CHECK_CATALOG.length;
+  // Alias entries document the other outcome of the same check and never run
+  // alongside their counterpart, so they are excluded from the per-scan count.
+  const totalChecks = CHECK_CATALOG.filter((c) => !c.alias).length;
   const totalWeight = DIMENSION_CATALOG.reduce((sum, d) => sum + d.weight, 0);
 
   return (

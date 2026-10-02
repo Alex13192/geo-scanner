@@ -19,6 +19,12 @@ export type CatalogCheck = {
   rule: string;
   /** What a non-pass result means. */
   onFail?: string;
+  /**
+   * True when this entry documents the other outcome of the same check rather
+   * than an additional check. Alias entries never run alongside their
+   * counterpart, so they are excluded from the per-scan check count.
+   */
+  alias?: boolean;
 };
 
 export type CatalogDimension = {
@@ -158,6 +164,7 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "robots-ai-blocked",
     dimension: "ai-crawler-access",
     points: 6,
+    alias: true,
     rule: "The inverse of the check above, reported by name so the blocked agents appear in the finding.",
   },
   {
