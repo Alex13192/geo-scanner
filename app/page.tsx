@@ -122,6 +122,40 @@ export default function HomePage() {
     router.push(`/report?domain=${encodeURIComponent(cleanDomain)}&lang=${lang}`);
   };
 
+  /**
+   * Visible FAQ content.
+   *
+   * The SAME array also renders the FAQPage structured data at the bottom of
+   * this page. That is deliberate: Google only accepts FAQ markup for questions
+   * and answers that are actually visible to users, so the two must not drift.
+   *
+   * Written answer-first and factually. One of these answers deliberately tells
+   * the reader that llms.txt is NOT a ranking factor - overselling it would be
+   * both dishonest and bad GEO, since AI engines favour accurate sources.
+   */
+  const faqItems = [
+    {
+      q: "What is Generative Engine Optimization (GEO)?",
+      a: "GEO is the practice of making a website discoverable, parseable and citable by AI search engines such as ChatGPT, Perplexity, Claude and Google AI Overviews. Instead of ranking a blue link, the goal is to be quoted inside a generated answer.",
+    },
+    {
+      q: "How do I check whether AI crawlers can read my website?",
+      a: "Check your robots.txt for rules that block AI crawler user-agents such as GPTBot, ClaudeBot, PerplexityBot and Bytespider, then confirm your firewall does not return 403 to those agents. LLMention scans both automatically and reports exactly what is blocked.",
+    },
+    {
+      q: "Do I need an llms.txt file?",
+      a: "Not necessarily. llms.txt is an emerging convention rather than a standard: Google does not use it in Search, and AI crawlers request it inconsistently. It is cheap to add and does help documentation sites and coding agents, but treat it as one small signal, not a ranking factor.",
+    },
+    {
+      q: "Which AI crawlers should I allow in robots.txt?",
+      a: "Allow the crawlers behind the engines you want citations from: GPTBot and OAI-SearchBot for OpenAI, ClaudeBot and Claude-SearchBot for Anthropic, PerplexityBot for Perplexity, Google-Extended for Google, and Bingbot, whose index also feeds ChatGPT search. Blocking a crawler removes you from that engine's answers entirely.",
+    },
+    {
+      q: "Is GEO replacing SEO?",
+      a: "No. GEO and SEO share most of their foundations: crawlable pages, clear structure, accurate facts and genuine authority. GEO adds an emphasis on answer-shaped content, entity markup such as Schema.org JSON-LD, and machine-readable context files. A site that already does SEO well starts GEO from a strong position.",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-[#070A10] text-white flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white">
       {/* Header */}
@@ -275,6 +309,48 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* FAQ — content here and the FAQPage markup below come from one source */}
+        <section id="faq" className="w-full pt-8 text-left space-y-4">
+          <div className="text-center space-y-1">
+            <h2 className="text-lg font-bold text-white">Frequently Asked Questions</h2>
+            <p className="text-xs text-gray-400">Short, direct answers about GEO and AI crawler access.</p>
+          </div>
+          <div className="space-y-3">
+            {faqItems.map((item, i) => (
+              <details
+                key={i}
+                className="group bg-[#070A10]/60 border border-gray-800/60 rounded-xl p-5 open:border-blue-500/40 transition-colors"
+              >
+                <summary className="cursor-pointer list-none flex items-start justify-between gap-4">
+                  <h3 className="text-sm font-bold text-gray-100 leading-snug">{item.q}</h3>
+                  <span className="text-gray-500 group-open:rotate-45 transition-transform text-lg leading-none shrink-0">
+                    +
+                  </span>
+                </summary>
+                <p className="text-xs text-gray-400 leading-relaxed pt-3">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: faqItems.map((item) => ({
+                "@type": "Question",
+                name: item.q,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: item.a,
+                },
+              })),
+            }),
+          }}
+        />
 
       </main>
 
