@@ -79,7 +79,20 @@ export default function ScoreRing({
 
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - Math.min(100, Math.max(0, shown)) / 100);
+
+  /**
+   * Before the animation starts - which includes server rendering and the first
+   * paint - the ring shows its real value, not zero.
+   *
+   * This matters more than it looks. The first version rendered `shown`, which
+   * starts at 0, so the raw HTML of the homepage contained a prominent "0 /100"
+   * directly beside the sentence "100 out of 100". Google executes JavaScript
+   * and would have seen the real figure; every crawler that does not, including
+   * this site's own scanner, would have read a false statement about the site.
+   */
+  const displayed = started ? shown : value;
+
+  const offset = circumference * (1 - Math.min(100, Math.max(0, displayed)) / 100);
 
   const color = value >= 80 ? "#34d399" : value >= 60 ? "#fbbf24" : "#f87171";
 
@@ -114,7 +127,7 @@ export default function ScoreRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="font-mono font-black text-white leading-none" style={{ fontSize: size * 0.26 }}>
-          {Math.round(shown)}
+          {Math.round(displayed)}
         </span>
         <span className="font-mono text-gray-500 leading-none pt-1" style={{ fontSize: size * 0.11 }}>
           /100
