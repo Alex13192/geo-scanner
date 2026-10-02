@@ -40,6 +40,13 @@ an AI-generated answer, and produces a shareable readiness score.
 - [Implementing Schema.org JSON-LD for entity disambiguation](https://geo-scanner.ccie13192.com/docs/schema-org-jsonld/):
   Connecting Organization, WebSite and SoftwareApplication nodes into one entity.
 
+## Company
+
+- [About](https://geo-scanner.ccie13192.com/about/): Who maintains the tool, what it
+  deliberately does not do, and how to report a result you believe is wrong.
+- [Pricing](https://geo-scanner.ccie13192.com/pricing/): The scanner is free and needs
+  no account; the paid option is a one-time manual audit.
+
 ## Supported AI crawlers
 
 GPTBot, OAI-SearchBot, ChatGPT-User (OpenAI); ClaudeBot, Claude-User,

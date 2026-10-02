@@ -8,6 +8,14 @@ import "./globals.css";
 const SITE_URL = "https://geo-scanner.ccie13192.com";
 const BRAND = "LLMention";
 
+/**
+ * Bump this when the homepage content changes. It feeds dateModified in the
+ * structured data, which the scanner's own Freshness checks look for.
+ * Do NOT use `new Date()` here: a build-time date makes every deploy look like
+ * a content change, which is the fastest way to have freshness ignored.
+ */
+const LAST_UPDATED = "2026-10-02";
+
 const TAGLINE = `${BRAND} — GEO Scanner for AI Search Visibility`;
 const DESCRIPTION =
   "Check whether ChatGPT, Claude and Perplexity can crawl, read and cite your website. Free AI crawler audit and /llms.txt generator, no signup required.";
@@ -79,8 +87,9 @@ const jsonLd = {
       url: SITE_URL,
       logo: `${SITE_URL}/favicon.ico`,
       description: DESCRIPTION,
-      // TODO: add real profiles once they exist, e.g.
-      // sameAs: ["https://x.com/yourhandle", "https://github.com/you/repo"],
+      // sameAs is what lets a model resolve the brand to a single entity instead
+      // of guessing whether the name and the domain are the same thing.
+      sameAs: ["https://github.com/Alex13192/geo-scanner"],
     },
     {
       "@type": "WebSite",
@@ -89,6 +98,20 @@ const jsonLd = {
       name: BRAND,
       publisher: { "@id": `${SITE_URL}/#organization` },
       inLanguage: "en",
+    },
+    {
+      // Declares who is accountable for the page and when it last changed.
+      // A named person would be a stronger E-E-A-T signal than the
+      // organisation; swap `author` for a Person node once one exists.
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/#webpage`,
+      url: SITE_URL,
+      name: BRAND,
+      isPartOf: { "@id": `${SITE_URL}/#website` },
+      about: { "@id": `${SITE_URL}/#organization` },
+      author: { "@id": `${SITE_URL}/#organization` },
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      dateModified: LAST_UPDATED,
     },
     {
       "@type": "SoftwareApplication",

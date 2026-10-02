@@ -288,24 +288,53 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 新增模块 2：SEO vs GEO 对比 */}
+        {/* Traditional SEO vs GEO, as a table rather than prose: comparisons in
+            tabular form are the shape engines extract most reliably. */}
         <section className="w-full pt-8 text-left space-y-4">
           <div className="bg-gradient-to-r from-blue-950/20 via-gray-900/60 to-purple-950/20 border border-gray-800 p-8 rounded-2xl space-y-6">
             <div className="text-center space-y-1">
-              <h2 className="text-lg font-bold text-white">Why GEO Matters in 2026</h2>
-              <p className="text-xs text-gray-400">Generative Engine Optimization shifts focus from keywords to AI entity citation.</p>
+              <h2 className="text-lg font-bold text-white">Why GEO matters in 2026</h2>
+              <p className="text-xs text-gray-400">
+                Generative Engine Optimization moves the target from a ranked link to a cited passage.
+              </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-              <div className="bg-[#070A10]/60 p-5 rounded-xl border border-gray-800/60 space-y-2">
-                <span className="text-xs font-mono font-bold text-red-400 uppercase">Traditional SEO</span>
-                <h3 className="text-sm font-bold text-gray-200">Keyword Ranking & Backlinks</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">Optimizes for SERP blue links, click-through rates, and Google PageRank algorithms.</p>
-              </div>
-              <div className="bg-[#070A10]/60 p-5 rounded-xl border border-blue-500/30 space-y-2">
-                <span className="text-xs font-mono font-bold text-blue-400 uppercase">Generative GEO</span>
-                <h3 className="text-sm font-bold text-gray-200">AI Citation & Share of Voice</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">Optimizes for direct LLM synthesis, structured JSON-LD context, and /llms.txt file accessibility.</p>
-              </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+                <thead className="bg-[#070A10]/80 text-gray-400">
+                  <tr>
+                    <th className="text-left px-4 py-2.5 font-semibold">Dimension</th>
+                    <th className="text-left px-4 py-2.5 font-semibold">Traditional SEO</th>
+                    <th className="text-left px-4 py-2.5 font-semibold">Generative GEO</th>
+                  </tr>
+                </thead>
+                <tbody className="text-gray-300">
+                  <tr className="border-t border-gray-800/60">
+                    <td className="px-4 py-2.5 text-gray-500">What you win</td>
+                    <td className="px-4 py-2.5">A ranking position on a results page</td>
+                    <td className="px-4 py-2.5">A sentence quoted inside a generated answer</td>
+                  </tr>
+                  <tr className="border-t border-gray-800/60">
+                    <td className="px-4 py-2.5 text-gray-500">Unit of competition</td>
+                    <td className="px-4 py-2.5">The page, ranked against other pages</td>
+                    <td className="px-4 py-2.5">The passage, retrieved against other passages</td>
+                  </tr>
+                  <tr className="border-t border-gray-800/60">
+                    <td className="px-4 py-2.5 text-gray-500">Main lever</td>
+                    <td className="px-4 py-2.5">Keywords, backlinks, page authority</td>
+                    <td className="px-4 py-2.5">Entity clarity, evidence, extractable structure</td>
+                  </tr>
+                  <tr className="border-t border-gray-800/60">
+                    <td className="px-4 py-2.5 text-gray-500">How you verify it</td>
+                    <td className="px-4 py-2.5">Rank tracking and click-through rate</td>
+                    <td className="px-4 py-2.5">Whether a model repeats your claim, and cites you</td>
+                  </tr>
+                  <tr className="border-t border-gray-800/60">
+                    <td className="px-4 py-2.5 text-gray-500">Failure mode</td>
+                    <td className="px-4 py-2.5">Position 11, no clicks</td>
+                    <td className="px-4 py-2.5">The answer is given, and you are not in it</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -334,6 +363,117 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* What the research says. The blockquote and the outbound citations here
+            are deliberate: citing primary sources is the intervention with the
+            largest measured effect in the literature, so the site does it. */}
+        <section className="w-full pt-8 text-left space-y-4">
+          <div className="bg-gradient-to-r from-blue-950/20 via-gray-900/60 to-purple-950/20 border border-gray-800 p-8 rounded-2xl space-y-5">
+            <h2 className="text-lg font-bold text-white">What the published research found</h2>
+
+            <blockquote className="border-l-2 border-blue-500 pl-4 space-y-2">
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Adding source citations produced the largest measured visibility gain for
+                low-ranking sites (+115%), ahead of the addition of expert quotations (+41%) and
+                statistics (+30-40%), across the strategies tested on generative engines.
+              </p>
+              <footer className="text-xs text-gray-500">
+                — Summary of findings,{" "}
+                <a
+                  href="https://arxiv.org/abs/2311.09735"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  Generative Engine Optimization
+                </a>
+                , KDD 2024 (Princeton and Georgia Tech)
+              </footer>
+            </blockquote>
+
+            <p className="text-xs text-gray-400 leading-relaxed">
+              LLMention weights its score accordingly. Citability and evidence carry 11% of the
+              total and answer readiness a further 10%, because those are the dimensions tied most
+              directly to the measurements above. The full weighting, every rule, and an explicit
+              account of what the score cannot tell you are published at{" "}
+              <a href="/methodology/" className="text-blue-400 hover:text-blue-300 underline">
+                methodology
+              </a>
+              .
+            </p>
+
+            <ul className="text-xs text-gray-400 space-y-1.5 list-disc pl-5">
+              <li>
+                <a
+                  href="https://arxiv.org/abs/2311.09735"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  Generative Engine Optimization
+                </a>{" "}
+                — KDD 2024. The source of the figures quoted above.
+              </li>
+              <li>
+                <a
+                  href="https://arxiv.org/abs/2510.11438"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  What Generative Search Engines Like
+                </a>{" "}
+                — which page characteristics are actually surfaced in generated answers.
+              </li>
+              <li>
+                <a
+                  href="https://llmstxt.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  The llms.txt convention
+                </a>{" "}
+                — read the primary source rather than a vendor summary of it.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        {/* About: the publisher has to be identifiable, and the contact route has
+            to exist, before an engine treats a claim as attributable. */}
+        <section className="w-full pt-8 text-left space-y-4">
+          <div className="bg-[#070A10]/60 border border-gray-800/60 p-8 rounded-2xl space-y-4">
+            <h2 className="text-lg font-bold text-white">About LLMention</h2>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              LLMention is an independent tool that audits whether AI search engines can reach,
+              parse and cite a website. It is not affiliated with OpenAI, Anthropic, Google or
+              Perplexity, and it holds no data relationship with them. The scanner and the
+              llms.txt generator are free and require no account.
+            </p>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              The project publishes its scoring method in full, including the checks it runs, the
+              weight each one carries, and the parts of the picture it cannot see. No score floor
+              is applied, so a page that satisfies none of the checks scores near zero. Signals
+              with weak evidence behind them are weighted low rather than advertised as ranking
+              factors.
+            </p>
+            <p className="text-xs text-gray-500">
+              Written and maintained by the LLMention team.{" "}
+              <a href="/about/" className="text-blue-400 hover:text-blue-300 underline">
+                More about the project
+              </a>
+              , or{" "}
+              <a
+                href="mailto:hello@ccie13192.com"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                get in touch
+              </a>{" "}
+              if the scanner reports something you believe is wrong.
+            </p>
+          </div>
+        </section>
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -357,6 +497,9 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="w-full border-t border-gray-800/60 py-6 text-center text-xs text-gray-500 space-y-2">
         <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <a href="/about/" className="hover:text-gray-300 transition-colors">
+            About
+          </a>
           <a href="/methodology/" className="hover:text-gray-300 transition-colors">
             Methodology
           </a>
@@ -370,7 +513,7 @@ export default function HomePage() {
             llms.txt
           </a>
         </nav>
-        <div>© LLMention. Brand Generative Engine Optimization Intelligence.</div>
+        <div>© 2026 LLMention. Brand Generative Engine Optimization Intelligence.</div>
       </footer>
     </div>
   );
