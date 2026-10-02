@@ -246,8 +246,8 @@ export default function HomePage() {
             className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
           >
             <div className="text-2xl">🤖</div>
-            <h3 className="text-sm font-bold text-gray-200">{t.crawlersTitle}</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">{t.crawlersDesc}</p>
+            <h3 className="text-base font-bold text-gray-200">{t.crawlersTitle}</h3>
+            <p className="text-sm text-gray-400 leading-relaxed">{t.crawlersDesc}</p>
           </a>
 
           <a
@@ -255,8 +255,8 @@ export default function HomePage() {
             className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
           >
             <div className="text-2xl">📄</div>
-            <h3 className="text-sm font-bold text-gray-200">{t.llmsTitle}</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">{t.llmsDesc}</p>
+            <h3 className="text-base font-bold text-gray-200">{t.llmsTitle}</h3>
+            <p className="text-sm text-gray-400 leading-relaxed">{t.llmsDesc}</p>
           </a>
 
           <a
@@ -264,8 +264,8 @@ export default function HomePage() {
             className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
           >
             <div className="text-2xl">🏷️</div>
-            <h3 className="text-sm font-bold text-gray-200">{t.badgeTitle}</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">{t.badgeDesc}</p>
+            <h3 className="text-base font-bold text-gray-200">{t.badgeTitle}</h3>
+            <p className="text-sm text-gray-400 leading-relaxed">{t.badgeDesc}</p>
           </a>
         </div>
 
@@ -277,10 +277,10 @@ export default function HomePage() {
         <section className="w-full pt-10 text-left">
           <div className="bg-[#070A10]/60 border border-blue-500/30 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5">
-              <h2 className="text-sm font-bold text-white">
+              <h2 className="text-lg font-bold text-white">
                 This site is measured by the same 38 checks
               </h2>
-              <p className="text-xs text-gray-400 leading-relaxed max-w-2xl">
+              <p className="text-sm text-gray-400 leading-relaxed max-w-2xl">
                 LLMention audits its own homepage with the rules it applies to yours, and links
                 the result rather than quoting a number you have to take on trust. Last verified
                 on 2 October 2026: 100 out of 100, grade A, all 38 checks passing. Re-run it
@@ -339,13 +339,13 @@ export default function HomePage() {
         <section className="w-full pt-8 text-left space-y-4">
           <div className="bg-gradient-to-r from-blue-950/20 via-gray-900/60 to-purple-950/20 border border-gray-800 p-8 rounded-2xl space-y-6">
             <div className="text-center space-y-1">
-              <h2 className="text-lg font-bold text-white">Why GEO matters in 2026</h2>
+              <h2 className="text-2xl font-bold text-white">Why GEO matters in 2026</h2>
               <p className="text-xs text-gray-400">
                 Generative Engine Optimization moves the target from a ranked link to a cited passage.
               </p>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+              <table className="w-full text-sm border border-gray-800/80 rounded-xl overflow-hidden">
                 <thead className="bg-[#070A10]/80 text-gray-400">
                   <tr>
                     <th className="text-left px-4 py-2.5 font-semibold">Dimension</th>
@@ -388,7 +388,7 @@ export default function HomePage() {
         {/* FAQ — content here and the FAQPage markup below come from one source */}
         <section id="faq" className="w-full pt-8 text-left space-y-4">
           <div className="text-center space-y-1">
-            <h2 className="text-lg font-bold text-white">Frequently Asked Questions</h2>
+            <h2 className="text-2xl font-bold text-white">Frequently Asked Questions</h2>
             <p className="text-xs text-gray-400">Short, direct answers about GEO and AI crawler access.</p>
           </div>
           <div className="space-y-3">
@@ -403,7 +403,7 @@ export default function HomePage() {
                     +
                   </span>
                 </summary>
-                <p className="text-xs text-gray-400 leading-relaxed pt-3">{item.a}</p>
+                <p className="text-sm text-gray-400 leading-relaxed pt-3">{item.a}</p>
               </details>
             ))}
           </div>
@@ -414,7 +414,7 @@ export default function HomePage() {
             largest measured effect in the literature, so the site does it. */}
         <section className="w-full pt-8 text-left space-y-4">
           <div className="bg-gradient-to-r from-blue-950/20 via-gray-900/60 to-purple-950/20 border border-gray-800 p-8 rounded-2xl space-y-5">
-            <h2 className="text-lg font-bold text-white">What the published research found</h2>
+            <h2 className="text-2xl font-bold text-white">What the published research found</h2>
 
             <blockquote className="border-l-2 border-blue-500 pl-4 space-y-2">
               <p className="text-sm text-gray-300 leading-relaxed">
@@ -436,7 +436,7 @@ export default function HomePage() {
               </footer>
             </blockquote>
 
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-sm text-gray-400 leading-relaxed">
               LLMention weights its score accordingly. Citability and evidence carry 11% of the
               total and answer readiness a further 10%, because those are the dimensions tied most
               directly to the measurements above. The full weighting, every rule, and an explicit
@@ -447,7 +447,7 @@ export default function HomePage() {
               .
             </p>
 
-            <ul className="text-xs text-gray-400 space-y-1.5 list-disc pl-5">
+            <ul className="text-sm text-gray-400 space-y-1.5 list-disc pl-5">
               <li>
                 <a
                   href="https://arxiv.org/abs/2311.09735"
@@ -489,14 +489,14 @@ export default function HomePage() {
             to exist, before an engine treats a claim as attributable. */}
         <section className="w-full pt-8 text-left space-y-4">
           <div className="bg-[#070A10]/60 border border-gray-800/60 p-8 rounded-2xl space-y-4">
-            <h2 className="text-lg font-bold text-white">About LLMention</h2>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <h2 className="text-2xl font-bold text-white">About LLMention</h2>
+            <p className="text-sm text-gray-400 leading-relaxed">
               LLMention is an independent tool that audits whether AI search engines can reach,
               parse and cite a website. It is not affiliated with OpenAI, Anthropic, Google or
               Perplexity, and it holds no data relationship with them. The scanner and the
               llms.txt generator are free and require no account.
             </p>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-sm text-gray-400 leading-relaxed">
               The project publishes its scoring method in full, including the checks it runs, the
               weight each one carries, and the parts of the picture it cannot see. No score floor
               is applied, so a page that satisfies none of the checks scores near zero. Signals
