@@ -77,6 +77,47 @@ console.log("=== security headers on / ===");
   }
 }
 
+/* ---- Which deployment is actually answering ---- */
+console.log("\n=== deployment identity ===");
+{
+  /*
+   * THIS CHECK EXISTS BECAUSE ITS ABSENCE WAS A REAL BLIND SPOT.
+   *
+   * During the move from next-on-pages to OpenNext, check:live reported a clean pass
+   * against the production domain while that domain was still served by the old Pages
+   * deployment. Every content assertion it made was genuinely true of both deployments -
+   * the security headers, the Content-Signal, the canonical and the markdown twins had all
+   * been shipped to Pages in earlier commits - so nothing here could tell the two apart,
+   * and a cutover that had not happened looked like one that had.
+   *
+   * The adapters identify themselves in response headers, so the distinction is decidable:
+   *   OpenNext Worker   x-opennext: 1, and x-nextjs-cache
+   *   next-on-pages     x-next-cache-tags and x-matched-path, no x-opennext
+   *
+   * A plain `next start` sets neither, and that is a legitimate target to point this
+   * script at, so it is reported rather than failed.
+   */
+  const { res, error } = await get("/");
+  if (error) {
+    bad("could not read the deployment identity", error);
+  } else {
+    const opennext = res.headers.get("x-opennext");
+    const pagesTags = res.headers.get("x-next-cache-tags");
+    const matchedPath = res.headers.get("x-matched-path");
+
+    if (opennext) {
+      ok("served by the OpenNext Worker", `x-opennext: ${opennext}`);
+    } else if (pagesTags || matchedPath) {
+      bad(
+        "still served by the next-on-pages Pages deployment",
+        `${pagesTags ? "x-next-cache-tags" : "x-matched-path"} present, x-opennext absent`
+      );
+    } else {
+      ok("not identifiable as either adapter", "expected for a plain next start; not a failure");
+    }
+  }
+}
+
 /* ---- robots.txt ---- */
 console.log("\n=== robots.txt ===");
 {
