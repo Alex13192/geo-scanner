@@ -8,7 +8,11 @@
     "pages:build": "npx @cloudflare/next-on-pages",
     "start": "next start",
     "lint": "eslint",
-    "check:values": "node scripts/check-values.mjs"
+    "check:values": "node scripts/check-values.mjs",
+    "check:built": "node scripts/check-built-pages.mts",
+    "generate:copy": "node scripts/generate-check-copy.mts",
+    "test:analyze": "node scripts/test-analyze.mts",
+    "test:rate-limit": "node scripts/test-rate-limit.mts"
   },
   "dependencies": {
     "lucide-react": "^1.49.0",

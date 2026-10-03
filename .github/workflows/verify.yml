@@ -1,0 +1,82 @@
+name: verify
+
+# WHAT THIS RUNS, AND WHY EVERY STEP IS HERE
+#
+# The site's claim is that its published method and its executed method cannot
+# drift apart. Four of these steps exist to make that claim mechanical rather than
+# aspirational, and the last one is the reason the rest can be trusted:
+#
+#   check:values     every static URL and contact address agrees with lib/site.ts.
+#                    Added after a stale host survived in robots.txt and llms.txt,
+#                    where a wrong Sitemap: line is worse than no line at all. It
+#                    has since caught two hardcoded origins in new files, one of
+#                    them inside an explanatory comment - which is correct, because
+#                    a grep cannot tell a comment from working code.
+#   test:analyze     the scoring engine's own suite: the robots.txt parser, the
+#                    measurement guards, the page-type exemptions, the generated
+#                    check copy, the meta ranges the site publishes, and the
+#                    assertion that the fixtures exercise every catalogued check.
+#   test:rate-limit  the token bucket. Exists because its memory guard used to be
+#                    buckets.clear(), which reset every client - the flood that
+#                    tripped the guard was also what disarmed it.
+#   tsc              types. Cheap, and it catches the class of mistake a build can
+#                    silently tolerate.
+#   build            proves the pages prerender, which is not the same as compiling.
+#   check:built      scores the HTML the build just wrote with the scanner's OWN
+#                    analyser and fails if any indexable route is below its floor.
+#
+# THAT LAST STEP IS THE POINT OF THIS FILE. The scanner only analyses a homepage,
+# so it can never see this class of problem on its own site - and twice it did not:
+# /llms-txt-studio/ and /readiness-badge/ both shipped two words of prerendered
+# HTML while every other check stayed green, because a client component calling
+# useSearchParams() opts its subtree out of prerendering and the build is perfectly
+# happy to serve the fallback.
+#
+# If a new page deliberately scores lower than an A, prove it in the pull request
+# rather than silencing this step. `npm run check:built -- --warn-only` reports
+# without failing, and `--threshold=<n>` moves the bar; both exist for a reasoned
+# exception, not for a red build somebody wants to merge anyway.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Check that declared values agree
+        run: npm run check:values
+
+      - name: Run the scoring engine's tests
+        run: npm run test:analyze
+
+      - name: Run the rate limiter's tests
+        run: npm run test:rate-limit
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          # next/font downloads Geist at build time, so this job needs network
+          # access; telemetry does not need to be part of it.
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - name: Score the built site with its own analyser
+        run: npm run check:built
