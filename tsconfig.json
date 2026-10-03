@@ -13,6 +13,13 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    // This repo has two runtimes for the same files. Next's bundler resolves
+    // "./catalog" to catalog.ts; plain node, which runs scripts/*.mts, requires the
+    // extension to be written out. Allowing it lets lib/geo/*.ts use explicit .ts
+    // specifiers so a module there can be imported by both. The first cross-module
+    // import inside lib/geo exposed this, because until then none of those files
+    // imported each other. Requires noEmit, which is already set.
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",

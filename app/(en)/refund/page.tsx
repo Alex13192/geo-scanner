@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -14,6 +14,8 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * discharge the separate obligations that selling to consumers in the EU
  * creates (an Impressum and a withdrawal notice among them).
  */
+import { og } from "@/lib/og";
+
 const TITLE = "Refund policy";
 const DESCRIPTION =
   "When a manual GEO audit is refunded, how to ask for it, and how long it takes. The plain-language terms, without a form to fill in.";
@@ -21,7 +23,11 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/refund/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/refund/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/refund/",
+  }),
 };
 
 export default function RefundPage() {
@@ -130,12 +136,42 @@ export default function RefundPage() {
             Run a free scan
           </a>
         </div>
+        <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
+          <h2 className="text-xl font-bold text-white">When a refund applies</h2>
+          <p>The conditions, the mechanism and the timings, without a form to fill in.</p>
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+            <thead className="bg-gray-900/60 text-gray-400">
+              <tr>
+              <th className="text-left px-4 py-2.5 font-semibold">Situation</th>
+              <th className="text-left px-4 py-2.5 font-semibold">Outcome</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">The audit found nothing actionable on the pages you submitted</td>
+              <td className="px-4 py-2.5 align-top">Full refund on request</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">You reply within 14 days of delivery</td>
+              <td className="px-4 py-2.5 align-top">Refunded to the original payment method</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">The scope changed before any work began</td>
+              <td className="px-4 py-2.5 align-top">Nothing was charged, so there is nothing to refund</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Work has been delivered and you are dissatisfied with the priority order</td>
+              <td className="px-4 py-2.5 align-top">Not refundable; the finding list itself is the deliverable</td>
+            </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
       </main>
 
-      <footer className="max-w-3xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        © 2026 LLMention. Brand Generative Engine Optimization Intelligence.
-      </footer>
+      <PageFooter width="3xl" />
     </div>
   );
 }

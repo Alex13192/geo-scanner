@@ -19,7 +19,21 @@
  * resource, and a full HTML parser is not worth the budget.
  */
 
-export type CheckStatus = "pass" | "warn" | "fail";
+/**
+ * "na" exists because a check can be inapplicable rather than failed.
+ *
+ * WHY THIS IS NOT THE SCORE FLOOR THIS FILE REFUSES TO ADD: a floor lifts a page
+ * that failed a check. This removes a check that was never a fair question for the
+ * page in front of it, and renormalises the weights around what is left. A privacy
+ * policy is not a worse page for containing no expert quotations - the question
+ * does not apply, and scoring it as a failure punished an entire class of page for
+ * being the kind of page it is.
+ *
+ * It is also why the default is "every check applies to every page". Nothing
+ * changes unless a check is explicitly listed in NA_BY_PAGE_TYPE, so the change
+ * that introduced this could not move any existing score.
+ */
+export type CheckStatus = "pass" | "warn" | "fail" | "na";
 
 export type Check = {
   id: string;
@@ -41,9 +55,16 @@ export type Dimension = {
   /** Share of the total score, in percent. Weights sum to 100. */
   weight: number;
   score: number;
-  /** Sum of earned/possible across this dimension's checks. */
+  /** Sum of earned/possible across this dimension's applicable checks. */
   earned: number;
   possible: number;
+  /**
+   * The weight actually used in the total, which is 0 when every check in the
+   * dimension turned out not to apply. The remaining weights are renormalised
+   * against their sum, so the total still reads as a percentage of what could be
+   * assessed rather than of a fixed 100.
+   */
+  applicableWeight: number;
   rationale: string;
 };
 
@@ -90,6 +111,15 @@ export type AnalyzeInput = {
   llmsText: string | null;
   sitemapText: string | null;
   lastModifiedHeader: string | null;
+  /**
+   * The path the page was actually served from, used only to decide which checks
+   * apply to this kind of page. See detectPageType below.
+   *
+   * Optional, and deliberately so: when it is absent every check applies, so any
+   * caller that has not been updated - including the fixture tests - keeps the
+   * behaviour it had before page types existed.
+   */
+  path?: string;
 };
 
 export type AnalyzeResult = {
@@ -104,6 +134,14 @@ export type AnalyzeResult = {
   checks: { id: string; dimension: string; status: CheckStatus; weight: number; title: string }[];
   checksRun: number;
   checksPassed: number;
+  /**
+   * How many checks were excluded because they do not apply to this page type.
+   * Reported rather than hidden, so "37 of 38" can be read correctly when three of
+   * them were never questions in the first place.
+   */
+  checksNotApplicable: number;
+  /** What kind of page this was judged to be, and so which rules were applied. */
+  pageType: PageType;
 };
 
 /* ------------------------------------------------------------------ */
@@ -144,6 +182,24 @@ const partial = (
   title,
   evidence,
   fix,
+});
+
+/**
+ * A check that does not apply to this kind of page.
+ *
+ * It keeps its weight on the Check record - that is what the check is worth when
+ * it does apply - but earned stays 0 and the aggregation excludes it from both
+ * earned and possible, so it can neither add nor subtract. The evidence string
+ * says why, because "not scored" and "not checked" are different claims and the
+ * report has to be able to tell them apart.
+ */
+const notApplicable = (id: string, weight: number, title: string, why: string): Check => ({
+  id,
+  status: "na",
+  weight,
+  earned: 0,
+  title,
+  evidence: why,
 });
 
 function stripTags(html: string): string {
@@ -429,6 +485,97 @@ export function parseRobots(text: string): ParsedRobots {
   return { blocked, sitemaps, raw: text };
 }
 
+/* ------------------------------------------------------------------ */
+/* Page types                                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * What kind of page is being scored.
+ *
+ * WHY THIS EXISTS: the scanner used to apply every check to whatever it was given,
+ * which was defensible only because it only ever scored homepages. The moment a
+ * caller passes a path - and the API now does - that assumption breaks in a
+ * specific and unfair way: a privacy policy has no expert quotations and no
+ * Organization node of its own, and it is not a worse page for it. Treating an
+ * inapplicable check as a failure taught the score to punish a whole class of page
+ * for being the kind of page it is. Both products in this category handle this;
+ * the first version of this scanner did not, and the failure it printed looked
+ * like a real finding.
+ */
+export type PageType = "homepage" | "docs" | "article" | "legal" | "contact" | "general";
+
+/**
+ * Checks that do not apply to a page type, keyed by check id.
+ *
+ * THIS IS THE SINGLE SOURCE. It is exported so /methodology can render the
+ * exclusions from the same object the analyser applies, which is the only way the
+ * published rule and the executed rule can be guaranteed to agree - the same
+ * reason the check catalogue drives that page rather than a hand-written list.
+ *
+ * scripts/test-analyze.mts asserts that every key here is a real check id and
+ * every value a real page type. Without that guard a typo would be a silent
+ * no-op: the check would simply keep applying and nothing would report it.
+ *
+ * Every check not listed here applies to every page, which is why adding page
+ * types could not move any existing score.
+ */
+export const NA_BY_PAGE_TYPE: Record<string, PageType[]> = {
+  /*
+   * `legal` and `contact` are grouped because the reason is the same: both are
+   * utility pages that state something rather than argue for it. An evidence check
+   * asks such a page to support a case it was never making, and a length target
+   * applies to content, not to a licence or a phone number.
+   */
+  quotations: ["legal", "contact"],
+  statistics: ["legal", "contact"],
+  "authority-citations": ["legal", "contact"],
+  "word-count": ["legal", "contact"],
+  // A policy page is a reference, not an answer surface. A contact page usually is
+  // one, which is why `faq` stays applicable there - see /contact/.
+  faq: ["legal"],
+  // An article body does not carry the site's About or Contact chrome; that lives
+  // in the layout around it, which a single-page fetch never sees.
+  "about-contact": ["article"],
+};
+
+/** Where each type is decided from. Paths first, markup second. */
+/**
+ * The term has to be followed by a separator or the end of the path, never by
+ * another letter - otherwise `legal` would match `/legals` and `refund` would
+ * match `/refunds`. The separators are `-`, `_`, `.` and `/`, because real sites
+ * write all four: /terms-of-service, /terms_of_service, /terms.html, /terms/.
+ * The first version of this omitted `-` and classified /terms-of-service as a
+ * general page, which the probe list in scripts/test-analyze.mts caught.
+ */
+const LEGAL_PATH =
+  /\/(privacy|terms|tos|legal|imprint|impressum|withdrawal|widerruf|refund|cookies|gdpr|dpa|subprocessors|disclaimer)([-_./]|$)/i;
+const DOCS_PATH = /(^|\/)(docs?|documentation|guide|guides|reference|manual|handbook)([-_./]|$)/i;
+const CONTACT_PATH = /(^|\/)(contact|contact-us|support|help|get-in-touch)([-_./]|$)/i;
+const ARTICLE_JSONLD =
+  /"@type"\s*:\s*"(BlogPosting|NewsArticle|Article|TechArticle|ScholarlyArticle)"/i;
+
+/**
+ * Classify a page from its path, falling back to what its structured data claims.
+ *
+ * The path comes first because it is what the site itself decided to call the
+ * page; the markup second, because a CMS emitting BlogPosting is telling us
+ * something the URL may not. Deliberately no content heuristics - guessing "this
+ * reads like an article" would make the score depend on a judgement the reader
+ * cannot check, and the entire reason the rules are published is that they can be.
+ *
+ * An absent path means "homepage", and no check is excluded from a homepage, so a
+ * caller that passes no path gets exactly the behaviour it had before.
+ */
+export function detectPageType(path: string | undefined, html: string): PageType {
+  const clean = (path || "").split("?")[0].split("#")[0];
+  if (clean === "" || clean === "/") return "homepage";
+  if (LEGAL_PATH.test(clean)) return "legal";
+  if (CONTACT_PATH.test(clean)) return "contact";
+  if (DOCS_PATH.test(clean)) return "docs";
+  if (ARTICLE_JSONLD.test(html)) return "article";
+  return "general";
+}
+
 const DIMENSIONS = [
   {
     id: "ai-crawler-access",
@@ -679,6 +826,30 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
     } else {
       c.push(fail("sitemap-valid", 3, "sitemap.xml not found", "The request for /sitemap.xml returned nothing usable.", "Publish a sitemap so crawlers can discover pages without guessing."));
     }
+    /*
+     * Content-Signal is a 2025 proposal for stating content policy inside robots.txt,
+     * so a crawler reads permissions and preferences from the file it already
+     * fetches. Adoption is early and no major engine has committed to honouring it,
+     * which is exactly why it is worth 1 point out of 16 in this dimension rather
+     * than being sold as a ranking factor. Scoring it at all is the honest position:
+     * it is cheap, it is where the convention is heading, and a tool that recommends
+     * it should be able to show its own line.
+     */
+    const contentSignal = (input.robotsText || "").match(
+      /^\s*content-signal\s*:\s*(\S[^\r\n]*)/im
+    );
+    c.push(
+      contentSignal
+        ? pass("content-signal", 1, "robots.txt states a content policy", `Content-Signal: ${contentSignal[1].trim()}`)
+        : fail(
+            "content-signal",
+            1,
+            "No content policy in robots.txt",
+            "robots.txt has no Content-Signal directive.",
+            "Add a line such as: Content-Signal: search=yes, ai-input=yes, ai-train=no. Early adoption and weighted low, but it states your position in the one file every crawler already reads."
+          )
+    );
+
     checks["ai-crawler-access"] = c;
   }
 
@@ -936,6 +1107,31 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
         ? pass("ai-context-robots", 1, "A crawler policy is published", "robots.txt is readable.")
         : fail("ai-context-robots", 1, "No crawler policy published", "robots.txt could not be read.", "Publish robots.txt stating which crawlers are welcome.")
     );
+    /*
+     * A markdown alternate is the llms.txt idea applied per page: hand the machine a
+     * version of this page with the navigation and the scripts stripped out.
+     *
+     * The check reads the DECLARATION only, and the limitation is stated rather than
+     * hidden: the scanner fetches one URL, so following the alternate to confirm it
+     * resolves would be a second request it does not make. A page can therefore pass
+     * this check with a link that 404s. That is a real weakness, it is written into
+     * the published rule, and closing it is a separate change to the fetcher.
+     */
+    const mdAlternate =
+      /<link[^>]+rel\s*=\s*["']alternate["'][^>]*type\s*=\s*["']text\/markdown["']/i.test(input.html) ||
+      /<link[^>]+type\s*=\s*["']text\/markdown["'][^>]*rel\s*=\s*["']alternate["']/i.test(input.html);
+    c.push(
+      mdAlternate
+        ? pass("markdown-alternate", 1, "A markdown alternate is declared", "The page declares a text/markdown alternate.")
+        : fail(
+            "markdown-alternate",
+            1,
+            "No markdown alternate",
+            'No <link rel="alternate" type="text/markdown"> in the document head.',
+            'Publish a markdown version of the page and point at it with <link rel="alternate" type="text/markdown" href="...">, so an agent can fetch the content without the chrome around it.'
+          )
+    );
+
     checks["llms-txt"] = c;
   }
 
@@ -1064,6 +1260,32 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
     checks["delivery"] = c;
   }
 
+  /* ---- Applicability ---- */
+  /*
+   * Applied here rather than inside each check, so that a check author cannot
+   * forget it and so the whole exception list stays in one reviewable place.
+   * Anything not named in NA_BY_PAGE_TYPE is untouched, which is what makes this
+   * change score-neutral for every page type it does not mention.
+   */
+  const pageType = detectPageType(input.path, input.html);
+  let checksNotApplicable = 0;
+  for (const [checkId, types] of Object.entries(NA_BY_PAGE_TYPE)) {
+    if (!types.includes(pageType)) continue;
+    for (const dimensionId of Object.keys(checks)) {
+      const list = checks[dimensionId];
+      const index = list.findIndex((c) => c.id === checkId);
+      if (index < 0) continue;
+      const existing = list[index];
+      list[index] = notApplicable(
+        checkId,
+        existing.weight,
+        existing.title,
+        `Not applicable to a ${pageType} page, so it is excluded from the score rather than counted as a failure.`
+      );
+      checksNotApplicable += 1;
+    }
+  }
+
   /* ---- Aggregate ---- */
   const dimensions: Dimension[] = [];
   const issues: Issue[] = [];
@@ -1073,8 +1295,11 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
 
   for (const meta of DIMENSIONS) {
     const list = checks[meta.id] || [];
-    const possible = list.reduce((s, c) => s + c.weight, 0);
-    const earned = list.reduce((s, c) => s + c.earned, 0);
+    // An inapplicable check leaves both sides of the fraction, so it can neither
+    // add points nor cost them.
+    const applicable = list.filter((c) => c.status !== "na");
+    const possible = applicable.reduce((s, c) => s + c.weight, 0);
+    const earned = applicable.reduce((s, c) => s + c.earned, 0);
     const score = possible > 0 ? Math.round((earned / possible) * 100) : 0;
 
     dimensions.push({
@@ -1084,6 +1309,9 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
       score,
       earned,
       possible,
+      // A dimension with nothing applicable contributes no weight of its own; the
+      // remaining dimensions are renormalised against their sum below.
+      applicableWeight: possible > 0 ? meta.weight : 0,
       rationale: meta.rationale,
     });
 
@@ -1097,7 +1325,9 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
         weight: check.weight,
         title: check.title,
       });
-      if (check.status === "pass") continue;
+      // An excluded check is not an issue, and listing it as one is precisely the
+      // problem this change exists to remove.
+      if (check.status === "pass" || check.status === "na") continue;
       issues.push({
         id: check.id,
         category: meta.label,
@@ -1110,7 +1340,16 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
     }
   }
 
-  const score = Math.round(dimensions.reduce((s, d) => s + (d.score * d.weight) / 100, 0));
+  /*
+   * Renormalised total. With nothing excluded the applicable weights sum to 100
+   * and this is arithmetically identical to the previous formula - the property
+   * the fixture tests exist to keep.
+   */
+  const totalWeight = dimensions.reduce((s, d) => s + d.applicableWeight, 0);
+  const score =
+    totalWeight > 0
+      ? Math.round(dimensions.reduce((s, d) => s + d.score * d.applicableWeight, 0) / totalWeight)
+      : 0;
 
   const grade =
     score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
@@ -1125,8 +1364,10 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
             ? "Poor - significant GEO gaps"
             : "Critical - rarely cited by AI engines";
 
-  // Severity first, then the dimension that carries the most weight.
-  const weightOf = new Map(dimensions.map((d) => [d.label, d.weight]));
+  // Severity first, then the dimension that carries the most weight. Ordering by
+  // applicableWeight rather than the nominal weight keeps a dimension that was
+  // entirely excluded from outranking the ones that actually applied.
+  const weightOf = new Map(dimensions.map((d) => [d.label, d.applicableWeight]));
   issues.sort((a, b) => {
     const sev = { high: 0, medium: 1, low: 2 };
     if (sev[a.severity] !== sev[b.severity]) return sev[a.severity] - sev[b.severity];
@@ -1152,5 +1393,7 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
     checks: allChecks,
     checksRun,
     checksPassed,
+    checksNotApplicable,
+    pageType,
   };
 }

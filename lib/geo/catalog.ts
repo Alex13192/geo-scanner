@@ -201,6 +201,14 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     rule: "/sitemap.xml returns a body containing <urlset> or <sitemapindex>.",
     onFail: "No sitemap, or a response that is not valid sitemap markup.",
   },
+  {
+    id: "content-signal",
+    dimension: "ai-crawler-access",
+    points: 1,
+    rule: "robots.txt contains a Content-Signal directive with a value on the same line, for example `Content-Signal: search=yes, ai-input=yes, ai-train=no`. The directive is matched case-insensitively at the start of any line.",
+    onFail: "No Content-Signal directive in robots.txt.",
+    note: "Weighted 1 of the 16 points in this dimension because adoption is early: the directive was proposed in 2025 and no major engine has committed to honouring it. It is scored because the convention is cheap to follow and a tool that recommends it should be able to show its own line, not because it moves a ranking.",
+  },
 
   /* ---- Machine Readability ---- */
   {
@@ -375,6 +383,14 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     dimension: "llms-txt",
     points: 1,
     rule: "robots.txt is readable, so a crawler policy is published.",
+  },
+  {
+    id: "markdown-alternate",
+    dimension: "llms-txt",
+    points: 1,
+    rule: 'The document head contains a <link> with rel="alternate" and type="text/markdown", in either attribute order.',
+    onFail: "No markdown alternate is declared on the page.",
+    note: "This reads the declaration only. The scanner fetches one URL, so it does not follow the alternate to confirm that it resolves, and a page can pass this check while pointing at a link that 404s. That limitation is stated here rather than hidden; closing it means a second request in the fetcher.",
   },
 
   /* ---- Freshness ---- */

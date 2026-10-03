@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -24,6 +24,8 @@ import { CONTACT_EMAIL } from "@/lib/site";
  *
  * Not legal advice. Have it reviewed before selling to consumers in the EU.
  */
+import { og } from "@/lib/og";
+
 const TITLE = "Privacy policy";
 const DESCRIPTION =
   "What LLMention processes when you run a scan, what the server logs contain, how advertising cookies are handled, and how to exercise your data rights.";
@@ -33,7 +35,11 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/privacy/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/privacy/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/privacy/",
+  }),
 };
 
 export default function PrivacyPage() {
@@ -309,12 +315,47 @@ export default function PrivacyPage() {
             Run a free scan
           </a>
         </div>
+        <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
+          <h2 className="text-xl font-bold text-white">Summary of what is processed</h2>
+          <p>Four kinds of data are involved in running a scan or answering a message. Each is explained in full further down this page.</p>
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+            <thead className="bg-gray-900/60 text-gray-400">
+              <tr>
+              <th className="text-left px-4 py-2.5 font-semibold">Data</th>
+              <th className="text-left px-4 py-2.5 font-semibold">Why it is involved</th>
+              <th className="text-left px-4 py-2.5 font-semibold">Explained in</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">The domain you submit, and the page the scanner fetches</td>
+              <td className="px-4 py-2.5 align-top">They are the subject of the scan; the checks read that response</td>
+              <td className="px-4 py-2.5 align-top">What this policy covers</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Standard request logs at the edge</td>
+              <td className="px-4 py-2.5 align-top">Keeping the service available, and limiting how often one address can scan</td>
+              <td className="px-4 py-2.5 align-top">Server logs</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Cookies set by advertising partners</td>
+              <td className="px-4 py-2.5 align-top">They fund the free tier rather than a subscription</td>
+              <td className="px-4 py-2.5 align-top">Advertising cookies</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Your email address, if you write to us</td>
+              <td className="px-4 py-2.5 align-top">So the message can be answered and the record kept</td>
+              <td className="px-4 py-2.5 align-top">Your data rights</td>
+            </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
       </main>
 
-      <footer className="max-w-3xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        <div>© 2026 LLMention. Brand Generative Engine Optimization Intelligence.</div>
-      </footer>
+      <PageFooter width="3xl" />
     </div>
   );
 }

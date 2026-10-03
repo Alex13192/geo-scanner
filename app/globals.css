@@ -1,46 +1,71 @@
 @import "tailwindcss";
 
+/*
+ * Surface colours - the single source of truth.
+ *
+ * This site is dark by design. app/(en)/layout.tsx used to hardcode
+ * #0b0f19 / #ffffff as an inline style on <body>, which outranks any
+ * stylesheet, so the light values that used to live here and the
+ * prefers-color-scheme block under them were both dead code. They are now
+ * replaced by the values that were actually being painted, and the inline
+ * style is gone.
+ *
+ * There is no light theme, and adding one is not a matter of restoring a media
+ * query here: several components hardcode dark utility colours, so it needs a
+ * pass over those first.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b0f19;
+  --foreground: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /*
+   * These resolve only because app/(en)/layout.tsx loads Geist and Geist Mono
+   * through next/font under exactly these variable names.
+   *
+   * Note that `@theme inline` does NOT emit `--font-sans` to :root - Tailwind
+   * inlines it into `--default-font-family`, which its own base layer applies
+   * to <html>. So do not write `font-family: var(--font-sans)` anywhere: it
+   * would be undefined. Equally, do not add a `font-family` rule on <body> - a
+   * body rule is precisely what used to shadow this mapping and leave the whole
+   * site rendering in the browser's generic sans-serif.
+   */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* ------------------------------------------------------------------
    Long-form article typography for /docs/<slug> pages.
    Tailwind Typography is not installed, so these are defined by hand.
+
+   The scale is deliberate. It was previously inverted: h2 was 1.05rem
+   (16.8px) against 16px body copy, a 5% step that reads as no hierarchy at
+   all, and h3 was 0.9rem (14.4px) - smaller than the paragraphs it was meant
+   to introduce. Sizes stay in rem so they follow the reader's own browser
+   font-size setting.
    ------------------------------------------------------------------ */
 .doc-article h2 {
   color: #ffffff;
-  font-size: 1.05rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  line-height: 1.4;
-  margin: 2.25rem 0 0.75rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 2.5rem 0 0.75rem;
 }
 .doc-article h3 {
   color: #e5e7eb;
-  font-size: 0.9rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  margin: 1.5rem 0 0.5rem;
+  line-height: 1.4;
+  margin: 1.75rem 0 0.5rem;
 }
 .doc-article p {
   margin: 0 0 1rem;
@@ -81,8 +106,8 @@ body {
   border-radius: 0.75rem;
   padding: 1rem;
   overflow-x: auto;
-  font-size: 0.72rem;
-  line-height: 1.6;
+  font-size: 0.875rem;
+  line-height: 1.65;
   color: #bfdbfe;
   margin: 0 0 1rem;
 }

@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
 
+import { og } from "@/lib/og";
+
 const TITLE = "Implementing Schema.org JSON-LD for AI Entity Disambiguation";
 const DESCRIPTION =
-  "How to use Schema.org JSON-LD to make sure ChatGPT and Claude connect your brand name, domain and products to one entity, including a minimal working example and validation steps.";
+  "How to use Schema.org JSON-LD so ChatGPT and Claude connect your brand, domain and products to one entity, with a minimal example and validation steps.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/docs/schema-org-jsonld/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/docs/schema-org-jsonld/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/docs/schema-org-jsonld/",
+    type: "article",
+  }),
 };
 
 export default function Page() {
@@ -20,6 +27,14 @@ export default function Page() {
       description={DESCRIPTION}
       readTime="5 min read"
       updated="October 2026"
+      faq={{
+        title: "Questions about entity markup",
+        items: [
+          { q: "Which schema types matter most?", a: "Organization and WebSite. They are what let a model bind your brand name, your domain and your product to a single entity instead of guessing whether three separate strings mean the same thing." },
+          { q: "What does sameAs actually do?", a: "It names the profiles that are the same entity elsewhere, which is what turns a string into a resolved entity. A link to an empty or abandoned profile is worse than no link at all." },
+          { q: "How do I validate the markup?", a: "Paste it into a structured data validator and check two things: every node has a stable @id, and the properties its type requires are present rather than merely intended." },
+        ],
+      }}
     >
       <p>
         <strong>JSON-LD is how you tell a machine that your brand name, your domain and your

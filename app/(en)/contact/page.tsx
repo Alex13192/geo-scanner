@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
+import Faq from "@/app/components/Faq";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -15,6 +16,8 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * a server that otherwise holds nothing about visitors, which would contradict
  * the privacy policy for no benefit.
  */
+import { og } from "@/lib/og";
+
 const TITLE = "Contact";
 const DESCRIPTION =
   "How to reach LLMention: corrections to a score, audit requests, privacy requests and press. A real address, answered by the person who maintains the tool.";
@@ -22,7 +25,11 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/contact/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/contact/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/contact/",
+  }),
 };
 
 const ROUTES = [
@@ -175,12 +182,72 @@ export default function ContactPage() {
             Run a free scan
           </a>
         </div>
+
+        {/*
+          The Q&A sits outside the .doc-article container on purpose: that class
+          carries its own h2 scale, and the Faq component brings its own. Nesting
+          one inside the other would silently resize the headings.
+        */}
+                <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
+          <h2 className="text-xl font-bold text-white">What to send, and what happens next</h2>
+          <p>One address handles everything, so here is how to make a message easy to act on.</p>
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+            <thead className="bg-gray-900/60 text-gray-400">
+              <tr>
+              <th className="text-left px-4 py-2.5 font-semibold">Reason for writing</th>
+              <th className="text-left px-4 py-2.5 font-semibold">What to include</th>
+              <th className="text-left px-4 py-2.5 font-semibold">What comes back</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">A score you think is wrong</td>
+              <td className="px-4 py-2.5 align-top">The check id and the URL</td>
+              <td className="px-4 py-2.5 align-top">The check is fixed, or you are told why it stands</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">An audit request</td>
+              <td className="px-4 py-2.5 align-top">The pages you want reviewed, up to five</td>
+              <td className="px-4 py-2.5 align-top">A scope note with the price and your withdrawal rights, before anything is charged</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">A data request</td>
+              <td className="px-4 py-2.5 align-top">Which right you are exercising</td>
+              <td className="px-4 py-2.5 align-top">A reply within one business day</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Anything else</td>
+              <td className="px-4 py-2.5 align-top">As much or as little as you like</td>
+              <td className="px-4 py-2.5 align-top">A reply from the person who maintains the tool</td>
+            </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
+<div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+          <Faq
+            title="Questions about contacting us"
+            items={[
+              {
+                q: "What should I send if I think a score is wrong?",
+                a: "The check id and the URL. The method is published precisely so that a disagreement can be specific, and a check that is wrong gets fixed rather than argued about.",
+              },
+              {
+                q: "How quickly is a message answered?",
+                a: "Within one business day for anything about a score, an audit request or a data request. There is one inbox rather than a routing form, so nothing lands in a mailbox nobody reads.",
+              },
+              {
+                q: "Can I request a re-scan of a page I have fixed?",
+                a: "Yes, and there is no queue to join: run the scan again. Scores are produced per request and nothing is cached between runs.",
+              },
+            ]}
+          />
+        </div>
       </main>
 
-      <footer className="max-w-3xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        <div>© 2026 LLMention. Brand Generative Engine Optimization Intelligence.</div>
-      </footer>
+      <PageFooter width="3xl" />
     </div>
   );
 }

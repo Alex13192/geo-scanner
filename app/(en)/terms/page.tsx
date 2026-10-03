@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -20,6 +20,8 @@ import { CONTACT_EMAIL } from "@/lib/site";
  *
  * Not legal advice. Have it reviewed before selling to consumers in the EU.
  */
+import { og } from "@/lib/og";
+
 const TITLE = "Terms of service";
 const DESCRIPTION =
   "The rules for using the free LLMention scanner and buying a manual GEO audit: what is promised, what is not, and what you may and may not scan.";
@@ -29,7 +31,11 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/terms/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/terms/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/terms/",
+  }),
 };
 
 export default function TermsPage() {
@@ -209,12 +215,42 @@ export default function TermsPage() {
             Run a free scan
           </a>
         </div>
+        <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
+          <h2 className="text-xl font-bold text-white">What these terms commit us to</h2>
+          <p>Three promises and one limit, stated here so they are easy to find.</p>
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+            <thead className="bg-gray-900/60 text-gray-400">
+              <tr>
+              <th className="text-left px-4 py-2.5 font-semibold">Subject</th>
+              <th className="text-left px-4 py-2.5 font-semibold">Position</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">What is promised</td>
+              <td className="px-4 py-2.5 align-top">The scanner runs the published checks and reports what it observed</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">What is not promised</td>
+              <td className="px-4 py-2.5 align-top">Any citation, ranking or recommendation by an AI engine</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">What you may scan</td>
+              <td className="px-4 py-2.5 align-top">Sites you own or have permission to test</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">What you may not scan</td>
+              <td className="px-4 py-2.5 align-top">Targets designed to overload the service or probe private networks</td>
+            </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
       </main>
 
-      <footer className="max-w-3xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        <div>© 2026 LLMention. Brand Generative Engine Optimization Intelligence.</div>
-      </footer>
+      <PageFooter width="3xl" />
     </div>
   );
 }

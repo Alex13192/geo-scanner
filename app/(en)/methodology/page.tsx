@@ -1,27 +1,34 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
+import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
+import Faq from "@/app/components/Faq";
 import {
   DIMENSION_CATALOG,
   CHECK_CATALOG,
   GRADE_BANDS,
   REFERENCES,
 } from "@/lib/geo/catalog";
+// Imported from the analyser rather than duplicated here, so the exclusions this
+// page publishes are the same object the scoring code applies. Editing one and not
+// the other is the drift the catalogue-driven method exists to prevent.
+import { NA_BY_PAGE_TYPE } from "@/lib/geo/analyze";
+
+import { og } from "@/lib/og";
 
 const TITLE = "Methodology — how the GEO score is calculated";
 const DESCRIPTION =
-  "The complete scoring method behind LLMention: twelve weighted dimensions, every check with its exact rule and point value, the A-F grade bands, the primary research the weighting leans on, and an honest account of what the score cannot tell you.";
+  "The complete scoring method: twelve weighted dimensions, every check with its exact rule and point value, the A-F bands, and what the score cannot tell you.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/methodology/" },
-  openGraph: {
+  openGraph: og({
     title: TITLE,
     description: DESCRIPTION,
     url: "/methodology/",
-    type: "article",
-  },
+  }),
 };
 
 export default function MethodologyPage() {
@@ -88,6 +95,18 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
             scores near zero rather than being lifted to a respectable-looking minimum. Points
             are relative weights within a dimension: where two entries below describe the two
             outcomes of a single check, only one of them applies to any given scan.
+          </p>
+          <p>
+            There is one thing that is <em>not</em> a floor and is worth separating from one: a
+            small number of checks are marked <strong>not applicable</strong> to a particular kind
+            of page, and are removed from the calculation entirely rather than counted as a
+            failure. A policy page is not a worse page for containing no expert quotations; the
+            question does not apply. When a check is excluded, its points leave both sides of the
+            fraction and the remaining dimensions are renormalised against their own sum, so the
+            total stays a percentage of what could actually be assessed. Every exclusion is listed
+            against the check it applies to below, and the tests assert that each one names a real
+            check and that no exclusion applies to a homepage — which is what makes this change
+            score-neutral for every scan the tool performed before page types existed.
           </p>
 
           <h2>What do the grades mean?</h2>
@@ -191,6 +210,15 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
                           Not satisfied: {check.onFail}
                         </div>
                       )}
+                      {NA_BY_PAGE_TYPE[check.id] && (
+                        <div className="text-gray-500 pl-10 pt-0.5">
+                          Not applicable to{" "}
+                          <span className="text-gray-400">
+                            {NA_BY_PAGE_TYPE[check.id].join(", ")}
+                          </span>{" "}
+                          pages. Excluded from the score rather than counted as a failure.
+                        </div>
+                      )}
                       {check.note && (
                         <div className="text-gray-500 pl-10 pt-0.5 border-l border-gray-800 ml-10 pl-3">
                           Note: {check.note}
@@ -233,12 +261,27 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
             Run a free GEO audit on your own site →
           </Link>
         </div>
+        <div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+          <Faq
+            title="Questions about the method"
+            items={[
+            { q: "Is the total an average of the twelve dimensions?", a: "No. Each dimension is scored as the fraction of its own points that were earned, and the twelve are then combined by weight. A dimension worth 16% moves the total three times as much as one worth 5%." },
+            { q: "Why is a context file weighted so low?", a: "Because the published evidence for it is weak. Google has said it does not use llms.txt in Search, so it is worth 5 of the 100 points rather than being advertised as a ranking factor." },
+            { q: "Can I reproduce a score?", a: "Yes. A scan is a single GET against the public API, and the same inputs produce the same score. The study over 30 homepages names the exact endpoint it used." },
+            ]}
+          />
+          <Evidence
+            quote={GEO_PRIMARY_QUOTE}
+            attribution="Generative Engine Optimization, KDD 2024"
+            attributionUrl="https://arxiv.org/abs/2311.09735"
+            sources={GEO_PRIMARY_SOURCES}
+            note="The weightings on this site follow that measurement rather than taste, and the parts of the picture a single-URL scan cannot see are stated rather than left out."
+          />
+        </div>
+
       </main>
 
-      <footer className="max-w-3xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        © LLMention. Brand Generative Engine Optimization Intelligence.
-      </footer>
+      <PageFooter width="3xl" />
     </div>
   );
 }

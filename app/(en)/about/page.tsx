@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
+import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
+import Faq from "@/app/components/Faq";
 import { CONTACT_EMAIL } from "@/lib/site";
+
+import { og } from "@/lib/og";
 
 const TITLE = "About LLMention";
 const DESCRIPTION =
@@ -11,7 +15,11 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/about/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/about/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/about/",
+  }),
 };
 
 export default function AboutPage() {
@@ -148,12 +156,60 @@ export default function AboutPage() {
             Run a free GEO audit on your own site →
           </Link>
         </div>
+                <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
+          <h2 className="text-xl font-bold text-white">What the scanner does and does not do</h2>
+          <p>In the published study over 30 homepages, 2 of them (7%) reached a B or above and none reached an A. That result is easier to read with the scope stated plainly.</p>
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+            <thead className="bg-gray-900/60 text-gray-400">
+              <tr>
+              <th className="text-left px-4 py-2.5 font-semibold">It does</th>
+              <th className="text-left px-4 py-2.5 font-semibold">It does not</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Fetch your homepage the way a crawler would</td>
+              <td className="px-4 py-2.5 align-top">Execute JavaScript, so a client-rendered page is judged as a crawler sees it</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Read robots.txt, llms.txt and the sitemap when they exist</td>
+              <td className="px-4 py-2.5 align-top">Sign in, submit a form, or reach anything behind a paywall</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Report each failed check with the evidence that produced it</td>
+              <td className="px-4 py-2.5 align-top">Ask any AI engine whether your brand is mentioned, recommended or cited</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Publish every rule, its weight and its pass condition</td>
+              <td className="px-4 py-2.5 align-top">Predict a citation, or promise a ranking</td>
+            </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
+<div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+          <Faq
+            title="Questions about the project"
+            items={[
+            { q: "Who runs LLMention?", a: "An independent project, maintained by the team named on the contact page. It is not affiliated with OpenAI, Anthropic, Google or Perplexity, and holds no data relationship with any of them." },
+            { q: "Why publish the scoring method in full?", a: "Because the category has a credibility problem in the other direction: tools describe mysterious AI visibility scores without saying how they are computed. A method you cannot inspect is not evidence." },
+            { q: "Does the scanner query ChatGPT about my brand?", a: "No. It measures whether your pages are in a state that makes being cited possible, which is a narrower claim than whether you are being cited, and a more defensible one." },
+            ]}
+          />
+          <Evidence
+            quote={GEO_PRIMARY_QUOTE}
+            attribution="Generative Engine Optimization, KDD 2024"
+            attributionUrl="https://arxiv.org/abs/2311.09735"
+            sources={GEO_PRIMARY_SOURCES}
+            note="The weightings on this site follow that measurement rather than taste, and the parts of the picture a single-URL scan cannot see are stated rather than left out."
+          />
+        </div>
+
       </main>
 
-      <footer className="max-w-3xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        © 2026 LLMention. Brand Generative Engine Optimization Intelligence.
-      </footer>
+      <PageFooter width="3xl" />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
+import { CHECK_CATALOG } from '@/lib/geo/catalog';
 
 /**
  * Bump this date whenever you meaningfully change page content.
@@ -19,11 +20,19 @@ const LAST_MODIFIED = new Date('2026-10-02');
  * single-language site must not declare `languages` at all, because an alternate
  * that names a page which no longer exists tells search engines an alternate
  * exists and then fails to deliver it. /de/* now 301s to the English
- * equivalent - see public/_redirects.
+ * equivalent - see middleware.ts, which is where those redirects actually live.
+ * This comment used to point at public/_redirects; that file was removed once it
+ * turned out not to run, and the pointer was left behind.
  *
  * NOTE ON /report/
  * The scan result page is user-specific and thin content. It is deliberately
  * NOT listed here, and is disallowed in robots.txt.
+ *
+ * NOTE ON /checks/
+ * One page per published rule, generated from the catalogue rather than typed out,
+ * so adding a check to lib/geo/catalog.ts cannot leave the sitemap behind. Priority
+ * is low on purpose: these are reference pages that earn their traffic from the
+ * report linking into them and from long-tail queries, not from the homepage.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
@@ -135,5 +144,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'yearly',
       priority: 0.5,
     },
+    /* The rule reference: the hub, then one page per rule. */
+    {
+      url: `${SITE_URL}/checks/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    ...CHECK_CATALOG.filter((check) => !check.alias).map((check) => ({
+      url: `${SITE_URL}/checks/${check.id}/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+    })),
   ];
 }

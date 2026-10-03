@@ -83,4 +83,22 @@ Disallow: /report/
 # API endpoints
 Disallow: /api/
 
+# ---------------------------------------------------------------
+# Content Signals
+#
+# A 2025 proposal for stating content policy in one line a crawler
+# can parse, rather than inferring it from a list of user-agent
+# groups. Everything is open here, which is what the Allow: /
+# directives above already say: Google-Extended and CCBot are both
+# allowed, and this site's argument is that being readable by AI is
+# the point. A signal that contradicted those rules would be worse
+# than no signal at all.
+#
+# Adoption is early and no major engine has committed to honouring
+# it, so our own scanner weights it 1 point out of 16 in the
+# AI Crawler Access dimension.
+# ---------------------------------------------------------------
+
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
 Sitemap: https://geo-scanner.ccie13192.com/sitemap.xml

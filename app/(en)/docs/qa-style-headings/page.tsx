@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
 
+import { og } from "@/lib/og";
+
 const TITLE = "Optimizing Headings for Direct AI Citation";
 const DESCRIPTION =
-  "How to rewrite H2 and H3 headings as real questions and pair them with answer-first paragraphs, so AI search engines can lift a clean, self-contained answer from your page.";
+  "How to rewrite H2 and H3 headings as real questions and pair them with answer-first paragraphs, so an AI search engine can lift a self-contained answer.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/docs/qa-style-headings/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/docs/qa-style-headings/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/docs/qa-style-headings/",
+    type: "article",
+  }),
 };
 
 export default function Page() {
@@ -20,6 +27,14 @@ export default function Page() {
       description={DESCRIPTION}
       readTime="4 min read"
       updated="October 2026"
+      faq={{
+        title: "Questions about question-shaped headings",
+        items: [
+          { q: "What makes a heading answerable?", a: "It is phrased the way a person would ask, and the paragraph underneath answers it in the first sentence rather than building up to the answer." },
+          { q: "Should every heading become a question?", a: "No. Question headings help where a section genuinely answers something. Forcing one onto a section that is not an answer produces worse writing and no gain." },
+          { q: "Does this change how the page looks?", a: "It changes the wording of the heading and the order of the paragraph, not the layout. The headings stay the same size and the page keeps its structure." },
+        ],
+      }}
     >
       <p>
         <strong>AI engines quote passages, not pages.</strong> A generated answer lifts a

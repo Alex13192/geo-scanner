@@ -157,6 +157,19 @@ export async function GET(request: Request) {
     llmsText: llms && llms.status === 200 ? llms.body : null,
     sitemapText: sitemap && sitemap.status === 200 ? sitemap.body : null,
     lastModifiedHeader: home.lastModified,
+    /*
+     * The path the page was finally served from, which is what decides whether
+     * checks like `quotations` or `about-contact` are fair questions for this page
+     * at all. Taken from the final URL rather than the requested domain, so a
+     * redirect to /privacy/ is classified as the page that was actually read.
+     */
+    path: (() => {
+      try {
+        return new URL(home.finalUrl).pathname;
+      } catch {
+        return undefined;
+      }
+    })(),
   });
 
   // `brief=1` returns the headline numbers without the twelve dimension objects
@@ -181,6 +194,10 @@ export async function GET(request: Request) {
       hasSameAs: !result.issues.some((i) => i.id === "sameas"),
       hasRobotsTxt: !result.issues.some((i) => i.id === "robots-present"),
       topIssue: result.issues[0]?.id ?? null,
+      // Reported even in the brief form, because "30 of 38" means something
+      // different when four of them were never questions for this page.
+      pageType: result.pageType,
+      checksNotApplicable: result.checksNotApplicable,
     });
   }
 
@@ -207,6 +224,8 @@ export async function GET(request: Request) {
     dimensions: result.dimensions,
     checksRun: result.checksRun,
     checksPassed: result.checksPassed,
+    pageType: result.pageType,
+    checksNotApplicable: result.checksNotApplicable,
     issues: result.issues,
     metrics: result.metrics,
   });

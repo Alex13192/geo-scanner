@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
 
+import { og } from "@/lib/og";
+
 const TITLE = "Configuring robots.txt and WAF for GPTBot and PerplexityBot";
 const DESCRIPTION =
-  "Which user-agents AI search engines send, how to allow them in robots.txt without opening your firewall, and how to confirm that a WAF is not silently returning 403 to AI crawlers.";
+  "Which user-agents AI search engines send, how to allow them in robots.txt, and how to confirm a WAF is not silently returning 403 to AI crawlers.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/docs/allow-ai-crawlers/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/docs/allow-ai-crawlers/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/docs/allow-ai-crawlers/",
+    type: "article",
+  }),
 };
 
 export default function Page() {
@@ -20,6 +27,14 @@ export default function Page() {
       description={DESCRIPTION}
       readTime="4 min read"
       updated="October 2026"
+      faq={{
+        title: "Questions about crawler access",
+        items: [
+          { q: "Which user-agents do I need to allow?", a: "At minimum GPTBot and OAI-SearchBot for OpenAI, ClaudeBot and Claude-SearchBot for Anthropic, PerplexityBot for Perplexity, and Google-Extended for Google's AI surfaces." },
+          { q: "robots.txt allows them, so why does a scan still report a block?", a: "Because a firewall or CDN rule can refuse a request before robots.txt is consulted. Large sites verify crawlers by IP address, so the WAF configuration is part of the answer, not just the file." },
+          { q: "Should I allow every AI crawler?", a: "That is a policy decision rather than a technical one. Allowing search crawlers while disallowing training crawlers is a common and defensible split, and robots.txt can express it." },
+        ],
+      }}
     >
       <p>
         <strong>A blocked crawler means you cannot be cited by that engine, no matter how good

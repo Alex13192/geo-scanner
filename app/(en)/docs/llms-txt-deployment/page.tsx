@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
 
+import { og } from "@/lib/og";
+
 const TITLE = "How to Generate and Deploy an llms.txt File";
 const DESCRIPTION =
-  "A practical guide to structuring, hosting and verifying an /llms.txt file at your domain root, including an honest assessment of what it does and does not do for AI search visibility.";
+  "A practical guide to structuring, hosting and verifying an /llms.txt file at your domain root, and an honest look at what it does not do for AI visibility.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/docs/llms-txt-deployment/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/docs/llms-txt-deployment/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/docs/llms-txt-deployment/",
+    type: "article",
+  }),
 };
 
 export default function Page() {
@@ -20,6 +27,14 @@ export default function Page() {
       description={DESCRIPTION}
       readTime="3 min read"
       updated="October 2026"
+      faq={{
+        title: "Questions about deploying llms.txt",
+        items: [
+          { q: "Where exactly does the file go?", a: "At the domain root, so that https://your-domain.com/llms.txt returns it directly with HTTP 200 and a body. A redirect to a login page, or an HTML error page, counts as not served." },
+          { q: "Does publishing llms.txt improve rankings?", a: "No. Google has said it does not use the file in Search, and support across the other engines is inconsistent. It is cheap and worth doing, and it is not a ranking factor." },
+          { q: "How do I confirm it is being served correctly?", a: "Request the URL and read what comes back: markdown with a 200, rather than a 404 or a page of HTML. A status code alone is not enough, because an empty file returns 200 too." },
+        ],
+      }}
     >
       <p>
         <strong>llms.txt is a plain markdown file served at your domain root that tells

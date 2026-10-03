@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
+import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
+import Faq from "@/app/components/Faq";
 import { SITE_URL } from "@/lib/site";
 
 /**
@@ -29,15 +31,21 @@ import { SITE_URL } from "@/lib/site";
  *    between two requests made seconds apart, so a "refused" mark is one
  *    observation rather than a property of the site.
  */
-const TITLE = "We scanned the homepages of 30 major websites for AI visibility";
+import { og } from "@/lib/og";
+
+const TITLE = "We scanned 30 major sites for AI visibility";
 const DESCRIPTION =
-  "None of the 30 scored an A and the average was 62. Every news publisher in the sample disallows AI crawlers, and one site refuses them at the server. Full per-domain results, reproducible against the public API.";
+  "None of the 30 homepages scored an A; the average was 62. Every news publisher disallows AI crawlers. Per-domain results, reproducible from the public API.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/study/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/study/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/study/",
+  }),
 };
 
 const SCAN_DATE = "3 October 2026";
@@ -403,12 +411,27 @@ export default function StudyPage() {
             Methodology
           </a>
         </div>
+        <div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+          <Faq
+            title="Questions about this study"
+            items={[
+            { q: "How were the 30 sites chosen?", a: "They are a convenience sample of large, well-known homepages, not a random one. That is enough to show a pattern and not enough to generalise from, which is why the sample is described rather than implied." },
+            { q: "Why do so many large sites score badly?", a: "A homepage is the hardest page on any site to score well on: it is short, it is navigational, and it carries little of the evidence a generated answer needs. Their article pages may be in far better shape." },
+            { q: "Was any figure adjusted by hand?", a: "No. Every number in the table came from the same scanner on one date, and each row links to a report that can be re-run against the public API." },
+            ]}
+          />
+          <Evidence
+            quote={GEO_PRIMARY_QUOTE}
+            attribution="Generative Engine Optimization, KDD 2024"
+            attributionUrl="https://arxiv.org/abs/2311.09735"
+            sources={GEO_PRIMARY_SOURCES}
+            note="The weightings on this site follow that measurement rather than taste, and the parts of the picture a single-URL scan cannot see are stated rather than left out."
+          />
+        </div>
+
       </main>
 
-      <footer className="max-w-4xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        © 2026 LLMention. Brand Generative Engine Optimization Intelligence.
-      </footer>
+      <PageFooter width="4xl" />
     </div>
   );
 }

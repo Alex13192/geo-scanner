@@ -6,7 +6,14 @@
  * throw inside analyze() would return HTTP 500 for every scan, so the three
  * cases below are exercised before anything is deployed.
  */
-import { analyze, parseRobots } from "../lib/geo/analyze.ts";
+import { analyze, parseRobots, detectPageType, NA_BY_PAGE_TYPE } from "../lib/geo/analyze.ts";
+import { CHECK_COPY } from "../lib/geo/check-copy.ts";
+import {
+  renderedTitle,
+  renderedDescription,
+  TITLE_RANGE,
+  DESCRIPTION_RANGE,
+} from "../lib/geo/check-meta.ts";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "../lib/geo/catalog.ts";
 import { inspectTarget } from "../lib/net/fetch-safe.ts";
 
@@ -180,6 +187,175 @@ if (unexercised.length === 0) {
   );
   for (const c of unexercised) console.log(`        - ${c.id}`);
   process.exitCode = 1;
+}
+
+/* 4b. Page-type exemptions.
+      A typo in NA_BY_PAGE_TYPE would be a silent no-op - the check would simply
+      keep applying and nothing would say so - so the table is verified against the
+      catalogue rather than trusted. */
+console.log("\n=== page-type exemptions ===");
+{
+  const VALID_PAGE_TYPES = ["homepage", "docs", "article", "legal", "contact", "general"];
+  const catalogIds = new Set(CHECK_CATALOG.map((c) => c.id));
+
+  const problems: string[] = [];
+  for (const [id, types] of Object.entries(NA_BY_PAGE_TYPE)) {
+    if (!catalogIds.has(id)) {
+      problems.push(`NA_BY_PAGE_TYPE names "${id}", which is not a check in the catalogue`);
+    }
+    for (const t of types) {
+      if (!VALID_PAGE_TYPES.includes(t)) {
+        problems.push(`NA_BY_PAGE_TYPE["${id}"] has an unknown page type "${t}"`);
+      }
+    }
+    if (types.includes("homepage")) {
+      problems.push(
+        `NA_BY_PAGE_TYPE excludes "${id}" from homepages, which would move live scores`
+      );
+    }
+  }
+  if (problems.length === 0) {
+    console.log(
+      `  PASS  ${Object.keys(NA_BY_PAGE_TYPE).length} exemption(s), every one naming a real check`
+    );
+  } else {
+    for (const p of problems) console.log(`  FAIL  ${p}`);
+    process.exitCode = 1;
+  }
+
+  const probes: Array<[string, string, string]> = [
+    ["/", "", "homepage"],
+    ["", "", "homepage"],
+    ["/privacy/", "", "legal"],
+    ["/terms-of-service", "", "legal"],
+    ["/contact/", "", "contact"],
+    ["/docs/allow-ai-crawlers/", "", "docs"],
+    ["/blog/hello", '"@type": "BlogPosting"', "article"],
+    ["/somewhere/else", "", "general"],
+  ];
+  for (const [path, html, expected] of probes) {
+    const got = detectPageType(path, html);
+    const ok = got === expected;
+    console.log(`  ${ok ? "PASS" : "FAIL"}  ${path || "(no path)"} -> ${got}`);
+    if (!ok) process.exitCode = 1;
+  }
+
+  // The regression guard that matters: a root request must be scored exactly as it
+  // was before page types existed.
+  const noPath = analyze({ ...base, html: goodHtml });
+  const rootPath = analyze({ ...base, html: goodHtml, path: "/" });
+  const unchanged = noPath.score === rootPath.score && rootPath.checksNotApplicable === 0;
+  console.log(
+    `  ${unchanged ? "PASS" : "FAIL"}  a root path leaves the score untouched ` +
+      `(${noPath.score} vs ${rootPath.score}, ${rootPath.checksNotApplicable} excluded)`
+  );
+  if (!unchanged) process.exitCode = 1;
+
+  // And a page the exemptions do cover must drop those checks from the fraction
+  // and never list them as issues.
+  const expectedNa = Object.keys(NA_BY_PAGE_TYPE).filter(
+    (id) => emittedCheckIds.has(id) && NA_BY_PAGE_TYPE[id].includes("legal")
+  ).length;
+  const legal = analyze({ ...base, html: goodHtml, path: "/privacy/" });
+  const leaked = legal.issues.filter((i) => NA_BY_PAGE_TYPE[i.id]?.includes("legal"));
+  const legalOk = legal.checksNotApplicable === expectedNa && leaked.length === 0;
+  console.log(
+    `  ${legalOk ? "PASS" : "FAIL"}  a legal page excludes ${legal.checksNotApplicable}/${expectedNa} ` +
+      `and reports ${leaked.length} of them as issues`
+  );
+  if (!legalOk) process.exitCode = 1;
+}
+
+/* 4c. Generated check copy.
+      /checks/<id>/ renders its title and fix from lib/geo/check-copy.ts, which is
+      generated from the analyser rather than written by hand. This asserts the
+      generated file keeps up with the catalogue: without it, a new check would
+      produce a page with no heading and no fix, and nothing would say so. */
+console.log("\n=== generated check copy ===");
+{
+  const runnable = CHECK_CATALOG.filter((c) => !c.alias);
+  const noTitle = runnable.filter((c) => !CHECK_COPY[c.id]?.title);
+  const noFix = runnable.filter((c) => (CHECK_COPY[c.id]?.fixes.length ?? 0) === 0);
+
+  if (noTitle.length === 0) {
+    console.log(`  PASS  all ${runnable.length} catalogued checks have a generated title`);
+  } else {
+    console.log(`  FAIL  ${noTitle.length} check(s) have no generated title:`);
+    for (const c of noTitle) console.log(`        - ${c.id}`);
+    console.log("        run: npm run generate:copy");
+    process.exitCode = 1;
+  }
+
+  if (noFix.length === 0) {
+    console.log("  PASS  every one of them also has fix text");
+  } else {
+    console.log(
+      `  FAIL  ${noFix.length} check(s) have no fix text, so /checks/<id>/ would be half a page:`
+    );
+    for (const c of noFix) console.log(`        - ${c.id}`);
+    console.log(
+      "        if a check genuinely cannot fail, relax this guard deliberately rather than"
+    );
+    console.log("        shipping the page without one");
+    process.exitCode = 1;
+  }
+}
+
+
+/* 4d. The check pages must satisfy the ranges this site publishes.
+      This is the self-consistency rule the project is built on: the scanner scores
+      other people's titles at 15-65 characters and descriptions at 50-160, so the
+      38 pages it generates for itself have to land in the same windows. The first
+      version did not, and the two reasons are both invisible in the source - a
+      layout suffix and HTML escaping - which is why the assertion measures what is
+      rendered rather than what was written. */
+console.log("\n=== check page meta ranges ===");
+{
+  const runnable = CHECK_CATALOG.filter((c) => !c.alias);
+  const violations: string[] = [];
+  let minTitle = Infinity;
+  let maxTitle = 0;
+  let minDesc = Infinity;
+  let maxDesc = 0;
+
+  for (const check of runnable) {
+    const title = renderedTitle(check.id);
+    const desc = renderedDescription(check.id);
+    minTitle = Math.min(minTitle, title.length);
+    maxTitle = Math.max(maxTitle, title.length);
+    minDesc = Math.min(minDesc, desc.length);
+    maxDesc = Math.max(maxDesc, desc.length);
+
+    if (title.length < TITLE_RANGE.min || title.length > TITLE_RANGE.max) {
+      violations.push(`title ${title.length} for ${check.id} (want ${TITLE_RANGE.min}-${TITLE_RANGE.max})`);
+    }
+    if (desc.length < DESCRIPTION_RANGE.min || desc.length > DESCRIPTION_RANGE.max) {
+      violations.push(`description ${desc.length} for ${check.id} (want ${DESCRIPTION_RANGE.min}-${DESCRIPTION_RANGE.max})`);
+    }
+  }
+
+  if (violations.length === 0) {
+    console.log(
+      `  PASS  all ${runnable.length} rendered titles in ${TITLE_RANGE.min}-${TITLE_RANGE.max} (${minTitle}-${maxTitle}) ` +
+        `and descriptions in ${DESCRIPTION_RANGE.min}-${DESCRIPTION_RANGE.max} (${minDesc}-${maxDesc})`
+    );
+  } else {
+    console.log(`  FAIL  ${violations.length} check page(s) outside the published ranges:`);
+    for (const v of violations) console.log(`        - ${v}`);
+    process.exitCode = 1;
+  }
+
+  // Near-duplicate descriptions across a generated page family are the tell that the
+  // family was produced without anything to say, so they are counted rather than
+  // assumed away.
+  const descriptions = runnable.map((c) => renderedDescription(c.id));
+  const unique = new Set(descriptions).size;
+  if (unique === descriptions.length) {
+    console.log(`  PASS  all ${unique} descriptions are distinct`);
+  } else {
+    console.log(`  FAIL  only ${unique}/${descriptions.length} descriptions are distinct`);
+    process.exitCode = 1;
+  }
 }
 
 /* 5. A single-language site must not pass the multilingual check just because it

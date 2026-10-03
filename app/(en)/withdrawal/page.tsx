@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
 import { LEGAL_NAME_LATIN } from "@/lib/legal-entity";
 import { CONTACT_EMAIL } from "@/lib/site";
 
@@ -30,6 +30,8 @@ import { CONTACT_EMAIL } from "@/lib/site";
  *
  * NOT LEGAL ADVICE. Have it reviewed before selling to consumers in the EU.
  */
+import { og } from "@/lib/og";
+
 const TITLE = "Right of withdrawal";
 const DESCRIPTION =
   "How a consumer in the EU or the UK withdraws from a manual GEO audit contract within 14 days, what that means for the refund, and the model withdrawal form.";
@@ -38,7 +40,11 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/withdrawal/" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/withdrawal/", type: "article" },
+  openGraph: og({
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/withdrawal/",
+  }),
 };
 
 export default function WithdrawalPage() {
@@ -203,12 +209,42 @@ export default function WithdrawalPage() {
             Run a free scan
           </a>
         </div>
+        <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
+          <h2 className="text-xl font-bold text-white">The withdrawal period in practice</h2>
+          <p>Consumers in the EU and the UK have fourteen days. This is what each part of that window means.</p>
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+            <thead className="bg-gray-900/60 text-gray-400">
+              <tr>
+              <th className="text-left px-4 py-2.5 font-semibold">Point in time</th>
+              <th className="text-left px-4 py-2.5 font-semibold">What it means</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Day 0</td>
+              <td className="px-4 py-2.5 align-top">The contract is concluded, and the fourteen days begin</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Within day 14</td>
+              <td className="px-4 py-2.5 align-top">Send an unambiguous statement by email; no form and no reason required</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">If you asked us to start early</td>
+              <td className="px-4 py-2.5 align-top">You owe a proportionate amount for work already done, and the rest is refunded</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">After a completed delivery you consented to</td>
+              <td className="px-4 py-2.5 align-top">The right lapses only if you expressly agreed to begin and understood that it would</td>
+            </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
       </main>
 
-      <footer className="max-w-3xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        <div>© 2026 LLMention. Brand Generative Engine Optimization Intelligence.</div>
-      </footer>
+      <PageFooter width="3xl" />
     </div>
   );
 }

@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
+import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
+import Faq from "@/app/components/Faq";
 
 interface Guide {
   id: string;
@@ -135,12 +137,65 @@ export default function DocsPage() {
             </Link>
           ))}
         </div>
+                <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
+          <h2 className="text-xl font-bold text-white">The guides</h2>
+          <p>Four technical guides. Together they cover the checks the scanner most often fails on a site that is otherwise well built.</p>
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+            <thead className="bg-gray-900/60 text-gray-400">
+              <tr>
+              <th className="text-left px-4 py-2.5 font-semibold">Guide</th>
+              <th className="text-left px-4 py-2.5 font-semibold">Topic</th>
+              <th className="text-left px-4 py-2.5 font-semibold">Read time</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">How to generate and deploy an llms.txt file</td>
+              <td className="px-4 py-2.5 align-top">Setup</td>
+              <td className="px-4 py-2.5 align-top">3 min read</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Configuring robots.txt and WAF for GPTBot and PerplexityBot</td>
+              <td className="px-4 py-2.5 align-top">Technical</td>
+              <td className="px-4 py-2.5 align-top">4 min read</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Optimizing headings for direct AI citation</td>
+              <td className="px-4 py-2.5 align-top">Content</td>
+              <td className="px-4 py-2.5 align-top">4 min read</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Implementing Schema.org JSON-LD for entity disambiguation</td>
+              <td className="px-4 py-2.5 align-top">Schema</td>
+              <td className="px-4 py-2.5 align-top">5 min read</td>
+            </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
+<div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+          <Faq
+            title="Questions about these guides"
+            items={[
+            { q: "Where should I start?", a: "With the llms.txt deployment guide if you have not published a context file, and with the robots.txt guide if AI crawlers might be turned away at your firewall before robots.txt is even read." },
+            { q: "Are the guides specific to one AI engine?", a: "No. They cover the crawler user-agents and markup conventions the major engines have in common, and they say plainly where support is inconsistent." },
+            { q: "Do the guides replace the scan?", a: "No, they are complements. A guide explains what a rule wants; the scan tells you whether your page satisfies it, and the scanner applies the same rules these guides describe." },
+            ]}
+          />
+          <Evidence
+            quote={GEO_PRIMARY_QUOTE}
+            attribution="Generative Engine Optimization, KDD 2024"
+            attributionUrl="https://arxiv.org/abs/2311.09735"
+            sources={GEO_PRIMARY_SOURCES}
+            note="The weightings on this site follow that measurement rather than taste, and the parts of the picture a single-URL scan cannot see are stated rather than left out."
+          />
+        </div>
+
       </main>
 
-      <footer className="max-w-6xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        © LLMention Knowledge Base. Brand Generative Engine Optimization Intelligence.
-      </footer>
+      <PageFooter width="6xl" brand="LLMention Knowledge Base" />
     </div>
   );
 }

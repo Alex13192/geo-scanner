@@ -1,21 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import LegalLinks from "@/app/components/LegalLinks";
+import PageFooter from "@/app/components/PageFooter";
+import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
+import Faq from "@/app/components/Faq";
 import { CONTACT_EMAIL } from "@/lib/site";
 
-const TITLE = "Pricing — Free GEO Scanner and Manual AI Visibility Audits";
+import { og } from "@/lib/og";
+
+const TITLE = "Pricing — Free GEO Scanner and Manual Audits";
 const DESCRIPTION =
-  "The LLMention scanner and /llms.txt generator are free and need no account. For teams that want a human-reviewed, prioritised fix list, we offer a one-time manual GEO audit.";
+  "The scanner and llms.txt generator are free and need no account. For teams that want a human-reviewed fix list, a one-time manual GEO audit.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/pricing/" },
-  openGraph: {
+  openGraph: og({
     title: TITLE,
     description: DESCRIPTION,
     url: "/pricing/",
-  },
+  }),
 };
 
 const mailto = (subject: string) =>
@@ -159,12 +163,71 @@ export default function PricingPage() {
             page.
           </p>
         </div>
+                <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
+          <h2 className="text-xl font-bold text-white">Free scan or paid audit</h2>
+          <p>Both use the same published method. The difference is who does the interpreting.</p>
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
+            <thead className="bg-gray-900/60 text-gray-400">
+              <tr>
+              <th className="text-left px-4 py-2.5 font-semibold"></th>
+              <th className="text-left px-4 py-2.5 font-semibold">Free scan</th>
+              <th className="text-left px-4 py-2.5 font-semibold">Manual audit</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Cost</td>
+              <td className="px-4 py-2.5 align-top">$0, no account</td>
+              <td className="px-4 py-2.5 align-top">$199 once, no subscription</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Scope</td>
+              <td className="px-4 py-2.5 align-top">One homepage, per request</td>
+              <td className="px-4 py-2.5 align-top">Up to five pages you choose</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Output</td>
+              <td className="px-4 py-2.5 align-top">A score, twelve dimension scores and the failed checks with the evidence each produced</td>
+              <td className="px-4 py-2.5 align-top">The same, plus a prioritised fix list with robots.txt, llms.txt and JSON-LD already drafted</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Turnaround</td>
+              <td className="px-4 py-2.5 align-top">Seconds</td>
+              <td className="px-4 py-2.5 align-top">48 hours from payment</td>
+            </tr>
+            <tr className="border-t border-gray-800/80">
+              <td className="px-4 py-2.5 align-top">Refund</td>
+              <td className="px-4 py-2.5 align-top">Not applicable</td>
+              <td className="px-4 py-2.5 align-top">Full refund if the audit finds nothing actionable</td>
+            </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+
+<div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+          <Faq
+            title="Questions about pricing"
+            items={[
+            { q: "Why is the scanner free?", a: "Because a one-shot scan is cheap to run and cheap to copy. Charging for it would put this in the same bucket as every tool that hides the result behind a paywall." },
+            { q: "What does the audit buy that the free scan does not?", a: "A person reading up to five of your pages and handing back the fix list with the code already drafted, rather than a score and a list of failed checks you still have to interpret." },
+            { q: "Is the audit a subscription?", a: "No. It is one payment for one delivery, and nothing recurring is charged." },
+            { q: "What happens if the audit finds nothing to fix?", a: "It is refunded in full. Reply to the delivery email within 14 days and the refund goes back to the original payment method." },
+            ]}
+          />
+          <Evidence
+            quote={GEO_PRIMARY_QUOTE}
+            attribution="Generative Engine Optimization, KDD 2024"
+            attributionUrl="https://arxiv.org/abs/2311.09735"
+            sources={GEO_PRIMARY_SOURCES}
+            note="The weightings on this site follow that measurement rather than taste, and the parts of the picture a single-URL scan cannot see are stated rather than left out."
+          />
+        </div>
+
       </main>
 
-      <footer className="max-w-5xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
-        <LegalLinks className="mb-3" />
-        © LLMention. Brand Generative Engine Optimization Intelligence.
-      </footer>
+      <PageFooter width="5xl" />
     </div>
   );
 }
