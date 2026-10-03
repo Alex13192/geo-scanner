@@ -86,9 +86,11 @@ export default function ScoreRing({
    *
    * This matters more than it looks. The first version rendered `shown`, which
    * starts at 0, so the raw HTML of the homepage contained a prominent "0 /100"
-   * directly beside the sentence "100 out of 100". Google executes JavaScript
-   * and would have seen the real figure; every crawler that does not, including
-   * this site's own scanner, would have read a false statement about the site.
+   * directly beside the sentence stating the site's real score. Google executes
+   * JavaScript and would have seen the true figure; every crawler that does not,
+   * including this site's own scanner, would have read a false statement about
+   * the site. The number is deliberately not repeated in this comment, because
+   * it changes whenever the score does.
    */
   const displayed = started ? shown : value;
 

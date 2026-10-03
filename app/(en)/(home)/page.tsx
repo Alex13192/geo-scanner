@@ -170,13 +170,16 @@ export default function HomePage() {
               <p className="text-sm text-gray-400 leading-relaxed max-w-2xl">
                 LLMention audits its own homepage with the rules it applies to yours, and links
                 the result rather than quoting a number you have to take on trust. Last verified
-                on 2 October 2026: 100 out of 100, grade A, all 38 checks passing. Re-run it
-                yourself — the report shows all twelve dimension scores, and every rule behind
-                them is published.
+                on 3 October 2026: 98 out of 100, grade A, 37 of 38 checks passing. The one
+                failure is hreflang, and it is real rather than accidental: that rule requires at
+                least two language versions, and this site was reduced to English only, so it now
+                fails a check it used to pass. The number is published instead of the rule being
+                softened to protect a perfect score. Re-run it yourself — the report shows all
+                twelve dimension scores, and every rule behind them is published.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-5 shrink-0 self-center">
-              <ScoreRing value={100} label="This site scores 100 out of 100" />
+              <ScoreRing value={98} label="This site scores 98 out of 100" />
               <a
                 href={`/report/?domain=${SITE_HOST}`}
                 className="text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white px-5 py-3 rounded-xl transition-all text-center"
