@@ -9,13 +9,13 @@ const t = {
     tag: "Generative Engine Optimization",
     title1: "Is Your Site Optimized for",
     title2: "AI Search Engines?",
-    subtitle: "Check if ChatGPT, Perplexity, and Claude can crawl your website. Audit your AI visibility and auto-generate /llms.txt files instantly.",
+    subtitle: "Check whether ChatGPT, Perplexity and Claude can crawl, read and cite your pages — and see exactly which of the 38 published checks you fail.",
     placeholder: "Enter domain or URL (e.g., adidas.com)",
     button: "Scan Website 🚀",
     crawlersTitle: "AI Crawler Passability",
     crawlersDesc: "Reads robots.txt and reports which of GPTBot, PerplexityBot and ClaudeBot are disallowed at your root.",
-    llmsTitle: "/llms.txt Generation",
-    llmsDesc: "Auto-generate standardized markdown context files so LLMs can digest your domain's content cleanly.",
+    entityTitle: "Entity & Structured Data",
+    entityDesc: "Reads your JSON-LD and reports whether Organization, WebSite and sameAs bind your brand to one entity rather than three loose strings.",
     badgeTitle: "Dynamic Score Badge",
     badgeDesc: "Embed a badge carrying your verified GEO score in your GitHub README or site footer.",
 };
@@ -138,12 +138,12 @@ export default function HomePage() {
           </a>
 
           <a
-            href="/llms-txt-studio/"
+            href="/docs/schema-org-jsonld/"
             className="bg-gray-900/50 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl space-y-2 transition-colors block"
           >
-            <div className="text-2xl">📄</div>
-            <h3 className="text-base font-bold text-gray-200">{t.llmsTitle}</h3>
-            <p className="text-sm text-gray-400 leading-relaxed">{t.llmsDesc}</p>
+            <div className="text-2xl">🧩</div>
+            <h3 className="text-base font-bold text-gray-200">{t.entityTitle}</h3>
+            <p className="text-sm text-gray-400 leading-relaxed">{t.entityDesc}</p>
           </a>
 
           <a
