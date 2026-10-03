@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalLinks from "@/app/components/LegalLinks";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 const TITLE = "About LLMention";
 const DESCRIPTION =
@@ -12,8 +13,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about/" },
   openGraph: { title: TITLE, description: DESCRIPTION, url: "/about/", type: "article" },
 };
-
-const CONTACT_EMAIL = "hello@ccie13192.com";
 
 export default function AboutPage() {
   return (

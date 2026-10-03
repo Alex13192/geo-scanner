@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LegalLinks from "@/app/components/LegalLinks";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Terms of service.
@@ -22,8 +23,6 @@ import LegalLinks from "@/app/components/LegalLinks";
 const TITLE = "Terms of service";
 const DESCRIPTION =
   "The rules for using the free LLMention scanner and buying a manual GEO audit: what is promised, what is not, and what you may and may not scan.";
-const CONTACT_EMAIL = "hello@ccie13192.com";
-
 const UPDATED = "2 October 2026";
 
 export const metadata: Metadata = {

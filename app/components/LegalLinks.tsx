@@ -1,39 +1,49 @@
 /**
- * The three links that every review process looks for: a reachable privacy
- * policy, the terms, and a way to make contact. AdSense reviewers, payment
- * providers and directory reviewers all check for these before anything else,
- * and a footer is where they look.
+ * The links that every review process looks for: a reachable privacy policy, the
+ * terms, and a way to make contact. AdSense reviewers, payment providers and
+ * directory reviewers all check for these before anything else, and a footer is
+ * where they look.
  *
- * Kept as one component on purpose. This site renders eleven separate footers
- * by hand, which is exactly how /privacy/ and /terms/ went missing while the
- * pricing page was already promising a refund policy: nothing forced the pages
- * and the links to agree. Adding a route now costs one array entry here.
+ * Kept as one component on purpose. This site renders more than ten separate
+ * footers by hand, which is exactly how /privacy/ and /terms/ went missing while
+ * the pricing page was already promising a refund policy: nothing forced the
+ * pages and the links to agree. Adding a route now costs one array entry here.
  *
- * The legal pages are English-only. The German pages therefore label the links
- * "(EN)" and mark them hrefLang="en", the same convention the German homepage
- * already uses for the English-only guides.
+ * Two of the German entries are German-language pages (Impressum,
+ * Widerrufsrecht); the rest are English-only, so each link carries its own
+ * `lang` rather than the whole row being marked. Claiming hrefLang="en" on the
+ * Impressum would be a false statement about a German page.
  */
+type LegalLink = {
+  href: string;
+  label: string;
+  /** Set only when the target is in a different language than the page. */
+  lang?: "en";
+};
+
 type LegalLinksProps = {
   /**
-   * "de" switches the labels to the German page's "(EN)" convention and marks
-   * the links as pointing at English content. Defaults to the English labels.
+   * "de" switches to the German set, which adds the two pages German law
+   * requires and labels the English-only ones "(EN)".
    */
   locale?: "en" | "de";
   className?: string;
 };
 
-const LINKS = {
+const LINKS: Record<"en" | "de", readonly LegalLink[]> = {
   en: [
     { href: "/privacy/", label: "Privacy policy" },
     { href: "/terms/", label: "Terms" },
     { href: "/contact/", label: "Contact" },
   ],
   de: [
-    { href: "/privacy/", label: "Datenschutz (EN)" },
-    { href: "/terms/", label: "AGB (EN)" },
-    { href: "/contact/", label: "Kontakt (EN)" },
+    { href: "/de/impressum/", label: "Impressum" },
+    { href: "/de/widerrufsrecht/", label: "Widerrufsrecht" },
+    { href: "/privacy/", label: "Datenschutz (EN)", lang: "en" },
+    { href: "/terms/", label: "AGB (EN)", lang: "en" },
+    { href: "/contact/", label: "Kontakt (EN)", lang: "en" },
   ],
-} as const;
+};
 
 export default function LegalLinks({ locale = "en", className = "" }: LegalLinksProps) {
   return (
@@ -45,7 +55,7 @@ export default function LegalLinks({ locale = "en", className = "" }: LegalLinks
         <a
           key={link.href}
           href={link.href}
-          hrefLang={locale === "de" ? "en" : undefined}
+          hrefLang={link.lang}
           className="hover:text-gray-300 transition-colors"
         >
           {link.label}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CONTACT_EMAIL, SITE_HOST } from "@/lib/site";
 
 /**
  * German homepage.
@@ -176,7 +177,7 @@ export default function GermanHomePage() {
               </p>
             </div>
             <a
-              href="/report/?domain=geo-scanner.ccie13192.com"
+              href={`/report/?domain=${SITE_HOST}`}
               className="text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white px-5 py-3 rounded-xl transition-all shrink-0 text-center"
             >
               Diese Website scannen →
@@ -405,7 +406,7 @@ export default function GermanHomePage() {
               </a>
               , oder{" "}
               <a
-                href="mailto:hello@ccie13192.com"
+                href={`mailto:${CONTACT_EMAIL}`}
                 className="text-blue-400 hover:text-blue-300 underline"
               >
                 schreiben Sie uns
@@ -462,6 +463,12 @@ export default function GermanHomePage() {
           </a>
           <a href="/contact/" hrefLang="en" className="hover:text-gray-300 transition-colors">
             Kontakt (EN)
+          </a>
+          <a href="/de/impressum/" className="hover:text-gray-300 transition-colors">
+            Impressum
+          </a>
+          <a href="/de/widerrufsrecht/" className="hover:text-gray-300 transition-colors">
+            Widerrufsrecht
           </a>
         </nav>
         <div>

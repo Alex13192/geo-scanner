@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback, Suspense } from "react";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Readiness badge generator.
@@ -97,7 +98,7 @@ function BadgeContent() {
   // Must point at OUR domain. This URL is embedded in every badge a user
   // copies, so a wrong host here sends all badge traffic to someone else.
   const reportUrl = scannedDomain
-    ? `https://geo-scanner.ccie13192.com/report/?domain=${scannedDomain}`
+    ? `${SITE_URL}/report/?domain=${scannedDomain}`
     : "";
 
   const markdownSnippet =

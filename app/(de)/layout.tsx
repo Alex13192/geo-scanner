@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "../globals.css";
+import { BRAND, SITE_URL } from "@/lib/site";
 
 /**
  * German root layout.
@@ -14,9 +15,6 @@ import "../globals.css";
  * non-ASCII characters in code are written as escapes. German body copy lives
  * in the page files, which are written by tooling that guarantees UTF-8.
  */
-const SITE_URL = "https://geo-scanner.ccie13192.com";
-const BRAND = "LLMention";
-
 const TAGLINE = `${BRAND} \u2014 GEO-Scanner f\u00fcr Sichtbarkeit in der KI-Suche`;
 const DESCRIPTION =
   "Pr\u00fcfen Sie, ob ChatGPT, Claude und Perplexity Ihre Website crawlen, lesen und zitieren k\u00f6nnen. Kostenloser KI-Crawler-Check und llms.txt-Generator, ohne Anmeldung.";

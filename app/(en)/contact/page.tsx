@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LegalLinks from "@/app/components/LegalLinks";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Contact page.
@@ -17,8 +18,6 @@ import LegalLinks from "@/app/components/LegalLinks";
 const TITLE = "Contact";
 const DESCRIPTION =
   "How to reach LLMention: corrections to a score, audit requests, privacy requests and press. A real address, answered by the person who maintains the tool.";
-const CONTACT_EMAIL = "hello@ccie13192.com";
-
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,

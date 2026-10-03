@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
 import "../globals.css";
-
-/**
- * Canonical site origin.
- * Keep this in sync with app/sitemap.ts and public/robots.txt.
- */
-const SITE_URL = "https://geo-scanner.ccie13192.com";
-const BRAND = "LLMention";
+import { BRAND, SITE_URL } from "@/lib/site";
 
 /**
  * Bump this when the homepage content changes. It feeds dateModified in the

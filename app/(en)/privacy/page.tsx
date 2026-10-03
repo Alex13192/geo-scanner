@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LegalLinks from "@/app/components/LegalLinks";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Privacy policy.
@@ -26,8 +27,6 @@ import LegalLinks from "@/app/components/LegalLinks";
 const TITLE = "Privacy policy";
 const DESCRIPTION =
   "What LLMention processes when you run a scan, what the server logs contain, how advertising cookies are handled, and how to exercise your data rights.";
-const CONTACT_EMAIL = "hello@ccie13192.com";
-
 const UPDATED = "2 October 2026";
 
 export const metadata: Metadata = {
@@ -258,6 +257,23 @@ export default function PrivacyPage() {
             are in, including in the United States. Those transfers rely on the safeguards those
             providers have in place, such as the European Commission&apos;s standard contractual
             clauses and the EU-US Data Privacy Framework.
+          </p>
+
+          <h2>Chinese data protection law (PIPL)</h2>
+          <p>
+            The operator of this site is established in China, so the Personal Information
+            Protection Law (个人信息保护法, PIPL) applies to this processing in addition to the
+            GDPR where that applies. Under PIPL, the information described above is processed for
+            the same purposes and kept for the same periods, on the basis of your consent and the
+            necessity of processing to provide a service you requested.
+          </p>
+          <p>
+            Where PIPL applies, you have the right to be informed about and to decide on the
+            processing of your personal information, to access and copy it, to have it corrected or
+            completed, to have it deleted, to withdraw consent, to ask for an explanation of the
+            processing rules, and to complain to a Chinese data protection authority. Requests go
+            to the same address as the GDPR requests above, and cross-border transfers rely on the
+            safeguards described in the previous section.
           </p>
 
           <h2>Children</h2>

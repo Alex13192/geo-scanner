@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LegalLinks from "@/app/components/LegalLinks";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * First-party data study.
@@ -325,7 +326,7 @@ export default function StudyPage() {
             Every row above comes from one public endpoint, and{" "}
             <code>brief=1</code> returns just the headline numbers:
           </p>
-          <pre>{`curl "https://geo-scanner.ccie13192.com/api/scan?domain=openai.com&brief=1"
+          <pre>{`curl "${SITE_URL}/api/scan?domain=openai.com&brief=1"
 
 {"domain":"openai.com","status":200,"score":55,"grade":"F",
  "checksRun":38,"checksPassed":23,"aiCrawlersBlocked":false,

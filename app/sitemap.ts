@@ -1,10 +1,5 @@
 import type { MetadataRoute } from 'next';
-
-/**
- * Canonical site origin.
- * Change this in ONE place if the domain ever changes.
- */
-const SITE_URL = 'https://geo-scanner.ccie13192.com';
+import { SITE_URL } from '@/lib/site';
 
 /**
  * Bump this date whenever you meaningfully change page content.
@@ -222,6 +217,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
           de: `${SITE_URL}/de/llms-txt-studio/`,
         },
       },
+    },
+    /* German legal pages. German only, so no alternate is declared: there is no
+       English Impressum to point an hreflang at, and a hreflang naming a page
+       that does not exist is worse than none. Listed at all because a page that
+       is not in the sitemap is a page nobody finds, and these are the pages a
+       German consumer or a reviewer looks for in the footer. */
+    {
+      url: `${SITE_URL}/de/impressum/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/de/widerrufsrecht/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.3,
     },
   ];
 }

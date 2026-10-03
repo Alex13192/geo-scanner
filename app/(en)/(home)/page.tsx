@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ScoreRing from "@/app/components/ScoreRing";
+import { CONTACT_EMAIL, SITE_HOST } from "@/lib/site";
 
 type Language = "en" | "zh" | "es" | "de" | "fr" | "ja";
 
@@ -292,7 +293,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row items-center gap-5 shrink-0 self-center">
               <ScoreRing value={100} label="This site scores 100 out of 100" />
               <a
-                href="/report/?domain=geo-scanner.ccie13192.com"
+                href={`/report/?domain=${SITE_HOST}`}
                 className="text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white px-5 py-3 rounded-xl transition-all text-center"
               >
                 Scan this site →
@@ -514,7 +515,7 @@ export default function HomePage() {
               </a>
               , or{" "}
               <a
-                href="mailto:hello@ccie13192.com"
+                href={`mailto:${CONTACT_EMAIL}`}
                 className="text-blue-400 hover:text-blue-300 underline"
               >
                 get in touch

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LegalLinks from "@/app/components/LegalLinks";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Refund policy.
@@ -16,8 +17,6 @@ import LegalLinks from "@/app/components/LegalLinks";
 const TITLE = "Refund policy";
 const DESCRIPTION =
   "When a manual GEO audit is refunded, how to ask for it, and how long it takes. The plain-language terms, without a form to fill in.";
-const CONTACT_EMAIL = "hello@ccie13192.com";
-
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,

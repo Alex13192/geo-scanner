@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { analyze } from "@/lib/geo/analyze";
 import { fetchText, inspectTarget, type SafeFetchResult } from "@/lib/net/fetch-safe";
 import { clientKey, takeToken } from "@/lib/net/rate-limit";
+import { SITE_URL } from "@/lib/site";
 
 export const runtime = "edge"; // 必须在 Cloudflare Edge 上运行
 export const dynamic = "force-dynamic"; // 强制声明为动态接口，防止静态编译拦截
@@ -23,8 +24,7 @@ export const dynamic = "force-dynamic"; // 强制声明为动态接口，防止�
  * even when real GPTBot traffic is perfectly welcome. Whether a site blocks AI
  * crawlers is answered authoritatively by robots.txt, not by guessing.
  */
-const CRAWLER_UA =
-  "Mozilla/5.0 (compatible; LLMentionBot/1.0; +https://geo-scanner.ccie13192.com/methodology/)";
+const CRAWLER_UA = `Mozilla/5.0 (compatible; LLMentionBot/1.0; +${SITE_URL}/methodology/)`;
 
 const FETCH_TIMEOUT_MS = 9000;
 

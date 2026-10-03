@@ -12,12 +12,12 @@
 import { NextResponse } from "next/server";
 import { fetchText, inspectTarget } from "@/lib/net/fetch-safe";
 import { clientKey, takeToken } from "@/lib/net/rate-limit";
+import { SITE_URL } from "@/lib/site";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
-const UA =
-  "Mozilla/5.0 (compatible; LLMentionBot/1.0; +https://geo-scanner.ccie13192.com/methodology/)";
+const UA = `Mozilla/5.0 (compatible; LLMentionBot/1.0; +${SITE_URL}/methodology/)`;
 
 const FETCH_TIMEOUT_MS = 9000;
 const MAX_LINKS = 12;

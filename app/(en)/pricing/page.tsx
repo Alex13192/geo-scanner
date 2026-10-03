@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalLinks from "@/app/components/LegalLinks";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 const TITLE = "Pricing — Free GEO Scanner and Manual AI Visibility Audits";
 const DESCRIPTION =
@@ -16,8 +17,6 @@ export const metadata: Metadata = {
     url: "/pricing/",
   },
 };
-
-const CONTACT_EMAIL = "hello@ccie13192.com";
 
 const mailto = (subject: string) =>
   `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
