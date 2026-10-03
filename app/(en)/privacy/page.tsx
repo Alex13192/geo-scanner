@@ -200,6 +200,10 @@ export default function PrivacyPage() {
             <li>
               <strong>Google</strong> serves the advertising described above.
             </li>
+            <li>
+              <strong>GitHub</strong> hosts the public source repository. If you open an issue
+              there, GitHub&apos;s own terms and privacy policy apply to that.
+            </li>
           </ul>
           <p>
             If you pay for a manual audit, the payment provider used for that transaction processes

@@ -97,8 +97,16 @@ export default function AboutPage() {
           </p>
           <p>
             Written and maintained by the LLMention team. The scoring method is published in
-            full on the <Link href="/methodology/">methodology page</Link>, so a disagreement
-            with a result can be specific: say which check and which URL.
+            full on the <Link href="/methodology/">methodology page</Link>, and the source is
+            public at{" "}
+            <a
+              href="https://github.com/Alex13192/geo-scanner"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              github.com/Alex13192/geo-scanner
+            </a>
+            , so a disagreement with a result can be specific: say which check and which URL.
           </p>
 
           <h2>Contact</h2>
