@@ -32,6 +32,32 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  /*
+   * A preview hostname on a domain this project already owns, so the deployed Worker can
+   * be checked from a network that cannot reach *.workers.dev.
+   *
+   * That is not hypothetical: on the machine this migration was developed on, DNS for
+   * *.workers.dev is intercepted and answers with a Meta address
+   * (2a03:2880:f10f:83:face:b00c:0:25de), so every request from there times out while the
+   * custom domain works normally. wrangler tail fails the same way, for the same reason.
+   *
+   * WHY THIS IS TWO LEVELS AND NOT THREE. The first attempt was
+   * next.geo-scanner.ccie13192.com, which resolved correctly but failed the TLS handshake:
+   * Cloudflare's Universal SSL certificate covers the apex and one level of subdomain, so
+   * a name three levels deep has no certificate. preview.ccie13192.com is two levels and
+   * is covered.
+   *
+   * This also confirms Phase D is safe certificate-wise: geo-scanner.ccie13192.com is two
+   * levels, which is why it already serves HTTPS today.
+   *
+   * Delete this block once the move is done and the site is confirmed on the domain itself.
+   */
+  "routes": [
+    {
+      "pattern": "preview.ccie13192.com",
+      "custom_domain": true
+    }
+  ],
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
