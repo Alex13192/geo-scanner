@@ -105,6 +105,7 @@ function ReportContent() {
    * page was read, so when they do not describe one, the page has to say so.
    */
   const [scoreBasis, setScoreBasis] = useState("homepage");
+  const [browserStatus, setBrowserStatus] = useState<number | null>(null);
   /** True when the response was larger than the read cap and was truncated. */
   const [truncated, setTruncated] = useState(false);
   const [activeFilter, setActiveFilter] = useState<"all" | "high" | "medium" | "low">("all");
@@ -139,6 +140,7 @@ function ReportContent() {
           setOverallScore(0);
         } else {
           setScoreBasis(typeof data.scoreBasis === "string" ? data.scoreBasis : "homepage");
+          setBrowserStatus(typeof data.browserStatus === "number" ? data.browserStatus : null);
           setTruncated(data.truncated === true);
           setOverallScore(data.score ?? 0);
           setGrade(data.grade || "");
@@ -335,9 +337,23 @@ function ReportContent() {
             <p className="text-xs text-amber-100/80 leading-relaxed">
               The homepage did not return HTTP 200, so what was analysed is the body your server
               sent &mdash; a block page, a challenge or an error document. Every dimension below
-              describes that response. It is not a verdict on your content, and a low score here
-              usually points at a bot-protection rule rather than a GEO problem. Resolve the
-              access issue, then scan again.
+              describes that response, not your content.{" "}
+              {browserStatus === 200 ? (
+                <>
+                  The same URL served a browser-shaped request normally, so the refusal is aimed at
+                  identified crawlers &mdash; and GPTBot, ClaudeBot, PerplexityBot and OAI-SearchBot
+                  all present as bots. That refusal <strong>is</strong> a GEO problem rather than a
+                  false alarm; the AI Crawler Access finding below says what to change.
+                </>
+              ) : (
+                <>
+                  {browserStatus == null
+                    ? "A browser-shaped request could not be completed for comparison, so"
+                    : `A browser-shaped request was refused as well (HTTP ${browserStatus}), so`}{" "}
+                  the refusal points at the address this scan came from rather than at your
+                  configuration. Read the score as unverified rather than as a verdict on the site.
+                </>
+              )}
             </p>
           </div>
         )}

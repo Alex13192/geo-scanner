@@ -68,6 +68,23 @@ export type AnalyzeInput = {
    */
   scheme: "https" | "http";
   homeStatus: number;
+  /**
+   * The status the same URL returned to a browser-shaped request, or null when
+   * no such probe was made or it could not be completed.
+   *
+   * WHY THIS EXISTS: a non-200 homepage was scored as an access note while
+   * robots.txt alone decided whether AI crawlers were blocked. That let a site
+   * which refused an identified crawler outright still collect half marks on the
+   * dimension that exists to measure exactly that - roofscasa.com scored 50/100
+   * on AI Crawler Access while returning 403 to the crawler, because it happened
+   * to have no robots.txt, so "nothing is disallowed" was read as a pass.
+   *
+   * The probe separates the two reasons a refusal happens: a rule aimed at
+   * identified bots, which also catches GPTBot, ClaudeBot and PerplexityBot, from
+   * our own address being blocked, which says nothing about the site. It is used
+   * only for the access verdict, never to score page content.
+   */
+  browserStatus?: number | null;
   html: string;
   robotsText: string | null;
   llmsText: string | null;
@@ -525,21 +542,71 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
   /* ---- AI Crawler Access (16) ---- */
   {
     const c: Check[] = [];
-    if (robots) {
-      c.push(pass("robots-present", 2, "robots.txt is served", `Fetched ${robotsText!.length} bytes.`));
-      if (robots.blocked.length === 0) {
-        c.push(pass("robots-ai-allowed", 6, "No AI crawler is blocked", "gptbot, claudebot, perplexitybot, oai-searchbot and google-extended are all permitted at the site root."));
-      } else {
-        c.push(
-          fail(
+
+    /**
+     * Whether AI crawlers are actually admitted, which robots.txt alone cannot
+     * answer. The verdict combines the policy file with what the server did.
+     */
+    const crawlerAccessVerdict = (): Check => {
+      const blockedInRobots = robots !== null && robots.blocked.length > 0;
+
+      if (input.homeStatus === 200) {
+        if (blockedInRobots) {
+          return fail(
             "robots-ai-blocked",
             6,
             "AI crawlers are blocked in robots.txt",
-            `Disallowed at the site root for: ${robots.blocked.join(", ")}.`,
+            `Disallowed at the site root for: ${robots!.blocked.join(", ")}.`,
             "Remove the Disallow rule for the crawlers behind the engines you want citations from."
-          )
+          );
+        }
+        return pass(
+          "robots-ai-allowed",
+          6,
+          "No AI crawler is blocked",
+          robots
+            ? "gptbot, claudebot, perplexitybot, oai-searchbot and google-extended are all permitted at the site root."
+            : "No robots.txt is served, so nothing disallows gptbot, claudebot, perplexitybot, oai-searchbot or google-extended."
         );
       }
+
+      // The homepage refused our request. If a browser-shaped request to the same
+      // URL was served normally, the rule is aimed at identified crawlers - which
+      // is exactly what the engines that do the citing send.
+      if (input.browserStatus === 200) {
+        return fail(
+          "robots-ai-blocked",
+          6,
+          "The server refuses identified crawlers",
+          `A crawler-shaped request received HTTP ${input.homeStatus}, while the same URL served a browser-shaped request with HTTP 200. ${
+            blockedInRobots
+              ? `robots.txt also disallows: ${robots!.blocked.join(", ")}.`
+              : "robots.txt does not disallow them, so the refusal happens before robots.txt is read."
+          }`,
+          "Admit identified AI crawlers (GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot) from outside your network. A rule that refuses anything presenting as a bot refuses every one of them."
+        );
+      }
+
+      // Both request shapes were refused, so the refusal is about the address the
+      // scan came from rather than about crawler policy. That is not the site's
+      // fault and is not scored as one, but it cannot be scored as a pass either.
+      const probeNote =
+        input.browserStatus == null
+          ? "No browser-shaped request could be completed for comparison."
+          : `A browser-shaped request was refused as well (HTTP ${input.browserStatus}).`;
+      return partial(
+        "robots-ai-allowed",
+        6,
+        2,
+        "Crawler access could not be verified",
+        `The homepage returned HTTP ${input.homeStatus} to a crawler-shaped request. ${probeNote} The refusal therefore points at the scanning address rather than at your configuration, so this check is scored partially rather than passed or failed.`,
+        "Check in your CDN or WAF whether identified AI crawlers are admitted, and from which networks. This scan cannot settle that from here."
+      );
+    };
+
+    if (robots) {
+      c.push(pass("robots-present", 2, "robots.txt is served", `Fetched ${robotsText!.length} bytes.`));
+      c.push(crawlerAccessVerdict());
       if (robots.sitemaps.length > 0) {
         c.push(pass("robots-sitemap", 1, "robots.txt declares a sitemap", robots.sitemaps[0]));
       } else {
@@ -550,8 +617,9 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
       // crawler is disallowed by it. The previous version collapsed this branch
       // into a single 9-point failure, which both punished a site whose AI
       // crawlers are in fact unblocked and made the number of checks vary
-      // between scans. Emitting the same three checks in both branches keeps the
-      // count stable at 39 and the reading honest.
+      // between scans. Emitting the same checks in both branches keeps the count
+      // stable and the reading honest - but only when the page was actually
+      // served, which is why the verdict below is no longer decided here.
       c.push(
         fail(
           "robots-present",
@@ -561,14 +629,7 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
           "Publish robots.txt. With no robots.txt every crawler is permitted by default, so this is a policy gap rather than a block."
         )
       );
-      c.push(
-        pass(
-          "robots-ai-allowed",
-          6,
-          "No AI crawler is blocked",
-          "No robots.txt is served, so nothing disallows gptbot, claudebot, perplexitybot, oai-searchbot or google-extended."
-        )
-      );
+      c.push(crawlerAccessVerdict());
       c.push(
         fail(
           "robots-sitemap",

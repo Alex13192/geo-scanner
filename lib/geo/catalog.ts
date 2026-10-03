@@ -163,16 +163,16 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "robots-ai-allowed",
     dimension: "ai-crawler-access",
     points: 6,
-    rule: "Parsing robots.txt into user-agent groups, none of gptbot, claudebot, perplexitybot, oai-searchbot or google-extended is disallowed from /. An exact agent group takes precedence over the * group, the longest matching pattern wins and Allow wins ties, an empty Disallow value matches nothing, and * is treated as a wildcard.",
-    onFail: "At least one AI crawler is disallowed from the site root.",
-    note: "A site with no robots.txt at all passes this check, because with no file no crawler is disallowed by it. That is a deliberate reading: absence of robots.txt is a policy gap, not a block. The gap is reported separately by robots-present.",
+    rule: "Parsing robots.txt into user-agent groups, none of gptbot, claudebot, perplexitybot, oai-searchbot or google-extended is disallowed from /, AND the homepage served a crawler-shaped request with HTTP 200. An exact agent group takes precedence over the * group, the longest matching pattern wins and Allow wins ties, an empty Disallow value matches nothing, and * is treated as a wildcard. When the homepage refused the request, the verdict follows a second probe of the same URL made with a browser-shaped User-Agent: if that one returns 200 the refusal is aimed at identified crawlers, and the check fails under robots-ai-blocked; if it is refused as well, the refusal is about the scanning address rather than the site, and this check scores 2 of 6 as unverified.",
+    onFail: "At least one AI crawler is disallowed from the site root, or the server refuses identified crawlers outright.",
+    note: "A site with no robots.txt at all passes this check only when the homepage was actually served, because with no file no crawler is disallowed by it. That is a deliberate reading: absence of robots.txt is a policy gap, not a block, and the gap is reported separately by robots-present. A refusal by the server is the stronger evidence and now overrides the file: robots.txt saying nothing is not permission if the request is rejected before it is read.",
   },
   {
     id: "robots-ai-blocked",
     dimension: "ai-crawler-access",
     points: 6,
     alias: true,
-    rule: "The inverse of the check above, reported by name so the blocked agents appear in the finding.",
+    rule: "The inverse of the check above, reported by name so the blocked agents appear in the finding. It is also reported when the server refuses identified crawlers while serving a browser-shaped request, because the effect on those crawlers is the same.",
   },
   {
     id: "robots-sitemap",
@@ -186,7 +186,7 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     points: 2,
     rule: "The homepage returns HTTP 200 to a non-browser request that identifies itself honestly.",
     onFail:
-      "A non-200 homepage response. This is reported as its own finding and is not by itself proof that AI crawlers are blocked.",
+      "A non-200 homepage response. The access verdict itself is reported by robots-ai-allowed or robots-ai-blocked, which account for what the refusal was aimed at.",
   },
   {
     id: "home-noindex",

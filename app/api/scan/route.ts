@@ -26,6 +26,27 @@ export const dynamic = "force-dynamic"; // 强制声明为动态接口，防止�
  */
 const CRAWLER_UA = `Mozilla/5.0 (compatible; LLMentionBot/1.0; +${SITE_URL}/methodology/)`;
 
+/**
+ * Sent only as a second probe, and only when the first request was refused.
+ *
+ * WHY A SCANNER MAY DO THIS AT ALL: the refusal has two completely different
+ * meanings and nothing else separates them. If a browser-shaped request is served
+ * while a crawler-shaped one is refused, the site is running a rule aimed at
+ * identified bots - and GPTBot, ClaudeBot, PerplexityBot and OAI-SearchBot all
+ * present as bots, so the rule blocks the engines the audit is about. If both are
+ * refused, the block is about the address the scan came from and says nothing
+ * about the site. Reporting the first case as "not a GEO problem", which is what
+ * the old copy did, was backwards.
+ *
+ * This is a diagnostic, not a disguise: its result is used only for the access
+ * verdict, never to score page content, and it is disclosed in the published rule
+ * for robots-ai-allowed. Impersonating GPTBot - the thing the comment above
+ * rejects - would be different in kind, because that claims to be a specific
+ * crawler whose access rules the site set deliberately.
+ */
+const BROWSER_PROBE_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
 const FETCH_TIMEOUT_MS = 9000;
 
 function cleanDomain(domain: string): string {
@@ -94,6 +115,18 @@ export async function GET(request: Request) {
     home = await fetchText(`${scheme}://${domain}`, options);
   }
 
+  // 1b. One extra request, and only when the first was refused: ask the same URL
+  //     again as a browser. This is what tells "your WAF refuses identified bots"
+  //     apart from "our address is blocked", which the score should not conflate.
+  let browserStatus: number | null = null;
+  if (home && home.status !== 200) {
+    const probe = await fetchText(`${scheme}://${domain}`, {
+      ...options,
+      userAgent: BROWSER_PROBE_UA,
+    });
+    browserStatus = probe ? probe.status : null;
+  }
+
   // No HTTP response at all on either scheme: the domain really is unreachable.
   if (!home) {
     return NextResponse.json({
@@ -116,6 +149,7 @@ export async function GET(request: Request) {
     domain,
     scheme,
     homeStatus: home.status,
+    browserStatus,
     html: home.body,
     robotsText: robots && robots.status === 200 ? robots.body : null,
     llmsText: llms && llms.status === 200 ? llms.body : null,
@@ -131,6 +165,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       domain,
       status: home.status,
+      browserStatus,
       scoreBasis: home.status === 200 ? "homepage" : `${home.status} error response`,
       truncated: home.truncated,
       score: result.score,
@@ -148,15 +183,18 @@ export async function GET(request: Request) {
   }
 
   // Note: a non-200 homepage is NOT treated as unreachable. The analyser scores
-  // it accordingly, and robots.txt - not the homepage response - decides whether
-  // AI crawlers are actually blocked. But the caller has to be able to tell that
-  // the score describes an error response rather than a page, so the basis is
-  // stated explicitly instead of leaving twelve dimension scores to imply that
-  // a real page was read.
+  // it accordingly, and the access verdict now combines robots.txt with what the
+  // server did to a crawler-shaped request and to a browser-shaped one, so a
+  // refusal aimed at identified crawlers is reported as a block instead of as a
+  // neutral access note. The caller still has to be able to tell that the score
+  // describes an error response rather than a page, so the basis is stated
+  // explicitly instead of leaving twelve dimension scores to imply that a real
+  // page was read.
   return NextResponse.json({
     reachable: true,
     status: home.status,
     scheme,
+    browserStatus,
     // Phrased to read correctly inside "This score describes ...": a leading
     // "HTTP" would make the banner say "describes a HTTP 403 response".
     scoreBasis: home.status === 200 ? "homepage" : `${home.status} error response`,
