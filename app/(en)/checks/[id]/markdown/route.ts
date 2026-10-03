@@ -15,17 +15,32 @@ import { SITE_URL } from "@/lib/site";
  *
  * WHY A ROUTE AND NOT A .md FILE NAME: the App Router has no segment syntax that
  * maps a dynamic id onto `<id>.md`, and inventing a static file per page would put
- * 38 generated artefacts into the repository. The URL shape is not part of the
+ * 40 generated artefacts into the repository. The URL shape is not part of the
  * convention - the declaration on the page is - so /markdown/ is used and the
  * rel="alternate" link points here.
  *
+ * WHY THIS IS DYNAMIC AND NOT PRERENDERED, WHICH THE FIRST VERSION GOT WRONG:
+ * next-on-pages requires every route that is not purely static to run on the Edge
+ * Runtime and to say so, so it needs `runtime = "edge"` exactly as the two /api/
+ * handlers do. The first version omitted it and added generateStaticParams instead, in
+ * an attempt to prerender the twins - and the Cloudflare build failed with
+ *
+ *   Invalid prerender config for /checks/[id]/markdown
+ *   The following routes were not configured to run with the Edge Runtime
+ *
+ * because a route handler with a prerender config is not something the adapter can
+ * turn into a Pages build. There is nothing to prerender anyway: the response is
+ * assembled from lib/geo/catalog.ts and lib/geo/check-copy.ts, both of which are
+ * already in the worker bundle, so a dynamic edge handler does no I/O and no work that
+ * prerendering would have saved.
+ *
  * The scanner's markdown-alternate check reads the DECLARATION only, so serving this
  * correctly is what makes the declaration honest rather than what makes it score.
- * That distinction is in the catalog note.
+ * That distinction is in the catalog note, and scripts/check-live.mjs follows the link
+ * to confirm it resolves, which is the part the scanner cannot do.
  */
-export function generateStaticParams() {
-  return CHECK_CATALOG.filter((check) => !check.alias).map((check) => ({ id: check.id }));
-}
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

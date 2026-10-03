@@ -420,6 +420,47 @@ console.log("\n=== published check count stated in the source ===");
   }
 }
 
+/* 4f. Every route handler must declare the Edge Runtime.
+      next-on-pages refuses to produce a Pages build for any route that is not purely
+      static unless it exports runtime = "edge", and it says so only in the deploy log -
+      which is a slow and expensive place to find out. The markdown twin route shipped
+      without it, the Cloudflare build failed with "The following routes were not
+      configured to run with the Edge Runtime: /checks/[id]/markdown", and this guard
+      exists so the next one fails here instead, in about a second.
+
+      This asserts the declaration is present rather than trying to decide which routes
+      need it. Every route handler in this app is on the edge by design; two /api/
+      handlers and the markdown twin all are, so a new one that is not is a mistake
+      rather than a choice. */
+console.log("\n=== route handlers declare the Edge Runtime ===");
+{
+  const routes: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name === "route.ts" || entry.name === "route.tsx") routes.push(full);
+    }
+  };
+  walk(join(process.cwd(), "app"));
+
+  const undeclared = routes.filter(
+    (file) => !/export const runtime\s*=\s*["']edge["']/.test(readFileSync(file, "utf8"))
+  );
+
+  if (routes.length === 0) {
+    console.log("  FAIL  no route handlers found; the walk is probably wrong");
+    process.exitCode = 1;
+  } else if (undeclared.length === 0) {
+    console.log(`  PASS  all ${routes.length} route handler(s) export runtime = "edge"`);
+  } else {
+    console.log(`  FAIL  ${undeclared.length} route handler(s) would break the Pages build:`);
+    for (const file of undeclared) console.log(`        - ${relative(process.cwd(), file)}`);
+    console.log('        add: export const runtime = "edge";');
+    process.exitCode = 1;
+  }
+}
+
 /* 5. A single-language site must not pass the multilingual check just because it
       declares a default. This is the measurement error the project exists to
       avoid, so it is pinned down explicitly. */
