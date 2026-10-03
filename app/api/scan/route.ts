@@ -118,6 +118,8 @@ export async function GET(request: Request) {
   // 1b. One extra request, and only when the first was refused: ask the same URL
   //     again as a browser. This is what tells "your WAF refuses identified bots"
   //     apart from "our address is blocked", which the score should not conflate.
+  //     The access verdict still honours robots.txt first: a site can refuse us
+  //     *and* publish a disallow, and the disallow is the certain fact of the two.
   let browserStatus: number | null = null;
   if (home && home.status !== 200) {
     const probe = await fetchText(`${scheme}://${domain}`, {

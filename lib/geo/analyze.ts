@@ -550,16 +550,32 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
     const crawlerAccessVerdict = (): Check => {
       const blockedInRobots = robots !== null && robots.blocked.length > 0;
 
+      /**
+       * A published disallow is decisive on its own, and has to be checked before
+       * anything about the homepage response. It is knowable whether or not the page
+       * was served, and it is the mechanism a crawler will actually obey.
+       *
+       * This ordering is a fix, not a preference. When the robots branch sat inside
+       * the homepage-served branch, a site that disallowed AI agents AND refused our
+       * request came out as merely "could not be verified" - losing the one fact
+       * about it that was certain. nytimes.com and reuters.com both hit that: their
+       * robots.txt disallows AI agents, and being refused made it vanish.
+       */
+      if (blockedInRobots) {
+        return fail(
+          "robots-ai-blocked",
+          6,
+          "AI crawlers are blocked in robots.txt",
+          `Disallowed at the site root for: ${robots!.blocked.join(", ")}.${
+            input.homeStatus === 200
+              ? ""
+              : ` The homepage also returned HTTP ${input.homeStatus} to a crawler-shaped request.`
+          }`,
+          "Remove the Disallow rule for the crawlers behind the engines you want citations from."
+        );
+      }
+
       if (input.homeStatus === 200) {
-        if (blockedInRobots) {
-          return fail(
-            "robots-ai-blocked",
-            6,
-            "AI crawlers are blocked in robots.txt",
-            `Disallowed at the site root for: ${robots!.blocked.join(", ")}.`,
-            "Remove the Disallow rule for the crawlers behind the engines you want citations from."
-          );
-        }
         return pass(
           "robots-ai-allowed",
           6,
