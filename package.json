@@ -8,7 +8,7 @@
     "pages:build": "npx @cloudflare/next-on-pages",
     "start": "next start",
     "lint": "eslint",
-    "check:domain": "node scripts/check-domain.mjs"
+    "check:values": "node scripts/check-values.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.49.0",

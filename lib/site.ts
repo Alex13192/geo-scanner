@@ -14,7 +14,7 @@
  *
  * Moving to an independent domain is therefore:
  *   1. edit SITE_URL below
- *   2. run `npm run check:domain` - it names every file still carrying the old
+ *   2. run `npm run check:values` - it names every file still carrying the old
  *      host, including the two static files that cannot import this module
  *      (public/robots.txt and public/llms.txt). A `Sitemap:` line in robots.txt
  *      that points at the old domain is worse than having no line at all.
@@ -30,5 +30,10 @@ export const BRAND = "LLMention";
  * One address for the whole site. It is declared here because it appeared as a
  * local constant in six files, which is how a contact address silently diverges
  * between a pricing page and a refund policy.
+ *
+ * It has to be an address someone actually reads: it is the destination for
+ * audit requests, data requests and withdrawal notices, and a contact address
+ * nobody monitors is worse than no contact address, because it looks like a
+ * working channel and is not.
  */
-export const CONTACT_EMAIL = "hello@ccie13192.com";
+export const CONTACT_EMAIL = "alex.xu@ccie13192.com";

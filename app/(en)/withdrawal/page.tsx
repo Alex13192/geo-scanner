@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import LegalLinks from "@/app/components/LegalLinks";
-import {
-  CONTACT_EMAIL,
-  LEGAL_ADDRESS_LINES,
-  LEGAL_NAME_LATIN,
-} from "@/lib/legal-entity";
+import { LEGAL_NAME_LATIN } from "@/lib/legal-entity";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Withdrawal notice, in English, for consumers in the EU and the UK.
@@ -22,6 +19,14 @@ import {
  * China, so the governing consumer protection is the buyer's own. Where the
  * German implementation is the stricter and better known one, it is named in
  * brackets rather than asserted as the only law that applies.
+ *
+ * WHAT IS DELIBERATELY ABSENT: the operator's postal address. It was published
+ * while the German Impressum existed, because section 5 DDG requires a
+ * serviceable address; the German pages are gone and the address is out of the
+ * source. A withdrawal can be declared by email, and naming the operator plus an
+ * email address is enough for a consumer to act on. If a market is later added
+ * that requires an address in writing, see the note in lib/legal-entity.ts -
+ * make the repository private before that address goes back into a file.
  *
  * NOT LEGAL ADVICE. Have it reviewed before selling to consumers in the EU.
  */
@@ -160,12 +165,6 @@ export default function WithdrawalPage() {
             <br />
             {LEGAL_NAME_LATIN}
             <br />
-            {LEGAL_ADDRESS_LINES.map((line) => (
-              <span key={`form-${line}`}>
-                {line}
-                <br />
-              </span>
-            ))}
             Email: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </p>
           <p>
