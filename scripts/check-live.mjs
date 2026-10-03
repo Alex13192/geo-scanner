@@ -172,6 +172,38 @@ console.log("\n=== the rule section ===");
   else bad("the sitemap does not mention /checks/");
 }
 
+/* ---- Edge caching: a measurement, deliberately NOT an assertion ---- */
+console.log("\n=== edge caching (informational, not gated) ===");
+{
+  /*
+   * This section reports rather than asserts, and the distinction is the point. Whether
+   * Cloudflare caches a Pages Function response on the strength of its Cache-Control
+   * header is the open question next.config.ts documents; failing the run here would mean
+   * asserting something nobody has verified yet. When the answer is known, this becomes a
+   * real check with a real expected value.
+   *
+   * Each path is requested twice, because the first response for an uncached URL is
+   * expected to be a MISS and only a second request can demonstrate a HIT.
+   */
+  for (const path of ["/", "/methodology/", "/checks/robots-present/"]) {
+    const first = await get(path);
+    if (first.error) {
+      console.log(`  ${path}  unreachable: ${first.error}`);
+      continue;
+    }
+    const second = await get(path);
+    console.log(`  ${path}`);
+    console.log(`    cache-control:   ${first.res.headers.get("cache-control") || "(none)"}`);
+    console.log(
+      `    cf-cache-status: 1st ${first.res.headers.get("cf-cache-status") || "-"}, ` +
+        `2nd ${second.res.headers.get("cf-cache-status") || "-"}`
+    );
+  }
+  console.log("    HIT or REVALIDATED on the second request means the edge is caching.");
+  console.log("    DYNAMIC on both means the header alone is not enough - a Cloudflare");
+  console.log("    Cache Rule for these paths, or OpenNext's incremental cache, would be.");
+}
+
 console.log(
   failures === 0
     ? `\n${base} answered every check.`
