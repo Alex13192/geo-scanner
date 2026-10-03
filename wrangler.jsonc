@@ -53,10 +53,6 @@
    * Delete this block once the move is done and the site is confirmed on the domain itself.
    */
   "routes": [
-    {
-      "pattern": "preview.ccie13192.com",
-      "custom_domain": true
-    },
     /*
      * The production hostname, attached as a ROUTE rather than as a custom domain.
      *
@@ -67,12 +63,13 @@
      *
      * The blocker is not the Pages binding as such, it is the CNAME that the Pages custom
      * domain integration created - Cloudflare treats it as externally managed and will not
-     * build a Workers custom domain on top of it. A route does not create a DNS record: it
-     * attaches this Worker to a hostname that already resolves and is already proxied,
-     * which this one is (it answers from 2606:4700:3036::6815:509f).
+     * build a Workers custom domain on top of it. A route creates no DNS record: it attaches
+     * this Worker to a hostname that already resolves and is already proxied, which this one
+     * is. The cutover therefore involved no DNS change and no window in which the name did
+     * not resolve.
      *
-     * If Cloudflare refuses this too, the remaining step is to remove the custom domain
-     * from the Pages project, which deletes that CNAME, after which custom_domain works.
+     * If it is ever refused in turn, the remaining step is to remove the custom domain from
+     * the Pages project, which deletes that CNAME, after which the custom domain form works.
      */
     {
       "pattern": "geo-scanner.ccie13192.com/*",

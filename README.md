@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LLMention
 
-## Getting Started
+A GEO scanner for AI search visibility, at https://geo-scanner.ccie13192.com.
 
-First, run the development server:
+It fetches a homepage the way a crawler would, scores it against 40 published checks across
+12 weighted dimensions, and reports every failure with the evidence that produced it. The
+ruling principle is that the method must be inspectable: every rule, its point value and the
+condition that makes it pass are published, and the tests assert that the published method
+and the executed method cannot drift apart.
+
+- Every rule: `/checks/`, one page per check, generated from `lib/geo/catalog.ts`
+- The full method, the weights and the limits: `/methodology/`
+- The study over 30 homepages: `/study/`, collected by `npm run study:run`
+
+## Running it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci
+npm run dev            # http://localhost:3000
+npm run preview        # build and serve the real Cloudflare Worker locally
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploying
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The site is a **Cloudflare Worker**, built with `@opennextjs/cloudflare` and configured by
+`wrangler.jsonc`. It is not a Pages project any more, and it is not deployed from the
+Cloudflare dashboard: the build command and output directory used to live only there, which
+meant nothing in this repository described how the site reached production and nobody could
+reproduce a deployment failure locally.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx wrangler login     # once
+npm run deploy         # build + deploy to Cloudflare
+```
 
-## Learn More
+Push to `main` also deploys, through `.github/workflows/deploy.yml`, **but only once these
+repository secrets exist**:
 
-To learn more about Next.js, take a look at the following resources:
+| Secret | Where it comes from |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens → template "Edit Cloudflare Workers" |
+| `CLOUDFLARE_ACCOUNT_ID` | the account id in the dashboard URL, or `npx wrangler whoami` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Without them the deploy job fails with a wrangler error and ships nothing, which is the
+correct failure. `npm run deploy` from a development machine always works as a fallback.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`wrangler.jsonc` attaches the production hostname as a **route**, not as a `custom_domain`.
+That is deliberate: attaching it as a custom domain is refused with `code: 100117` because
+the hostname carries an externally managed DNS record left by the Pages integration. A route
+creates no DNS record and needs none. The comment in that file records the error.
 
-## Deploy on Vercel
+## Checking it
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Six gates. The first five inspect local build output; the sixth is the only one that can see
+what is actually being served.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | What it proves |
+| --- | --- |
+| `npm run check:values` | every static URL and address agrees with `lib/site.ts` |
+| `npm run test:analyze` | the scoring engine: robots.txt parsing, measurement guards, page-type exemptions, generated copy, the ranges the site publishes for its own titles, and that no source file declares the edge runtime |
+| `npm run test:rate-limit` | the token bucket, including that a flood of distinct keys cannot reset an exhausted client |
+| `npx tsc --noEmit` | types |
+| `npx opennextjs-cloudflare build` | the adapter accepts the app, then `npm run check:built` scores the built HTML with the scanner's own analyser and fails below a floor |
+| `npm run check:live -- https://geo-scanner.ccie13192.com` | the deployed origin: security headers, which deployment is answering, robots.txt, llms.txt, the `/report/` canonical, a markdown twin resolving, and the rule hub |
+
+`check:live` takes any origin, so it also works against `npm run preview` or a preview
+hostname. Its `deployment identity` assertion checks for the `x-opennext` response header:
+without it, a run against a hostname still served by the old Pages deployment passed every
+content check and looked like a successful cutover.
+
+## Layout
+
+```
+app/                 routes; (en)/ is the only locale, deliberately
+  (en)/checks/       the rule reference, generated from the catalogue
+  api/               scan and llms.txt endpoints, Node runtime inside the Worker
+lib/geo/             the scoring engine, the published catalogue, generated copy
+lib/og.ts            the openGraph block, built in one place
+lib/site.ts          the origin and contact address, declared once
+scripts/             the gates above, plus the study runner
+public/_headers      static asset caching, read under Workers
+wrangler.jsonc       the Worker: entry, compatibility flags, bindings, routes
+```
+
+## A note on the comments
+
+They are long, and they explain why rather than what. Several of them record a mistake that
+was made and what it cost, because the reasoning is the part that does not survive a rewrite
+of the code. `lib/geo/analyze.ts`, `middleware.ts` and `next.config.ts` are the densest.
