@@ -1,0 +1,25 @@
+# Cloudflare Pages redirects.
+#
+# The German site (/de/*) was removed on the grounds that one market's legal
+# overhead was not worth the traffic it brought. Those URLs were in the sitemap
+# with hreflang pairs and may be indexed, so they are 301'd to the closest
+# English page rather than left to 404: a 404 throws away whatever equity those
+# URLs carry and shows a dead end to anyone arriving from a stale link.
+#
+# Order matters - the first matching rule wins, so the specific routes come
+# before the catch-all splat at the bottom.
+#
+# The one German page that is NOT simply an SEO redirect is /de/widerrufsrecht/.
+# That notice is not a German-market artefact: a consumer in the EU or the UK has
+# a statutory right of withdrawal from a distance contract regardless of the
+# language the site is published in, so its replacement is a real page
+# (/withdrawal/), not a redirect to marketing copy.
+
+/de/                                  /                                301
+/de/docs/                             /docs/                           301
+/de/docs/gptbot-robots-txt/           /docs/allow-ai-crawlers/         301
+/de/docs/llms-txt-erstellen/          /docs/llms-txt-deployment/       301
+/de/llms-txt-studio/                  /llms-txt-studio/                301
+/de/impressum/                        /about/                          301
+/de/widerrufsrecht/                   /withdrawal/                     301
+/de/*                                 /                                301

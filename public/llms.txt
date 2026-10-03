@@ -60,11 +60,8 @@ an AI-generated answer, and produces a shareable readiness score.
   exercise your data rights.
 - [Terms of service](https://geo-scanner.ccie13192.com/terms/): What is promised, what
   is not, and what you may and may not scan.
-- [Impressum](https://geo-scanner.ccie13192.com/de/impressum/) (German): Provider
-  identification under section 5 DDG, naming the operator and a serviceable address.
-- [Widerrufsbelehrung](https://geo-scanner.ccie13192.com/de/widerrufsrecht/) (German):
-  The statutory 14-day withdrawal notice for consumers in the EU, with the model
-  withdrawal form.
+- [Right of withdrawal](https://geo-scanner.ccie13192.com/withdrawal/): The statutory
+  14-day withdrawal notice for consumers in the EU and the UK, with the model form.
 
 ## Supported AI crawlers
 

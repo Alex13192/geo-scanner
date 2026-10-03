@@ -5,23 +5,7 @@ import { useRouter } from "next/navigation";
 import ScoreRing from "@/app/components/ScoreRing";
 import { CONTACT_EMAIL, SITE_HOST } from "@/lib/site";
 
-type Language = "en" | "zh" | "es" | "de" | "fr" | "ja";
-
-const translations: Record<Language, {
-  tag: string;
-  title1: string;
-  title2: string;
-  subtitle: string;
-  placeholder: string;
-  button: string;
-  crawlersTitle: string;
-  crawlersDesc: string;
-  llmsTitle: string;
-  llmsDesc: string;
-  badgeTitle: string;
-  badgeDesc: string;
-}> = {
-  en: {
+const t = {
     tag: "Generative Engine Optimization",
     title1: "Is Your Site Optimized for",
     title2: "AI Search Engines?",
@@ -34,93 +18,11 @@ const translations: Record<Language, {
     llmsDesc: "Auto-generate standardized markdown context files so LLMs can digest your domain's content cleanly.",
     badgeTitle: "Dynamic Score Badge",
     badgeDesc: "Embed a badge carrying your verified GEO score in your GitHub README or site footer.",
-  },
-  zh: {
-    tag: "生成式引擎优化 (GEO)",
-    title1: "您的网站是否已针对",
-    title2: "AI 搜索引擎进行优化？",
-    subtitle: "检查 ChatGPT、Perplexity 和 Claude 是否能够抓取您的网站。审计您的 AI 能见度并即时生成 /llms.txt 文件。",
-    placeholder: "输入域名或 URL (例如 adidas.com)",
-    button: "矢量扫描 🚀",
-    crawlersTitle: "AI 爬虫可达性",
-    crawlersDesc: "扫描 robots.txt 与 WAF 防火墙规则，确保 GPTBot、PerplexityBot 等未被封禁。",
-    llmsTitle: "/llms.txt 自动生成",
-    llmsDesc: "自动生成标准 Markdown 上下文文件，让大语言模型更清晰地理解您的网站内容。",
-    badgeTitle: "动态评分徽章",
-    badgeDesc: "生成带有真实扫描分数的 GEO 徽章，可嵌入 GitHub README 或网站页脚。",
-  },
-  es: {
-    tag: "Optimización para Motores Generativos",
-    title1: "¿Está su sitio optimizado para",
-    title2: "Motores de Búsqueda de IA?",
-    subtitle: "Compruebe si ChatGPT, Perplexity y Claude pueden rastrear su sitio web. Audite su visibilidad de IA y genere archivos /llms.txt al instante.",
-    placeholder: "Ingrese dominio o URL (ej. adidas.com)",
-    button: "Escanear Sitio 🚀",
-    crawlersTitle: "Accesibilidad de Rastreadores IA",
-    crawlersDesc: "Escanee robots.txt y reglas WAF para garantizar que GPTBot y PerplexityBot no estén bloqueados.",
-    llmsTitle: "Generación de /llms.txt",
-    llmsDesc: "Genere automáticamente archivos Markdown estandarizados para que los LLM digieran su contenido.",
-    badgeTitle: "Insignia de Puntuación Dinámica",
-    badgeDesc: "Incruste una insignia con su puntuación GEO verificada en su GitHub o pie de página.",
-  },
-  de: {
-    tag: "Generative Engine Optimization",
-    title1: "Ist Ihre Website optimiert für",
-    title2: "KI-Suchmaschinen?",
-    subtitle: "Überprüfen Sie, ob ChatGPT, Perplexity und Claude Ihre Website crawlen können. Auditieren Sie Ihre KI-Sichtbarkeit und erstellen Sie /llms.txt.",
-    placeholder: "Domain oder URL eingeben (z. B. adidas.com)",
-    button: "Website Scannen 🚀",
-    crawlersTitle: "KI-Crawler-Erreichbarkeit",
-    crawlersDesc: "Überprüfen Sie robots.txt und WAF-Regeln, um sicherzustellen, dass GPTBot nicht blockiert ist.",
-    llmsTitle: "/llms.txt Erstellung",
-    llmsDesc: "Erstellen Sie automatisch standardisierte Markdown-Dateien für eine saubere LLM-Erfassung.",
-    badgeTitle: "Dynamisches Score-Badge",
-    badgeDesc: "Binden Sie ein Badge mit Ihrer geprüften GEO-Punktzahl in Ihre GitHub-README oder Ihren Website-Footer ein.",
-  },
-  fr: {
-    tag: "Optimisation pour Moteurs Génératifs",
-    title1: "Votre site est-il optimisé pour",
-    title2: "les Moteurs de Recherche IA ?",
-    subtitle: "Vérifiez si ChatGPT, Perplexity et Claude peuvent explorer votre site. Auditez votre visibilité IA et générez des fichiers /llms.txt.",
-    placeholder: "Entrez le domaine (ex. adidas.com)",
-    button: "Analyser le Site 🚀",
-    crawlersTitle: "Accessibilité des Robots IA",
-    crawlersDesc: "Analysez robots.txt et les règles WAF pour vous assurer que GPTBot et PerplexityBot ne sont pas bloqués.",
-    llmsTitle: "Génération de /llms.txt",
-    llmsDesc: "Générez automatiquement des fichiers Markdown structurés pour permettre aux LLM de comprendre votre contenu.",
-    badgeTitle: "Badge de Score Dynamique",
-    badgeDesc: "Intégrez un badge affichant votre score GEO vérifié dans votre README GitHub ou votre pied de page.",
-  },
-  ja: {
-    tag: "生成AIエンジン最適化 (GEO)",
-    title1: "あなたのウェブサイトは",
-    title2: "AI検索エンジンに最適化されていますか？",
-    subtitle: "ChatGPT、Perplexity、Claudeがサイトをクロールできるか確認。AIの可視性を監査し、/llms.txtを即座に生成します。",
-    placeholder: "ドメインまたはURLを入力 (例: adidas.com)",
-    button: "サイトをスキャン 🚀",
-    crawlersTitle: "AIクローラーのアクセシビリティ",
-    crawlersDesc: "robots.txtとWAFルールをスキャンし、GPTBotやPerplexityBotがブロックされていないか確認します。",
-    llmsTitle: "/llms.txtの自動生成",
-    llmsDesc: "LLMがコンテンツを正確に理解できるよう、標準化されたMarkdownファイルを自動生成します。",
-    badgeTitle: "動的スコアバッジ",
-    badgeDesc: "実際のスキャンで得たGEOスコアのバッジをGitHubのREADMEやサイトフッターに埋め込めます。",
-  },
 };
 
 export default function HomePage() {
   const [url, setUrl] = useState("");
   const router = useRouter();
-
-  /**
-   * Pinned to English deliberately.
-   *
-   * This page previously offered a six-language dropdown that swapped only the
-   * strings in `translations` and left every other sentence in English, so
-   * choosing "Deutsch" produced a half-translated page. That is worse than not
-   * offering the option at all. Real localisation needs a URL per language;
-   * German now lives at /de and is linked from the header instead.
-   */
-  const t = translations.en;
 
   const handleScan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,23 +86,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Only languages that exist as complete pages are listed. A switcher
-              that offers a language the site cannot serve in full is a broken
-              promise, and this product is positioned against exactly that. */}
-          <nav className="flex items-center gap-1 bg-gray-900/80 p-1 rounded-full border border-gray-800 text-xs">
-            <span className="px-3 py-1 rounded-full bg-blue-600 text-white font-medium">
-              🇬🇧 English
-            </span>
-            <a
-              href="/de/"
-              hrefLang="de"
-              className="px-3 py-1 rounded-full text-gray-400 hover:text-white transition-all"
-            >
-              🇩🇪 Deutsch
-            </a>
-          </nav>
-        </div>
       </header>
 
       {/* Hero Section */}
@@ -574,6 +459,9 @@ export default function HomePage() {
           </a>
           <a href="/terms/" className="hover:text-gray-300 transition-colors">
             Terms
+          </a>
+          <a href="/withdrawal/" className="hover:text-gray-300 transition-colors">
+            Withdrawal
           </a>
           <a href="/contact/" className="hover:text-gray-300 transition-colors">
             Contact

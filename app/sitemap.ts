@@ -14,9 +14,12 @@ const LAST_MODIFIED = new Date('2026-10-02');
  * Canonical URLs therefore carry a trailing slash - keep it that way here.
  *
  * NOTE ON HREFLANG
- * Alternates are declared in pairs. A sitemap entry that names an alternate
- * without that alternate naming it back is the most common reason hreflang is
- * ignored, so both directions are always written together below.
+ * There are none, and that is deliberate. This site was previously published in
+ * English and German with paired alternates; the German half was removed. A
+ * single-language site must not declare `languages` at all, because an alternate
+ * that names a page which no longer exists tells search engines an alternate
+ * exists and then fails to deliver it. /de/* now 301s to the English
+ * equivalent - see public/_redirects.
  *
  * NOTE ON /report/
  * The scan result page is user-specific and thin content. It is deliberately
@@ -24,18 +27,11 @@ const LAST_MODIFIED = new Date('2026-10-02');
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
-    /* ---- English ---- */
     {
       url: `${SITE_URL}/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 1,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/`,
-          de: `${SITE_URL}/de/`,
-        },
-      },
     },
     {
       url: `${SITE_URL}/study/`,
@@ -48,36 +44,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/docs/`,
-          de: `${SITE_URL}/de/docs/`,
-        },
-      },
     },
     {
       url: `${SITE_URL}/docs/llms-txt-deployment/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/docs/llms-txt-deployment/`,
-          de: `${SITE_URL}/de/docs/llms-txt-erstellen/`,
-        },
-      },
     },
     {
       url: `${SITE_URL}/docs/allow-ai-crawlers/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/docs/allow-ai-crawlers/`,
-          de: `${SITE_URL}/de/docs/gptbot-robots-txt/`,
-        },
-      },
     },
     {
       url: `${SITE_URL}/docs/qa-style-headings/`,
@@ -96,12 +74,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/llms-txt-studio/`,
-          de: `${SITE_URL}/de/llms-txt-studio/`,
-        },
-      },
     },
     {
       url: `${SITE_URL}/readiness-badge/`,
@@ -136,8 +108,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     /* Legal and contact.
        These pages are thin by nature, which is why they carry a low priority,
        but they are the ones an AdSense reviewer or a payment provider looks for
-       first. English only: no `de` alternate is declared, because a hreflang
-       entry pointing at a page that does not exist is worse than none. */
+       first. /withdrawal/ is the notice EU and UK consumers are entitled to
+       before they are bound, and it replaces the German Widerrufsbelehrung that
+       this site used to carry. */
     {
       url: `${SITE_URL}/privacy/`,
       lastModified: LAST_MODIFIED,
@@ -151,89 +124,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
     {
+      url: `${SITE_URL}/withdrawal/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
       url: `${SITE_URL}/contact/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'yearly',
       priority: 0.5,
-    },
-
-    /* ---- German ---- */
-    {
-      url: `${SITE_URL}/de/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'weekly',
-      priority: 0.9,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/`,
-          de: `${SITE_URL}/de/`,
-        },
-      },
-    },
-    {
-      url: `${SITE_URL}/de/docs/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'weekly',
-      priority: 0.8,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/docs/`,
-          de: `${SITE_URL}/de/docs/`,
-        },
-      },
-    },
-    {
-      url: `${SITE_URL}/de/docs/gptbot-robots-txt/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/docs/allow-ai-crawlers/`,
-          de: `${SITE_URL}/de/docs/gptbot-robots-txt/`,
-        },
-      },
-    },
-    {
-      url: `${SITE_URL}/de/docs/llms-txt-erstellen/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/docs/llms-txt-deployment/`,
-          de: `${SITE_URL}/de/docs/llms-txt-erstellen/`,
-        },
-      },
-    },
-    {
-      url: `${SITE_URL}/de/llms-txt-studio/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-      alternates: {
-        languages: {
-          en: `${SITE_URL}/llms-txt-studio/`,
-          de: `${SITE_URL}/de/llms-txt-studio/`,
-        },
-      },
-    },
-    /* German legal pages. German only, so no alternate is declared: there is no
-       English Impressum to point an hreflang at, and a hreflang naming a page
-       that does not exist is worse than none. Listed at all because a page that
-       is not in the sitemap is a page nobody finds, and these are the pages a
-       German consumer or a reviewer looks for in the footer. */
-    {
-      url: `${SITE_URL}/de/impressum/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: `${SITE_URL}/de/widerrufsrecht/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'yearly',
-      priority: 0.3,
     },
   ];
 }

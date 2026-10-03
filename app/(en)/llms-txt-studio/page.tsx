@@ -122,13 +122,6 @@ function StudioContent() {
               </button>
             </nav>
           </div>
-          <a
-            href="/de/llms-txt-studio/"
-            hrefLang="de"
-            className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 px-3.5 py-2 rounded-lg transition-all whitespace-nowrap"
-          >
-            🇩🇪 Deutsch
-          </a>
         </div>
       </header>
 

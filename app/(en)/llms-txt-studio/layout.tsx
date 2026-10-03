@@ -9,10 +9,6 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   alternates: {
     canonical: "/llms-txt-studio/",
-    languages: {
-      en: "/llms-txt-studio/",
-      de: "/de/llms-txt-studio/",
-    },
   },
   openGraph: {
     title: TITLE,

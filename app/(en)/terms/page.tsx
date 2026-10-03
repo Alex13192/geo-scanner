@@ -174,12 +174,14 @@ export default function TermsPage() {
           <p>
             If you buy as a consumer, you keep the mandatory protections of the law of your country
             of residence, and nothing here overrides them. That includes the statutory right to
-            withdraw from a distance contract within 14 days. The practical effect is stated on the{" "}
-            <a href="/refund/">refund policy</a>: if the audit does not identify anything actionable
-            on the pages you submitted, it is refunded in full, which is a more generous commitment
-            than the statutory minimum in that situation. Some jurisdictions also require a seller
-            to provide notices that are not published here; where that applies, the notices are
-            given separately at the point of sale.
+            withdraw from a distance contract within 14 days. The{" "}
+            <a href="/withdrawal/">right of withdrawal</a> page carries the full notice and the
+            model withdrawal form you are entitled to before the contract is concluded. The
+            practical effect is stated on the <a href="/refund/">refund policy</a>: if the audit
+            does not identify anything actionable on the pages you submitted, it is refunded in
+            full, which is a more generous commitment than the statutory minimum in that situation.
+            Some jurisdictions also require a seller to provide notices that are not published here;
+            where that applies, the notices are given separately at the point of sale.
           </p>
 
           <h2>If these terms change</h2>
