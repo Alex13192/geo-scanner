@@ -42,6 +42,9 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Callable, so deploy.yml runs exactly these gates before anything is shipped instead
+  # of keeping a second copy of them that drifts from this one.
+  workflow_call:
 
 jobs:
   verify:
@@ -71,8 +74,19 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      - name: Build
-        run: npm run build
+      # THE ADAPTER'S OWN BUILD, not plain `next build`.
+      #
+      # A bare `next build` proves the pages compile. It does not prove the deployment
+      # adapter accepts them - and that gap shipped a real failure: the markdown twin
+      # route had no Edge Runtime declaration, next-on-pages refused to produce a Pages
+      # build, and the error appeared only in the Cloudflare deploy log, because
+      # `npm run pages:build` could not be reproduced on the developer's Windows machine
+      # at all (it shells out to bash). Running the adapter here means the next failure of
+      # that shape happens in a pull request instead.
+      #
+      # This invokes `next build` itself, so it replaces the step rather than joining it.
+      - name: Build for Cloudflare
+        run: npx opennextjs-cloudflare build
         env:
           # next/font downloads Geist at build time, so this job needs network
           # access; telemetry does not need to be part of it.

@@ -1,0 +1,29 @@
+# Static asset caching, applied by Cloudflare to the files OpenNext emits under
+# .open-next/assets.
+#
+# WHY THIS FILE COULD NOT DO ANYTHING BEFORE: under next-on-pages every request was
+# served by a single Pages Function, and Cloudflare does not apply _headers (or
+# _redirects) to Function responses - the same trap middleware.ts documents for
+# _redirects. OpenNext serves the prerendered pages and the build output as real static
+# assets behind the ASSETS binding, so this file is now read.
+#
+# /_next/static/* is the documented minimum and covers the JS and CSS chunks, whose
+# filenames are content-hashed and therefore safe to cache forever.
+
+/_next/static/*
+  Cache-Control: public,max-age=31536000,immutable
+
+# The prerendered HTML is NOT covered by this file, and that is now measured rather than
+# assumed. After an OpenNext build:
+#
+#   .open-next/assets/                     62 files - the JS/CSS chunks and the public/
+#                                          files. A cache rule here is read.
+#   .open-next/cache/<id>/route-cache/     62 files - the prerendered pages, bundled into
+#                                          the Worker and served BY the Worker.
+#
+# So a rule here cannot reach the HTML, and the earlier plan to consider one is dead: the
+# pages respond from the Worker, which means their Cache-Control is whatever
+# next.config.ts headers() sends, and whether Cloudflare caches a Worker response on the
+# strength of that header is still the open question `npm run check:live` reports on.
+# If the answer turns out to be no, the mechanism that certainly works is a Cloudflare
+# Cache Rule on these paths, not this file.
