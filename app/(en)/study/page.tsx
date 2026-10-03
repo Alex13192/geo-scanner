@@ -14,17 +14,24 @@ import { SITE_URL } from "@/lib/site";
  * HONESTY RULES THAT APPLY TO THIS PAGE:
  *  - Every number below came from the same /api/scan the product ships, on the
  *    date stated, over the homepages listed. No result is hand-adjusted.
- *  - A 4xx from our crawler is NOT evidence that a site blocks AI crawlers. It
- *    is evidence that our user-agent was refused. Blocking is decided by
- *    robots.txt, and the two are reported separately because they are different
- *    claims.
+ *  - "Not admitted" has two mechanisms and the table separates them. robots.txt
+ *    disallowing an AI agent is a published policy any crawler will obey. The
+ *    server refusing a crawler-shaped request while serving a browser-shaped one is
+ *    a different fact: it happens before robots.txt is consulted, and it catches
+ *    every engine, because they all present as bots.
+ *  - A refusal of BOTH request shapes is not counted against the site. It says the
+ *    request was turned away from the network this scan runs on, which is evidence
+ *    about the scanner rather than about AI access. Those rows read blocked: false.
  *  - The sample is 30 homepages chosen by hand, not a random sample. Saying
  *    "of the 30 largest" would be a lie; the page says how they were chosen.
- *  - The limits are stated on the page rather than left for a reader to find.
+ *  - The limits are stated on the page rather than left for a reader to find,
+ *    including the one the re-run exposed: a bot-management response can differ
+ *    between two requests made seconds apart, so a "refused" mark is one
+ *    observation rather than a property of the site.
  */
 const TITLE = "We scanned the homepages of 30 major websites for AI visibility";
 const DESCRIPTION =
-  "None scored an A. The average was 62 out of 100. Every news publisher in the sample disallows AI crawlers in robots.txt. Full per-domain results, reproducible against the public API.";
+  "None of the 30 scored an A and the average was 62. Every news publisher in the sample disallows AI crawlers, and one site refuses them at the server. Full per-domain results, reproducible against the public API.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -33,61 +40,80 @@ export const metadata: Metadata = {
   openGraph: { title: TITLE, description: DESCRIPTION, url: "/study/", type: "article" },
 };
 
-const SCAN_DATE = "2 October 2026";
+const SCAN_DATE = "3 October 2026";
 
 type Row = {
   domain: string;
   status: number;
+  /**
+   * What a browser-shaped request to the same URL returned, or null when the
+   * homepage answered 200 and no second request was needed.
+   */
+  browserStatus: number | null;
   score: number;
   grade: string;
-  /** A 4xx/5xx or non-200 answer, so the score describes that response. */
+  /** A non-200 answer, so the score describes that response rather than a page. */
   aborted: boolean;
-  /** robots.txt disallows at least one of the five tracked AI agents at root. */
+  /**
+   * AI crawlers are not admitted: robots.txt disallows one of the five tracked
+   * agents at root, or the server refuses a crawler-shaped request. The two
+   * mechanisms are separated by `refused` below.
+   */
   blocked: boolean;
+  /**
+   * Refused to a crawler-shaped request while the same URL served a browser-shaped
+   * one. This is the case a robots.txt line cannot express: the block happens
+   * before robots.txt is read, and because GPTBot, ClaudeBot, PerplexityBot and
+   * OAI-SearchBot all present as bots, a rule like that turns every one of them away.
+   */
+  refused: boolean;
   entity: boolean;
   sameAs: boolean;
   category: string;
 };
 
 /**
- * Raw results, transcribed from /api/scan?brief=1. Ordered by score so the
- * table reads as a ranking, which is how a reader will look for their own site.
+ * Raw results, transcribed from /api/scan?brief=1, re-run on 3 October 2026.
+ *
+ * Ordered by score so the table reads as a ranking, which is how a reader will
+ * look for their own site.
  */
 const RESULTS: Row[] = [
-  { domain: "salesforce.com", status: 200, score: 83, grade: "B", aborted: false, blocked: false, entity: true, sameAs: false, category: "Enterprise software" },
-  { domain: "siemens.com", status: 200, score: 80, grade: "B", aborted: false, blocked: false, entity: true, sameAs: false, category: "Industry" },
-  { domain: "vercel.com", status: 200, score: 79, grade: "C", aborted: false, blocked: false, entity: true, sameAs: true, category: "Developer platform" },
-  { domain: "cloudflare.com", status: 200, score: 77, grade: "C", aborted: false, blocked: false, entity: true, sameAs: true, category: "Infrastructure" },
-  { domain: "stripe.com", status: 200, score: 75, grade: "C", aborted: false, blocked: false, entity: true, sameAs: true, category: "Payments" },
-  { domain: "shopify.com", status: 200, score: 72, grade: "C", aborted: false, blocked: false, entity: false, sameAs: true, category: "Commerce" },
-  { domain: "apple.com", status: 200, score: 69, grade: "D", aborted: false, blocked: false, entity: true, sameAs: true, category: "Consumer hardware" },
-  { domain: "developer.mozilla.org", status: 200, score: 66, grade: "D", aborted: false, blocked: false, entity: false, sameAs: false, category: "Documentation" },
-  { domain: "bbc.com", status: 200, score: 63, grade: "D", aborted: false, blocked: true, entity: false, sameAs: true, category: "News" },
-  { domain: "anthropic.com", status: 200, score: 62, grade: "D", aborted: false, blocked: false, entity: false, sameAs: false, category: "AI lab" },
-  { domain: "notion.so", status: 200, score: 62, grade: "D", aborted: false, blocked: false, entity: false, sameAs: false, category: "Software" },
-  { domain: "figma.com", status: 200, score: 62, grade: "D", aborted: false, blocked: true, entity: true, sameAs: true, category: "Design software" },
-  { domain: "nvidia.com", status: 200, score: 61, grade: "D", aborted: false, blocked: false, entity: false, sameAs: true, category: "Semiconductors" },
-  { domain: "github.com", status: 200, score: 60, grade: "D", aborted: false, blocked: false, entity: false, sameAs: false, category: "Developer platform" },
-  { domain: "spiegel.de", status: 200, score: 56, grade: "F", aborted: false, blocked: true, entity: true, sameAs: true, category: "News" },
-  { domain: "openai.com", status: 200, score: 55, grade: "F", aborted: false, blocked: false, entity: false, sameAs: false, category: "AI lab" },
-  { domain: "telekom.com", status: 200, score: 54, grade: "F", aborted: false, blocked: false, entity: false, sameAs: false, category: "Telecoms" },
-  { domain: "bahn.de", status: 200, score: 52, grade: "F", aborted: false, blocked: false, entity: false, sameAs: false, category: "Transport" },
-  { domain: "theguardian.com", status: 200, score: 49, grade: "F", aborted: false, blocked: true, entity: false, sameAs: false, category: "News" },
-  { domain: "microsoft.com", status: 200, score: 48, grade: "F", aborted: false, blocked: false, entity: false, sameAs: false, category: "Enterprise software" },
-  { domain: "wikipedia.org", status: 200, score: 47, grade: "F", aborted: false, blocked: false, entity: false, sameAs: false, category: "Reference" },
-  { domain: "sap.com", status: 200, score: 41, grade: "F", aborted: false, blocked: false, entity: false, sameAs: false, category: "Enterprise software" },
-  { domain: "google.com", status: 429, score: 30, grade: "F", aborted: true, blocked: false, entity: false, sameAs: false, category: "Search" },
-  { domain: "zeit.de", status: 403, score: 26, grade: "F", aborted: true, blocked: true, entity: false, sameAs: false, category: "News" },
-  { domain: "perplexity.ai", status: 403, score: 23, grade: "F", aborted: true, blocked: false, entity: false, sameAs: false, category: "AI search" },
-  { domain: "stackoverflow.com", status: 403, score: 16, grade: "F", aborted: true, blocked: false, entity: false, sameAs: false, category: "Developer Q&A" },
-  { domain: "amazon.com", status: 202, score: 14, grade: "F", aborted: true, blocked: true, entity: false, sameAs: false, category: "Commerce" },
-  { domain: "nytimes.com", status: 403, score: 12, grade: "F", aborted: true, blocked: true, entity: false, sameAs: false, category: "News" },
-  { domain: "reuters.com", status: 401, score: 12, grade: "F", aborted: true, blocked: true, entity: false, sameAs: false, category: "News" },
-  { domain: "bmw.com", status: 520, score: 12, grade: "F", aborted: true, blocked: false, entity: false, sameAs: false, category: "Automotive" },
+  { domain: "salesforce.com", status: 200, browserStatus: null, score: 83, grade: "B", aborted: false, blocked: false, refused: false, entity: true, sameAs: false, category: "Enterprise software" },
+  { domain: "siemens.com", status: 200, browserStatus: null, score: 80, grade: "B", aborted: false, blocked: false, refused: false, entity: true, sameAs: false, category: "Industry" },
+  { domain: "vercel.com", status: 200, browserStatus: null, score: 79, grade: "C", aborted: false, blocked: false, refused: false, entity: true, sameAs: true, category: "Developer platform" },
+  { domain: "cloudflare.com", status: 200, browserStatus: null, score: 77, grade: "C", aborted: false, blocked: false, refused: false, entity: true, sameAs: true, category: "Infrastructure" },
+  { domain: "stripe.com", status: 200, browserStatus: null, score: 75, grade: "C", aborted: false, blocked: false, refused: false, entity: true, sameAs: true, category: "Payments" },
+  { domain: "shopify.com", status: 200, browserStatus: null, score: 72, grade: "C", aborted: false, blocked: false, refused: false, entity: false, sameAs: true, category: "Commerce" },
+  { domain: "apple.com", status: 200, browserStatus: null, score: 69, grade: "D", aborted: false, blocked: false, refused: false, entity: true, sameAs: true, category: "Consumer hardware" },
+  { domain: "developer.mozilla.org", status: 200, browserStatus: null, score: 64, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Documentation" },
+  { domain: "anthropic.com", status: 200, browserStatus: null, score: 62, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "AI lab" },
+  { domain: "notion.so", status: 200, browserStatus: null, score: 62, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Software" },
+  { domain: "figma.com", status: 200, browserStatus: null, score: 62, grade: "D", aborted: false, blocked: true, refused: false, entity: true, sameAs: true, category: "Design software" },
+  { domain: "bbc.com", status: 200, browserStatus: null, score: 61, grade: "D", aborted: false, blocked: true, refused: false, entity: false, sameAs: true, category: "News" },
+  { domain: "nvidia.com", status: 200, browserStatus: null, score: 61, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: true, category: "Semiconductors" },
+  { domain: "github.com", status: 200, browserStatus: null, score: 60, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Developer platform" },
+  { domain: "spiegel.de", status: 200, browserStatus: null, score: 56, grade: "F", aborted: false, blocked: true, refused: false, entity: true, sameAs: true, category: "News" },
+  { domain: "telekom.com", status: 200, browserStatus: null, score: 54, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Telecoms" },
+  { domain: "bahn.de", status: 200, browserStatus: null, score: 52, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Transport" },
+  { domain: "microsoft.com", status: 200, browserStatus: null, score: 48, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Enterprise software" },
+  { domain: "theguardian.com", status: 200, browserStatus: null, score: 47, grade: "F", aborted: false, blocked: true, refused: false, entity: false, sameAs: false, category: "News" },
+  { domain: "wikipedia.org", status: 200, browserStatus: null, score: 47, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Reference" },
+  { domain: "sap.com", status: 200, browserStatus: null, score: 41, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Enterprise software" },
+  { domain: "zeit.de", status: 403, browserStatus: 200, score: 26, grade: "F", aborted: true, blocked: true, refused: true, entity: false, sameAs: false, category: "News" },
+  { domain: "google.com", status: 429, browserStatus: 429, score: 26, grade: "F", aborted: true, blocked: false, refused: false, entity: false, sameAs: false, category: "Search" },
+  { domain: "perplexity.ai", status: 403, browserStatus: 403, score: 19, grade: "F", aborted: true, blocked: false, refused: false, entity: false, sameAs: false, category: "AI search" },
+  { domain: "amazon.com", status: 202, browserStatus: 202, score: 14, grade: "F", aborted: true, blocked: true, refused: false, entity: false, sameAs: false, category: "Commerce" },
+  { domain: "openai.com", status: 403, browserStatus: 200, score: 13, grade: "F", aborted: true, blocked: true, refused: true, entity: false, sameAs: false, category: "AI lab" },
+  { domain: "stackoverflow.com", status: 403, browserStatus: 403, score: 12, grade: "F", aborted: true, blocked: false, refused: false, entity: false, sameAs: false, category: "Developer Q&A" },
+  { domain: "nytimes.com", status: 403, browserStatus: 403, score: 12, grade: "F", aborted: true, blocked: true, refused: false, entity: false, sameAs: false, category: "News" },
+  { domain: "reuters.com", status: 401, browserStatus: 401, score: 12, grade: "F", aborted: true, blocked: true, refused: false, entity: false, sameAs: false, category: "News" },
+  { domain: "bmw.com", status: 520, browserStatus: 520, score: 8, grade: "F", aborted: true, blocked: false, refused: false, entity: false, sameAs: false, category: "Automotive" },
 ];
 
 const answered = RESULTS.filter((r) => !r.aborted);
 const blocked = RESULTS.filter((r) => r.blocked);
+const refused = RESULTS.filter((r) => r.refused);
 const news = RESULTS.filter((r) => r.category === "News");
 const newsBlocked = news.filter((r) => r.blocked);
 const average = Math.round(answered.reduce((sum, r) => sum + r.score, 0) / answered.length);
@@ -155,7 +181,7 @@ export default function StudyPage() {
               <span className="text-lg text-gray-500">/{RESULTS.length}</span>
             </div>
             <div className="text-[11px] text-gray-400 pt-1 leading-snug">
-              disallow AI crawlers in robots.txt
+              do not admit AI crawlers, by policy or by refusal
             </div>
           </div>
           <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5">
@@ -177,18 +203,22 @@ export default function StudyPage() {
             {average} out of 100 — a D on this scale.
           </p>
           <p>
-            The second finding is sharper. <strong>{blocked.length} of the 30 domains disallow at
-            least one of GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot or Google-Extended at
-            their site root.</strong> Every news publisher in the sample is in that group:{" "}
+            The second finding is sharper. <strong>{blocked.length} of the 30 domains do not admit
+            at least one of GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot or Google-Extended at
+            their site root</strong> — {blocked.length - refused.length} of them say so in
+            robots.txt, and {refused.length} refuse the request at the server before robots.txt is
+            even read. Every news publisher in the sample is in that group:{" "}
             {newsBlocked.length} of {news.length}. The publishing industry has not drifted into
             blocking AI crawlers by accident — it has chosen to.
           </p>
           <p>
-            The third finding is about the companies selling AI. <strong>OpenAI scores{" "}
-            {RESULTS.find((r) => r.domain === "openai.com")?.score} and Anthropic{" "}
+            The third finding is about the companies selling AI. <strong>OpenAI's own homepage
+            scores {RESULTS.find((r) => r.domain === "openai.com")?.score} and Anthropic's{" "}
             {RESULTS.find((r) => r.domain === "anthropic.com")?.score}</strong>, both below the
-            average of the sample, and neither declares an Organization entity. The sites that
-            score best are the ones selling infrastructure to developers, not the ones selling
+            average of the sample, and OpenAI's is the sharper case: a crawler-shaped request to
+            openai.com was refused with HTTP 403 in the same run that served a browser-shaped
+            request to the same URL normally. Neither declares an Organization entity. The sites
+            that score best are the ones selling infrastructure to developers, not the ones selling
             the answers.
           </p>
 
@@ -207,18 +237,23 @@ export default function StudyPage() {
             reading the homepage has no structured statement of who owns the site.
           </p>
 
-          <h2>Blocking is not the same as being refused</h2>
+          <h2>Three different things can stop a crawler</h2>
           <p>
-            Two different things happened to this scan and they are easy to confuse, so the table
-            separates them. A <strong>blocked</strong> mark means robots.txt disallows an AI
-            agent at the root — a published, deliberate policy that any crawler will obey. A
-            non-200 status means <em>our</em> crawler was turned away, which usually means bot
-            management decided a small scanner from a datacentre looked like a scraper.
+            They are easy to confuse, so the table separates them. <strong>Disallowed</strong>{" "}
+            means robots.txt disallows an AI agent at the root — a published, deliberate policy that
+            any crawler will obey. <strong>Refused</strong> means the server answered a
+            crawler-shaped request with an error while serving a browser-shaped request to the same
+            URL normally: the block happens before robots.txt is consulted, and because GPTBot,
+            ClaudeBot, PerplexityBot and OAI-SearchBot all present as bots, a rule like that turns
+            away every engine this page is about. {refused.length} domains in this table are that
+            case.
           </p>
           <p>
-            Those are not the same claim, and only the first one is evidence about AI access. A
-            site can refuse us and still welcome GPTBot; {RESULTS.filter((r) => r.aborted && !r.blocked).length}{" "}
-            domains in this table are exactly that case.
+            A refusal of <em>both</em> request shapes is a third thing and is not counted as a
+            block. It says the request was turned away from the network this scan runs on, which is
+            evidence about the scanner rather than about AI access.{" "}
+            {RESULTS.filter((r) => r.aborted && !r.blocked).length} domains are in that position,
+            and the table records them as neither disallowed nor refused.
           </p>
 
           <h2>The results</h2>
@@ -230,7 +265,7 @@ export default function StudyPage() {
               <tr>
                 <th className="text-left px-3 py-2.5 font-semibold">Domain</th>
                 <th className="text-left px-3 py-2.5 font-semibold">Score</th>
-                <th className="text-left px-3 py-2.5 font-semibold">HTTP</th>
+                <th className="text-left px-3 py-2.5 font-semibold">HTTP crawler / browser</th>
                 <th className="text-left px-3 py-2.5 font-semibold">AI crawlers</th>
                 <th className="text-left px-3 py-2.5 font-semibold">Entity</th>
                 <th className="text-left px-3 py-2.5 font-semibold">sameAs</th>
@@ -250,12 +285,19 @@ export default function StudyPage() {
                   <td className={`px-3 py-2 font-mono font-bold ${gradeClass(row.grade)}`}>
                     {row.score} {row.grade}
                   </td>
-                  <td className="px-3 py-2 font-mono text-gray-500">{row.status}</td>
+                  <td className="px-3 py-2 font-mono text-gray-500">
+                    {row.status}
+                    {row.browserStatus !== null && (
+                      <span className="text-gray-600"> / {row.browserStatus}</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2">
-                    {row.blocked ? (
+                    {row.refused ? (
+                      <span className="text-red-400">refused</span>
+                    ) : row.blocked ? (
                       <span className="text-red-400">disallowed</span>
                     ) : (
-                      <span className="text-gray-500">permitted</span>
+                      <span className="text-gray-500">admitted</span>
                     )}
                   </td>
                   <td className="px-3 py-2">{row.entity ? "yes" : <span className="text-gray-600">no</span>}</td>
@@ -280,9 +322,13 @@ export default function StudyPage() {
               the largest sites on the internet.
             </li>
             <li>
-              Each homepage was fetched once, on {SCAN_DATE}, by the LLMention crawler from its
-              own infrastructure, identifying itself honestly. It did not impersonate an AI
-              crawler and it was not sent from an AI crawler&rsquo;s address.
+              Each homepage was fetched by the LLMention crawler from its own infrastructure,
+              identifying itself honestly as a bot. It did not impersonate an AI crawler and it was
+              not sent from an AI crawler&rsquo;s address. Where that request was refused, the same
+              URL was asked once more with a browser-shaped User-Agent, so that a rule aimed at
+              identified bots could be told apart from an address being blocked. That second request
+              never scores page content; it decides one check, and the rule behind it is published
+              on the <a href="/methodology/">methodology page</a>.
             </li>
             <li>
               robots.txt, llms.txt and sitemap.xml were requested from the same origin, and the
@@ -311,9 +357,17 @@ export default function StudyPage() {
               Netherlands edition during one run and its Singapore edition during another.
             </li>
             <li>
-              <strong>A refused request proves nothing about AI access.</strong> The scanner
-              fetches as itself. It cannot see what a site does to a real GPTBot, and it does not
-              claim to.
+              <strong>A refusal of both request shapes proves nothing about AI access.</strong>{" "}
+              When the scanner is turned away as a bot and as a browser alike, the block is about
+              the network it came from, and the row says so rather than blaming the site. What a
+              refusal <em>can</em> show is the opposite case — a browser served, a bot refused —
+              and that is a rule aimed at exactly the crawlers this page measures.
+            </li>
+            <li>
+              <strong>A refusal can vary between requests.</strong> During this re-run, one site
+              answered the browser-shaped request with 200 and, minutes later, with the same error
+              it gave the crawler. A &ldquo;refused&rdquo; mark is therefore one observation at one
+              moment, not a stable property of the site, and the row may look different on re-run.
             </li>
             <li>
               <strong>Not a prediction.</strong> These are readiness checks, not a measurement of
@@ -326,12 +380,13 @@ export default function StudyPage() {
             Every row above comes from one public endpoint, and{" "}
             <code>brief=1</code> returns just the headline numbers:
           </p>
-          <pre>{`curl "${SITE_URL}/api/scan?domain=openai.com&brief=1"
+          <pre>{`curl "${SITE_URL}/api/scan?domain=github.com&brief=1"
 
-{"domain":"openai.com","status":200,"score":55,"grade":"F",
- "checksRun":38,"checksPassed":23,"aiCrawlersBlocked":false,
+{"domain":"github.com","status":200,"browserStatus":null,
+ "scoreBasis":"homepage","score":60,"grade":"D",
+ "checksRun":38,"checksPassed":22,"aiCrawlersBlocked":false,
  "hasJsonLdEntity":false,"hasSameAs":false,"hasRobotsTxt":true,
- "topIssue":"jsonld-valid"}`}</pre>
+ "topIssue":"robots-sitemap"}`}</pre>
           <p>
             The rules behind every number are published on the{" "}
             <a href="/methodology/">methodology page</a>, including the parts of the picture the
