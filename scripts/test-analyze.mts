@@ -420,43 +420,61 @@ console.log("\n=== published check count stated in the source ===");
   }
 }
 
-/* 4f. Every route handler must declare the Edge Runtime.
-      next-on-pages refuses to produce a Pages build for any route that is not purely
-      static unless it exports runtime = "edge", and it says so only in the deploy log -
-      which is a slow and expensive place to find out. The markdown twin route shipped
-      without it, the Cloudflare build failed with "The following routes were not
-      configured to run with the Edge Runtime: /checks/[id]/markdown", and this guard
-      exists so the next one fails here instead, in about a second.
+/* 4f. NO source file may declare the Edge Runtime.
+      THIS ASSERTION IS THE EXACT INVERSE OF WHAT IT WAS, AND THAT IS THE POINT.
 
-      This asserts the declaration is present rather than trying to decide which routes
-      need it. Every route handler in this app is on the edge by design; two /api/
-      handlers and the markdown twin all are, so a new one that is not is a mistake
-      rather than a choice. */
-console.log("\n=== route handlers declare the Edge Runtime ===");
+      Under next-on-pages the rule was the opposite: any route that was not purely static
+      had to export runtime = "edge", and the adapter said so only in the deploy log. The
+      markdown twin route shipped without it, the Cloudflare build failed with "The
+      following routes were not configured to run with the Edge Runtime:
+      /checks/[id]/markdown", and the guard was added so that mistake failed here in a
+      second instead.
+
+      OpenNext inverts it. Its documentation, step 9 of the migration guide: "Remove any
+      `export const runtime = "edge";` if present ... The edge runtime is not supported yet
+      with @opennextjs/cloudflare." So the declaration that used to be mandatory is now
+      forbidden, and the guard has to say the opposite rather than be deleted - deleting it
+      would leave the trap armed for whoever re-adds the line next, and re-adding it is
+      exactly what a reader of the old comments would do.
+
+      It scans every .ts/.tsx under app/ rather than only route handlers, because the
+      guidance is "from any of your source files" and a declaration in a page would break
+      the build just as thoroughly. */
+console.log("\n=== no source file declares the Edge Runtime ===");
 {
-  const routes: string[] = [];
+  const sources: string[] = [];
   const walk = (dir: string) => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const full = join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
-      else if (entry.name === "route.ts" || entry.name === "route.tsx") routes.push(full);
+      else if (/\.(ts|tsx)$/.test(entry.name)) sources.push(full);
     }
   };
   walk(join(process.cwd(), "app"));
 
-  const undeclared = routes.filter(
-    (file) => !/export const runtime\s*=\s*["']edge["']/.test(readFileSync(file, "utf8"))
+  /*
+   * Anchored to the start of a line, because a route segment config is a top-level
+   * statement. The first version of this guard matched anywhere in the file and reported
+   * all three routes as offenders - because their comments quote the declaration while
+   * explaining why it is gone. That is the same lesson check-values.mjs taught twice in
+   * this repository: a grep cannot tell prose from code. The fix is to make the pattern
+   * describe syntax rather than to strip comments, which a regex cannot do reliably.
+   */
+  const offending = sources.filter((file) =>
+    /^\s*export const runtime\s*=\s*["']edge["']/m.test(readFileSync(file, "utf8"))
   );
 
-  if (routes.length === 0) {
-    console.log("  FAIL  no route handlers found; the walk is probably wrong");
+  if (sources.length === 0) {
+    console.log("  FAIL  no source files found; the walk is probably wrong");
     process.exitCode = 1;
-  } else if (undeclared.length === 0) {
-    console.log(`  PASS  all ${routes.length} route handler(s) export runtime = "edge"`);
+  } else if (offending.length === 0) {
+    console.log(`  PASS  none of the ${sources.length} app source files declare edge runtime`);
   } else {
-    console.log(`  FAIL  ${undeclared.length} route handler(s) would break the Pages build:`);
-    for (const file of undeclared) console.log(`        - ${relative(process.cwd(), file)}`);
-    console.log('        add: export const runtime = "edge";');
+    console.log(
+      `  FAIL  ${offending.length} file(s) declare runtime = "edge", which OpenNext does not support:`
+    );
+    for (const file of offending) console.log(`        - ${relative(process.cwd(), file)}`);
+    console.log('        remove: export const runtime = "edge";');
     process.exitCode = 1;
   }
 }

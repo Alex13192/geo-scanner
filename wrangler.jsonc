@@ -1,0 +1,97 @@
+{
+  // Cloudflare Worker configuration for the OpenNext build.
+  //
+  // WHY THIS FILE EXISTS AND DID NOT BEFORE: under next-on-pages there was no wrangler
+  // configuration at all - the build command and output directory lived only in the
+  // Cloudflare dashboard, which is why nobody could tell from this repository how the
+  // site was deployed. Everything the deployment needs is now here.
+  //
+  // The values for main and assets are the ones OpenNext produces and should not be
+  // changed unless the build output is changed to match.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+
+  // Also the WORKER_SELF_REFERENCE service name below, and the workers.dev subdomain
+  // this deploys to. If the name is already taken in the account, change it here AND in
+  // the services block - the two must match.
+  "name": "geo-scanner",
+
+  // OpenNext requires 2024-09-23 or later.
+  "compatibility_date": "2024-12-30",
+  "compatibility_flags": [
+    // Required: the Next.js Node.js runtime needs Node APIs.
+    "nodejs_compat",
+    // Restricts fetch() to public URLs. The scanner fetches a hostname supplied by the
+    // caller, and lib/net/fetch-safe.ts already refuses private and link-local targets in
+    // application code - this enforces the same rule one layer down, where application
+    // code cannot be bypassed. If a legitimate fetch ever fails with a non-public-target
+    // error, the bug is in fetch-safe.ts and this flag is the thing that noticed.
+    "global_fetch_strictly_public"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  /*
+   * A preview hostname on a domain this project already owns, so the deployed Worker can
+   * be checked from a network that cannot reach *.workers.dev.
+   *
+   * That is not hypothetical: on the machine this migration was developed on, DNS for
+   * *.workers.dev is intercepted and answers with a Meta address
+   * (2a03:2880:f10f:83:face:b00c:0:25de), so every request from there times out while the
+   * custom domain works normally. wrangler tail fails the same way, for the same reason.
+   *
+   * WHY THIS IS TWO LEVELS AND NOT THREE. The first attempt was
+   * next.geo-scanner.ccie13192.com, which resolved correctly but failed the TLS handshake:
+   * Cloudflare's Universal SSL certificate covers the apex and one level of subdomain, so
+   * a name three levels deep has no certificate. preview.ccie13192.com is two levels and
+   * is covered.
+   *
+   * This also confirms Phase D is safe certificate-wise: geo-scanner.ccie13192.com is two
+   * levels, which is why it already serves HTTPS today.
+   *
+   * Delete this block once the move is done and the site is confirmed on the domain itself.
+   */
+  "routes": [
+    /*
+     * The production hostname, attached as a ROUTE rather than as a custom domain.
+     *
+     * WHY NOT custom_domain, WHICH WAS THE FIRST ATTEMPT: it was refused with
+     *
+     *   Hostname 'geo-scanner.ccie13192.com' already has externally managed DNS records
+     *   (A, CNAME, etc). Delete them first or try a different hostname. [code: 100117]
+     *
+     * The blocker is not the Pages binding as such, it is the CNAME that the Pages custom
+     * domain integration created - Cloudflare treats it as externally managed and will not
+     * build a Workers custom domain on top of it. A route creates no DNS record: it attaches
+     * this Worker to a hostname that already resolves and is already proxied, which this one
+     * is. The cutover therefore involved no DNS change and no window in which the name did
+     * not resolve.
+     *
+     * If it is ever refused in turn, the remaining step is to remove the custom domain from
+     * the Pages project, which deletes that CNAME, after which the custom domain form works.
+     */
+    {
+      "pattern": "geo-scanner.ccie13192.com/*",
+      "zone_name": "ccie13192.com"
+    }
+  ],
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "geo-scanner"
+    }
+  ]
+
+  // DELIBERATELY ABSENT, both for now and for a stated reason:
+  //
+  // r2_buckets - the NEXT_INC_CACHE_R2_BUCKET binding enables OpenNext's incremental
+  //   cache. Nearly every page here is produced at build time (17 content pages, 41 rule
+  //   pages, 40 markdown twins), so the win has to be demonstrated before it is worth a
+  //   resource and a binding. Add it here and point open-next.config.ts at the R2 cache
+  //   when there is a reason to.
+  //
+  // images - the IMAGES binding turns on Cloudflare's image optimization. This app sets
+  //   images.unoptimized and never imports next/image, so the binding would enable
+  //   something nothing calls.
+}

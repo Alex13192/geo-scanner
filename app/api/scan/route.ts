@@ -12,7 +12,22 @@ import { fetchText, inspectTarget, type SafeFetchResult } from "@/lib/net/fetch-
 import { clientKey, takeToken } from "@/lib/net/rate-limit";
 import { SITE_URL } from "@/lib/site";
 
-export const runtime = "edge"; // 必须在 Cloudflare Edge 上运行
+/*
+ * THERE IS DELIBERATELY NO `export const runtime = "edge"` HERE ANY MORE.
+ *
+ * It was required under next-on-pages and it is forbidden under OpenNext, whose
+ * documentation says plainly: "The edge runtime is not supported yet with
+ * @opennextjs/cloudflare." The route now runs on the Node.js runtime, inside the Worker,
+ * with nodejs_compat - see wrangler.jsonc. The two adapters' peer ranges do not overlap
+ * (next-on-pages stops at next 15.5.2, OpenNext starts at 15.5.27), so this line could
+ * not be made optional: it is the thing that had to change for the security patches from
+ * 15.5.24 onwards to be reachable at all.
+ *
+ * scripts/test-analyze.mts asserts the absence of this declaration across app/, so
+ * re-adding it fails the test suite rather than the next deployment.
+ *
+ * `dynamic` is unrelated to the runtime and stays.
+ */
 export const dynamic = "force-dynamic"; // 强制声明为动态接口，防止静态编译拦截
 
 /**

@@ -39,7 +39,13 @@ import { SITE_URL } from "@/lib/site";
  * That distinction is in the catalog note, and scripts/check-live.mjs follows the link
  * to confirm it resolves, which is the part the scanner cannot do.
  */
-export const runtime = "edge";
+/*
+ * No `export const runtime = "edge"` - the edge runtime is not supported by
+ * @opennextjs/cloudflare. Runs on the Node.js runtime with nodejs_compat. This is the
+ * third and last route that had to change when the adapter did; see the longer note in
+ * app/api/scan/route.ts, and scripts/test-analyze.mts which now asserts the declaration
+ * is ABSENT rather than present.
+ */
 export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {

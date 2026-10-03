@@ -14,7 +14,9 @@ import { fetchText, inspectTarget } from "@/lib/net/fetch-safe";
 import { clientKey, takeToken } from "@/lib/net/rate-limit";
 import { SITE_URL } from "@/lib/site";
 
-export const runtime = "edge";
+// No `export const runtime = "edge"` - the edge runtime is not supported by
+// @opennextjs/cloudflare. Runs on the Node.js runtime with nodejs_compat; see the longer
+// note in app/api/scan/route.ts and the assertion in scripts/test-analyze.mts.
 export const dynamic = "force-dynamic";
 
 const UA = `Mozilla/5.0 (compatible; LLMentionBot/1.0; +${SITE_URL}/methodology/)`;

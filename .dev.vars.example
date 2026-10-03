@@ -1,0 +1,12 @@
+# Copy to .dev.vars before running `npm run preview`.
+#
+#   cp .dev.vars.example .dev.vars        (bash)
+#   Copy-Item .dev.vars.example .dev.vars (PowerShell)
+#
+# .dev.vars itself is gitignored, because it is where a real secret belongs once this
+# project has one. This template is committed so a fresh clone knows the file is expected
+# and what goes in it.
+
+# Which of the Next.js env files to load in development. Defaults to "production" when
+# unset, which is the wrong default for a local preview.
+NEXTJS_ENV=development
