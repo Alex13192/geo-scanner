@@ -2,23 +2,20 @@ name: deploy
 
 # Ships the Worker, and only after the same gates a pull request has to pass.
 #
-# WHY THIS REPOSITORY DEPLOYS ITSELF RATHER THAN LETTING THE DASHBOARD DO IT:
-# the site used to be deployed by a Cloudflare Pages Git integration whose build command
-# and output directory existed only in the Cloudflare dashboard. Nothing in this
-# repository said how the site reached production - README.md still described deploying to
-# Vercel, OPERATIONS.md did not mention deployment at all, and the adapter was configured
-# nowhere. That is a deployment nobody can reproduce, and it is also why a build could
-# fail in a way no local command reproduced.
+# WHY THIS REPOSITORY DEPLOYS ITSELF RATHER THAN LETTING A DASHBOARD DO IT:
+# the site used to be deployed by a Cloudflare Pages Git integration whose build command and
+# output directory existed only in the Cloudflare dashboard. Nothing in this repository said
+# how the site reached production - README.md still described deploying to Vercel,
+# OPERATIONS.md did not mention deployment at all, and the adapter was configured nowhere.
+# That is a deployment nobody can reproduce, and it is also why a build could fail in a way
+# no local command reproduced. wrangler.jsonc, this file and scripts/check-live.mjs are now
+# the whole recipe.
 #
-# Everything needed is now here: wrangler.jsonc describes the Worker, this file describes
-# the pipeline, and scripts/check-live.mjs describes the acceptance test.
-#
-# WHAT IT NEEDS, AND WHAT HAPPENS WITHOUT IT:
-#   CLOUDFLARE_API_TOKEN   an API token with the "Edit Cloudflare Workers" template
-#   CLOUDFLARE_ACCOUNT_ID  the account id from the Cloudflare dashboard URL
-# Both are repository secrets. Until they exist the deploy job fails with a clear wrangler
-# error and nothing is shipped - which is the correct failure, not a broken deployment.
-# `npm run deploy` from a development machine remains the fallback.
+# WHAT IT NEEDS:
+#   CLOUDFLARE_API_TOKEN   Cloudflare dashboard -> My Profile -> API Tokens ->
+#                          template "Edit Cloudflare Workers"
+#   CLOUDFLARE_ACCOUNT_ID  from the dashboard URL, or `npx wrangler whoami`
+# Both are repository secrets. See README.md, section "Deploying".
 
 on:
   push:
@@ -37,24 +34,43 @@ jobs:
   deploy:
     needs: verify
     runs-on: ubuntu-latest
+    env:
+      # secrets is not an available context in a job-level `if`, so the token is lifted into
+      # the environment where the step conditions can read it.
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
     steps:
+      # Skipped rather than failed when the token is absent: a red run on main for every push
+      # would read as "broken" when the truth is "not configured yet". This step says which.
+      - name: Explain the skip if the token is missing
+        if: env.CF_TOKEN == ''
+        run: |
+          echo "::notice title=Deploy skipped::CLOUDFLARE_API_TOKEN is not set, so nothing was deployed."
+          echo "Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository secrets."
+          echo "Until then 'npm run deploy' from a development machine works, and the site"
+          echo "stays on the last deployed version."
+
       - uses: actions/checkout@v4
+        if: env.CF_TOKEN != ''
 
       - uses: actions/setup-node@v4
+        if: env.CF_TOKEN != ''
         with:
           node-version: "24"
           cache: npm
           cache-dependency-path: package-lock.json
 
       - name: Install
+        if: env.CF_TOKEN != ''
         run: npm ci
 
-      # The OpenNext build needs the Next.js build, which it invokes itself.
+      # The OpenNext build runs the Next.js build itself.
       - name: Build for Cloudflare
+        if: env.CF_TOKEN != ''
         run: npx opennextjs-cloudflare build
 
       - name: Deploy to Cloudflare Workers
+        if: env.CF_TOKEN != ''
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -62,10 +78,10 @@ jobs:
           # `wrangler deploy`, not `wrangler pages deploy` - this is a Worker now.
           command: deploy
 
-  # The sixth gate, and the only one that can run here: every other check inspects local
-  # build output, so none of them can see what the deployment actually answers. This is
-  # also what caught an earlier release shipping security headers that only existed in a
-  # config file.
+  # The sixth gate. Every other check inspects local build output, so none of them can see
+  # what the deployment actually answers - and this one asserts WHICH deployment is answering,
+  # because a run against a hostname still served by the old Pages project passed every
+  # content check and looked like a successful cutover.
   smoke:
     needs: deploy
     runs-on: ubuntu-latest
