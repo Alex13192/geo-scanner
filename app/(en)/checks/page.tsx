@@ -15,12 +15,12 @@ import { og } from "@/lib/og";
  * analyser, and the tests assert the three agree.
  *
  * The rule text is truncated to its first sentence here on purpose. A reader
- * scanning 38 rules wants to recognise the one they need, not read all of them; the
+ * scanning 40 rules wants to recognise the one they need, not read all of them; the
  * full wording, with the weight reasoning and the fix, is one page away.
  */
 const TITLE = "Every GEO check the scanner runs";
 const DESCRIPTION =
-  "All 38 checks the scanner runs, grouped by the twelve weighted dimensions, each with its exact rule, its point value and a page explaining how to fix it.";
+  "All 40 checks the scanner runs, grouped by the twelve weighted dimensions, each with its exact rule, its point value and a page explaining how to fix it.";
 
 export const metadata: Metadata = {
   title: TITLE,

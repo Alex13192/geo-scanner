@@ -9,7 +9,8 @@
  * The tests assert that this file covers every catalogued check, so adding a check
  * without regenerating fails the suite rather than shipping a blank page.
  *
- * 41 checks.
+ * 41 entries: 40 published checks plus 1 alias
+ * entry that documents the other outcome of a check and never appears on its own.
  */
 export type CheckCopy = {
   title: string;

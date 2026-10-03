@@ -86,7 +86,7 @@ export default function ReportPage() {
             GEO Audit Report
           </h1>
           <p className="text-sm text-gray-400 mt-2 max-w-3xl">
-            This page scores one homepage against 38 published checks across twelve weighted
+            This page scores one homepage against 40 published checks across twelve weighted
             dimensions, and lists what failed with the evidence the check produced. The scan runs
             when the page loads.
           </p>

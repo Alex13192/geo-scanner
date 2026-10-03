@@ -45,7 +45,7 @@ export async function generateMetadata({
   const check = findCheck(id);
   if (!check) return {};
 
-  // Built in lib/geo/check-meta.ts so the tests can assert that every one of the 38
+  // Built in lib/geo/check-meta.ts so the tests can assert that every one of the 40
   // lands inside the 15-65 / 50-160 ranges this site publishes and scores against.
   const title = checkPageTitle(id);
   const description = checkPageDescription(id);

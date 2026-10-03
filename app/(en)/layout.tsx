@@ -71,11 +71,14 @@ export const metadata: Metadata = {
   // making /docs/<slug>/ claim the homepage's alternates - and, once the German site
   // was removed, naming translations that no longer exist.
   //
-  // This comment used to point at app/(en)/(home)/layout.tsx for the homepage's
-  // alternates. That file does not exist and never did in this tree; the homepage is
-  // app/(en)/page.tsx. It also described the mechanism as Next "merging nested
-  // metadata objects", which is backwards and worth stating correctly here because the
-  // two halves behave differently:
+  // This comment used to say "see app/(en)/(home)/layout.tsx for the homepage". That
+  // file does not exist: the (home) route group holds page.tsx and no layout. The
+  // correction first written here claimed the homepage was app/(en)/page.tsx, which is
+  // also wrong - the group is real and the homepage lives at app/(en)/(home)/page.tsx.
+  // Both errors are the same error, which is why it is worth a line: a claim about the
+  // file tree that nobody opened the directory to check. It also described the mechanism
+  // below as Next "merging nested metadata objects", which is backwards, and the two
+  // halves behave differently enough to be worth stating correctly:
   //
   //   undeclared field  -> inherited from the parent (the /report/ canonical above)
   //   declared object   -> REPLACES the parent's wholesale, not deep-merged

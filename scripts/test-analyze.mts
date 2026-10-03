@@ -7,6 +7,8 @@
  * cases below are exercised before anything is deployed.
  */
 import { analyze, parseRobots, detectPageType, NA_BY_PAGE_TYPE } from "../lib/geo/analyze.ts";
+import { readFileSync, readdirSync } from "node:fs";
+import { join, relative } from "node:path";
 import { CHECK_COPY } from "../lib/geo/check-copy.ts";
 import {
   renderedTitle,
@@ -354,6 +356,66 @@ console.log("\n=== check page meta ranges ===");
     console.log(`  PASS  all ${unique} descriptions are distinct`);
   } else {
     console.log(`  FAIL  only ${unique}/${descriptions.length} descriptions are distinct`);
+    process.exitCode = 1;
+  }
+}
+
+/* 4e. Every count the site states about itself must match the catalogue.
+      Adding two checks changed a number this site asserts in a dozen places, and a
+      search for it used a pattern too narrow to find them - so the prose kept saying 38
+      while the method said 40. That is the exact drift this project exists to catch in
+      other people's tools, and it is cheap to make impossible here: read the source,
+      find every "N checks", and require N to be the catalogue's own count. */
+console.log("\n=== published check count stated in the source ===");
+{
+  const runnable = CHECK_CATALOG.filter((c) => !c.alias).length;
+
+  /*
+   * The study was collected under the 38-check model, and its prose describes that run
+   * rather than the current scanner, so it is the one place a different number is
+   * correct. Listed explicitly rather than skipped by a pattern, so a second exception
+   * cannot hide behind it. (The raw JSON snapshot on the same page says
+   * "checksRun":38, which this pattern cannot match because the word precedes the
+   * number - it is historical data and should stay as it is.)
+   */
+  const HISTORICAL = ["38 documented checks were run over the result."];
+
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.(ts|tsx)$/.test(entry.name)) files.push(full);
+    }
+  };
+  walk(join(process.cwd(), "app"));
+
+  const wrong: string[] = [];
+  let found = 0;
+  for (const file of files) {
+    const lines = readFileSync(file, "utf8").split(/\r?\n/);
+    for (const [index, line] of lines.entries()) {
+      for (const match of line.matchAll(/\b(\d+)\s+(?:published\s+|documented\s+|runnable\s+)?checks\b/g)) {
+        if (HISTORICAL.some((h) => line.includes(h))) continue;
+        found += 1;
+        if (Number(match[1]) !== runnable) {
+          wrong.push(
+            `${relative(process.cwd(), file)}:${index + 1} says ${match[1]} checks, the catalogue has ${runnable}`
+          );
+        }
+      }
+    }
+  }
+
+  // A guard that finds nothing is not a passing guard, it is a broken regex.
+  if (found < 5) {
+    console.log(`  FAIL  only ${found} stated counts found; the pattern is probably wrong`);
+    process.exitCode = 1;
+  } else if (wrong.length === 0) {
+    console.log(`  PASS  all ${found} stated counts agree with the catalogue (${runnable})`);
+  } else {
+    console.log(`  FAIL  ${wrong.length} stated count(s) disagree with the catalogue:`);
+    for (const w of wrong) console.log(`        - ${w}`);
     process.exitCode = 1;
   }
 }

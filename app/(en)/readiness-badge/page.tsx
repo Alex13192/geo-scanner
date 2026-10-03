@@ -151,7 +151,7 @@ export default function ReadinessBadgePage() {
             </h2>
             <p>
               It proves that on the date of the scan, the homepage satisfied a specific, published
-              set of checks. Nothing more. The scanner runs 38 checks across 12 weighted dimensions,
+              set of checks. Nothing more. The scanner runs 40 checks across 12 weighted dimensions,
               and every rule and its point value is on the{" "}
               <Link href="/methodology/" className="text-blue-400 hover:text-blue-300 underline">
                 methodology page

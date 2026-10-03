@@ -9,7 +9,7 @@ const t = {
     tag: "Generative Engine Optimization",
     title1: "Is Your Site Optimized for",
     title2: "AI Search Engines?",
-    subtitle: "Check whether ChatGPT, Perplexity and Claude can crawl, read and cite your pages — and see exactly which of the 38 published checks you fail.",
+    subtitle: "Check whether ChatGPT, Perplexity and Claude can crawl, read and cite your pages — and see exactly which of the 40 published checks you fail.",
     placeholder: "Enter domain or URL (e.g., adidas.com)",
     button: "Scan Website 🚀",
     crawlersTitle: "AI Crawler Passability",
@@ -165,21 +165,25 @@ export default function HomePage() {
           <div className="bg-[#070A10]/60 border border-blue-500/30 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5">
               <h2 className="text-lg font-bold text-white">
-                This site is measured by the same 38 checks
+                This site is measured by the same 40 checks
               </h2>
               <p className="text-sm text-gray-400 leading-relaxed max-w-2xl">
                 LLMention audits its own homepage with the rules it applies to yours, and links
                 the result rather than quoting a number you have to take on trust. Last verified
-                on 3 October 2026: 98 out of 100, grade A, 37 of 38 checks passing. The one
-                failure is hreflang, and it is real rather than accidental: that rule requires at
-                least two language versions, and this site was reduced to English only, so it now
-                fails a check it used to pass. The number is published instead of the rule being
-                softened to protect a perfect score. Re-run it yourself — the report shows all
-                twelve dimension scores, and every rule behind them is published.
+                on 3 October 2026: 97 out of 100, grade A, 38 of 40 checks passing. The two
+                failures are both real rather than accidental. hreflang requires at least two
+                language versions and this site was reduced to English only, so it fails a check
+                it used to pass. markdown-alternate wants a markdown twin of the page, and this
+                homepage does not have one: the rule pages have them generated from the same
+                source as the HTML, and a hand-written copy of a page written in JSX would be a
+                second version free to drift from the first. Both numbers are published instead
+                of the rules being softened to protect a perfect score. Re-run it yourself — the
+                report shows all twelve dimension scores, and every rule behind them is
+                published.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-5 shrink-0 self-center">
-              <ScoreRing value={98} label="This site scores 98 out of 100" />
+              <ScoreRing value={97} label="This site scores 97 out of 100" />
               <a
                 href={`/report/?domain=${SITE_HOST}`}
                 className="text-xs font-semibold bg-gray-900 hover:bg-gray-800 border border-gray-700 text-white px-5 py-3 rounded-xl transition-all text-center"

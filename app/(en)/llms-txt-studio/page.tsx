@@ -16,7 +16,7 @@ import StudioWidget from "./StudioWidget";
  *
  * That mattered more here than it would on most sites. This is a page that tells
  * other people their markup is the reason they are not being cited. The page
- * itself was the worst-scoring kind of page on the site: 38 checks, twelve
+ * itself was the worst-scoring kind of page on the site: 40 checks, twelve
  * dimensions, and this one could not have passed "raw server response contains
  * visible text without executing JavaScript".
  *
@@ -375,7 +375,7 @@ export default function StudioPage() {
               >
                 github.com/Alex13192/geo-scanner
               </a>
-              . It runs 38 checks across 12 dimensions and publishes every rule it applies,
+              . It runs 40 checks across 12 dimensions and publishes every rule it applies,
               including the ones it deliberately weights low.
             </p>
           </div>
