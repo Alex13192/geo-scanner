@@ -96,15 +96,9 @@ export default function AboutPage() {
             is a manual audit, described on the <Link href="/pricing/">pricing page</Link>.
           </p>
           <p>
-            Written and maintained by the LLMention team. The source repository is public at{" "}
-            <a
-              href="https://github.com/Alex13192/geo-scanner"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              github.com/Alex13192/geo-scanner
-            </a>
-            , and corrections to the scoring method are welcome there.
+            Written and maintained by the LLMention team. The scoring method is published in
+            full on the <Link href="/methodology/">methodology page</Link>, so a disagreement
+            with a result can be specific: say which check and which URL.
           </p>
 
           <h2>Contact</h2>
