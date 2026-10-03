@@ -568,6 +568,15 @@ export default function HomePage() {
           <a href="/llms.txt" className="hover:text-gray-300 transition-colors">
             llms.txt
           </a>
+          <a href="/privacy/" className="hover:text-gray-300 transition-colors">
+            Privacy policy
+          </a>
+          <a href="/terms/" className="hover:text-gray-300 transition-colors">
+            Terms
+          </a>
+          <a href="/contact/" className="hover:text-gray-300 transition-colors">
+            Contact
+          </a>
         </nav>
         <div>© 2026 LLMention. Brand Generative Engine Optimization Intelligence.</div>
       </footer>

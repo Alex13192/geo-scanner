@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import LegalLinks from "@/app/components/LegalLinks";
 
 const TITLE = "About LLMention";
 const DESCRIPTION =
@@ -149,6 +150,7 @@ export default function AboutPage() {
       </main>
 
       <footer className="max-w-3xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
+        <LegalLinks className="mb-3" />
         © 2026 LLMention. Brand Generative Engine Optimization Intelligence.
       </footer>
     </div>

@@ -454,6 +454,15 @@ export default function GermanHomePage() {
           <a href="/llms.txt" className="hover:text-gray-300 transition-colors">
             llms.txt
           </a>
+          <a href="/privacy/" hrefLang="en" className="hover:text-gray-300 transition-colors">
+            Datenschutz (EN)
+          </a>
+          <a href="/terms/" hrefLang="en" className="hover:text-gray-300 transition-colors">
+            AGB (EN)
+          </a>
+          <a href="/contact/" hrefLang="en" className="hover:text-gray-300 transition-colors">
+            Kontakt (EN)
+          </a>
         </nav>
         <div>
           &copy; 2026 LLMention. Brand Generative Engine Optimization Intelligence.

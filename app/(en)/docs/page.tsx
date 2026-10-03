@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import LegalLinks from "@/app/components/LegalLinks";
 
 interface Guide {
   id: string;
@@ -137,6 +138,7 @@ export default function DocsPage() {
       </main>
 
       <footer className="max-w-6xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
+        <LegalLinks className="mb-3" />
         © LLMention Knowledge Base. Brand Generative Engine Optimization Intelligence.
       </footer>
     </div>

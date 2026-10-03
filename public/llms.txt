@@ -44,8 +44,22 @@ an AI-generated answer, and produces a shareable readiness score.
 
 - [About](https://geo-scanner.ccie13192.com/about/): Who maintains the tool, what it
   deliberately does not do, and how to report a result you believe is wrong.
+- [Study](https://geo-scanner.ccie13192.com/study/): First-party measurements over 30
+  major homepages, published with the sample and the date they were taken.
 - [Pricing](https://geo-scanner.ccie13192.com/pricing/): The scanner is free and needs
   no account; the paid option is a one-time manual audit.
+- [Refund policy](https://geo-scanner.ccie13192.com/refund/): When a manual audit is
+  refunded, how to ask for it, and how long it takes.
+
+## Contact and legal
+
+- [Contact](https://geo-scanner.ccie13192.com/contact/): One email address for score
+  corrections, audit requests and data requests.
+- [Privacy policy](https://geo-scanner.ccie13192.com/privacy/): What a scan processes,
+  what the server logs contain, how advertising cookies are handled, and how to
+  exercise your data rights.
+- [Terms of service](https://geo-scanner.ccie13192.com/terms/): What is promised, what
+  is not, and what you may and may not scan.
 
 ## Supported AI crawlers
 
@@ -59,3 +73,4 @@ Claude-SearchBot, anthropic-ai (Anthropic); PerplexityBot, Perplexity-User
 - The scanner and the llms.txt generator are free and do not require an account.
 - Scan result pages under /report/ are generated per request and are excluded from
   search indexing via robots.txt.
+- The tool is operated by the LLMention team, reachable at hello@ccie13192.com.

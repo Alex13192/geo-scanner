@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import LegalLinks from "@/app/components/LegalLinks";
 
 /**
  * First-party data study.
@@ -349,6 +350,7 @@ export default function StudyPage() {
       </main>
 
       <footer className="max-w-4xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
+        <LegalLinks className="mb-3" />
         © 2026 LLMention. Brand Generative Engine Optimization Intelligence.
       </footer>
     </div>

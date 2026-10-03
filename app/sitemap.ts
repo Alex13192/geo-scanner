@@ -138,6 +138,29 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
+    /* Legal and contact.
+       These pages are thin by nature, which is why they carry a low priority,
+       but they are the ones an AdSense reviewer or a payment provider looks for
+       first. English only: no `de` alternate is declared, because a hreflang
+       entry pointing at a page that does not exist is worse than none. */
+    {
+      url: `${SITE_URL}/privacy/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/terms/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/contact/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
 
     /* ---- German ---- */
     {

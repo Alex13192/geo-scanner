@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LegalLinks from "@/app/components/LegalLinks";
 
 const guides = [
   {
@@ -103,6 +104,7 @@ export default function GermanDocsIndex() {
       </main>
 
       <footer className="max-w-5xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
+        <LegalLinks locale="de" className="mb-3" />
         © 2026 LLMention. Brand Generative Engine Optimization Intelligence.
       </footer>
     </div>

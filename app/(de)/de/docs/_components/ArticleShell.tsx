@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import LegalLinks from "@/app/components/LegalLinks";
 
 /**
  * German equivalent of the English ArticleShell.
@@ -76,6 +77,7 @@ export default function ArticleShell({
       </main>
 
       <footer className="max-w-3xl mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-center text-xs text-gray-500">
+        <LegalLinks locale="de" className="mb-3" />
         &copy; 2026 LLMention. Brand Generative Engine Optimization Intelligence.
       </footer>
     </div>
