@@ -1,13 +1,17 @@
 /**
  * The links that every review process looks for: a reachable privacy policy, the
- * terms, a way to make contact, and - for a site that sells to consumers in the
- * EU or the UK - the withdrawal notice they are entitled to before they are
- * bound.
+ * terms, and a way to make contact.
+ *
+ * A fourth belonged here until the paid audit was withdrawn - the withdrawal
+ * notice a site owes consumers in the EU and the UK before they are bound. The
+ * link and the page it pointed at were removed in the same change, because a
+ * footer link to a deleted page is a worse outcome than either.
  *
  * Kept as one component on purpose. This site renders more than ten separate
- * footers by hand, which is exactly how /privacy/ and /terms/ went missing while
- * the pricing page was already promising a refund policy: nothing forced the
- * pages and the links to agree. Adding a route now costs one array entry here.
+ * footers by hand, which is exactly how /privacy/ and /terms/ once went missing
+ * while another page was already promising a policy that had no page behind it:
+ * nothing forced the pages and the links to agree. Adding a route now costs one
+ * array entry here.
  *
  * This used to carry a German set as well. The German site was removed, so the
  * `locale` prop went with it rather than being left as a parameter with one
@@ -24,7 +28,6 @@ const LINKS = [
   { href: "/about/", label: "About" },
   { href: "/privacy/", label: "Privacy policy" },
   { href: "/terms/", label: "Terms" },
-  { href: "/withdrawal/", label: "Withdrawal" },
   { href: "/contact/", label: "Contact" },
 ] as const;
 

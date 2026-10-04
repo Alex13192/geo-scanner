@@ -12,8 +12,9 @@ import { BRAND } from "./site";
  * of those fourteen silently lost `siteName` and `locale` - and with them two
  * checks this site publishes and scores other people against:
  *
- *   og:site_name   the homepage emitted "LLMention"; /pricing/ emitted nothing,
- *                  so a crawler reading that page could not tell whose it was.
+ *   og:site_name   the homepage emitted "LLMention"; /pricing/ (since removed
+ *                  with the paid audit) emitted nothing, so a crawler reading
+ *                  that page could not tell whose it was.
  *                  That is exactly the "entity is not cross-referenced" failure
  *                  the Trust dimension marks down.
  *   og:locale      only the homepage carried a locale with a region, so

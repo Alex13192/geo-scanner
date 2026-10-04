@@ -452,12 +452,6 @@ export default function HomePage() {
           <a href="/docs/" className="hover:text-gray-300 transition-colors">
             Guides
           </a>
-          <a href="/pricing/" className="hover:text-gray-300 transition-colors">
-            Pricing
-          </a>
-          <a href="/refund/" className="hover:text-gray-300 transition-colors">
-            Refund policy
-          </a>
           <a href="/llms.txt" className="hover:text-gray-300 transition-colors">
             llms.txt
           </a>
@@ -466,9 +460,6 @@ export default function HomePage() {
           </a>
           <a href="/terms/" className="hover:text-gray-300 transition-colors">
             Terms
-          </a>
-          <a href="/withdrawal/" className="hover:text-gray-300 transition-colors">
-            Withdrawal
           </a>
           <a href="/contact/" className="hover:text-gray-300 transition-colors">
             Contact

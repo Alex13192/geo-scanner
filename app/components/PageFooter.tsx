@@ -6,11 +6,12 @@ import LegalLinks from "@/app/components/LegalLinks";
  * WHY THIS EXISTS: the footer was written out by hand fourteen times, and the two
  * ways that went wrong are both visible in the old copies.
  *
- * First, four of them had no year at all - /methodology/, /pricing/, /docs/ and
- * /docs/<slug>/ via ArticleShell - so the scanner's own copyright-year check
+ * First, four of them had no year at all - /methodology/, /docs/, /docs/<slug>/
+ * via ArticleShell, and /pricing/ - so the scanner's own copyright-year check
  * failed on exactly those four routes and passed on the rest. The rule looks for
  * the current calendar year in the visible text, which is a rule this site
- * publishes and scores other people against.
+ * publishes and scores other people against. /pricing/ went with the paid audit
+ * (see OPERATIONS.md), so three of the four remain.
  *
  * Second, the ten that did carry a year had `2026` typed in as a literal. That is
  * not a bug today and it becomes ten bugs on 1 January 2027, silently, on pages

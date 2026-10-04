@@ -97,18 +97,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
-      url: `${SITE_URL}/pricing/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'monthly',
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/refund/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'yearly',
-      priority: 0.4,
-    },
-    {
       url: `${SITE_URL}/about/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
@@ -116,10 +104,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     /* Legal and contact.
        These pages are thin by nature, which is why they carry a low priority,
-       but they are the ones an AdSense reviewer or a payment provider looks for
-       first. /withdrawal/ is the notice EU and UK consumers are entitled to
-       before they are bound, and it replaces the German Widerrufsbelehrung that
-       this site used to carry. */
+       but they are the ones an AdSense reviewer looks for first.
+       /pricing/, /refund/ and /withdrawal/ were listed here until the paid audit
+       was withdrawn. They are deleted rather than listed, and they 301 to "/" from
+       middleware.ts, because they were published and may be indexed. */
     {
       url: `${SITE_URL}/privacy/`,
       lastModified: LAST_MODIFIED,
@@ -128,12 +116,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${SITE_URL}/terms/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
-    {
-      url: `${SITE_URL}/withdrawal/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'yearly',
       priority: 0.3,

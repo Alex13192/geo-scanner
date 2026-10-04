@@ -7,20 +7,24 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * Contact page.
  *
  * Why a separate route rather than just the mailto in the About page: the
- * reviewers who decide whether this site may show ads or take payments look for
- * a contact route in the footer, and "it is mentioned somewhere in the body of
- * the about page" is not a route. The address itself was already real and
- * consistent across the site; this page makes it findable and says what to send.
+ * reviewers who decide whether this site may show ads look for a contact route
+ * in the footer, and "it is mentioned somewhere in the body of the about page"
+ * is not a route. The address itself was already real and consistent across the
+ * site; this page makes it findable and says what to send.
  *
  * There is deliberately no contact form. A form would mean storing messages on
  * a server that otherwise holds nothing about visitors, which would contradict
  * the privacy policy for no benefit.
+ *
+ * A fourth route - "request an audit" - was here while the paid audit was sold.
+ * It went with /pricing/ and /refund/, in the same change that stopped the site
+ * offering anything to buy. See OPERATIONS.md.
  */
 import { og } from "@/lib/og";
 
 const TITLE = "Contact";
 const DESCRIPTION =
-  "How to reach LLMention: corrections to a score, audit requests, privacy requests and press. A real address, answered by the person who maintains the tool.";
+  "How to reach LLMention: corrections to a score, privacy requests and press. A real address, answered by the person who maintains the tool.";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
@@ -39,13 +43,6 @@ const ROUTES = [
       "The most useful message you can send. Say which check and which URL; the full method is public so a disagreement can be specific, and a wrong check gets fixed rather than argued about.",
     mailto: `mailto:${CONTACT_EMAIL}?subject=Wrong%20score%20report`,
     action: "Report a wrong score",
-  },
-  {
-    subject: "A manual audit",
-    detail:
-      "Send the pages you care about. You get a reply within one business day with a scope note, and no payment is taken before you agree to it. The scope and price are on the pricing page.",
-    mailto: `mailto:${CONTACT_EMAIL}?subject=Manual%20GEO%20audit%20—%20request`,
-    action: "Request an audit",
   },
   {
     subject: "A data request",
@@ -103,9 +100,8 @@ export default function ContactPage() {
             {CONTACT_EMAIL}
           </a>
           <p className="text-xs text-gray-400 leading-relaxed">
-            One address for everything, read by the person who maintains the tool. Audit requests
-            get a reply within one business day; everything else as fast as it can be answered
-            properly.
+            One address for everything, read by the person who maintains the tool, answered as fast
+            as it can be answered properly.
           </p>
         </div>
 
@@ -161,10 +157,6 @@ export default function ContactPage() {
               including what the score cannot see.
             </li>
             <li>
-              <a href="/pricing/">Pricing</a> and the <a href="/refund/">refund policy</a> — what the
-              paid audit covers and when it is refunded.
-            </li>
-            <li>
               <a href="/docs/">Guides</a> — how to allow AI crawlers, deploy an llms.txt file, and
               add the structured data.
             </li>
@@ -207,11 +199,6 @@ export default function ContactPage() {
               <td className="px-4 py-2.5 align-top">The check is fixed, or you are told why it stands</td>
             </tr>
             <tr className="border-t border-gray-800/80">
-              <td className="px-4 py-2.5 align-top">An audit request</td>
-              <td className="px-4 py-2.5 align-top">The pages you want reviewed, up to five</td>
-              <td className="px-4 py-2.5 align-top">A scope note with the price and your withdrawal rights, before anything is charged</td>
-            </tr>
-            <tr className="border-t border-gray-800/80">
               <td className="px-4 py-2.5 align-top">A data request</td>
               <td className="px-4 py-2.5 align-top">Which right you are exercising</td>
               <td className="px-4 py-2.5 align-top">A reply within one business day</td>
@@ -236,7 +223,7 @@ export default function ContactPage() {
               },
               {
                 q: "How quickly is a message answered?",
-                a: "Within one business day for anything about a score, an audit request or a data request. There is one inbox rather than a routing form, so nothing lands in a mailbox nobody reads.",
+                a: "Within one business day for anything about a score or a data request. There is one inbox rather than a routing form, so nothing lands in a mailbox nobody reads.",
               },
               {
                 q: "Can I request a re-scan of a page I have fixed?",

@@ -100,8 +100,8 @@ export default function AboutPage() {
           <p>
             LLMention is maintained by the LLMention team as an independent project. It is not
             affiliated with OpenAI, Anthropic, Google or Perplexity, and it holds no data
-            relationship with them. The scanner is free and requires no account; the paid option
-            is a manual audit, described on the <Link href="/pricing/">pricing page</Link>.
+            relationship with them. The scanner is free, it requires no account, and there is
+            nothing on this site to buy.
           </p>
           <p>
             Written and maintained by the LLMention team. The scoring method is published in
@@ -119,7 +119,7 @@ export default function AboutPage() {
 
           <h2>Contact</h2>
           <p>
-            Questions, corrections and audit requests all go to the same place:{" "}
+            Questions and corrections both go to the same place:{" "}
             <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. If the scanner reports
             something about your site that you believe is wrong, that is the most useful message
             you can send, and the method is public specifically so a disagreement can be

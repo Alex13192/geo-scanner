@@ -39,7 +39,6 @@ const ROUTES: Route[] = [
   { route: "/readiness-badge/", file: "readiness-badge.html", indexable: true },
   { route: "/methodology/", file: "methodology.html", indexable: true },
   { route: "/study/", file: "study.html", indexable: true },
-  { route: "/pricing/", file: "pricing.html", indexable: true },
   { route: "/about/", file: "about.html", indexable: true },
   { route: "/contact/", file: "contact.html", indexable: true },
   { route: "/docs/", file: "docs.html", indexable: true },
@@ -49,8 +48,6 @@ const ROUTES: Route[] = [
   { route: "/docs/schema-org-jsonld/", file: "docs/schema-org-jsonld.html", indexable: true },
   { route: "/privacy/", file: "privacy.html", indexable: true },
   { route: "/terms/", file: "terms.html", indexable: true },
-  { route: "/withdrawal/", file: "withdrawal.html", indexable: true },
-  { route: "/refund/", file: "refund.html", indexable: true },
   // Tool output, generated per request and disallowed in robots.txt.
   { route: "/report/", file: "report.html", indexable: false },
 ];

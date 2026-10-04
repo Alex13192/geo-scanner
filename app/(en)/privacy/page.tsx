@@ -6,11 +6,10 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * Privacy policy.
  *
  * This page exists because the site is free to use and is paid for by ads, and
- * because both AdSense review and the payment providers used for the manual
- * audit check for a reachable privacy policy before anything else. Google's own
- * AdSense requirements name a privacy policy that discloses third-party cookie
- * use as a condition of serving ads, so the advertising section below is not
- * boilerplate: it is the section the review is looking for.
+ * because AdSense review checks for a reachable privacy policy before anything
+ * else. Google's own AdSense requirements name a privacy policy that discloses
+ * third-party cookie use as a condition of serving ads, so the advertising
+ * section below is not boilerplate: it is the section the review is looking for.
  *
  * Honesty constraints kept deliberately:
  *  - No analytics, no account system and no advertising cookies are described
@@ -29,7 +28,7 @@ import { og } from "@/lib/og";
 const TITLE = "Privacy policy";
 const DESCRIPTION =
   "What LLMention processes when you run a scan, what the server logs contain, how advertising cookies are handled, and how to exercise your data rights.";
-const UPDATED = "2 October 2026";
+const UPDATED = "4 October 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -77,10 +76,9 @@ export default function PrivacyPage() {
         <article className="doc-article text-sm text-gray-300 leading-relaxed">
           <h2>What this policy covers</h2>
           <p>
-            This covers the free scanner, the /llms.txt generator and every guide on this site, and
-            the paid manual GEO audit. It says what is processed, why, how long it is kept, and what
-            you can ask us to do about it. It does not cover third-party sites you reach by
-            following a link from here.
+            This covers the free scanner, the /llms.txt generator and every guide on this site. It
+            says what is processed, why, how long it is kept, and what you can ask us to do about
+            it. It does not cover third-party sites you reach by following a link from here.
           </p>
 
           <h2>Who is responsible</h2>
@@ -211,12 +209,6 @@ export default function PrivacyPage() {
               there, GitHub&apos;s own terms and privacy policy apply to that.
             </li>
           </ul>
-          <p>
-            If you pay for a manual audit, the payment provider used for that transaction processes
-            your payment details under its own privacy policy. We do not receive or store your card
-            details.
-          </p>
-
           <h2>Why this processing is allowed</h2>
           <ul>
             <li>
@@ -228,11 +220,6 @@ export default function PrivacyPage() {
               <strong>Consent</strong> (Article 6(1)(a) GDPR) for advertising cookies and
               personalised advertising where consent is required.
             </li>
-            <li>
-              <strong>Performance of a contract</strong> (Article 6(1)(b) GDPR) for correspondence
-              and delivery when you order a manual audit, and for the record-keeping that goes with
-              it.
-            </li>
           </ul>
 
           <h2>How long it is kept</h2>
@@ -240,9 +227,8 @@ export default function PrivacyPage() {
             Server and security logs are kept for a short period, determined by our hosting
             provider&apos;s log retention, and are used for security and capacity rather than
             analysis of individuals. Scan results are not stored beyond the request that produced
-            them. Correspondence about a paid audit is kept for as long as needed to deliver it and
-            to meet accounting obligations. Advertising cookie lifetimes are set by Google, not by
-            us.
+            them. Correspondence is kept for as long as it takes to answer it. Advertising cookie
+            lifetimes are set by Google, not by us.
           </p>
 
           <h2>Your rights</h2>
@@ -299,8 +285,7 @@ export default function PrivacyPage() {
           <p>
             Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>, or use the{" "}
             <a href="/contact/">contact page</a> for anything that is not a data request. The{" "}
-            <a href="/terms/">terms of service</a> and the{" "}
-            <a href="/refund/">refund policy</a> are the pages that go with this one.
+            <a href="/terms/">terms of service</a> is the page that goes with this one.
           </p>
         </article>
 
@@ -340,7 +325,7 @@ export default function PrivacyPage() {
             </tr>
             <tr className="border-t border-gray-800/80">
               <td className="px-4 py-2.5 align-top">Cookies set by advertising partners</td>
-              <td className="px-4 py-2.5 align-top">They fund the free tier rather than a subscription</td>
+              <td className="px-4 py-2.5 align-top">They fund a free tool rather than a subscription</td>
               <td className="px-4 py-2.5 align-top">Advertising cookies</td>
             </tr>
             <tr className="border-t border-gray-800/80">

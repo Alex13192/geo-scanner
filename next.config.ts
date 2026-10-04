@@ -103,14 +103,11 @@ const CACHEABLE = [
   "/methodology/",
   "/study/",
   "/about/",
-  "/pricing/",
   "/contact/",
   "/llms-txt-studio/",
   "/readiness-badge/",
   "/privacy/",
   "/terms/",
-  "/withdrawal/",
-  "/refund/",
 ];
 
 /**

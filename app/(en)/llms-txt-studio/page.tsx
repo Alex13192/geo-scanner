@@ -393,9 +393,6 @@ export default function StudioPage() {
           <Link href="/methodology/" className="hover:text-gray-300 transition-colors">
             Methodology
           </Link>
-          <Link href="/pricing/" className="hover:text-gray-300 transition-colors">
-            Pricing
-          </Link>
         </div>
         <LegalLinks className="justify-start" />
         {/*
