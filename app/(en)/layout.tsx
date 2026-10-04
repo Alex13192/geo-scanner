@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
+import { ADSENSE_SCRIPT_SRC } from "@/lib/ads";
 import { BRAND, SITE_URL } from "@/lib/site";
 
 /**
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
 
   title: {
     default: TAGLINE,
-    // Per-route layouts (docs, pricing, ...) export their own title, which
+    // Per-route layouts (docs, about, ...) export their own title, which
     // renders as "<page title> | LLMention".
     template: `%s | ${BRAND}`,
   },
@@ -201,6 +202,24 @@ export default function RootLayout({
         already resets both on <body>.
       */}
       <body>
+        {/*
+          AdSense loader, on every page.
+
+          Site-wide rather than opt-in per route, deliberately: the review that
+          decides whether this publisher is approved looks for the snippet on the
+          pages it fetches, and a smaller footprint weakens the thing the site is
+          waiting on. Where an ad may not sit is a placement question, and it is
+          answered in the AdSense dashboard rather than here - Auto ads page
+          exclusions are what would keep advertising off /pricing/, /refund/ and
+          /withdrawal/ if those pages existed, and they no longer do. If a page is
+          ever added that an ad would cheapen, exclude it there rather than
+          splitting this loader.
+
+          See lib/ads.ts for why this is a plain async element rather than
+          `next/script`, and for the consent platform that must be enabled before
+          the account is approved.
+        */}
+        <script async src={ADSENSE_SCRIPT_SRC} crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

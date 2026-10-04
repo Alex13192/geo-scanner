@@ -10,7 +10,7 @@
  * repeated the same story in six files, and a second address (hello@) was still
  * sitting in public/llms.txt after the first one had been consolidated.
  *
- * It checks the two failure modes that actually happen:
+ * It checks the three failure modes that actually happen:
  *
  *   1. Nothing under app/ or lib/ may hardcode either value. Everything is
  *      supposed to import SITE_URL, SITE_HOST or CONTACT_EMAIL, so a literal
@@ -22,6 +22,11 @@
  *      longer own, or an llms.txt advertising a dead contact address, is worse
  *      than the line being absent, because both are instructions to a machine or
  *      a reader that will be followed.
+ *
+ *   3. public/ads.txt must name the same publisher as lib/ads.ts, for the same
+ *      reason as 2 and with a sharper consequence. An ads.txt naming a publisher
+ *      you no longer use is not a missing file, it is a false statement of who is
+ *      authorised to sell your inventory, and ad systems act on it.
  *
  * Run: npm run check:values
  */
@@ -122,6 +127,43 @@ for (const rel of ["public/robots.txt", "public/llms.txt"]) {
 
 if (!read("public/llms.txt").includes(email)) {
   problems.push(`public/llms.txt never mentions ${email}, so it was not updated with lib/site.ts.`);
+}
+
+/* ---- 3. ads.txt must name the publisher declared in lib/ads.ts ----------- */
+
+const ADS_MODULE = join("lib", "ads.ts");
+
+let declaredClient = null;
+try {
+  declaredClient = read(ADS_MODULE).match(/export const ADSENSE_CLIENT\s*=\s*"([^"]+)"/);
+} catch {
+  // reported below as unreadable, alongside a missing ads.txt
+}
+
+let adsTxt = null;
+try {
+  adsTxt = read("public/ads.txt");
+} catch {
+  problems.push(
+    "public/ads.txt is missing. Every site that serves AdSense needs one at its root."
+  );
+}
+
+if (!declaredClient) {
+  problems.push(`Could not read ADSENSE_CLIENT from ${ADS_MODULE}.`);
+} else if (adsTxt !== null) {
+  // ads.txt names the publisher bare ("pub-..."), where the tag uses "ca-pub-...".
+  const publisher = declaredClient[1].replace(/^ca-/, "");
+  if (!adsTxt.includes(publisher)) {
+    problems.push(
+      `public/ads.txt does not name ${publisher}, so it was not updated with ${ADS_MODULE}.`
+    );
+  }
+  if (!/^\s*google\.com\s*,\s*\S+\s*,\s*(DIRECT|RESELLER)\s*,\s*\S+\s*$/m.test(adsTxt)) {
+    problems.push(
+      "public/ads.txt has no line in the specification's `domain, publisher-id, relationship, cert-authority` form."
+    );
+  }
 }
 
 /* ---- result ------------------------------------------------------------- */
