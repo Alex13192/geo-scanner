@@ -129,6 +129,59 @@ const GEO_COMPARISON: [string, string, string][] = [
   ["Failure mode", "Position 11, no clicks", "The answer is given, and you are not in it"],
 ];
 
+/**
+ * The three tools, with the screenshots above the copy.
+ *
+ * WHY THESE ARE PHOTOGRAPHS AND NOT MORE DOM: the hero console and the dimension
+ * panel are built from markup, which keeps the page light but shows a
+ * reconstruction of the product. These three are captures of the real pages,
+ * taken by driving the running site - a domain is typed into each tool and it is
+ * allowed to answer before the shutter - so the numbers in them are this site's
+ * own live result rather than a mock-up.
+ *
+ * Every domain shown is this site's own. A tile carrying a real third party's
+ * score would be a claim about somebody else, which is the same line the hero
+ * console's failure list is held to.
+ *
+ * The files live in public/shots/ as 880x550 WebP, about 75 KB for all three.
+ * next.config.ts sets `images: { unoptimized: true }` for the Cloudflare
+ * deployment, so next/image would be a pass-through here and a plain <img> with
+ * explicit width/height is both honest about what happens and one less
+ * abstraction. width and height are stated so the row does not reflow as the
+ * images arrive, which is the whole of the CLS story on this page.
+ *
+ * The alt text names the host through SITE_HOST rather than spelling it out.
+ * scripts/check-values.mjs scans every line of app/ for a literal hostname and
+ * fails the build's value check if it finds one - comments included - because a
+ * second copy of the canonical origin is how the old domain survived a move.
+ */
+const TOOLS = [
+  {
+    src: "/shots/report.webp",
+    alt: `The GEO audit report for ${SITE_HOST}: 97 out of 100, grade A, 38 of 40 checks passed, with all twelve weighted dimension scores below it.`,
+    title: "The audit report",
+    body: "Forty published checks across twelve weighted dimensions. Every dimension shows its own score and the evidence behind it, and every failure names the rule it broke.",
+    href: `/report/?domain=${SITE_HOST}`,
+    linkLabel: "Open a live report",
+  },
+  {
+    src: "/shots/llms-txt-studio.webp",
+    alt: `The /llms.txt studio after generating a file for ${SITE_HOST}, showing twelve internal links it found on the homepage.`,
+    title: "The /llms.txt studio",
+    body: "Enter a domain and the studio reads the homepage, then drafts an llms.txt from the real page title, the description and the internal links it actually found.",
+    href: "/llms-txt-studio/",
+    linkLabel: "Generate a file",
+  },
+  {
+    src: "/shots/readiness-badge.webp",
+    alt: `The badge generator showing a live green 97 out of 100 badge for ${SITE_HOST}, with the Markdown and HTML embed snippets.`,
+    title: "The readiness badge",
+    body: "A badge carrying the score from a real scan, in Markdown for a README or HTML for a footer. The number is read from the scan and cannot be typed in.",
+    href: "/readiness-badge/",
+    linkLabel: "Get the badge",
+  },
+];
+
 const ONE_RING_CIRCUMFERENCE = 452;
 
 export default function HomePage() {
@@ -305,7 +358,7 @@ export default function HomePage() {
         </section>
 
         {/* ========================== THE CHECKS ========================== */}
-        <section className="band">
+        <section className="band band--alt">
           <div className="wrap py-20 md:py-24">
             <div className="text-center">
               <p className="mb-3 text-xs font-semibold uppercase tracking-[0.09em] text-[var(--accent)]">
@@ -359,6 +412,65 @@ export default function HomePage() {
                 </p>
                 <span className="mt-auto pt-2 text-sm text-[var(--accent)]">Get the badge →</span>
               </a>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================== THE TOOLS =========================== */}
+        {/*
+          The only band on the page whose subject is a picture rather than a
+          paragraph, and the only place a visitor can see what the tools look
+          like before running one. The screenshots are real captures of the three
+          pages below, taken against this site; see the TOOLS constant.
+        */}
+        <section className="band">
+          <div className="wrap py-20 md:py-24">
+            <div className="text-center">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.09em] text-[var(--accent)]">
+                The tools
+              </p>
+              <h2 className="mx-auto max-w-3xl text-balance text-3xl font-semibold tracking-[-0.028em] md:text-5xl">
+                Three free tools. No account, no limit.
+              </h2>
+            </div>
+
+            <div className="mt-14 grid gap-6 lg:grid-cols-3">
+              {TOOLS.map((tool) => (
+                <div
+                  key={tool.href}
+                  className="flex flex-col overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-2)]"
+                >
+                  {/*
+                    The screenshot sits on an inset grey mat rather than flush
+                    against the card. Two reasons: these are captures of
+                    light-on-white interfaces, so a white image on a white card
+                    has no edge of its own and reads as a smudge, and the mat is
+                    the difference between "a card with a picture in it" and "a
+                    window onto the tool".
+                  */}
+                  <div className="bg-[var(--surface-1)] p-5">
+                    <img
+                      src={tool.src}
+                      width={880}
+                      height={550}
+                      alt={tool.alt}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full rounded-lg border border-[var(--line)] shadow-sm"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-3 p-7">
+                    <h3 className="text-lg font-semibold tracking-tight">{tool.title}</h3>
+                    <p className="text-sm leading-relaxed text-[var(--ink-2)]">{tool.body}</p>
+                    <a
+                      href={tool.href}
+                      className="mt-auto pt-2 text-sm font-medium text-[var(--accent)] hover:opacity-75"
+                    >
+                      {tool.linkLabel} →
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>

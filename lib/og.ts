@@ -1,6 +1,35 @@
 import { BRAND } from "./site";
 
 /**
+ * The social card, declared once and imported by everything that needs it.
+ *
+ * WHY THIS EXISTS: the site shipped with no og:image anywhere - there was not a
+ * single image file under public/ - so every share of every page unfurled as a
+ * bare text card, and the metadata dimension's own og:image signal was absent
+ * from the site that scores other people on it.
+ *
+ * It lives here rather than inline in the root layout because two places need
+ * it: the root layout's own openGraph block, and the `og()` helper below, which
+ * every route calls. A second literal would drift the moment the card is
+ * redrawn.
+ *
+ * width and height are stated rather than left for the crawler to discover: a
+ * card whose dimensions are unknown is sized at fetch time, and several clients
+ * then letterbox it or drop it entirely. `alt` is stated for the same class of
+ * reason - a card that cannot be described is a card that cannot be quoted.
+ *
+ * The path is site-relative on purpose. `metadataBase` in app/(en)/layout.tsx
+ * resolves it to an absolute URL, so the canonical host stays declared exactly
+ * once, in lib/site.ts, where scripts/check-values.mjs can prove it.
+ */
+export const OG_IMAGE = {
+  url: "/og.png",
+  width: 1200,
+  height: 630,
+  alt: `${BRAND} - GEO scanner for AI search visibility`,
+};
+
+/**
  * The openGraph block for a page, built in one place.
  *
  * WHY THIS EXISTS - one root cause behind two failing checks:
@@ -50,5 +79,6 @@ export function og({
     siteName: BRAND,
     locale: "en_US",
     type,
+    images: [OG_IMAGE],
   };
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { ADSENSE_SCRIPT_SRC } from "@/lib/ads";
+import { OG_IMAGE } from "@/lib/og";
 import { BRAND, SITE_URL } from "@/lib/site";
 
 /**
@@ -99,12 +100,16 @@ export const metadata: Metadata = {
     title: TAGLINE,
     description: DESCRIPTION,
     locale: "en_US",
+    // The card itself is declared in lib/og.ts, because every route's openGraph
+    // block comes from `og()` there and a second literal would drift from it.
+    images: [OG_IMAGE],
   },
 
   twitter: {
     card: "summary_large_image",
     title: TAGLINE,
     description: DESCRIPTION,
+    images: [OG_IMAGE],
   },
 
   robots: {
