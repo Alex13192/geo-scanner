@@ -12,9 +12,23 @@
  *
  * It checks the three failure modes that actually happen:
  *
- *   1. Nothing under app/ or lib/ may hardcode either value. Everything is
- *      supposed to import SITE_URL, SITE_HOST or CONTACT_EMAIL, so a literal
- *      here means a second source of truth has started.
+ *   1. Nothing under app/, lib/, scripts/ or .github/workflows/ may hardcode either
+ *      value. Everything there is supposed to import SITE_URL, SITE_HOST or
+ *      CONTACT_EMAIL, so a literal means a second source of truth has started.
+ *
+ *      WHY THOSE FOUR AND NOT app/ AND lib/ ALONE: moving the site to its own domain
+ *      left three live references outside the original pair, and all three were found
+ *      by grepping by hand rather than by this script. The worst was in
+ *      check-built-pages.mts, which scored every built page against the old hostname
+ *      and would have reported a number nobody had reason to question. The other two
+ *      were the smoke job's command line in deploy.yml and two lines of README. A check
+ *      that has to be remembered is not a check, which is the sentence this file opened
+ *      with.
+ *
+ *      WHAT IS STILL NOT SCANNED, said rather than implied: prose. README.md names the
+ *      site and should. A rule that flags any line containing the host cannot tell a
+ *      claim from a reference, so it covers code and CI configuration and leaves
+ *      documentation to whoever edits it.
  *
  *   2. public/robots.txt and public/llms.txt must agree with lib/site.ts. Those
  *      two cannot import anything, so they are what a change silently leaves
@@ -57,7 +71,7 @@ const problems = [];
 /* ---- 1. nothing under app/ or lib/ may hardcode the declared values ------ */
 
 const SKIP_DIRS = new Set(["node_modules", ".next", ".git", "out", ".vercel", "public"]);
-const CODE_EXT = /\.(ts|tsx|mjs|mts|js|jsx)$/;
+const CODE_EXT = /\.(ts|tsx|mjs|mts|js|jsx|yml|yaml)$/;
 
 function walk(dir, visit) {
   for (const entry of readdirSync(dir)) {
@@ -71,7 +85,7 @@ function walk(dir, visit) {
   }
 }
 
-for (const start of ["app", "lib"]) {
+for (const start of ["app", "lib", "scripts", ".github"]) {
   const startDir = join(ROOT, start);
   try {
     statSync(startDir);
