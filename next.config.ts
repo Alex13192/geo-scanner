@@ -87,6 +87,13 @@ const SECURITY_HEADERS = [
  * `npm run check:live` therefore reports cf-cache-status for these paths. The answer is
  * meant to come from the deployment, not from this comment, and the values below are the
  * ones to change if it comes back DYNAMIC.
+ *
+ * WHAT CAME BACK, AND WHERE THE REST OF THE FIX IS. Neither HIT nor DYNAMIC but empty,
+ * on a Free-plan Worker whose 10 ms CPU budget a cold Next.js runtime exceeds - which
+ * surfaced as intermittent 1102s, because every page view boots the runtime and nothing
+ * is cached. OPERATIONS.md records the Cache Rule that closes it and the check that
+ * proves it, because that is an operational step rather than a value in this file. The
+ * headers below are still inert until that rule exists.
  */
 const CACHE_LONG = [
   { key: "Cache-Control", value: "public, s-maxage=86400, stale-while-revalidate=604800" },
