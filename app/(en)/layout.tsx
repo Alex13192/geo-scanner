@@ -46,7 +46,7 @@ const geistMono = Geist_Mono({
  * Do NOT use `new Date()` here: a build-time date makes every deploy look like
  * a content change, which is the fastest way to have freshness ignored.
  */
-const LAST_UPDATED = "2026-10-02";
+const LAST_UPDATED = "2026-10-04";
 
 const TAGLINE = `${BRAND} \u2014 GEO Scanner for AI Search Visibility`;
 const DESCRIPTION =

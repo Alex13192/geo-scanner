@@ -52,7 +52,7 @@ const SELF_AUDIT = {
   grade: "A",
   passed: 38,
   run: 40,
-  verified: "3 October 2026",
+  verified: "4 October 2026",
   failures: ["hreflang", "markdown-alternate"],
 };
 
