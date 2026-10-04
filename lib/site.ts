@@ -19,7 +19,7 @@
  *      (public/robots.txt and public/llms.txt). A `Sitemap:` line in robots.txt
  *      that points at the old domain is worse than having no line at all.
  */
-export const SITE_URL = "https://geo-scanner.ccie13192.com";
+export const SITE_URL = "https://llmention-geo.com";
 
 /** Host only, for the `?domain=` links that re-audit this site. */
 export const SITE_HOST = new URL(SITE_URL).host;

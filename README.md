@@ -1,6 +1,6 @@
 # LLMention
 
-A GEO scanner for AI search visibility, at https://geo-scanner.ccie13192.com.
+A GEO scanner for AI search visibility, at https://llmention-geo.com.
 
 It fetches a homepage the way a crawler would, scores it against 40 published checks across
 12 weighted dimensions, and reports every failure with the evidence that produced it. The
@@ -61,7 +61,7 @@ what is actually being served.
 | `npm run test:rate-limit` | the token bucket, including that a flood of distinct keys cannot reset an exhausted client |
 | `npx tsc --noEmit` | types |
 | `npx opennextjs-cloudflare build` | the adapter accepts the app, then `npm run check:built` scores the built HTML with the scanner's own analyser and fails below a floor |
-| `npm run check:live -- https://geo-scanner.ccie13192.com` | the deployed origin: security headers, which deployment is answering, robots.txt, llms.txt, the `/report/` canonical, a markdown twin resolving, and the rule hub |
+| `npm run check:live -- https://llmention-geo.com` | the deployed origin: security headers, which deployment is answering, robots.txt, llms.txt, the `/report/` canonical, a markdown twin resolving, and the rule hub |
 
 `check:live` takes any origin, so it also works against `npm run preview` or a preview
 hostname. Its `deployment identity` assertion checks for the `x-opennext` response header:

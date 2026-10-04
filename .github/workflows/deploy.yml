@@ -94,4 +94,4 @@ jobs:
           node-version: "24"
 
       - name: Check the deployed site
-        run: node scripts/check-live.mjs https://geo-scanner.ccie13192.com
+        run: node scripts/check-live.mjs https://llmention-geo.com

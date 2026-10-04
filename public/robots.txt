@@ -1,5 +1,5 @@
 # robots.txt
-# https://geo-scanner.ccie13192.com
+# https://llmention-geo.com
 #
 # NOTE: This site is itself a Generative Engine Optimization (GEO) product.
 # AI crawlers are explicitly welcome here - being readable by LLMs is the point.
@@ -101,4 +101,4 @@ Disallow: /api/
 
 Content-Signal: search=yes, ai-input=yes, ai-train=yes
 
-Sitemap: https://geo-scanner.ccie13192.com/sitemap.xml
+Sitemap: https://llmention-geo.com/sitemap.xml

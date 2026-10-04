@@ -26,6 +26,7 @@
  */
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { SITE_HOST } from "../lib/site.ts";
 import { analyze } from "../lib/geo/analyze.ts";
 
 const APP_DIR = join(process.cwd(), ".next", "server", "app");
@@ -135,7 +136,7 @@ for (const { route, file, indexable, min } of ROUTES) {
 
   const html = readFileSync(path, "utf8");
   const result = analyze({
-    domain: "geo-scanner.ccie13192.com",
+    domain: SITE_HOST,
     scheme: "https",
     homeStatus: 200,
     browserStatus: null,

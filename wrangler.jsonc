@@ -60,9 +60,29 @@
    */
   "routes": [
     /*
-     * The production hostname, attached as a ROUTE rather than as a custom domain.
+     * The site's own domain. A custom_domain is right here and was impossible before.
      *
-     * WHY NOT custom_domain, WHICH WAS THE FIRST ATTEMPT: it was refused with
+     * The contrast with the route below is the point: a custom_domain asks Cloudflare to
+     * CREATE the DNS record, and it refused to do that on ccie13192.com because the Pages
+     * integration had already created one. This zone was added with no records at all, so
+     * there is nothing to conflict with.
+     */
+    {
+      "pattern": "llmention-geo.com",
+      "custom_domain": true
+    },
+
+    /*
+     * THE OLD HOSTNAME, WHICH MUST KEEP ANSWERING.
+     *
+     * It is not kept out of sentiment. The reason it is a redirect rather than a deletion:
+     * pages under it are indexed, the readiness badge snippets embed the origin in code
+     * other people have already copied into their own footers, and both API routes carry
+     * it inside a user-agent string. A hostname that stops resolving sends other people's
+     * badge traffic, and real crawlers, to a domain that is not there - which is exactly
+     * the failure lib/site.ts warns about.
+     *
+     * WHY custom_domain WAS REFUSED HERE, AND STILL WOULD BE:
      *
      *   Hostname 'geo-scanner.ccie13192.com' already has externally managed DNS records
      *   (A, CNAME, etc). Delete them first or try a different hostname. [code: 100117]
@@ -70,8 +90,7 @@
      * The blocker was never the Pages binding as such, it is the CNAME that the Pages custom
      * domain integration created - which is the same record the note above is about. A route
      * creates no DNS record: it attaches this Worker to a hostname that already resolves and is
-     * already proxied, which this one is. The cutover therefore involved no DNS change and no
-     * window in which the name did not resolve.
+     * already proxied, which this one is.
      */
     {
       "pattern": "geo-scanner.ccie13192.com/*",
