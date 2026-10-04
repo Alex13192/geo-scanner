@@ -136,8 +136,8 @@ export default function BadgeWidget() {
         Badge generator
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl space-y-6">
-          <h3 className="text-sm font-bold text-white tracking-wide border-b border-gray-800/80 pb-4">
+        <div className="lg:col-span-5 bg-[var(--surface-1)] border border-[var(--line)] p-6 rounded-2xl space-y-6">
+          <h3 className="text-sm font-bold text-[var(--ink-1)] tracking-wide border-b border-[var(--line)] pb-4">
             Badge Configuration
           </h3>
 
@@ -145,7 +145,7 @@ export default function BadgeWidget() {
             <div>
               <label
                 htmlFor="badge-domain"
-                className="block text-xs font-medium text-gray-300 mb-1.5"
+                className="block text-xs font-medium text-[var(--ink-2)] mb-1.5"
               >
                 Target domain
               </label>
@@ -157,7 +157,7 @@ export default function BadgeWidget() {
                   onChange={(e) => setDomain(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && scan(cleanDomain(domain))}
                   placeholder="your-domain.com"
-                  className="flex-1 bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-all font-mono"
+                  className="flex-1 bg-[var(--surface-0)] border border-[var(--line)] rounded-xl px-4 py-2.5 text-xs text-[var(--ink-1)] placeholder-[var(--ink-3)] focus:outline-none focus:border-blue-500 transition-all font-mono"
                 />
                 <button
                   onClick={() => scan(cleanDomain(domain))}
@@ -167,18 +167,18 @@ export default function BadgeWidget() {
                   {scanning ? "Scanning…" : "Check score"}
                 </button>
               </div>
-              <p className="text-[11px] text-gray-500 pt-2 leading-relaxed">
+              <p className="text-[11px] text-[var(--ink-3)] pt-2 leading-relaxed">
                 The score is produced by scanning the site the same way the main audit does. It
                 cannot be typed in.
               </p>
             </div>
 
             <div>
-              <span className="block text-xs font-medium text-gray-300 mb-1.5">
+              <span className="block text-xs font-medium text-[var(--ink-2)] mb-1.5">
                 Score used in the badge
               </span>
-              <div className="w-full bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs font-mono flex items-center justify-between">
-                <span className="text-gray-400">
+              <div className="w-full bg-[var(--surface-0)] border border-[var(--line)] rounded-xl px-4 py-2.5 text-xs font-mono flex items-center justify-between">
+                <span className="text-[var(--ink-2)]">
                   {scanning ? "Scanning the site…" : ready ? scannedDomain : "No score yet"}
                 </span>
                 <span
@@ -192,7 +192,7 @@ export default function BadgeWidget() {
 
             {ready && (
               <div>
-                <span className="block text-xs font-medium text-gray-300 mb-1.5">
+                <span className="block text-xs font-medium text-[var(--ink-2)] mb-1.5">
                   Badge style
                 </span>
                 <div className="grid grid-cols-3 gap-2">
@@ -204,14 +204,14 @@ export default function BadgeWidget() {
                       className={`py-2 text-xs font-medium rounded-xl border transition-all capitalize ${
                         badgeStyle === style
                           ? "bg-blue-600 border-blue-500 text-white"
-                          : "bg-[#070A10] border-gray-800 text-gray-400 hover:text-white"
+                          : "bg-[var(--surface-0)] border-[var(--line)] text-[var(--ink-2)] hover:text-[var(--ink-1)]"
                       }`}
                     >
                       {style}
                     </button>
                   ))}
                 </div>
-                <p className="text-[11px] text-gray-500 pt-2 leading-relaxed">
+                <p className="text-[11px] text-[var(--ink-3)] pt-2 leading-relaxed">
                   The style choice only changes the preview below. All three embed the same
                   shields.io image, which uses the flat style.
                 </p>
@@ -220,21 +220,21 @@ export default function BadgeWidget() {
           </div>
         </div>
 
-        <div className="lg:col-span-7 bg-gray-950/60 border border-gray-800/80 p-6 rounded-2xl flex flex-col justify-between space-y-6">
+        <div className="lg:col-span-7 bg-[var(--surface-1)] border border-[var(--line)] p-6 rounded-2xl flex flex-col justify-between space-y-6">
           <div>
-            <h3 className="text-sm font-bold text-white tracking-wide border-b border-gray-800/80 pb-4">
+            <h3 className="text-sm font-bold text-[var(--ink-1)] tracking-wide border-b border-[var(--line)] pb-4">
               Preview
             </h3>
 
             {error && (
-              <div className="mt-6 bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl p-4">
+              <div className="mt-6 bg-red-500/10 border border-red-500/30 text-red-600 text-xs rounded-xl p-4">
                 {error}
               </div>
             )}
 
             {!ready && !error && (
-              <div className="my-8 flex items-center justify-center p-8 bg-[#070A10] rounded-xl border border-dashed border-gray-800 text-center">
-                <p className="text-xs text-gray-500 max-w-sm leading-relaxed">
+              <div className="my-8 flex items-center justify-center p-8 bg-[var(--surface-0)] rounded-xl border border-dashed border-[var(--line)] text-center">
+                <p className="text-xs text-[var(--ink-3)] max-w-sm leading-relaxed">
                   {scanning
                     ? "Scanning the site to read its real score…"
                     : "Enter a domain and check its score. The badge and the embed code appear once a real score exists."}
@@ -244,16 +244,16 @@ export default function BadgeWidget() {
 
             {ready && colorInfo && (
               <>
-                <div className="my-8 flex items-center justify-center p-8 bg-[#070A10] rounded-xl border border-gray-800/80">
+                <div className="my-8 flex items-center justify-center p-8 bg-[var(--surface-0)] rounded-xl border border-[var(--line)]">
                   {badgeStyle === "flat" && (
-                    <div className="inline-flex items-center text-xs font-mono rounded-md overflow-hidden shadow-lg border border-gray-800">
-                      <span className="bg-gray-800 text-gray-300 px-3 py-1.5 font-bold flex items-center gap-1.5">
+                    <div className="inline-flex items-center text-xs font-mono rounded-md overflow-hidden shadow-lg border border-[var(--line)]">
+                      <span className="bg-[var(--surface-1)] text-[var(--ink-2)] px-3 py-1.5 font-bold flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-blue-400"></span>
                         GEO Readiness
                       </span>
                       <span
                         style={{ backgroundColor: colorInfo.bg }}
-                        className="text-white px-3 py-1.5 font-extrabold"
+                        className="text-[var(--ink-1)] px-3 py-1.5 font-extrabold"
                       >
                         {score} / 100
                       </span>
@@ -261,11 +261,11 @@ export default function BadgeWidget() {
                   )}
 
                   {badgeStyle === "cyber" && (
-                    <div className="inline-flex items-center text-xs font-mono rounded-lg overflow-hidden border border-purple-500/30 bg-purple-950/20 p-1 shadow-md gap-2">
-                      <span className="text-purple-300 font-bold px-2 py-1 bg-purple-900/40 rounded">
+                    <div className="inline-flex items-center text-xs font-mono rounded-lg overflow-hidden border border-purple-500/30 bg-purple-500/10 p-1 shadow-md gap-2">
+                      <span className="text-purple-600 font-bold px-2 py-1 bg-purple-500/10 rounded">
                         ⚡ AI READY
                       </span>
-                      <span className="text-white font-extrabold pr-2">
+                      <span className="text-[var(--ink-1)] font-extrabold pr-2">
                         {scannedDomain} :{" "}
                         <span style={{ color: colorInfo.bg }}>{score} pts</span>
                       </span>
@@ -273,7 +273,7 @@ export default function BadgeWidget() {
                   )}
 
                   {badgeStyle === "minimal" && (
-                    <div className="inline-flex items-center gap-2 text-xs font-mono text-gray-300 bg-gray-900/80 border border-gray-800 px-3 py-1.5 rounded-full">
+                    <div className="inline-flex items-center gap-2 text-xs font-mono text-[var(--ink-2)] bg-[var(--surface-2)] border border-[var(--line)] px-3 py-1.5 rounded-full">
                       <span
                         className="w-2.5 h-2.5 rounded-full"
                         style={{ backgroundColor: colorInfo.bg }}
@@ -288,34 +288,34 @@ export default function BadgeWidget() {
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-medium text-gray-300">
+                      <span className="text-xs font-medium text-[var(--ink-2)]">
                         Markdown (for GitHub README)
                       </span>
                       <button
                         onClick={() => handleCopy(markdownSnippet, "md")}
-                        className="text-[11px] text-blue-400 hover:text-blue-300 font-medium"
+                        className="text-[11px] text-[var(--accent)] hover:opacity-75 font-medium"
                       >
                         {copiedType === "md" ? "✓ Copied" : "Copy Markdown"}
                       </button>
                     </div>
-                    <pre className="bg-[#070A10] border border-gray-800 rounded-xl p-3 text-xs text-gray-300 font-mono overflow-x-auto">
+                    <pre className="bg-[var(--surface-0)] border border-[var(--line)] rounded-xl p-3 text-xs text-[var(--ink-2)] font-mono overflow-x-auto">
                       {markdownSnippet}
                     </pre>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-medium text-gray-300">
+                      <span className="text-xs font-medium text-[var(--ink-2)]">
                         HTML (for website or footer)
                       </span>
                       <button
                         onClick={() => handleCopy(htmlSnippet, "html")}
-                        className="text-[11px] text-blue-400 hover:text-blue-300 font-medium"
+                        className="text-[11px] text-[var(--accent)] hover:opacity-75 font-medium"
                       >
                         {copiedType === "html" ? "✓ Copied" : "Copy HTML"}
                       </button>
                     </div>
-                    <pre className="bg-[#070A10] border border-gray-800 rounded-xl p-3 text-xs text-gray-300 font-mono overflow-x-auto whitespace-pre-wrap">
+                    <pre className="bg-[var(--surface-0)] border border-[var(--line)] rounded-xl p-3 text-xs text-[var(--ink-2)] font-mono overflow-x-auto whitespace-pre-wrap">
                       {htmlSnippet}
                     </pre>
                   </div>

@@ -112,7 +112,14 @@ export default function ScoreRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#1f2937"
+          /*
+           * The unfilled track. This was the literal #1f2937, a dark-theme grey,
+           * which on the light surface drew a near-black ring behind the coloured
+           * one. It goes through `style` rather than the `stroke` attribute
+           * because a presentation attribute cannot contain var(): the value is
+           * rejected at parse time and the element ends up with no stroke at all.
+           */
+          style={{ stroke: "var(--line)" }}
           strokeWidth={stroke}
         />
         <circle
@@ -128,10 +135,10 @@ export default function ScoreRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-mono font-black text-white leading-none" style={{ fontSize: size * 0.26 }}>
+        <span className="font-mono font-black text-[var(--ink-1)] leading-none" style={{ fontSize: size * 0.26 }}>
           {Math.round(displayed)}
         </span>
-        <span className="font-mono text-gray-500 leading-none pt-1" style={{ fontSize: size * 0.11 }}>
+        <span className="font-mono text-[var(--ink-3)] leading-none pt-1" style={{ fontSize: size * 0.11 }}>
           /100
         </span>
       </div>

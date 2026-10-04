@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PageFooter from "@/app/components/PageFooter";
+import ProsePage from "@/app/components/ProsePage";
 import Faq from "@/app/components/Faq";
 import { CONTACT_EMAIL } from "@/lib/site";
 
@@ -62,50 +62,33 @@ const ROUTES = [
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
-          <a href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-              L
-            </div>
-            <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
-          </a>
-          <a
-            href="/about/"
-            className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 font-medium px-4 py-2 rounded-xl transition-all whitespace-nowrap"
-          >
-            ← About
-          </a>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-6 pt-12">
-        <div className="space-y-3 mb-10">
-          <span className="inline-block px-2.5 py-0.5 rounded-full font-mono text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">
-            Contact
-          </span>
-          <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
-            {TITLE}
-          </h1>
-          <p className="text-gray-400 text-sm md:text-base leading-relaxed">{DESCRIPTION}</p>
-        </div>
-
-        <div className="bg-gradient-to-r from-blue-950/20 via-gray-900/60 to-purple-950/20 border border-gray-800 rounded-2xl p-8 space-y-3">
-          <p className="text-xs font-mono text-gray-500 uppercase tracking-wide">Email</p>
+    <ProsePage
+      eyebrow="Contact"
+      title={TITLE}
+      description={<p>{DESCRIPTION}</p>}
+      action={{ href: "/about/", label: "← About" }}
+    >
+        {/*
+          The gradient here was `from-blue-950/20 via-gray-900/60 to-purple-950/20`,
+          which was written against the dark surface: on a white page, a 950-level
+          blue at 20% is a muddy tint rather than a highlight. The card is now the
+          same raised surface as every other card on the site.
+        */}
+        <div className="bg-[var(--surface-2)] border border-[var(--line)] rounded-2xl p-8 space-y-3">
+          <p className="text-xs font-mono text-[var(--ink-3)] uppercase tracking-wide">Email</p>
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-lg md:text-2xl font-bold text-blue-400 hover:text-blue-300 underline break-all"
+            className="text-lg md:text-2xl font-bold text-[var(--accent)] hover:opacity-75 underline break-all"
           >
             {CONTACT_EMAIL}
           </a>
-          <p className="text-xs text-gray-400 leading-relaxed">
+          <p className="text-xs text-[var(--ink-2)] leading-relaxed">
             One address for everything, read by the person who maintains the tool, answered as fast
             as it can be answered properly.
           </p>
         </div>
 
-        <article className="doc-article text-sm text-gray-300 leading-relaxed mt-10">
+        <article className="doc-article text-sm text-[var(--ink-2)] leading-relaxed mt-10">
           <h2>What to write about</h2>
         </article>
 
@@ -113,13 +96,13 @@ export default function ContactPage() {
           {ROUTES.map((route) => (
             <div
               key={route.subject}
-              className="bg-[#0b1018] border border-gray-800/80 rounded-2xl p-6 space-y-3 flex flex-col"
+              className="bg-[var(--surface-2)] border border-[var(--line)] rounded-2xl p-6 space-y-3 flex flex-col"
             >
-              <h3 className="text-sm font-bold text-white">{route.subject}</h3>
-              <p className="text-xs text-gray-400 leading-relaxed flex-1">{route.detail}</p>
+              <h3 className="text-sm font-bold text-[var(--ink-1)]">{route.subject}</h3>
+              <p className="text-xs text-[var(--ink-2)] leading-relaxed flex-1">{route.detail}</p>
               <a
                 href={route.mailto}
-                className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                className="text-xs text-[var(--accent)] hover:opacity-75 font-medium"
               >
                 {route.action} →
               </a>
@@ -127,7 +110,7 @@ export default function ContactPage() {
           ))}
         </div>
 
-        <article className="doc-article text-sm text-gray-300 leading-relaxed mt-4">
+        <article className="doc-article text-sm text-[var(--ink-2)] leading-relaxed mt-4">
           <h2>There is no contact form</h2>
           <p>
             Deliberately. A form would mean storing your message on a server that otherwise keeps
@@ -163,14 +146,14 @@ export default function ContactPage() {
           </ul>
         </article>
 
-        <div className="mt-16 pt-8 border-t border-gray-800/60 flex flex-wrap gap-x-6 gap-y-2">
-          <a href="/privacy/" className="text-xs text-blue-400 hover:text-blue-300">
+        <div className="mt-16 pt-8 border-t border-[var(--line)] flex flex-wrap gap-x-6 gap-y-2">
+          <a href="/privacy/" className="text-xs text-[var(--accent)] hover:opacity-75">
             Privacy policy →
           </a>
-          <a href="/terms/" className="text-xs text-blue-400 hover:text-blue-300">
+          <a href="/terms/" className="text-xs text-[var(--accent)] hover:opacity-75">
             Terms of service →
           </a>
-          <a href="/" className="text-xs text-gray-500 hover:text-gray-300">
+          <a href="/" className="text-xs text-[var(--ink-3)] hover:text-[var(--ink-1)]">
             Run a free scan
           </a>
         </div>
@@ -180,12 +163,12 @@ export default function ContactPage() {
           carries its own h2 scale, and the Faq component brings its own. Nesting
           one inside the other would silently resize the headings.
         */}
-                <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
-          <h2 className="text-xl font-bold text-white">What to send, and what happens next</h2>
+                <div className="mt-16 space-y-6 text-sm leading-relaxed text-[var(--ink-2)]">
+          <h2 className="text-xl font-bold text-[var(--ink-1)]">What to send, and what happens next</h2>
           <p>One address handles everything, so here is how to make a message easy to act on.</p>
           <div className="overflow-x-auto">
-          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
-            <thead className="bg-gray-900/60 text-gray-400">
+          <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
+            <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
               <tr>
               <th className="text-left px-4 py-2.5 font-semibold">Reason for writing</th>
               <th className="text-left px-4 py-2.5 font-semibold">What to include</th>
@@ -193,17 +176,17 @@ export default function ContactPage() {
               </tr>
             </thead>
             <tbody>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">A score you think is wrong</td>
               <td className="px-4 py-2.5 align-top">The check id and the URL</td>
               <td className="px-4 py-2.5 align-top">The check is fixed, or you are told why it stands</td>
             </tr>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">A data request</td>
               <td className="px-4 py-2.5 align-top">Which right you are exercising</td>
               <td className="px-4 py-2.5 align-top">A reply within one business day</td>
             </tr>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Anything else</td>
               <td className="px-4 py-2.5 align-top">As much or as little as you like</td>
               <td className="px-4 py-2.5 align-top">A reply from the person who maintains the tool</td>
@@ -213,7 +196,7 @@ export default function ContactPage() {
           </div>
         </div>
 
-<div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+<div className="mt-16 space-y-10 text-sm leading-relaxed text-[var(--ink-2)]">
           <Faq
             title="Questions about contacting us"
             items={[
@@ -232,9 +215,6 @@ export default function ContactPage() {
             ]}
           />
         </div>
-      </main>
-
-      <PageFooter width="3xl" />
-    </div>
+    </ProsePage>
   );
 }

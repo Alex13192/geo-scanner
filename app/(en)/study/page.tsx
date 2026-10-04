@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PageFooter from "@/app/components/PageFooter";
+import ProsePage from "@/app/components/ProsePage";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import { SITE_URL } from "@/lib/site";
@@ -71,73 +71,53 @@ function gradeClass(grade: string): string {
 
 export default function StudyPage() {
   return (
-    <div className="min-h-screen bg-[#070A10] text-white selection:bg-blue-500 selection:text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-          <a href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-              L
-            </div>
-            <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
-          </a>
-          <a
-            href="/"
-            className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 font-medium px-4 py-2 rounded-xl transition-all whitespace-nowrap"
-          >
-            Scan your own site →
-          </a>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-6 pt-12">
-        <div className="space-y-3 mb-10">
-          <span className="inline-block px-2.5 py-0.5 rounded-full font-mono text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
-            Research
-          </span>
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
-            {TITLE}
-          </h1>
-          <p className="text-gray-400 text-sm md:text-base leading-relaxed">
-            Every result below came from the same scanner this site ships, run against the
-            homepages of 30 large websites on {SCAN_DATE}. Nothing was adjusted by hand, and
-            every figure can be reproduced from the public API.
-          </p>
-        </div>
-
+    <ProsePage
+      eyebrow="Research"
+      title={TITLE}
+      description={
+        <p>
+          Every result below came from the same scanner this site ships, run against the
+          homepages of 30 large websites on {SCAN_DATE}. Nothing was adjusted by hand, and
+          every figure can be reproduced from the public API.
+        </p>
+      }
+      action={{ href: "/", label: "Scan your own site →" }}
+      width="4xl"
+    >
         {/* Headline numbers */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5">
-            <div className="text-3xl font-black text-white font-mono">{AVERAGE}</div>
-            <div className="text-[11px] text-gray-400 pt-1 leading-snug">
+          <div className="bg-[var(--surface-2)] border border-[var(--line)] rounded-2xl p-5">
+            <div className="text-3xl font-black text-[var(--ink-1)] font-mono">{AVERAGE}</div>
+            <div className="text-[11px] text-[var(--ink-2)] pt-1 leading-snug">
               average score, out of 100
             </div>
           </div>
-          <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5">
-            <div className="text-3xl font-black text-red-400 font-mono">{gradeCount("A")}</div>
-            <div className="text-[11px] text-gray-400 pt-1 leading-snug">
+          <div className="bg-[var(--surface-2)] border border-[var(--line)] rounded-2xl p-5">
+            <div className="text-3xl font-black text-red-600 font-mono">{gradeCount("A")}</div>
+            <div className="text-[11px] text-[var(--ink-2)] pt-1 leading-snug">
               sites graded A
             </div>
           </div>
-          <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5">
-            <div className="text-3xl font-black text-amber-400 font-mono">
+          <div className="bg-[var(--surface-2)] border border-[var(--line)] rounded-2xl p-5">
+            <div className="text-3xl font-black text-amber-600 font-mono">
               {BLOCKED.length}
-              <span className="text-lg text-gray-500">/{STUDY_ROWS.length}</span>
+              <span className="text-lg text-[var(--ink-3)]">/{STUDY_ROWS.length}</span>
             </div>
-            <div className="text-[11px] text-gray-400 pt-1 leading-snug">
+            <div className="text-[11px] text-[var(--ink-2)] pt-1 leading-snug">
               do not admit AI crawlers, by policy or by refusal
             </div>
           </div>
-          <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5">
-            <div className="text-3xl font-black text-gray-300 font-mono">
+          <div className="bg-[var(--surface-2)] border border-[var(--line)] rounded-2xl p-5">
+            <div className="text-3xl font-black text-[var(--ink-2)] font-mono">
               {STUDY_ROWS.length - ANSWERED.length}
             </div>
-            <div className="text-[11px] text-gray-400 pt-1 leading-snug">
+            <div className="text-[11px] text-[var(--ink-2)] pt-1 leading-snug">
               did not return a normal 200
             </div>
           </div>
         </section>
 
-        <article className="doc-article text-sm text-gray-300 leading-relaxed">
+        <article className="doc-article text-sm text-[var(--ink-2)] leading-relaxed">
           <h2>What we found</h2>
           <p>
             <strong>Not one of the 30 homepages scored an A.</strong> The highest was{" "}
@@ -203,8 +183,8 @@ export default function StudyPage() {
         </article>
 
         <div className="overflow-x-auto pt-4 pb-10">
-          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
-            <thead className="bg-gray-900/80 text-gray-400">
+          <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
+            <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
               <tr>
                 <th className="text-left px-3 py-2.5 font-semibold">Domain</th>
                 <th className="text-left px-3 py-2.5 font-semibold">Score</th>
@@ -214,13 +194,13 @@ export default function StudyPage() {
                 <th className="text-left px-3 py-2.5 font-semibold">sameAs</th>
               </tr>
             </thead>
-            <tbody className="text-gray-300">
+            <tbody className="text-[var(--ink-2)]">
               {STUDY_ROWS.map((row) => (
-                <tr key={row.domain} className="border-t border-gray-800/60">
-                  <td className="px-3 py-2 font-mono text-gray-200">
+                <tr key={row.domain} className="border-t border-[var(--line)]">
+                  <td className="px-3 py-2 font-mono text-[var(--ink-1)]">
                     <a
                       href={`/report/?domain=${row.domain}`}
-                      className="hover:text-blue-400 transition-colors"
+                      className="hover:opacity-75 transition-colors"
                     >
                       {row.domain}
                     </a>
@@ -228,34 +208,34 @@ export default function StudyPage() {
                   <td className={`px-3 py-2 font-mono font-bold ${gradeClass(row.grade)}`}>
                     {row.score} {row.grade}
                   </td>
-                  <td className="px-3 py-2 font-mono text-gray-500">
+                  <td className="px-3 py-2 font-mono text-[var(--ink-3)]">
                     {row.status}
                     {row.browserStatus !== null && (
-                      <span className="text-gray-600"> / {row.browserStatus}</span>
+                      <span className="text-[var(--ink-3)]"> / {row.browserStatus}</span>
                     )}
                   </td>
                   <td className="px-3 py-2">
                     {row.refused ? (
-                      <span className="text-red-400">refused</span>
+                      <span className="text-red-600">refused</span>
                     ) : row.blocked ? (
-                      <span className="text-red-400">disallowed</span>
+                      <span className="text-red-600">disallowed</span>
                     ) : (
-                      <span className="text-gray-500">admitted</span>
+                      <span className="text-[var(--ink-3)]">admitted</span>
                     )}
                   </td>
-                  <td className="px-3 py-2">{row.entity ? "yes" : <span className="text-gray-600">no</span>}</td>
-                  <td className="px-3 py-2">{row.sameAs ? "yes" : <span className="text-gray-600">no</span>}</td>
+                  <td className="px-3 py-2">{row.entity ? "yes" : <span className="text-[var(--ink-3)]">no</span>}</td>
+                  <td className="px-3 py-2">{row.sameAs ? "yes" : <span className="text-[var(--ink-3)]">no</span>}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p className="text-[11px] text-gray-500 pt-3 leading-relaxed">
+          <p className="text-[11px] text-[var(--ink-3)] pt-3 leading-relaxed">
             Click a domain to run the scan yourself and see the current result. Scores in this
             table are a snapshot taken on {SCAN_DATE} and will have moved since.
           </p>
         </div>
 
-        <article className="doc-article text-sm text-gray-300 leading-relaxed">
+        <article className="doc-article text-sm text-[var(--ink-2)] leading-relaxed">
           <h2>How this was done</h2>
           <ol>
             <li>
@@ -322,13 +302,13 @@ export default function StudyPage() {
           <p>
             The whole table is published as data, so its arithmetic can be checked without
             scraping this page:{" "}
-            <a href={STUDY_DATA_PATH} className="text-blue-400 hover:text-blue-300 underline">
+            <a href={STUDY_DATA_PATH} className="text-[var(--accent)] hover:opacity-75 underline">
               <code>{STUDY_DATA_PATH}</code>
             </a>{" "}
             returns JSON with the rows, the counts, the average and the grade distribution, and{" "}
             <a
               href={`${STUDY_DATA_PATH}?format=csv`}
-              className="text-blue-400 hover:text-blue-300 underline"
+              className="text-[var(--accent)] hover:opacity-75 underline"
             >
               <code>?format=csv</code>
             </a>{" "}
@@ -354,15 +334,15 @@ export default function StudyPage() {
           </p>
         </article>
 
-        <div className="mt-16 pt-8 border-t border-gray-800/60 flex flex-wrap gap-x-6 gap-y-2">
-          <a href="/" className="text-xs text-blue-400 hover:text-blue-300">
+        <div className="mt-16 pt-8 border-t border-[var(--line)] flex flex-wrap gap-x-6 gap-y-2">
+          <a href="/" className="text-xs text-[var(--accent)] hover:opacity-75">
             Run this on your own site →
           </a>
-          <a href="/methodology/" className="text-xs text-gray-500 hover:text-gray-300">
+          <a href="/methodology/" className="text-xs text-[var(--ink-3)] hover:text-[var(--ink-1)]">
             Methodology
           </a>
         </div>
-        <div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+        <div className="mt-16 space-y-10 text-sm leading-relaxed text-[var(--ink-2)]">
           <Faq
             title="Questions about this study"
             items={[
@@ -380,9 +360,6 @@ export default function StudyPage() {
           />
         </div>
 
-      </main>
-
-      <PageFooter width="4xl" />
-    </div>
+    </ProsePage>
   );
 }

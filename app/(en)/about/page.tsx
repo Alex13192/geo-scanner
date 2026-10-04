@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import PageFooter from "@/app/components/PageFooter";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
+import ProsePage from "@/app/components/ProsePage";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 import { og } from "@/lib/og";
@@ -24,39 +24,18 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#070A10] text-white selection:bg-blue-500 selection:text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-              L
-            </div>
-            <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
-          </Link>
-          <Link
-            href="/"
-            className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 font-medium px-4 py-2 rounded-xl transition-all"
-          >
-            ← Back to Scanner
-          </Link>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-6 pt-12">
-        <div className="space-y-3 mb-10">
-          <span className="inline-block px-2.5 py-0.5 rounded-full font-mono text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">
-            About
-          </span>
-          <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
-            About LLMention
-          </h1>
-          <p className="text-gray-400 text-sm md:text-base leading-relaxed">
-            A free scanner that tells you whether AI search engines can read, parse and cite your
-            pages, and publishes the rules it uses to decide.
-          </p>
-        </div>
-
-        <article className="doc-article text-sm text-gray-300 leading-relaxed">
+    <ProsePage
+      eyebrow="About"
+      title="About LLMention"
+      description={
+        <p>
+          A free scanner that tells you whether AI search engines can read, parse and cite your
+          pages, and publishes the rules it uses to decide.
+        </p>
+      }
+      action={{ href: "/", label: "← Back to Scanner" }}
+    >
+        <article className="doc-article text-[17px] leading-[1.65] text-[var(--ink-2)]">
           <h2>Why this exists</h2>
           <p>
             People increasingly get answers from an assistant instead of clicking a link. When
@@ -151,36 +130,36 @@ export default function AboutPage() {
           </ul>
         </article>
 
-        <div className="mt-16 pt-8 border-t border-gray-800/60">
-          <Link href="/" className="text-xs text-blue-400 hover:text-blue-300">
+        <div className="mt-16 pt-8 border-t border-[var(--line)]">
+          <Link href="/" className="text-xs text-[var(--accent)] hover:opacity-75">
             Run a free GEO audit on your own site →
           </Link>
         </div>
-                <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
-          <h2 className="text-xl font-bold text-white">What the scanner does and does not do</h2>
+                <div className="mt-16 space-y-6 text-sm leading-relaxed text-[var(--ink-2)]">
+          <h2 className="text-xl font-bold text-[var(--ink-1)]">What the scanner does and does not do</h2>
           <p>In the published study over 30 homepages, 2 of them (7%) reached a B or above and none reached an A. That result is easier to read with the scope stated plainly.</p>
           <div className="overflow-x-auto">
-          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
-            <thead className="bg-gray-900/60 text-gray-400">
+          <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
+            <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
               <tr>
               <th className="text-left px-4 py-2.5 font-semibold">It does</th>
               <th className="text-left px-4 py-2.5 font-semibold">It does not</th>
               </tr>
             </thead>
             <tbody>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Fetch your homepage the way a crawler would</td>
               <td className="px-4 py-2.5 align-top">Execute JavaScript, so a client-rendered page is judged as a crawler sees it</td>
             </tr>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Read robots.txt, llms.txt and the sitemap when they exist</td>
               <td className="px-4 py-2.5 align-top">Sign in, submit a form, or reach anything behind a paywall</td>
             </tr>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Report each failed check with the evidence that produced it</td>
               <td className="px-4 py-2.5 align-top">Ask any AI engine whether your brand is mentioned, recommended or cited</td>
             </tr>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Publish every rule, its weight and its pass condition</td>
               <td className="px-4 py-2.5 align-top">Predict a citation, or promise a ranking</td>
             </tr>
@@ -189,7 +168,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-<div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+<div className="mt-16 space-y-10 text-sm leading-relaxed text-[var(--ink-2)]">
           <Faq
             title="Questions about the project"
             items={[
@@ -207,9 +186,6 @@ export default function AboutPage() {
           />
         </div>
 
-      </main>
-
-      <PageFooter width="3xl" />
-    </div>
+    </ProsePage>
   );
 }

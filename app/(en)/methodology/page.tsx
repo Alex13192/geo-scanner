@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import PageFooter from "@/app/components/PageFooter";
+import ProsePage from "@/app/components/ProsePage";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import {
@@ -45,40 +45,19 @@ export default function MethodologyPage() {
   const totalWeight = DIMENSION_CATALOG.reduce((sum, d) => sum + d.weight, 0);
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white selection:bg-blue-500 selection:text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-              L
-            </div>
-            <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
-          </Link>
-          <Link
-            href="/"
-            className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 font-medium px-4 py-2 rounded-xl transition-all"
-          >
-            ← Back to Scanner
-          </Link>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-6 pt-12">
-        <div className="space-y-3 mb-10">
-          <span className="inline-block px-2.5 py-0.5 rounded-full font-mono text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">
-            Methodology
-          </span>
-          <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
-            How the GEO score is calculated
-          </h1>
-          <p className="text-gray-400 text-sm md:text-base leading-relaxed">
-            Every rule on this page is the rule the scanner actually executes. The list below is
-            generated from the same data the analyser runs on, so the published method and the
-            live method cannot drift apart.
-          </p>
-        </div>
-
-        <article className="doc-article text-sm text-gray-300 leading-relaxed">
+    <ProsePage
+      eyebrow="Methodology"
+      title="How the GEO score is calculated"
+      description={
+        <p>
+          Every rule on this page is the rule the scanner actually executes. The list below is
+          generated from the same data the analyser runs on, so the published method and the
+          live method cannot drift apart.
+        </p>
+      }
+      action={{ href: "/", label: "← Back to Scanner" }}
+    >
+        <article className="doc-article text-[17px] leading-[1.65] text-[var(--ink-2)]">
           <h2>How is the total score calculated?</h2>
           <p>
             The scanner runs <strong>{totalChecks} explicit checks</strong> across{" "}
@@ -111,19 +90,19 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
 
           <h2>What do the grades mean?</h2>
           <div className="not-prose overflow-x-auto my-5">
-            <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
-              <thead className="bg-gray-900/60 text-gray-400">
+            <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
+              <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
                 <tr>
                   <th className="text-left px-4 py-2.5 font-semibold">Grade</th>
                   <th className="text-left px-4 py-2.5 font-semibold">Score</th>
                   <th className="text-left px-4 py-2.5 font-semibold">Reading</th>
                 </tr>
               </thead>
-              <tbody className="text-gray-300">
+              <tbody className="text-[var(--ink-2)]">
                 {GRADE_BANDS.map((band, i) => (
-                  <tr key={band.grade} className="border-t border-gray-800/60">
-                    <td className="px-4 py-2.5 font-mono font-bold text-white">{band.grade}</td>
-                    <td className="px-4 py-2.5 font-mono text-gray-400">
+                  <tr key={band.grade} className="border-t border-[var(--line)]">
+                    <td className="px-4 py-2.5 font-mono font-bold text-[var(--ink-1)]">{band.grade}</td>
+                    <td className="px-4 py-2.5 font-mono text-[var(--ink-2)]">
                       {band.min}
                       {i === 0 ? "-100" : `-${GRADE_BANDS[i - 1].min - 1}`}
                     </td>
@@ -178,21 +157,21 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
             return (
               <section
                 key={dim.id}
-                className="bg-gray-950/40 border border-gray-800/80 rounded-2xl p-6"
+                className="bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-6"
               >
-                <div className="flex items-baseline justify-between gap-4 pb-3 border-b border-gray-800/60">
-                  <h3 className="text-base font-bold text-white">
-                    <span className="text-gray-600 font-mono text-xs pr-2">
+                <div className="flex items-baseline justify-between gap-4 pb-3 border-b border-[var(--line)]">
+                  <h3 className="text-base font-bold text-[var(--ink-1)]">
+                    <span className="text-[var(--ink-3)] font-mono text-xs pr-2">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     {dim.label}
                   </h3>
-                  <span className="text-xs font-mono text-blue-400 shrink-0">{dim.weight}%</span>
+                  <span className="text-xs font-mono text-[var(--accent)] shrink-0">{dim.weight}%</span>
                 </div>
 
-                <p className="text-xs text-gray-400 leading-relaxed pt-3">{dim.rationale}</p>
-                <p className="text-xs text-gray-500 leading-relaxed pt-2">
-                  <span className="text-gray-400 font-medium">Why this weight: </span>
+                <p className="text-xs text-[var(--ink-2)] leading-relaxed pt-3">{dim.rationale}</p>
+                <p className="text-xs text-[var(--ink-3)] leading-relaxed pt-2">
+                  <span className="text-[var(--ink-2)] font-medium">Why this weight: </span>
                   {dim.weighting}
                 </p>
 
@@ -200,27 +179,27 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
                   {checks.map((check) => (
                     <li key={check.id} className="text-xs leading-relaxed">
                       <div className="flex items-baseline gap-2">
-                        <span className="font-mono text-[10px] text-gray-500 shrink-0">
+                        <span className="font-mono text-[10px] text-[var(--ink-3)] shrink-0">
                           {check.points} pt
                         </span>
-                        <span className="text-gray-300">{check.rule}</span>
+                        <span className="text-[var(--ink-2)]">{check.rule}</span>
                       </div>
                       {check.onFail && (
-                        <div className="text-gray-500 pl-10 pt-0.5">
+                        <div className="text-[var(--ink-3)] pl-10 pt-0.5">
                           Not satisfied: {check.onFail}
                         </div>
                       )}
                       {NA_BY_PAGE_TYPE[check.id] && (
-                        <div className="text-gray-500 pl-10 pt-0.5">
+                        <div className="text-[var(--ink-3)] pl-10 pt-0.5">
                           Not applicable to{" "}
-                          <span className="text-gray-400">
+                          <span className="text-[var(--ink-2)]">
                             {NA_BY_PAGE_TYPE[check.id].join(", ")}
                           </span>{" "}
                           pages. Excluded from the score rather than counted as a failure.
                         </div>
                       )}
                       {check.note && (
-                        <div className="text-gray-500 pl-10 pt-0.5 border-l border-gray-800 ml-10 pl-3">
+                        <div className="text-[var(--ink-3)] pl-10 pt-0.5 border-l border-[var(--line)] ml-10 pl-3">
                           Note: {check.note}
                         </div>
                       )}
@@ -232,7 +211,7 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
           })}
         </div>
 
-        <article className="doc-article text-sm text-gray-300 leading-relaxed pt-14">
+        <article className="doc-article text-sm text-[var(--ink-2)] leading-relaxed pt-14">
           <h2>Primary sources</h2>
           <p>
             Where this method makes a judgement about what generative engines favour, it follows
@@ -256,12 +235,12 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
           </p>
         </article>
 
-        <div className="mt-16 pt-8 border-t border-gray-800/60">
-          <Link href="/" className="text-xs text-blue-400 hover:text-blue-300">
+        <div className="mt-16 pt-8 border-t border-[var(--line)]">
+          <Link href="/" className="text-xs text-[var(--accent)] hover:opacity-75">
             Run a free GEO audit on your own site →
           </Link>
         </div>
-        <div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+        <div className="mt-16 space-y-10 text-sm leading-relaxed text-[var(--ink-2)]">
           <Faq
             title="Questions about the method"
             items={[
@@ -279,9 +258,6 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
           />
         </div>
 
-      </main>
-
-      <PageFooter width="3xl" />
-    </div>
+    </ProsePage>
   );
 }

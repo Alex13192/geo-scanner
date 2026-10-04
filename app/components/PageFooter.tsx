@@ -53,7 +53,7 @@ export default function PageFooter({
 }: PageFooterProps) {
   return (
     <footer
-      className={`${WIDTH_CLASS[width]} mx-auto px-6 mt-20 pt-6 border-t border-gray-800/60 text-xs text-gray-500 ${
+      className={`${WIDTH_CLASS[width]} mx-auto px-6 mt-20 pt-6 border-t border-[var(--line)] text-xs text-[var(--ink-3)] ${
         align === "center" ? "text-center" : ""
       }`}
     >

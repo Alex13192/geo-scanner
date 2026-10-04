@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
 import { CHECK_COPY } from "@/lib/geo/check-copy";
-import PageFooter from "@/app/components/PageFooter";
+import ProsePage from "@/app/components/ProsePage";
 import Faq from "@/app/components/Faq";
 import { og } from "@/lib/og";
 
@@ -51,45 +51,28 @@ export default function ChecksIndexPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <span className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-              L
-            </span>
-            <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
-          </Link>
-          <Link
-            href="/methodology/"
-            className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 font-medium px-4 py-2 rounded-xl transition-all"
-          >
-            The full method →
-          </Link>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-6 pt-12">
-        <div className="space-y-4 mb-12">
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-tight">
-            {TITLE}
-          </h1>
-          <p className="text-sm text-gray-300 leading-relaxed">
+    <ProsePage
+      title={TITLE}
+      description={
+        <>
+          <p>
             The scanner runs <strong>{runnable.length} explicit checks</strong> across{" "}
             <strong>{DIMENSION_CATALOG.length} weighted dimensions</strong>. Every one of them is
             listed here with the exact rule it applies, so a score can be argued with rather than
             taken on trust. Nothing on these pages is a summary of the method — it is the method.
           </p>
-          <p className="text-sm text-gray-400 leading-relaxed">
+          <p>
             A check is worth points inside its dimension, and each dimension carries a share of the
             total. A dimension is not a checklist of equal items: the weights are published below
             and the reasoning for each one is on its page.
           </p>
-        </div>
-
+        </>
+      }
+      action={{ href: "/methodology/", label: "The full method →" }}
+    >
         <div className="overflow-x-auto mb-14">
-          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
-            <thead className="bg-gray-900/60 text-gray-400">
+          <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
+            <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
               <tr>
                 <th className="text-left px-4 py-2.5 font-semibold">Dimension</th>
                 <th className="text-left px-4 py-2.5 font-semibold">Weight</th>
@@ -102,9 +85,9 @@ export default function ChecksIndexPage() {
                 const list = byDimension.get(dimension.id) ?? [];
                 const points = list.reduce((sum, c) => sum + c.points, 0);
                 return (
-                  <tr key={dimension.id} className="border-t border-gray-800/80">
+                  <tr key={dimension.id} className="border-t border-[var(--line)]">
                     <td className="px-4 py-2.5 align-top">
-                      <a href={`#${dimension.id}`} className="text-blue-400 hover:text-blue-300">
+                      <a href={`#${dimension.id}`} className="text-[var(--accent)] hover:opacity-75">
                         {dimension.label}
                       </a>
                     </td>
@@ -124,26 +107,26 @@ export default function ChecksIndexPage() {
             if (list.length === 0) return null;
             return (
               <section key={dimension.id} id={dimension.id} className="scroll-mt-24">
-                <div className="flex items-baseline justify-between gap-4 border-b border-gray-800/80 pb-2 mb-4">
-                  <h2 className="text-lg font-bold text-white">{dimension.label}</h2>
-                  <span className="font-mono text-xs text-gray-500">{dimension.weight}% of total</span>
+                <div className="flex items-baseline justify-between gap-4 border-b border-[var(--line)] pb-2 mb-4">
+                  <h2 className="text-lg font-bold text-[var(--ink-1)]">{dimension.label}</h2>
+                  <span className="font-mono text-xs text-[var(--ink-3)]">{dimension.weight}% of total</span>
                 </div>
-                <p className="text-xs text-gray-500 leading-relaxed mb-4">{dimension.rationale}</p>
+                <p className="text-xs text-[var(--ink-3)] leading-relaxed mb-4">{dimension.rationale}</p>
                 <ul className="list-none pl-0 space-y-4">
                   {list.map((check) => (
                     <li key={check.id} className="text-sm leading-relaxed">
                       <div className="flex items-baseline gap-2">
-                        <span className="font-mono text-[10px] text-gray-500 shrink-0 w-12">
+                        <span className="font-mono text-[10px] text-[var(--ink-3)] shrink-0 w-12">
                           {check.points} pt
                         </span>
                         <Link
                           href={`/checks/${check.id}/`}
-                          className="text-blue-400 hover:text-blue-300 font-medium underline"
+                          className="text-[var(--accent)] hover:opacity-75 font-medium underline"
                         >
                           {CHECK_COPY[check.id]?.title ?? check.id}
                         </Link>
                       </div>
-                      <p className="text-gray-400 pl-14 pt-0.5">{firstSentence(check.rule)}</p>
+                      <p className="text-[var(--ink-2)] pl-14 pt-0.5">{firstSentence(check.rule)}</p>
                     </li>
                   ))}
                 </ul>
@@ -152,7 +135,7 @@ export default function ChecksIndexPage() {
           })}
         </div>
 
-        <div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
+        <div className="mt-16 space-y-10 text-sm leading-relaxed text-[var(--ink-2)]">
           <Faq
             title="Questions about the checks"
             items={[
@@ -173,23 +156,20 @@ export default function ChecksIndexPage() {
 
           <div>
             <p>
-              <Link href="/" className="text-blue-400 hover:text-blue-300 underline">
+              <Link href="/" className="text-[var(--accent)] hover:opacity-75 underline">
                 Run a free GEO audit on your own site →
               </Link>
             </p>
-            <p className="mt-3 text-gray-400">
+            <p className="mt-3 text-[var(--ink-2)]">
               The dimension weights, the A–F bands and the parts of the picture a single-URL scan
               cannot see are all on the{" "}
-              <Link href="/methodology/" className="text-blue-400 hover:text-blue-300 underline">
+              <Link href="/methodology/" className="text-[var(--accent)] hover:opacity-75 underline">
                 methodology page
               </Link>
               .
             </p>
           </div>
         </div>
-      </main>
-
-      <PageFooter width="3xl" />
-    </div>
+    </ProsePage>
   );
 }

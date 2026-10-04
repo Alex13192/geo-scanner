@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PageFooter from "@/app/components/PageFooter";
+import ProsePage from "@/app/components/ProsePage";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -43,37 +43,14 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
-          <a href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-              L
-            </div>
-            <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
-          </a>
-          <a
-            href="/contact/"
-            className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 font-medium px-4 py-2 rounded-xl transition-all whitespace-nowrap"
-          >
-            Contact
-          </a>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-6 pt-12">
-        <div className="space-y-3 mb-10">
-          <span className="inline-block px-2.5 py-0.5 rounded-full font-mono text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">
-            Legal
-          </span>
-          <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
-            {TITLE}
-          </h1>
-          <p className="text-gray-400 text-sm md:text-base leading-relaxed">{DESCRIPTION}</p>
-          <p className="text-xs text-gray-500 font-mono">Last updated {UPDATED}</p>
-        </div>
-
-        <article className="doc-article text-sm text-gray-300 leading-relaxed">
+    <ProsePage
+      eyebrow="Legal"
+      title={TITLE}
+      description={<p>{DESCRIPTION}</p>}
+      meta={`Last updated ${UPDATED}`}
+      action={{ href: "/contact/", label: "Contact" }}
+    >
+        <article className="doc-article text-[17px] leading-[1.65] text-[var(--ink-2)]">
           <h2>What this policy covers</h2>
           <p>
             This covers the free scanner, the /llms.txt generator and every guide on this site. It
@@ -289,23 +266,23 @@ export default function PrivacyPage() {
           </p>
         </article>
 
-        <div className="mt-16 pt-8 border-t border-gray-800/60 flex flex-wrap gap-x-6 gap-y-2">
-          <a href="/terms/" className="text-xs text-blue-400 hover:text-blue-300">
+        <div className="mt-16 pt-8 border-t border-[var(--line)] flex flex-wrap gap-x-6 gap-y-2">
+          <a href="/terms/" className="text-xs text-[var(--accent)] hover:opacity-75">
             Terms of service →
           </a>
-          <a href="/contact/" className="text-xs text-blue-400 hover:text-blue-300">
+          <a href="/contact/" className="text-xs text-[var(--accent)] hover:opacity-75">
             Contact →
           </a>
-          <a href="/" className="text-xs text-gray-500 hover:text-gray-300">
+          <a href="/" className="text-xs text-[var(--ink-3)] hover:text-[var(--ink-1)]">
             Run a free scan
           </a>
         </div>
-        <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
-          <h2 className="text-xl font-bold text-white">Summary of what is processed</h2>
+        <div className="mt-16 space-y-6 text-sm leading-relaxed text-[var(--ink-2)]">
+          <h2 className="text-xl font-bold text-[var(--ink-1)]">Summary of what is processed</h2>
           <p>Four kinds of data are involved in running a scan or answering a message. Each is explained in full further down this page.</p>
           <div className="overflow-x-auto">
-          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
-            <thead className="bg-gray-900/60 text-gray-400">
+          <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
+            <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
               <tr>
               <th className="text-left px-4 py-2.5 font-semibold">Data</th>
               <th className="text-left px-4 py-2.5 font-semibold">Why it is involved</th>
@@ -313,22 +290,22 @@ export default function PrivacyPage() {
               </tr>
             </thead>
             <tbody>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">The domain you submit, and the page the scanner fetches</td>
               <td className="px-4 py-2.5 align-top">They are the subject of the scan; the checks read that response</td>
               <td className="px-4 py-2.5 align-top">What this policy covers</td>
             </tr>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Standard request logs at the edge</td>
               <td className="px-4 py-2.5 align-top">Keeping the service available, and limiting how often one address can scan</td>
               <td className="px-4 py-2.5 align-top">Server logs</td>
             </tr>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Cookies set by advertising partners</td>
               <td className="px-4 py-2.5 align-top">They fund a free tool rather than a subscription</td>
               <td className="px-4 py-2.5 align-top">Advertising cookies</td>
             </tr>
-            <tr className="border-t border-gray-800/80">
+            <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Your email address, if you write to us</td>
               <td className="px-4 py-2.5 align-top">So the message can be answered and the record kept</td>
               <td className="px-4 py-2.5 align-top">Your data rights</td>
@@ -338,9 +315,6 @@ export default function PrivacyPage() {
           </div>
         </div>
 
-      </main>
-
-      <PageFooter width="3xl" />
-    </div>
+    </ProsePage>
   );
 }

@@ -28,8 +28,8 @@ import ReportWidget from "./ReportWidget";
  */
 export default function ReportPage() {
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+    <div className="min-h-screen bg-[var(--surface-0)] text-[var(--ink-1)] font-sans pb-20">
+      <header className="border-b border-[var(--line)] bg-[var(--surface-0)]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <Link
@@ -39,30 +39,30 @@ export default function ReportPage() {
               <span className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
                 L
               </span>
-              <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
+              <span className="font-extrabold text-base tracking-tight text-[var(--ink-1)]">LLMention</span>
             </Link>
             <nav
               aria-label="Sections"
-              className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs"
+              className="hidden md:flex items-center gap-1 bg-[var(--surface-2)] p-1 rounded-xl border border-[var(--line)] text-xs"
             >
               <span className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium shadow-sm">
                 Audit Overview
               </span>
               <Link
                 href="/llms-txt-studio/"
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink-1)] transition-all"
               >
                 /llms.txt Studio
               </Link>
               <Link
                 href="/readiness-badge/"
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink-1)] transition-all"
               >
                 Readiness Badge
               </Link>
               <Link
                 href="/methodology/"
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink-1)] transition-all"
               >
                 Methodology
               </Link>
@@ -79,13 +79,13 @@ export default function ReportPage() {
       */}
       <main className="max-w-7xl mx-auto px-6 pt-10">
         <div className="mb-8">
-          <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
+          <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-[var(--accent)] border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
             Edge Scan
           </span>
-          <h1 className="text-3xl font-extrabold text-white mt-3 tracking-tight">
+          <h1 className="text-3xl font-extrabold text-[var(--ink-1)] mt-3 tracking-tight">
             GEO Audit Report
           </h1>
-          <p className="text-sm text-gray-400 mt-2 max-w-3xl">
+          <p className="text-sm text-[var(--ink-2)] mt-2 max-w-3xl">
             This page scores one homepage against 40 published checks across twelve weighted
             dimensions, and lists what failed with the evidence the check produced. The scan runs
             when the page loads.
@@ -94,43 +94,43 @@ export default function ReportPage() {
 
         <Suspense
           fallback={
-            <div className="bg-gray-950/60 border border-gray-800/80 rounded-2xl p-8 space-y-4">
-              <p className="text-sm text-blue-400 font-mono animate-pulse">
+            <div className="bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-8 space-y-4">
+              <p className="text-sm text-[var(--accent)] font-mono animate-pulse">
                 Reading the homepage and robots.txt…
               </p>
-              <p className="text-sm text-gray-400 max-w-3xl leading-relaxed">
+              <p className="text-sm text-[var(--ink-2)] max-w-3xl leading-relaxed">
                 The scan fetches the page the way a crawler would, then reads robots.txt, llms.txt
                 and the sitemap if they exist. It takes a few seconds because it does five real
                 requests rather than reading a cache.
               </p>
-              <p className="text-sm text-gray-400 max-w-3xl leading-relaxed">
+              <p className="text-sm text-[var(--ink-2)] max-w-3xl leading-relaxed">
                 Nothing about the site is stored. The result exists only in the URL you are on, and
                 re-loading this page runs the scan again.
               </p>
               <div className="overflow-x-auto pt-2">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="py-2 pr-4 font-semibold text-white">What is fetched</th>
-                      <th className="py-2 font-semibold text-white">Why it affects the score</th>
+                    <tr className="border-b border-[var(--line)]">
+                      <th className="py-2 pr-4 font-semibold text-[var(--ink-1)]">What is fetched</th>
+                      <th className="py-2 font-semibold text-[var(--ink-1)]">Why it affects the score</th>
                     </tr>
                   </thead>
-                  <tbody className="text-gray-400">
-                    <tr className="border-b border-gray-800/60">
+                  <tbody className="text-[var(--ink-2)]">
+                    <tr className="border-b border-[var(--line)]">
                       <td className="py-2 pr-4 font-mono">the homepage</td>
                       <td className="py-2">
                         Carries the highest weight of the twelve dimensions, because a page a
                         crawler cannot read has no path to being quoted at all
                       </td>
                     </tr>
-                    <tr className="border-b border-gray-800/60">
+                    <tr className="border-b border-[var(--line)]">
                       <td className="py-2 pr-4 font-mono">/robots.txt</td>
                       <td className="py-2">
                         The site&apos;s stated intent about who may crawl, which is the only
                         authoritative answer available to a scanner
                       </td>
                     </tr>
-                    <tr className="border-b border-gray-800/60">
+                    <tr className="border-b border-[var(--line)]">
                       <td className="py-2 pr-4 font-mono">/llms.txt</td>
                       <td className="py-2">
                         Worth 5% and no more, because the evidence behind it is weak
@@ -151,20 +151,20 @@ export default function ReportPage() {
           <ReportWidget />
         </Suspense>
 
-        <section className="mt-16 max-w-3xl space-y-8 text-sm leading-relaxed text-gray-300">
+        <section className="mt-16 max-w-3xl space-y-8 text-sm leading-relaxed text-[var(--ink-2)]">
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">What the score is measuring</h2>
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">What the score is measuring</h2>
             <p>
               Whether your pages are in a state that makes being cited possible. That is a narrower
               claim than it sounds, and a deliberate one.
             </p>
-            <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-gray-400">
+            <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-[var(--ink-2)]">
               Adding source citations produced the largest measured visibility gain for
               low-ranking sites, at +115%, ahead of the addition of expert quotations at +41% and
               statistics at +30-40%, across the strategies tested on generative engines. —{" "}
               <a
                 href="https://arxiv.org/abs/2311.09735"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
                 rel="noopener"
               >
                 Generative Engine Optimization, KDD 2024
@@ -174,13 +174,13 @@ export default function ReportPage() {
               Those figures are why citability and evidence carry 11% of the score and answer
               readiness a further 10%, while a context file carries 5%. Every weight, every check
               and every pass condition is published on the{" "}
-              <Link href="/methodology/" className="text-blue-400 hover:text-blue-300 underline">
+              <Link href="/methodology/" className="text-[var(--accent)] hover:opacity-75 underline">
                 methodology page
               </Link>
               , and the analyser itself is open source at{" "}
               <a
                 href="https://github.com/Alex13192/geo-scanner"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
                 rel="noopener"
               >
                 github.com/Alex13192/geo-scanner
@@ -190,7 +190,7 @@ export default function ReportPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">What this report cannot tell you</h2>
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">What this report cannot tell you</h2>
             <p>
               It does not ask any AI engine about you. Nothing here measures whether ChatGPT
               currently recommends your brand, and a high score is not a promise of a citation.
@@ -214,14 +214,14 @@ export default function ReportPage() {
               Once you have a score, the{" "}
               <Link
                 href="/readiness-badge/"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
               >
                 badge generator
               </Link>{" "}
               turns it into something you can embed, and the{" "}
               <Link
                 href="/llms-txt-studio/"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
               >
                 llms.txt studio
               </Link>{" "}

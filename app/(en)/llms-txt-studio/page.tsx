@@ -26,8 +26,8 @@ import StudioWidget from "./StudioWidget";
  */
 export default function StudioPage() {
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+    <div className="min-h-screen bg-[var(--surface-0)] text-[var(--ink-1)] font-sans pb-20">
+      <header className="border-b border-[var(--line)] bg-[var(--surface-0)]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <Link
@@ -37,15 +37,15 @@ export default function StudioPage() {
               <span className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
                 L
               </span>
-              <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
+              <span className="font-extrabold text-base tracking-tight text-[var(--ink-1)]">LLMention</span>
             </Link>
             <nav
               aria-label="Sections"
-              className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs"
+              className="hidden md:flex items-center gap-1 bg-[var(--surface-2)] p-1 rounded-xl border border-[var(--line)] text-xs"
             >
               <Link
                 href="/report/"
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink-1)] transition-all"
               >
                 Audit Overview
               </Link>
@@ -54,13 +54,13 @@ export default function StudioPage() {
               </span>
               <Link
                 href="/readiness-badge/"
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink-1)] transition-all"
               >
                 Readiness Badge
               </Link>
               <Link
                 href="/methodology/"
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink-1)] transition-all"
               >
                 Methodology
               </Link>
@@ -71,13 +71,13 @@ export default function StudioPage() {
 
       <main className="max-w-7xl mx-auto px-6 pt-10">
         <div className="mb-8">
-          <span className="text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
+          <span className="text-[10px] font-mono font-bold bg-indigo-500/10 text-[var(--accent)] border border-indigo-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
             Markdown Studio
           </span>
-          <h1 className="text-3xl font-extrabold text-white mt-2 tracking-tight">
+          <h1 className="text-3xl font-extrabold text-[var(--ink-1)] mt-2 tracking-tight">
             Free /llms.txt Generator
           </h1>
-          <p className="text-sm text-gray-400 mt-2 max-w-2xl">
+          <p className="text-sm text-[var(--ink-2)] mt-2 max-w-2xl">
             Enter a domain and this tool reads its homepage, then drafts an llms.txt file from the
             real title, description and internal links it finds. No account, no limit.
           </p>
@@ -85,7 +85,7 @@ export default function StudioPage() {
 
         <Suspense
           fallback={
-            <div className="bg-gray-950/60 border border-gray-800/80 rounded-2xl p-6 text-gray-500 text-sm">
+            <div className="bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-6 text-[var(--ink-3)] text-sm">
               Loading the generator…
             </div>
           }
@@ -93,9 +93,9 @@ export default function StudioPage() {
           <StudioWidget />
         </Suspense>
 
-        <section className="mt-16 max-w-3xl space-y-10 text-sm leading-relaxed text-gray-300">
+        <section className="mt-16 max-w-3xl space-y-10 text-sm leading-relaxed text-[var(--ink-2)]">
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">What is llms.txt?</h2>
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">What is llms.txt?</h2>
             <p>
               llms.txt is a markdown file placed at a site&apos;s root that gives a language model a
               short, structured summary of what the site is and which pages matter. It is a
@@ -109,7 +109,7 @@ export default function StudioPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">
               What does the generated file contain?
             </h2>
             <p>Everything below is taken from your homepage. Nothing is invented.</p>
@@ -122,27 +122,27 @@ export default function StudioPage() {
               </li>
               <li>A note on how the file was produced, so a reader can tell what it is.</li>
             </ul>
-            <p className="mt-3 text-gray-400">
+            <p className="mt-3 text-[var(--ink-2)]">
               It does not crawl your whole site. It reads one page, because that is what can be
               done honestly in a few seconds without a job queue.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">How do I deploy it?</h2>
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">How do I deploy it?</h2>
             <p>Save the output as llms.txt and upload it, then confirm it is reachable.</p>
             <ol className="list-decimal pl-5 mt-3 space-y-1.5">
               <li>Copy or download the generated file.</li>
               <li>
                 Upload it to your web root so that{" "}
-                <code className="text-gray-400">https://your-domain.com/llms.txt</code> returns it.
+                <code className="text-[var(--ink-2)]">https://your-domain.com/llms.txt</code> returns it.
               </li>
               <li>
                 Check the response is HTTP 200 with a body, not a redirect to a login page or an
                 HTML error page.
               </li>
               <li>
-                Add a <code className="text-gray-400">Sitemap:</code> line to robots.txt if it is
+                Add a <code className="text-[var(--ink-2)]">Sitemap:</code> line to robots.txt if it is
                 not already there.
               </li>
             </ol>
@@ -150,7 +150,7 @@ export default function StudioPage() {
               The deployment details, including what a refusal looks like, are in{" "}
               <Link
                 href="/docs/llms-txt-deployment/"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
               >
                 the llms.txt deployment guide
               </Link>
@@ -159,7 +159,7 @@ export default function StudioPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">Is llms.txt a ranking factor?</h2>
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">Is llms.txt a ranking factor?</h2>
             <p>
               No. Google has said it does not use llms.txt in Search, and crawler support across the
               other engines is inconsistent. It is worth about 5% of the total score on this site.
@@ -170,13 +170,13 @@ export default function StudioPage() {
               measured gains in the published research came from citing sources and adding expert
               quotations, not from adding files:
             </p>
-            <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-gray-400">
+            <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-[var(--ink-2)]">
               Adding source citations produced the largest measured visibility gain for
               low-ranking sites, at +115%, ahead of the addition of expert quotations at +41% and
               statistics at +30-40%, across the strategies tested on generative engines. —{" "}
               <a
                 href="https://arxiv.org/abs/2311.09735"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
                 rel="noopener"
               >
                 Generative Engine Optimization, KDD 2024
@@ -188,7 +188,7 @@ export default function StudioPage() {
               You can read the whole weighting, and the limits of what it can tell you, on the{" "}
               <Link
                 href="/methodology/"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
               >
                 methodology page
               </Link>
@@ -197,12 +197,12 @@ export default function StudioPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">The shape of the file</h2>
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">The shape of the file</h2>
             <p>
               Every file this tool produces has the same three parts, so you can see what you will
               get before you run it.
             </p>
-            <pre className="mt-3 bg-[#070A10] border border-gray-800 rounded-xl p-4 text-xs font-mono text-gray-300 overflow-x-auto leading-relaxed">{`# Your Site Name
+            <pre className="mt-3 bg-[var(--surface-0)] border border-[var(--line)] rounded-xl p-4 text-xs font-mono text-[var(--ink-2)] overflow-x-auto leading-relaxed">{`# Your Site Name
 
 > One sentence from your meta description, describing what the site is.
 
@@ -211,7 +211,7 @@ export default function StudioPage() {
 
 ## Notes
 - Generated from the homepage on the date shown, by LLMention.`}</pre>
-            <p className="mt-3 text-gray-400">
+            <p className="mt-3 text-[var(--ink-2)]">
               Three to five sections is normal. If your homepage links to twenty pages, the draft
               will list twenty, and trimming it is the part that needs your judgement rather than
               the tool&apos;s.
@@ -219,7 +219,7 @@ export default function StudioPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">
               How does the scanner score llms.txt?
             </h2>
             <p>
@@ -230,14 +230,14 @@ export default function StudioPage() {
             <div className="overflow-x-auto mt-4">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-gray-800">
-                    <th className="py-2 pr-4 font-semibold text-white">Check</th>
-                    <th className="py-2 pr-4 font-semibold text-white">Points</th>
-                    <th className="py-2 font-semibold text-white">What has to be true</th>
+                  <tr className="border-b border-[var(--line)]">
+                    <th className="py-2 pr-4 font-semibold text-[var(--ink-1)]">Check</th>
+                    <th className="py-2 pr-4 font-semibold text-[var(--ink-1)]">Points</th>
+                    <th className="py-2 font-semibold text-[var(--ink-1)]">What has to be true</th>
                   </tr>
                 </thead>
-                <tbody className="text-gray-400">
-                  <tr className="border-b border-gray-800/60">
+                <tbody className="text-[var(--ink-2)]">
+                  <tr className="border-b border-[var(--line)]">
                     <td className="py-2 pr-4 font-mono">llms-txt</td>
                     <td className="py-2 pr-4">4</td>
                     <td className="py-2">
@@ -255,7 +255,7 @@ export default function StudioPage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-gray-400">
+            <p className="mt-4 text-[var(--ink-2)]">
               Note that the check reads the file&apos;s contents, not its status code. A 200
               response with an empty body scores nothing, and that distinction is deliberate:
               measuring whether a file is served is not the same as measuring whether it says
@@ -264,7 +264,7 @@ export default function StudioPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">Questions about the output</h2>
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">Questions about the output</h2>
             <script
               type="application/ld+json"
               dangerouslySetInnerHTML={{
@@ -308,7 +308,7 @@ export default function StudioPage() {
                 }),
               }}
             />
-            <h3 className="font-semibold text-white mt-4 mb-1">
+            <h3 className="font-semibold text-[var(--ink-1)] mt-4 mb-1">
               Does llms.txt replace robots.txt?
             </h3>
             <p>
@@ -317,16 +317,16 @@ export default function StudioPage() {
               enforces it.
             </p>
 
-            <h3 className="font-semibold text-white mt-5 mb-1">
+            <h3 className="font-semibold text-[var(--ink-1)] mt-5 mb-1">
               Where exactly does the file go?
             </h3>
             <p>
               At the site root, so that{" "}
-              <code className="text-gray-400">https://your-domain.com/llms.txt</code> returns it
+              <code className="text-[var(--ink-2)]">https://your-domain.com/llms.txt</code> returns it
               directly with an HTTP 200 and a body.
             </p>
 
-            <h3 className="font-semibold text-white mt-5 mb-1">
+            <h3 className="font-semibold text-[var(--ink-1)] mt-5 mb-1">
               Will this make ChatGPT recommend my site?
             </h3>
             <p>
@@ -334,7 +334,7 @@ export default function StudioPage() {
               model is able to read. It does not change what a model decides to say.
             </p>
 
-            <h3 className="font-semibold text-white mt-5 mb-1">
+            <h3 className="font-semibold text-[var(--ink-1)] mt-5 mb-1">
               What if my homepage is rendered entirely in JavaScript?
             </h3>
             <p>
@@ -345,7 +345,7 @@ export default function StudioPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">
               What the generated file cannot do
             </h2>
             <p>
@@ -370,7 +370,7 @@ export default function StudioPage() {
               above can be specific:{" "}
               <a
                 href="https://github.com/Alex13192/geo-scanner"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
                 rel="noopener"
               >
                 github.com/Alex13192/geo-scanner
@@ -382,15 +382,15 @@ export default function StudioPage() {
         </section>
       </main>
 
-      <footer className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-800/80 text-xs text-gray-500">
+      <footer className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[var(--line)] text-xs text-[var(--ink-3)]">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-4">
-          <Link href="/about/" className="hover:text-gray-300 transition-colors">
+          <Link href="/about/" className="hover:text-[var(--ink-1)] transition-colors">
             About
           </Link>
-          <Link href="/study/" className="hover:text-gray-300 transition-colors">
+          <Link href="/study/" className="hover:text-[var(--ink-1)] transition-colors">
             Study
           </Link>
-          <Link href="/methodology/" className="hover:text-gray-300 transition-colors">
+          <Link href="/methodology/" className="hover:text-[var(--ink-1)] transition-colors">
             Methodology
           </Link>
         </div>

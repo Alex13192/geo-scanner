@@ -193,13 +193,13 @@ export default function ReportWidget() {
 
   if (!rootDomain) {
     return (
-      <div className="min-h-screen bg-[#070A10] text-white font-sans flex items-center justify-center px-6">
-        <div className="max-w-md w-full bg-gray-950/60 border border-gray-800/80 rounded-2xl p-8 space-y-5 text-center">
+      <div className="min-h-screen bg-[var(--surface-0)] text-[var(--ink-1)] font-sans flex items-center justify-center px-6">
+        <div className="max-w-md w-full bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-8 space-y-5 text-center">
           <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-lg">
             L
           </div>
-          <h2 className="text-lg font-bold text-white">No domain to audit</h2>
-          <p className="text-xs text-gray-400 leading-relaxed">
+          <h2 className="text-lg font-bold text-[var(--ink-1)]">No domain to audit</h2>
+          <p className="text-xs text-[var(--ink-2)] leading-relaxed">
             This page reports on one site at a time and has to be told which one. Enter a domain
             below, or start from the homepage.
           </p>
@@ -218,7 +218,7 @@ export default function ReportWidget() {
               name="domain"
               type="text"
               placeholder="your-domain.com"
-              className="flex-1 bg-[#070A10] border border-gray-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-all font-mono"
+              className="flex-1 bg-[var(--surface-0)] border border-[var(--line)] rounded-xl px-4 py-2.5 text-xs text-[var(--ink-1)] placeholder-[var(--ink-3)] focus:outline-none focus:border-blue-500 transition-all font-mono"
             />
             <button
               type="submit"
@@ -227,7 +227,7 @@ export default function ReportWidget() {
               Run audit
             </button>
           </form>
-          <a href="/" className="inline-block text-xs text-blue-400 hover:text-blue-300 underline">
+          <a href="/" className="inline-block text-xs text-[var(--accent)] hover:opacity-75 underline">
             ← Back to the scanner
           </a>
         </div>
@@ -236,35 +236,35 @@ export default function ReportWidget() {
   }
 
   return (
-    <div className="text-white font-sans">
+    <div className="text-[var(--ink-1)] font-sans">
       {/* 主体内容 */}
       <section aria-label="Scan result" className="mt-2">
         {/* 顶部 Domain 概览 */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-gray-950/60 border border-gray-800/80 p-8 rounded-2xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-[var(--surface-1)] border border-[var(--line)] p-8 rounded-2xl">
           <div>
-            <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
+            <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-[var(--accent)] border border-blue-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
               GEO Server Scanner
             </span>
-            <p className="text-lg font-bold text-white mt-3 tracking-tight">
-              Live result for <span className="text-blue-400">{rootDomain}</span>
+            <p className="text-lg font-bold text-[var(--ink-1)] mt-3 tracking-tight">
+              Live result for <span className="text-[var(--accent)]">{rootDomain}</span>
             </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-[var(--ink-2)] mt-1">
               Live scanned via backend edge crawler across multi-dimensional AI optimization vectors.
             </p>
           </div>
 
-          <div className="flex items-center gap-6 bg-[#070A10] p-4 rounded-xl border border-gray-800">
+          <div className="flex items-center gap-6 bg-[var(--surface-0)] p-4 rounded-xl border border-[var(--line)]">
             <div className="text-center">
               {loading ? (
-                <div className="text-sm text-blue-400 animate-pulse font-mono py-2">Scanning via Edge...</div>
+                <div className="text-sm text-[var(--accent)] animate-pulse font-mono py-2">Scanning via Edge...</div>
               ) : siteUnreachable ? (
-                <div className="text-4xl font-black text-red-400 font-mono py-1">--</div>
+                <div className="text-4xl font-black text-red-600 font-mono py-1">--</div>
               ) : (
                 <div className="flex items-baseline justify-center gap-2">
                   <span className={`text-4xl font-black font-mono ${scoreTextColor(overallScore)}`}>
                     {overallScore}
                   </span>
-                  <span className="text-sm text-gray-500 font-mono">/100</span>
+                  <span className="text-sm text-[var(--ink-3)] font-mono">/100</span>
                   {grade && (
                     <span
                       className={`text-base font-black font-mono px-2 py-0.5 rounded-lg border ${gradeBadgeClass(overallScore)}`}
@@ -274,21 +274,21 @@ export default function ReportWidget() {
                   )}
                 </div>
               )}
-              <div className="text-[11px] text-gray-400 mt-1">Overall GEO Score</div>
+              <div className="text-[11px] text-[var(--ink-2)] mt-1">Overall GEO Score</div>
               {!loading && !siteUnreachable && gradeLabel && (
-                <div className="text-[11px] text-gray-500 mt-0.5">{gradeLabel}</div>
+                <div className="text-[11px] text-[var(--ink-3)] mt-0.5">{gradeLabel}</div>
               )}
               {!loading && !siteUnreachable && checksRun > 0 && (
-                <div className="text-[10px] text-gray-600 font-mono mt-1">
+                <div className="text-[10px] text-[var(--ink-3)] font-mono mt-1">
                   {checksPassed}/{checksRun} checks passed
                 </div>
               )}
             </div>
-            <div className="h-8 w-px bg-gray-800"></div>
+            <div className="h-8 w-px bg-[var(--surface-1)]"></div>
             <button
               disabled={loading || siteUnreachable}
               onClick={() => navigateTo(`/readiness-badge/?domain=${rootDomain}&score=${overallScore}`)}
-              className="text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 px-3.5 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
+              className="text-xs bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 border border-purple-500/30 px-3.5 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
             >
               Get Badge 🛡️️
             </button>
@@ -300,13 +300,13 @@ export default function ReportWidget() {
             challenge response, this has to be said before the numbers are. */}
         {!loading && !siteUnreachable && scoreBasis !== "homepage" && (
           <div className="mb-8 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 space-y-2">
-            <span className="inline-block text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded uppercase tracking-wider">
+            <span className="inline-block text-[10px] font-mono font-bold bg-amber-500/20 text-amber-700 border border-amber-500/30 px-2 py-0.5 rounded uppercase tracking-wider">
               Read this first
             </span>
-            <h2 className="text-sm font-bold text-amber-200">
+            <h2 className="text-sm font-bold text-amber-700">
               This score describes a {scoreBasis}, not your page
             </h2>
-            <p className="text-xs text-amber-100/80 leading-relaxed">
+            <p className="text-xs text-amber-700 leading-relaxed">
               The homepage did not return HTTP 200, so what was analysed is the body your server
               sent &mdash; a block page, a challenge or an error document. Every dimension below
               describes that response, not your content.{" "}
@@ -331,9 +331,9 @@ export default function ReportWidget() {
         )}
 
         {!loading && !siteUnreachable && truncated && (
-          <div className="mb-8 bg-gray-800/40 border border-gray-700 rounded-2xl p-6 space-y-2">
-            <h2 className="text-sm font-bold text-gray-200">The response was truncated</h2>
-            <p className="text-xs text-gray-400 leading-relaxed">
+          <div className="mb-8 bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-6 space-y-2">
+            <h2 className="text-sm font-bold text-[var(--ink-1)]">The response was truncated</h2>
+            <p className="text-xs text-[var(--ink-2)] leading-relaxed">
               The homepage exceeded the 2&nbsp;MB read limit, so scoring stopped partway through
               the document. Checks about content length, structure and extraction are therefore
               measured against an incomplete page and may understate the real result.
@@ -342,15 +342,15 @@ export default function ReportWidget() {
         )}
 
         {siteUnreachable ? (
-          <div className="text-center py-16 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm">
+          <div className="text-center py-16 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-600 text-sm">
             ❌ Unable to reach <span className="font-mono font-bold">{rootDomain}</span>. Please check if the domain is valid and live.
           </div>
         ) : (
           <>
             {/* Weighted dimension breakdown. Weights are published at /methodology. */}
             <div className="mb-4 flex items-baseline justify-between gap-4">
-              <h2 className="text-lg font-bold text-white tracking-tight">Score breakdown</h2>
-              <span className="text-[11px] text-gray-500">
+              <h2 className="text-lg font-bold text-[var(--ink-1)] tracking-tight">Score breakdown</h2>
+              <span className="text-[11px] text-[var(--ink-3)]">
                 {dimensions.length > 0
                   ? `${dimensions.length} weighted dimensions · 100 points total`
                   : "6 weighted dimensions"}
@@ -360,19 +360,19 @@ export default function ReportWidget() {
               {(dimensions.length > 0 ? dimensions : legacyDimensions(metrics)).map((d) => (
                 <div
                   key={d.id}
-                  className="bg-gray-950/40 border border-gray-800/80 p-4 rounded-xl"
+                  className="bg-[var(--surface-1)] border border-[var(--line)] p-4 rounded-xl"
                   title={d.rationale || undefined}
                 >
                   <div className="flex justify-between items-center mb-2 gap-3">
-                    <span className="text-xs text-gray-300 font-medium">{d.label}</span>
+                    <span className="text-xs text-[var(--ink-2)] font-medium">{d.label}</span>
                     <span className="flex items-baseline gap-2 shrink-0">
-                      <span className="text-[10px] text-gray-600 font-mono">{d.weight}%</span>
+                      <span className="text-[10px] text-[var(--ink-3)] font-mono">{d.weight}%</span>
                       <span className={`text-sm font-bold font-mono ${scoreTextColor(d.score)}`}>
                         {loading ? "--" : d.score}
                       </span>
                     </span>
                   </div>
-                  <div className="w-full bg-gray-900 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-[var(--surface-2)] rounded-full h-1.5 overflow-hidden">
                     <div
                       className={`h-1.5 rounded-full transition-all duration-500 ${scoreBarColor(d.score)}`}
                       style={{ width: loading ? "0%" : `${d.score}%` }}
@@ -384,16 +384,16 @@ export default function ReportWidget() {
 
             {/* 优化建议列表 Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white tracking-tight">Optimization Advice</h2>
-              <div className="flex items-center gap-1 bg-gray-950 p-1 rounded-xl border border-gray-800 text-xs">
+              <h2 className="text-lg font-bold text-[var(--ink-1)] tracking-tight">Optimization Advice</h2>
+              <div className="flex items-center gap-1 bg-[var(--surface-0)] p-1 rounded-xl border border-[var(--line)] text-xs">
                 {(["all", "high", "medium", "low"] as const).map((filter) => (
                   <button
                     key={filter}
                     onClick={() => setActiveFilter(filter)}
                     className={`px-3 py-1.5 rounded-lg capitalize font-medium transition-all ${
                       activeFilter === filter
-                        ? "bg-gray-800 text-white shadow-sm"
-                        : "text-gray-400 hover:text-white"
+                        ? "bg-[var(--surface-1)] text-[var(--ink-1)] shadow-sm"
+                        : "text-[var(--ink-2)] hover:text-[var(--ink-1)]"
                     }`}
                   >
                     {filter}
@@ -404,12 +404,12 @@ export default function ReportWidget() {
 
             {/* 加载中与问题列表 */}
             {loading ? (
-              <div className="text-center py-20 bg-gray-950/20 rounded-2xl border border-gray-800/40">
+              <div className="text-center py-20 bg-[var(--surface-1)] rounded-2xl border border-[var(--line)]">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4"></div>
-                <p className="text-sm text-gray-400 font-mono">Crawling and analyzing https://{rootDomain} via edge nodes...</p>
+                <p className="text-sm text-[var(--ink-2)] font-mono">Crawling and analyzing https://{rootDomain} via edge nodes...</p>
               </div>
             ) : issues.length === 0 ? (
-              <div className="text-center py-16 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-400 text-sm font-mono">
+              <div className="text-center py-16 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-600 text-sm font-mono">
                 🎉 Perfect Score! No major GEO issues found for this domain.
               </div>
             ) : (
@@ -417,32 +417,32 @@ export default function ReportWidget() {
                 {filteredIssues.map((issue) => (
                   <div
                     key={issue.id}
-                    className="bg-gray-950/40 border border-gray-800/80 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    className="bg-[var(--surface-1)] border border-[var(--line)] p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span
                           className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase ${
                             issue.severity === "high"
-                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                              ? "bg-red-500/10 text-red-600 border border-red-500/20"
                               : issue.severity === "medium"
-                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                              ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                              : "bg-blue-500/10 text-[var(--accent)] border border-blue-500/20"
                           }`}
                         >
                           {issue.severity}
                         </span>
-                        <span className="text-xs text-gray-400 font-mono">{issue.category}</span>
+                        <span className="text-xs text-[var(--ink-2)] font-mono">{issue.category}</span>
                       </div>
-                      <h3 className="text-base font-bold text-white">{issue.title}</h3>
-                      <p className="text-xs text-gray-400">
-                        <span className="text-gray-500">What we found: </span>
+                      <h3 className="text-base font-bold text-[var(--ink-1)]">{issue.title}</h3>
+                      <p className="text-xs text-[var(--ink-2)]">
+                        <span className="text-[var(--ink-3)]">What we found: </span>
                         {issue.summary}
                       </p>
                     </div>
 
-                    <div className="bg-[#070A10] p-3 rounded-xl border border-gray-800 text-xs text-gray-300 md:max-w-xs">
-                      <span className="text-blue-400 font-bold block mb-1">Recommendation:</span>
+                    <div className="bg-[var(--surface-0)] p-3 rounded-xl border border-[var(--line)] text-xs text-[var(--ink-2)] md:max-w-xs">
+                      <span className="text-[var(--accent)] font-bold block mb-1">Recommendation:</span>
                       {issue.recommendation}
                     </div>
                   </div>

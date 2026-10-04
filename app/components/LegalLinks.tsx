@@ -38,7 +38,7 @@ export default function LegalLinks({ className = "" }: { className?: string }) {
       className={`flex flex-wrap items-center justify-center gap-x-5 gap-y-2 ${className}`.trim()}
     >
       {LINKS.map((link) => (
-        <a key={link.href} href={link.href} className="hover:text-gray-300 transition-colors">
+        <a key={link.href} href={link.href} className="hover:text-[var(--ink-1)] transition-colors">
           {link.label}
         </a>
       ))}

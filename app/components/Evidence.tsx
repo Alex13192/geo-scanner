@@ -88,12 +88,12 @@ export default function Evidence({
 }: EvidenceProps) {
   return (
     <div>
-      <h2 className="text-xl font-bold text-white mb-3">{title}</h2>
-      <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-gray-400">
+      <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">{title}</h2>
+      <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-[var(--ink-2)]">
         {quote} —{" "}
         <a
           href={attributionUrl}
-          className="text-blue-400 hover:text-blue-300 underline"
+          className="text-[var(--accent)] hover:opacity-75 underline"
           rel="noopener"
         >
           {attribution}
@@ -102,18 +102,18 @@ export default function Evidence({
       {note ? <p className="mt-4">{note}</p> : null}
       {sources.length > 0 ? (
         <>
-          <h3 className="font-semibold text-white mt-5 mb-2">Primary sources</h3>
+          <h3 className="font-semibold text-[var(--ink-1)] mt-5 mb-2">Primary sources</h3>
           <ul className="list-disc pl-5 space-y-1.5">
             {sources.map((source) => (
               <li key={source.url}>
                 <a
                   href={source.url}
-                  className="text-blue-400 hover:text-blue-300 underline"
+                  className="text-[var(--accent)] hover:opacity-75 underline"
                   rel="noopener"
                 >
                   {source.label}
                 </a>
-                {source.note ? <span className="text-gray-400"> — {source.note}</span> : null}
+                {source.note ? <span className="text-[var(--ink-2)]"> — {source.note}</span> : null}
               </li>
             ))}
           </ul>

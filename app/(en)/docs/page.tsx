@@ -6,6 +6,20 @@ import PageFooter from "@/app/components/PageFooter";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 
+/**
+ * The guides hub.
+ *
+ * Laid out in the same full-width bands as the articles it links to: a
+ * .band--alt hero carrying the colour, then the grid. The grid itself was
+ * max-w-6xl (1152px) on a background of the same colour; at .wrap it is 1280px,
+ * and the hero band above it is what actually removes the "dead gutter" reading
+ * - see the note in _components/ArticleShell.tsx for the measurement.
+ *
+ * The prose under the grid stays at max-w-3xl. A table and a Q&A block are read
+ * the same way paragraphs are, and 1280px of body text is not more readable than
+ * 768px of it.
+ */
+
 interface Guide {
   id: string;
   category: "Setup" | "Content" | "Technical" | "Schema";
@@ -62,140 +76,182 @@ export default function DocsPage() {
     : guides.filter(g => g.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-[#070A10] text-white selection:bg-blue-500 selection:text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
+    <div className="min-h-screen bg-[var(--surface-0)] text-[var(--ink-1)] selection:bg-blue-500 selection:text-white font-sans">
+      <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--nav-bg)] backdrop-blur-xl backdrop-saturate-150">
+        <div className="wrap flex h-[52px] items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <span
+              aria-hidden="true"
+              className="grid h-6 w-6 place-items-center rounded-[7px] bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 text-[11px] font-black text-white"
+            >
               L
-            </div>
-            <span className="font-extrabold text-base tracking-tight text-white">LLMention Docs</span>
+            </span>
+            <span className="text-[15px] font-semibold tracking-tight text-[var(--ink-1)]">
+              LLMention Docs
+            </span>
           </Link>
           <Link
             href="/"
-            className="text-xs bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 font-medium px-4 py-2 rounded-xl transition-all"
+            className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-4 py-1.5 text-[13px] font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--ink-1)]"
           >
             ← Back to Scanner
           </Link>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 pt-12 space-y-10">
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-            LLMention Knowledge Hub
+      <main>
+        <section className="band band--alt border-b border-[var(--line)]">
+          <div className="wrap py-14 md:py-20">
+            <div className="max-w-3xl space-y-4">
+              <span className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
+                LLMention Knowledge Hub
+              </span>
+              <h1 className="text-3xl font-semibold leading-[1.1] tracking-[-0.028em] md:text-5xl">
+                Generative Engine Optimization Guides
+              </h1>
+              <p className="text-base leading-relaxed text-[var(--ink-2)] md:text-lg">
+                Step-by-step technical blueprints to help engineering and SEO teams optimize brand
+                presence in ChatGPT, Perplexity, and Claude.
+              </p>
+            </div>
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-            Generative Engine Optimization Guides
-          </h1>
-          <p className="text-gray-400 text-sm md:text-base max-w-2xl leading-relaxed">
-            Step-by-step technical blueprints to help engineering and SEO teams optimize brand presence in ChatGPT, Perplexity, and Claude.
-          </p>
-        </div>
+        </section>
 
-        <div className="flex items-center gap-2 border-b border-gray-800 pb-4 text-xs">
-          {["All", "Setup", "Content", "Schema", "Technical"].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl font-medium transition-all cursor-pointer ${
-                selectedCategory === cat
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-900 text-gray-400 hover:text-white border border-gray-800"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        <section className="band">
+          <div className="wrap py-14 md:py-16">
+            <div className="flex flex-wrap items-center gap-2 border-b border-[var(--line)] pb-4 text-xs">
+              {["All", "Setup", "Content", "Schema", "Technical"].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  aria-pressed={selectedCategory === cat}
+                  className={`cursor-pointer rounded-xl px-4 py-2 font-medium transition-all ${
+                    selectedCategory === cat
+                      ? "bg-blue-600 text-white"
+                      : "border border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink-2)] hover:text-[var(--ink-1)]"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredGuides.map((guide) => (
-            <Link
-              key={guide.id}
-              href={`/docs/${guide.id}/`}
-              className="bg-gray-900/60 border border-gray-800/80 hover:border-blue-500/50 p-6 rounded-2xl transition-all space-y-4 flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="px-2.5 py-0.5 rounded-full font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">
-                    {guide.category}
-                  </span>
-                  <span className="text-gray-500 font-mono">{guide.readTime}</span>
-                </div>
-                <h3 className="text-base font-bold text-white leading-snug">{guide.title}</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">{guide.description}</p>
+            <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+              {filteredGuides.map((guide) => (
+                <Link
+                  key={guide.id}
+                  href={`/docs/${guide.id}/`}
+                  className="flex flex-col justify-between gap-5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 transition-all hover:border-blue-500/50 hover:shadow-lg"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 font-mono font-semibold text-[var(--accent)]">
+                        {guide.category}
+                      </span>
+                      <span className="font-mono text-[var(--ink-3)]">{guide.readTime}</span>
+                    </div>
+                    <h2 className="text-lg font-semibold leading-snug tracking-tight">
+                      {guide.title}
+                    </h2>
+                    <p className="text-sm leading-relaxed text-[var(--ink-2)]">
+                      {guide.description}
+                    </p>
+                  </div>
+
+                  {guide.codeSnippet && (
+                    <pre className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface-0)] p-3 font-mono text-[11px] text-[var(--accent)]">
+                      {guide.codeSnippet}
+                    </pre>
+                  )}
+
+                  <span className="text-sm font-medium text-[var(--accent)]">Read guide →</span>
+                </Link>
+              ))}
+            </div>
+
+            {/* Prose, table and Q&A: all bounded to the same readable measure. */}
+            <div className="mx-auto mt-16 max-w-3xl space-y-6 text-[15px] leading-relaxed text-[var(--ink-2)]">
+              <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--ink-1)]">
+                The guides
+              </h2>
+              <p>
+                Four technical guides. Together they cover the checks the scanner most often fails
+                on a site that is otherwise well built.
+              </p>
+              <div className="overflow-x-auto rounded-xl border border-[var(--line)]">
+                <table className="w-full border-collapse text-sm">
+                  <thead className="bg-[var(--surface-1)] text-[var(--ink-2)]">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold">Guide</th>
+                      <th className="px-4 py-3 text-left font-semibold">Topic</th>
+                      <th className="px-4 py-3 text-left font-semibold">Read time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-[var(--line)]">
+                      <td className="px-4 py-3 align-top">
+                        How to generate and deploy an llms.txt file
+                      </td>
+                      <td className="px-4 py-3 align-top">Setup</td>
+                      <td className="px-4 py-3 align-top">3 min read</td>
+                    </tr>
+                    <tr className="border-t border-[var(--line)]">
+                      <td className="px-4 py-3 align-top">
+                        Configuring robots.txt and WAF for GPTBot and PerplexityBot
+                      </td>
+                      <td className="px-4 py-3 align-top">Technical</td>
+                      <td className="px-4 py-3 align-top">4 min read</td>
+                    </tr>
+                    <tr className="border-t border-[var(--line)]">
+                      <td className="px-4 py-3 align-top">
+                        Optimizing headings for direct AI citation
+                      </td>
+                      <td className="px-4 py-3 align-top">Content</td>
+                      <td className="px-4 py-3 align-top">4 min read</td>
+                    </tr>
+                    <tr className="border-t border-[var(--line)]">
+                      <td className="px-4 py-3 align-top">
+                        Implementing Schema.org JSON-LD for entity disambiguation
+                      </td>
+                      <td className="px-4 py-3 align-top">Schema</td>
+                      <td className="px-4 py-3 align-top">5 min read</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
+            </div>
 
-              {guide.codeSnippet && (
-                <pre className="bg-[#070A10] border border-gray-800/80 p-3 rounded-xl text-[11px] text-blue-200 font-mono overflow-x-auto">
-                  {guide.codeSnippet}
-                </pre>
-              )}
-
-              <span className="text-xs text-blue-400 font-medium">Read guide →</span>
-            </Link>
-          ))}
-        </div>
-                <div className="mt-16 space-y-6 text-sm leading-relaxed text-gray-300">
-          <h2 className="text-xl font-bold text-white">The guides</h2>
-          <p>Four technical guides. Together they cover the checks the scanner most often fails on a site that is otherwise well built.</p>
-          <div className="overflow-x-auto">
-          <table className="w-full text-xs border border-gray-800/80 rounded-xl overflow-hidden">
-            <thead className="bg-gray-900/60 text-gray-400">
-              <tr>
-              <th className="text-left px-4 py-2.5 font-semibold">Guide</th>
-              <th className="text-left px-4 py-2.5 font-semibold">Topic</th>
-              <th className="text-left px-4 py-2.5 font-semibold">Read time</th>
-              </tr>
-            </thead>
-            <tbody>
-            <tr className="border-t border-gray-800/80">
-              <td className="px-4 py-2.5 align-top">How to generate and deploy an llms.txt file</td>
-              <td className="px-4 py-2.5 align-top">Setup</td>
-              <td className="px-4 py-2.5 align-top">3 min read</td>
-            </tr>
-            <tr className="border-t border-gray-800/80">
-              <td className="px-4 py-2.5 align-top">Configuring robots.txt and WAF for GPTBot and PerplexityBot</td>
-              <td className="px-4 py-2.5 align-top">Technical</td>
-              <td className="px-4 py-2.5 align-top">4 min read</td>
-            </tr>
-            <tr className="border-t border-gray-800/80">
-              <td className="px-4 py-2.5 align-top">Optimizing headings for direct AI citation</td>
-              <td className="px-4 py-2.5 align-top">Content</td>
-              <td className="px-4 py-2.5 align-top">4 min read</td>
-            </tr>
-            <tr className="border-t border-gray-800/80">
-              <td className="px-4 py-2.5 align-top">Implementing Schema.org JSON-LD for entity disambiguation</td>
-              <td className="px-4 py-2.5 align-top">Schema</td>
-              <td className="px-4 py-2.5 align-top">5 min read</td>
-            </tr>
-            </tbody>
-          </table>
+            <div className="mx-auto mt-16 max-w-3xl space-y-10 text-[15px] leading-relaxed text-[var(--ink-2)]">
+              <Faq
+                title="Questions about these guides"
+                items={[
+                  {
+                    q: "Where should I start?",
+                    a: "With the llms.txt deployment guide if you have not published a context file, and with the robots.txt guide if AI crawlers might be turned away at your firewall before robots.txt is even read.",
+                  },
+                  {
+                    q: "Are the guides specific to one AI engine?",
+                    a: "No. They cover the crawler user-agents and markup conventions the major engines have in common, and they say plainly where support is inconsistent.",
+                  },
+                  {
+                    q: "Do the guides replace the scan?",
+                    a: "No, they are complements. A guide explains what a rule wants; the scan tells you whether your page satisfies it, and the scanner applies the same rules these guides describe.",
+                  },
+                ]}
+              />
+              <Evidence
+                quote={GEO_PRIMARY_QUOTE}
+                attribution="Generative Engine Optimization, KDD 2024"
+                attributionUrl="https://arxiv.org/abs/2311.09735"
+                sources={GEO_PRIMARY_SOURCES}
+                note="The weightings on this site follow that measurement rather than taste, and the parts of the picture a single-URL scan cannot see are stated rather than left out."
+              />
+            </div>
           </div>
-        </div>
-
-<div className="mt-16 space-y-10 text-sm leading-relaxed text-gray-300">
-          <Faq
-            title="Questions about these guides"
-            items={[
-            { q: "Where should I start?", a: "With the llms.txt deployment guide if you have not published a context file, and with the robots.txt guide if AI crawlers might be turned away at your firewall before robots.txt is even read." },
-            { q: "Are the guides specific to one AI engine?", a: "No. They cover the crawler user-agents and markup conventions the major engines have in common, and they say plainly where support is inconsistent." },
-            { q: "Do the guides replace the scan?", a: "No, they are complements. A guide explains what a rule wants; the scan tells you whether your page satisfies it, and the scanner applies the same rules these guides describe." },
-            ]}
-          />
-          <Evidence
-            quote={GEO_PRIMARY_QUOTE}
-            attribution="Generative Engine Optimization, KDD 2024"
-            attributionUrl="https://arxiv.org/abs/2311.09735"
-            sources={GEO_PRIMARY_SOURCES}
-            note="The weightings on this site follow that measurement rather than taste, and the parts of the picture a single-URL scan cannot see are stated rather than left out."
-          />
-        </div>
-
+        </section>
       </main>
 
-      <PageFooter width="6xl" brand="LLMention Knowledge Base" />
+      <PageFooter width="7xl" brand="LLMention Knowledge Base" />
     </div>
   );
 }

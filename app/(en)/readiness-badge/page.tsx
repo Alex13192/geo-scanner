@@ -22,8 +22,8 @@ import BadgeWidget from "./BadgeWidget";
  */
 export default function ReadinessBadgePage() {
   return (
-    <div className="min-h-screen bg-[#070A10] text-white font-sans pb-20">
-      <header className="border-b border-gray-800/80 bg-[#070A10]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+    <div className="min-h-screen bg-[var(--surface-0)] text-[var(--ink-1)] font-sans pb-20">
+      <header className="border-b border-[var(--line)] bg-[var(--surface-0)]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <Link
@@ -33,21 +33,21 @@ export default function ReadinessBadgePage() {
               <span className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center font-black text-white text-sm shadow-md">
                 L
               </span>
-              <span className="font-extrabold text-base tracking-tight text-white">LLMention</span>
+              <span className="font-extrabold text-base tracking-tight text-[var(--ink-1)]">LLMention</span>
             </Link>
             <nav
               aria-label="Sections"
-              className="hidden md:flex items-center gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800 text-xs"
+              className="hidden md:flex items-center gap-1 bg-[var(--surface-2)] p-1 rounded-xl border border-[var(--line)] text-xs"
             >
               <Link
                 href="/report/"
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink-1)] transition-all"
               >
                 Audit Overview
               </Link>
               <Link
                 href="/llms-txt-studio/"
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink-1)] transition-all"
               >
                 /llms.txt Studio
               </Link>
@@ -56,7 +56,7 @@ export default function ReadinessBadgePage() {
               </span>
               <Link
                 href="/methodology/"
-                className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white transition-all"
+                className="px-3 py-1.5 rounded-lg text-[var(--ink-2)] hover:text-[var(--ink-1)] transition-all"
               >
                 Methodology
               </Link>
@@ -67,13 +67,13 @@ export default function ReadinessBadgePage() {
 
       <main className="max-w-7xl mx-auto px-6 pt-10">
         <div className="mb-8">
-          <span className="text-[10px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
+          <span className="text-[10px] font-mono font-bold bg-purple-500/10 text-[var(--accent)] border border-purple-500/20 px-2.5 py-1 rounded-md uppercase tracking-wider">
             Embeddable Widget
           </span>
-          <h1 className="text-3xl font-extrabold text-white mt-2 tracking-tight">
+          <h1 className="text-3xl font-extrabold text-[var(--ink-1)] mt-2 tracking-tight">
             GEO Readiness Badge Generator
           </h1>
-          <p className="text-sm text-gray-400 mt-2 max-w-2xl">
+          <p className="text-sm text-[var(--ink-2)] mt-2 max-w-2xl">
             Embeds a badge carrying the score from a real scan. The number is read from the scan
             and cannot be edited, so the badge means something to whoever sees it.
           </p>
@@ -81,7 +81,7 @@ export default function ReadinessBadgePage() {
 
         <Suspense
           fallback={
-            <div className="bg-gray-950/60 border border-gray-800/80 rounded-2xl p-6 text-gray-500 text-sm">
+            <div className="bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-6 text-[var(--ink-3)] text-sm">
               Loading the badge generator…
             </div>
           }
@@ -89,9 +89,9 @@ export default function ReadinessBadgePage() {
           <BadgeWidget />
         </Suspense>
 
-        <section className="mt-16 max-w-3xl space-y-10 text-sm leading-relaxed text-gray-300">
+        <section className="mt-16 max-w-3xl space-y-10 text-sm leading-relaxed text-[var(--ink-2)]">
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">What the badge is</h2>
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">What the badge is</h2>
             <p>
               It is a shields.io image, generated from a scan of your homepage, that carries your
               score out of 100 and links back to the report it came from. Two formats are offered:
@@ -105,13 +105,13 @@ export default function ReadinessBadgePage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">
               Why the number cannot be typed in
             </h2>
             <p>
               It is worth being explicit, because most badge generators let you set your own score.
             </p>
-            <blockquote className="border-l-2 border-purple-500 pl-4 mt-4 text-gray-400">
+            <blockquote className="border-l-2 border-purple-500 pl-4 mt-4 text-[var(--ink-2)]">
               A badge whose number the bearer chooses is not evidence of anything. — the design
               note this page was built from
             </blockquote>
@@ -129,7 +129,7 @@ export default function ReadinessBadgePage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">How do I embed it?</h2>
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">How do I embed it?</h2>
             <p>Four steps, and the third one is the one people skip.</p>
             <ol className="list-decimal pl-5 mt-3 space-y-1.5">
               <li>Enter your domain and check the score. Nothing is generated until a scan succeeds.</li>
@@ -146,14 +146,14 @@ export default function ReadinessBadgePage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">
               What does the badge actually prove?
             </h2>
             <p>
               It proves that on the date of the scan, the homepage satisfied a specific, published
               set of checks. Nothing more. The scanner runs 40 checks across 12 weighted dimensions,
               and every rule and its point value is on the{" "}
-              <Link href="/methodology/" className="text-blue-400 hover:text-blue-300 underline">
+              <Link href="/methodology/" className="text-[var(--accent)] hover:opacity-75 underline">
                 methodology page
               </Link>
               .
@@ -161,13 +161,13 @@ export default function ReadinessBadgePage() {
             <div className="overflow-x-auto mt-4">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-gray-800">
-                    <th className="py-2 pr-4 font-semibold text-white">The badge shows</th>
-                    <th className="py-2 font-semibold text-white">The badge does not show</th>
+                  <tr className="border-b border-[var(--line)]">
+                    <th className="py-2 pr-4 font-semibold text-[var(--ink-1)]">The badge shows</th>
+                    <th className="py-2 font-semibold text-[var(--ink-1)]">The badge does not show</th>
                   </tr>
                 </thead>
-                <tbody className="text-gray-400">
-                  <tr className="border-b border-gray-800/60">
+                <tbody className="text-[var(--ink-2)]">
+                  <tr className="border-b border-[var(--line)]">
                     <td className="py-2 pr-4">
                       Whether crawlers can reach the page, from robots.txt and the response
                     </td>
@@ -175,7 +175,7 @@ export default function ReadinessBadgePage() {
                       Whether any AI engine currently mentions, recommends or cites you
                     </td>
                   </tr>
-                  <tr className="border-b border-gray-800/60">
+                  <tr className="border-b border-[var(--line)]">
                     <td className="py-2 pr-4">
                       Whether the markup gives a model something extractable: entity data,
                       structure, evidence
@@ -195,7 +195,7 @@ export default function ReadinessBadgePage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-gray-400">
+            <p className="mt-4 text-[var(--ink-2)]">
               The dimension carrying the most weight is crawler access at 16%, because a page that
               cannot be read has no path to being quoted at all. The dimensions carrying the least
               are delivery and international readiness, and the reasoning for every weight is
@@ -204,7 +204,7 @@ export default function ReadinessBadgePage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">
               Questions about embedding the badge
             </h2>
             <script
@@ -250,7 +250,7 @@ export default function ReadinessBadgePage() {
                 }),
               }}
             />
-            <h3 className="font-semibold text-white mt-4 mb-1">
+            <h3 className="font-semibold text-[var(--ink-1)] mt-4 mb-1">
               Does the badge update automatically?
             </h3>
             <p>
@@ -258,7 +258,7 @@ export default function ReadinessBadgePage() {
               that number until you replace the snippet.
             </p>
 
-            <h3 className="font-semibold text-white mt-5 mb-1">
+            <h3 className="font-semibold text-[var(--ink-1)] mt-5 mb-1">
               Can I set the score myself?
             </h3>
             <p>
@@ -266,7 +266,7 @@ export default function ReadinessBadgePage() {
               scan.
             </p>
 
-            <h3 className="font-semibold text-white mt-5 mb-1">
+            <h3 className="font-semibold text-[var(--ink-1)] mt-5 mb-1">
               What happens if my site blocks the scan?
             </h3>
             <p>
@@ -274,7 +274,7 @@ export default function ReadinessBadgePage() {
               rather than showing a number.
             </p>
 
-            <h3 className="font-semibold text-white mt-5 mb-1">
+            <h3 className="font-semibold text-[var(--ink-1)] mt-5 mb-1">
               Should I remove the badge if my score drops?
             </h3>
             <p>
@@ -284,20 +284,20 @@ export default function ReadinessBadgePage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-white mb-3">
+            <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">
               What the badge will not do for you
             </h2>
             <p>
               The badge is a small artefact, and it is fair to say what it is not, because the
               evidence for what actually moves visibility points elsewhere.
             </p>
-            <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-gray-400">
+            <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-[var(--ink-2)]">
               Adding source citations produced the largest measured visibility gain for
               low-ranking sites, at +115%, ahead of the addition of expert quotations at +41% and
               statistics at +30-40%, across the strategies tested on generative engines. —{" "}
               <a
                 href="https://arxiv.org/abs/2311.09735"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
                 rel="noopener"
               >
                 Generative Engine Optimization, KDD 2024
@@ -314,7 +314,7 @@ export default function ReadinessBadgePage() {
               The code, including the rule set this badge is scored against, is at{" "}
               <a
                 href="https://github.com/Alex13192/geo-scanner"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--accent)] hover:opacity-75 underline"
                 rel="noopener"
               >
                 github.com/Alex13192/geo-scanner
@@ -325,15 +325,15 @@ export default function ReadinessBadgePage() {
         </section>
       </main>
 
-      <footer className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-800/80 text-xs text-gray-500">
+      <footer className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[var(--line)] text-xs text-[var(--ink-3)]">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-4">
-          <Link href="/about/" className="hover:text-gray-300 transition-colors">
+          <Link href="/about/" className="hover:text-[var(--ink-1)] transition-colors">
             About
           </Link>
-          <Link href="/study/" className="hover:text-gray-300 transition-colors">
+          <Link href="/study/" className="hover:text-[var(--ink-1)] transition-colors">
             Study
           </Link>
-          <Link href="/methodology/" className="hover:text-gray-300 transition-colors">
+          <Link href="/methodology/" className="hover:text-[var(--ink-1)] transition-colors">
             Methodology
           </Link>
         </div>

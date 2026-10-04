@@ -51,18 +51,18 @@ export default function Faq({ title, items, level = "h3", footer }: FaqProps) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-white mb-3">{title}</h2>
+      <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">{title}</h2>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
       {items.map((item, i) => (
         <div key={item.q} className={i === 0 ? "mt-4" : "mt-5"}>
-          <Heading className="font-semibold text-white mb-1">{item.q}</Heading>
+          <Heading className="font-semibold text-[var(--ink-1)] mb-1">{item.q}</Heading>
           <p>{item.a}</p>
         </div>
       ))}
-      {footer ? <div className="mt-4 text-gray-400">{footer}</div> : null}
+      {footer ? <div className="mt-4 text-[var(--ink-2)]">{footer}</div> : null}
     </div>
   );
 }

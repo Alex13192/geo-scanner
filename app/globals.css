@@ -1,22 +1,82 @@
 @import "tailwindcss";
 
 /*
- * Surface colours - the single source of truth.
+ * Surface and ink tokens - the single place a colour is decided.
  *
- * This site is dark by design. app/(en)/layout.tsx used to hardcode
- * #0b0f19 / #ffffff as an inline style on <body>, which outranks any
- * stylesheet, so the light values that used to live here and the
- * prefers-color-scheme block under them were both dead code. They are now
- * replaced by the values that were actually being painted, and the inline
- * style is gone.
+ * WHY THESE EXIST: every surface on this site used to be a literal utility class
+ * repeated by hand - `bg-[#070A10]` in twenty page shells, `bg-gray-900/50` on
+ * cards, `border-gray-800/60` on every divider. That is the reason an earlier
+ * version of this comment could say, correctly, that a light theme was not a
+ * matter of restoring a media query: there were 466 hand-written dark colour
+ * utilities across 21 files and nothing to flip.
  *
- * There is no light theme, and adding one is not a matter of restoring a media
- * query here: several components hardcode dark utility colours, so it needs a
- * pass over those first.
+ * THE MECHANISM THAT MAKES IT WORK: `.band-dark` re-declares the same names for
+ * its own subtree. A component written against var(--surface-1) and var(--ink-2)
+ * therefore paints correctly on a light band and on a dark band with no
+ * conditional logic and no duplicated markup, which is what lets a banded page
+ * mix the two. Nothing outside this file should need to know which band it is in.
+ *
+ * THE THEME IS LIGHT. Two things follow, and both are easy to get wrong:
+ *
+ *   1. A literal colour anywhere in app/ is now a bug, not a style. The dark
+ *      literals are gone from every route; if you add one, it will be a white
+ *      patch on a light page or an invisible label on a dark band, and which of
+ *      those you get depends on where the component is rendered.
+ *   2. `text-white` is now correct ONLY on a saturated background - a filled
+ *      button, the brand mark, a coloured badge. Everywhere else it means text
+ *      the same colour as the page. On a surface, use var(--ink-1).
+ *
+ * The one counter-intuitive entry is --surface-2, which is white in both the
+ * light theme and on a light band. A card is separated from a #f5f5f7 band by
+ * being white, and from a white band by its border. Both are always paired with
+ * a var(--line) border for exactly that reason: without the border a card on a
+ * white band disappears.
  */
 :root {
-  --background: #0b0f19;
-  --foreground: #ffffff;
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+
+  /* Surfaces: the page, the alternating band, a card raised on either. */
+  --surface-0: #ffffff;
+  --surface-1: #f5f5f7;
+  --surface-2: #ffffff;
+
+  /* Text, strongest to weakest. */
+  --ink-1: #1d1d1f;
+  --ink-2: #6e6e73;
+  --ink-3: #86868b;
+
+  /* Code blocks read as a distinct surface rather than inverted text. */
+  --code-bg: #f5f5f7;
+  --code-ink: #1d1d1f;
+
+  --line: #d2d2d7;
+  --accent: #0071e3;
+  /* Text and icons sitting ON var(--accent). Saturated in both themes, so this
+     one does not move when the surface does. */
+  --on-accent: #ffffff;
+
+  /*
+   * Pass and fail, with the tint behind each.
+   *
+   * These are tokens and not `text-green-400` / `bg-green-500/10` for the same
+   * reason the inks are: the 400 band is chosen for legibility on black, and on
+   * white it is close to invisible. The -bg pair exists because Tailwind cannot
+   * apply an opacity modifier to a var() colour, so the tint has to be a colour
+   * in its own right rather than `var(--ok)/10`.
+   */
+  --ok: #1a7f37;
+  --ok-bg: #e7f4ea;
+  --warn: #9a6700;
+  --warn-bg: #fdf4e3;
+
+  /*
+   * The sticky header's translucent surface. It is a token rather than
+   * `bg-white/80` because it is the one colour on the site that has to be a
+   * partly transparent version of a surface, and a token is what lets it be
+   * restated per band if a page ever needs a dark header too.
+   */
+  --nav-bg: rgba(255, 255, 255, 0.72);
 }
 
 @theme inline {
@@ -43,6 +103,77 @@ body {
 }
 
 /* ------------------------------------------------------------------
+   Full-bleed bands, and the bounded column inside them.
+
+   The homepage used to be one 1152px column floating on a background of exactly
+   the same colour. Measured at 1920px that left 384px of identical pixels on
+   each side - 40% of the screen - and because nothing marked the boundary, the
+   eye read it as dead space rather than as a margin. /docs/ pages were worse:
+   768px of content against 576px of nothing on each side, 60% of the width.
+
+   The fix is not a wider column. apple.com bounds its own text at 980px, which
+   is narrower than the 1152px this site already used; what it does differently
+   is give every horizontal band the full viewport width and its own background,
+   so the colour changes at each boundary and the margin becomes deliberate.
+
+   So: .band spans the viewport and carries the colour, .wrap bounds the content.
+   A band's background must be one of the tokens above, never a literal - that is
+   what keeps .band-dark below able to repaint a whole subtree.
+   ------------------------------------------------------------------ */
+.band {
+  width: 100%;
+  background: var(--surface-0);
+}
+.band--alt {
+  background: var(--surface-1);
+}
+
+/*
+ * A band that stays dark in a light theme: the hero, the report preview and the
+ * closing call to action. It re-declares the token names for its own subtree, so
+ * a card written against var(--surface-2) and a paragraph written against
+ * var(--ink-2) render correctly inside it with no conditional logic anywhere -
+ * the reason the tokens were worth introducing at all.
+ *
+ * This must stay after .band: both are single-class selectors, so source order
+ * is what decides the background when an element carries both.
+ *
+ * --accent is lifted here. #0071e3 is chosen for contrast against white; against
+ * #000 it is barely distinguishable from --ink-2.
+ */
+.band-dark {
+  --surface-0: #000000;
+  --surface-1: #0c0c0e;
+  --surface-2: #16171a;
+  --ink-1: #f5f5f7;
+  --ink-2: #a1a1a6;
+  --ink-3: #86868b;
+  --code-bg: #0c0c0e;
+  --code-ink: #bfdbfe;
+  --line: #2a2a2e;
+  --accent: #4da3ff;
+  --ok: #30d158;
+  --ok-bg: rgba(48, 209, 88, 0.14);
+  --warn: #ff9f0a;
+  --warn-bg: rgba(255, 159, 10, 0.14);
+
+  background: var(--surface-0);
+  color: var(--ink-1);
+}
+
+.wrap {
+  width: 100%;
+  /* 80rem = 1280px. The old column was max-w-6xl (72rem / 1152px); the extra
+     128px is the only width this change adds, and it is the bands rather than
+     the width that close the visual gap. Prose inside still bounds itself with
+     max-w-2xl / max-w-3xl, because a 100-character line is unreadable however
+     wide the band is. */
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+/* ------------------------------------------------------------------
    Long-form article typography for /docs/<slug> pages.
    Tailwind Typography is not installed, so these are defined by hand.
 
@@ -51,9 +182,14 @@ body {
    all, and h3 was 0.9rem (14.4px) - smaller than the paragraphs it was meant
    to introduce. Sizes stay in rem so they follow the reader's own browser
    font-size setting.
+
+   Every colour here is a token. These rules used to carry six dark literals
+   (#ffffff, #e5e7eb, #f3f4f6, #60a5fa, #070a10, #1f2937) and would have been
+   the single most visible thing left behind by the light theme: an article
+   body of white headings on a white page.
    ------------------------------------------------------------------ */
 .doc-article h2 {
-  color: #ffffff;
+  color: var(--ink-1);
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.3;
@@ -61,7 +197,7 @@ body {
   margin: 2.5rem 0 0.75rem;
 }
 .doc-article h3 {
-  color: #e5e7eb;
+  color: var(--ink-1);
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.4;
@@ -84,31 +220,31 @@ body {
   margin-bottom: 0.375rem;
 }
 .doc-article strong {
-  color: #f3f4f6;
+  color: var(--ink-1);
   font-weight: 600;
 }
 .doc-article a {
-  color: #60a5fa;
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .doc-article code {
-  background: #070a10;
-  border: 1px solid #1f2937;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
   border-radius: 0.375rem;
   padding: 0.1rem 0.35rem;
   font-size: 0.8em;
-  color: #bfdbfe;
+  color: var(--code-ink);
 }
 .doc-article pre {
-  background: #070a10;
-  border: 1px solid #1f2937;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
   border-radius: 0.75rem;
   padding: 1rem;
   overflow-x: auto;
   font-size: 0.875rem;
   line-height: 1.65;
-  color: #bfdbfe;
+  color: var(--code-ink);
   margin: 0 0 1rem;
 }
 .doc-article pre code {
@@ -119,9 +255,102 @@ body {
   color: inherit;
 }
 .doc-article blockquote {
-  border-left: 2px solid #3b82f6;
+  border-left: 2px solid var(--accent);
   padding-left: 1rem;
-  color: #9ca3af;
+  color: var(--ink-2);
   margin: 0 0 1rem;
 }
 
+/* ------------------------------------------------------------------
+   The homepage's scan console - the one moving thing on the site.
+
+   WHY CSS AND NOT A LIBRARY: this deploys to Cloudflare Workers through
+   OpenNext, so every kilobyte of client JavaScript is paid for on the cold
+   path, and the scanner's own `payload` and `no-js-dependency` checks are
+   applied to this page by the same analyser that scores everyone else's. A
+   keyframe costs nothing on either axis. Framer Motion would have cost roughly
+   the weight of the rest of the page's JavaScript to do less.
+
+   The rows fade in one after another and the ring fills, then the whole thing
+   repeats. The ring's resting offset is the site's real score, so a reader who
+   never sees the animation - or a crawler that never runs it - still reads 97
+   and not a zero, which is the same mistake ScoreRing was fixed for.
+   ------------------------------------------------------------------ */
+@keyframes llm-row-in {
+  0% {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  6% {
+    opacity: 1;
+    transform: none;
+  }
+  78% {
+    opacity: 1;
+  }
+  88%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes llm-ring-fill {
+  0% {
+    stroke-dashoffset: 452;
+  }
+  62%,
+  100% {
+    stroke-dashoffset: 19;
+  }
+}
+
+.scan-row {
+  opacity: 0;
+  animation: llm-row-in 9s ease-in-out infinite;
+}
+.scan-row:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.scan-row:nth-child(2) {
+  animation-delay: 0.75s;
+}
+.scan-row:nth-child(3) {
+  animation-delay: 1.35s;
+}
+.scan-row:nth-child(4) {
+  animation-delay: 1.95s;
+}
+.scan-row:nth-child(5) {
+  animation-delay: 2.55s;
+}
+.scan-row:nth-child(6) {
+  animation-delay: 3.15s;
+}
+.scan-row:nth-child(7) {
+  animation-delay: 3.75s;
+}
+.scan-row:nth-child(8) {
+  animation-delay: 4.35s;
+}
+
+.scan-ring {
+  stroke-dasharray: 452;
+  stroke-dashoffset: 19;
+  animation: llm-ring-fill 9s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+}
+
+/*
+ * The escape hatch, and it is not optional. The ROWS are hidden by default and
+ * rely on the animation to appear, so a reader who has asked for reduced motion
+ * would otherwise be shown three empty rows; here they are simply made visible
+ * in their final state instead.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .scan-row {
+    opacity: 1;
+    animation: none;
+  }
+  .scan-ring {
+    animation: none;
+  }
+}

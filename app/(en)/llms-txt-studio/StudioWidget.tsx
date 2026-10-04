@@ -111,7 +111,7 @@ export default function StudioWidget() {
           onChange={(e) => setDomain(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && generate(cleanDomain(domain))}
           placeholder="your-domain.com"
-          className="flex-1 bg-gray-900/80 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500 transition-all"
+          className="flex-1 bg-[var(--surface-2)] border border-[var(--line)] rounded-xl px-4 py-3 text-sm text-[var(--ink-1)] placeholder-[var(--ink-3)] outline-none focus:border-blue-500 transition-all"
         />
         <button
           onClick={() => generate(cleanDomain(domain))}
@@ -123,17 +123,17 @@ export default function StudioWidget() {
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-2xl p-6 mb-8">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-600 text-sm rounded-2xl p-6 mb-8">
           {error}
         </div>
       )}
 
-      <div className="bg-gray-950/60 border border-gray-800/80 rounded-2xl p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-gray-800/80 pb-4">
+      <div className="bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-[var(--line)] pb-4">
           <div className="flex items-baseline gap-3">
-            <span className="text-xs font-mono text-gray-400">Preview: /llms.txt</span>
+            <span className="text-xs font-mono text-[var(--ink-2)]">Preview: /llms.txt</span>
             {linkCount !== null && (
-              <span className="text-[11px] text-gray-500 font-mono">
+              <span className="text-[11px] text-[var(--ink-3)] font-mono">
                 {linkCount} link{linkCount === 1 ? "" : "s"} found on the homepage
               </span>
             )}
@@ -142,7 +142,7 @@ export default function StudioWidget() {
             <button
               onClick={handleCopy}
               disabled={!content}
-              className="text-xs bg-gray-900 hover:bg-gray-800 disabled:opacity-50 border border-gray-700 text-gray-200 px-3 py-1.5 rounded-lg font-medium transition-all"
+              className="text-xs bg-[var(--surface-2)] hover:bg-[var(--surface-1)] disabled:opacity-50 border border-[var(--line)] text-[var(--ink-1)] px-3 py-1.5 rounded-lg font-medium transition-all"
             >
               {copied ? "✓ Copied" : "Copy raw"}
             </button>
@@ -164,10 +164,10 @@ export default function StudioWidget() {
           value={loading ? "Reading your homepage…" : content}
           onChange={(e) => setContent(e.target.value)}
           spellCheck={false}
-          className="w-full h-96 bg-[#070A10] border border-gray-800 rounded-xl p-4 text-xs font-mono text-gray-300 focus:outline-none focus:border-blue-500 transition-all resize-none leading-relaxed"
+          className="w-full h-96 bg-[var(--surface-0)] border border-[var(--line)] rounded-xl p-4 text-xs font-mono text-[var(--ink-2)] focus:outline-none focus:border-blue-500 transition-all resize-none leading-relaxed"
         />
 
-        <p className="text-[11px] text-gray-500 leading-relaxed pt-4">
+        <p className="text-[11px] text-[var(--ink-3)] leading-relaxed pt-4">
           Edit before publishing. This draft is built from one page, so it only lists what the
           homepage links to, and the descriptions are the link texts as written. Sites that
           redirect visitors by location may return a regional version, so check the links
