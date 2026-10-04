@@ -61,13 +61,41 @@ the Next.js runtime, and a deployment discards every warm isolate at once. Stati
 not part of this: they are served from the assets binding without invoking the Worker, which
 is why the legacy-host redirect in `middleware.ts` does not apply to them.
 
-**The step that was never completed is edge caching.** The comment above `headers()` in
-`next.config.ts` predicted this outcome and named the fix. `check-live.mjs` has been reporting
-the evidence all along, as `cf-cache-status: -` on both requests - nothing is cached anywhere.
-With the HTML cached at the edge, a repeat page view never reaches the Worker, so it costs no
-CPU and cannot return 1102.
+**What is NOT established: whether a Cache Rule can stop the Worker being invoked.** The
+comment above `headers()` in `next.config.ts` predicted this outcome and named that as the
+fix, and it may be right - but it has not been demonstrated on this route, and the instrument
+that comment named does not work here. Measured against the deployed site: a response from
+this Worker carries **no `cf-cache-status` at all** - not `HIT`, not `MISS`, not `DYNAMIC` -
+and no `age` or `etag` either, while `x-opennext: 1` and `x-nextjs-cache: MISS` are present on
+every request. So `check-live.mjs` cannot report whether the edge is caching, and an
+instruction to look there for a `2nd HIT` is wrong. That instruction was written here first
+and is the reason this paragraph exists.
 
-### The rule to add
+**What the edge does per page view**, from `Server-Timing` on the deployed site:
+`cfEdge;dur=205, cfOrigin;dur=0, cfWorker;dur=272` on a cold request, then `cfEdge;dur=9,
+cfWorker;dur=93` on the next one. `cfOrigin;dur=0` is the part that matters: there is no
+origin behind this, the Worker is the origin.
+
+### The fix that is certain
+
+Workers Paid is USD 5 a month and raises the CPU budget from 10 ms to 30 seconds, at which
+point no cold start approaches it. It needs no code change, no Cache Rule and no verification:
+the limit being exceeded stops being 10 ms. In the dashboard it is under **Workers & Pages ->
+Plans**, which is also where the account is shown to be on Free.
+
+This is the recommendation rather than the rule below, on the ground that a fix nobody can
+confirm is not a fix. The site carries advertising, so the comparison is between that plan and
+showing a viewer an error page instead of the site.
+
+### The Cache Rule, which is still worth adding
+
+It is what `next.config.ts` already intends, and it is the correct setting for content that is
+identical for every visitor - but treat it as a latency and bandwidth improvement rather than
+as the remedy for the 1102s, until somebody measures otherwise.
+
+Note that this is a **zone** setting. It lives under the domain's own sidebar, not under
+Workers & Pages, which is where the Worker's settings are and where it is natural to look
+first. Looking in the wrong one costs a round trip.
 
 Cloudflare dashboard, on the `llmention-geo.com` zone: **Caching -> Cache Rules -> Create rule**.
 
@@ -85,23 +113,4 @@ Expression (switch the builder to "Edit expression"):
 the visitor's own domain. Caching one visitor's scan and serving it to the next is a
 correctness bug, not a performance trade - which is why the comment there records that
 `/report/` was "one platform behaviour away from being cached for a year".
-
-### Verifying it
-
-```bash
-npm run check:live
-```
-
-The last block of that script is labelled "informational, not gated" and prints
-`cf-cache-status` for three cacheable paths, twice each. Before the rule it reads
-`1st -, 2nd -`. After it, the second request should read `HIT` or `REVALIDATED`. The script is
-the instrument for this, which is the reason the rule is written down here and not remembered.
-
-### The alternative, which removes it rather than reducing it
-
-Workers Paid is USD 5 a month and raises the budget from 10 ms to 30 seconds, at which point
-no cold start approaches it. Edge caching reduces the frequency - a cache expiry, or a path
-nobody has requested recently, still invokes a possibly-cold Worker - while the paid plan
-removes the class of failure. The site carries advertising, so the comparison is between that
-plan and showing a viewer an error page instead of the site.
 
