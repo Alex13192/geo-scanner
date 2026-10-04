@@ -25,10 +25,19 @@
  *   - /ads.txt being served as plain text that names Google. It cannot be verified from
  *     the repository at all: the file can be present and correct and still never reach a
  *     browser, which is exactly what the other hostname in this zone does.
+ *   - the old hostname still redirecting here. One of the two redirect mechanisms this
+ *     repository has tried was inert in production, and a hostname redirect that stops
+ *     happening looks like nothing at all: the old host keeps answering, with the right
+ *     content, and only the canonical signal is missing.
  *
  * Run it after a deploy. It exits non-zero, so it can be wired into a post-deploy step
  * whenever you want one.
  */
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const base = (process.argv[2] || "http://localhost:3000").replace(/\/+$/, "");
 
@@ -219,6 +228,47 @@ console.log("\n=== withdrawn pages ===");
     const target = (res.headers.get("location") || "").replace(/^https?:\/\/[^/]+/, "");
     if (target === "/") ok("/de/widerrufsrecht/ resolves in one hop to /");
     else bad("/de/widerrufsrecht/ does not resolve to /", `HTTP ${res.status} -> ${target || "(no location)"}`);
+  }
+}
+
+/* ---- the old hostname ---- */
+console.log("\n=== the old hostname ===");
+{
+  /*
+   * The old hostname is READ OUT OF lib/site.ts, the same way check:values reads SITE_URL,
+   * because this file cannot import a TypeScript module. Reading it rather than repeating it
+   * is the whole point: a second copy is what check:values exists to prevent, and a test that
+   * hardcodes the thing it tests proves only that the test was written.
+   */
+  const legacy = readFileSync(join(ROOT, "lib", "site.ts"), "utf8").match(
+    /export const LEGACY_HOST\s*=\s*"([^"]+)"/
+  )?.[1];
+
+  if (!legacy) {
+    bad("could not read LEGACY_HOST from lib/site.ts");
+  } else if (["localhost", "127.0.0.1"].includes(new URL(base).hostname)) {
+    /*
+     * The redirect is decided from the Host header, and fetch will not let this script set
+     * one. Skipped and said out loud rather than faked, so a local run cannot be mistaken
+     * for evidence that the redirect works.
+     */
+    console.log(`  skip  ${legacy} — needs a run against a deployed origin`);
+  } else {
+    for (const path of ["/", "/methodology/", "/report/?domain=example.com"]) {
+      const res = await fetch(`https://${legacy}${path}`, { redirect: "manual" });
+      const location = res.headers.get("location") || "";
+      if (res.status !== 301) {
+        bad(`${legacy}${path} does not redirect permanently`, `HTTP ${res.status}`);
+      } else if (!location.startsWith(`${base}/`)) {
+        bad(`${legacy}${path} redirects somewhere other than this site`, location);
+      } else {
+        // Path AND query have to survive. /report/ carries its entire meaning in its query,
+        // so a redirect that drops it turns a working link into the homepage's error page.
+        const arrived = location.slice(base.length);
+        if (arrived === path) ok(`${legacy}${path} → ${arrived}`);
+        else bad(`${legacy}${path} arrived changed`, `${arrived} (expected ${path})`);
+      }
+    }
   }
 }
 
