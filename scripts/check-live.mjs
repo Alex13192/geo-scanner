@@ -1,8 +1,8 @@
 /**
  * Check a RUNNING deployment, not a build directory.
  *
- *   node scripts/check-live.mjs                       # http://localhost:3000
- *   node scripts/check-live.mjs https://example.com   # the deployed site
+ *   node scripts/check-live.mjs                        # the canonical origin, from lib/site.ts
+ *   node scripts/check-live.mjs http://localhost:3000  # somewhere else, e.g. a local server
  *
  * WHY THIS EXISTS, given there are already five gates:
  * every one of them inspects local build output. `check:built` reads .next/server/app,
@@ -39,7 +39,31 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-const base = (process.argv[2] || "http://localhost:3000").replace(/\/+$/, "");
+/**
+ * The origin to check, where no argument means the site itself.
+ *
+ * WHY THE DEFAULT IS THE REAL SITE AND NOT localhost: it used to be localhost, which meant
+ * the smoke job had to pass the hostname on its command line - and that put a second copy of
+ * the canonical origin inside .github/workflows/deploy.yml, where check:values could not see
+ * it and where it would have gone stale the next time the site moved, silently, in the one
+ * job whose whole purpose is to notice that kind of thing. Reading the default here means CI
+ * names no hostname at all.
+ *
+ * Read with a regex rather than imported because this is a .mjs file and lib/site.ts is
+ * TypeScript - the same reason check:values reads it that way.
+ */
+function canonicalOrigin() {
+  const match = readFileSync(join(ROOT, "lib", "site.ts"), "utf8").match(
+    /export const SITE_URL\s*=\s*"([^"]+)"/
+  );
+  if (!match) {
+    console.error("Could not read SITE_URL from lib/site.ts, and no origin was given.");
+    process.exit(2);
+  }
+  return match[1];
+}
+
+const base = (process.argv[2] || canonicalOrigin()).replace(/\/+$/, "");
 
 /** The five headers next.config.ts declares as enforced. */
 const REQUIRED_HEADERS = [

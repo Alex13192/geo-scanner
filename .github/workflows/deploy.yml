@@ -94,4 +94,8 @@ jobs:
           node-version: "24"
 
       - name: Check the deployed site
-        run: node scripts/check-live.mjs https://llmention-geo.com
+        # No hostname here on purpose. It used to be an argument, which put a copy of the
+        # canonical origin in this file where check:values cannot see it - and a stale copy
+        # of that value is what the gate exists to prevent. With no argument, check-live
+        # reads SITE_URL from lib/site.ts.
+        run: node scripts/check-live.mjs
