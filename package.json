@@ -12,6 +12,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "lint": "eslint",
     "check:values": "node scripts/check-values.mjs",
+    "check:colours": "node scripts/check-class-colours.mjs",
     "check:built": "node scripts/check-built-pages.mts",
     "check:live": "node scripts/check-live.mjs",
     "generate:copy": "node scripts/generate-check-copy.mts",

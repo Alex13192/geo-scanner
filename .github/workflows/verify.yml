@@ -65,6 +65,15 @@ jobs:
       - name: Check that declared values agree
         run: npm run check:values
 
+      # The light theme made text colour context-dependent: text-white is correct
+      # only on a saturated fill, and the --ink tokens only on a surface. Swapping
+      # them produces dark ink on a dark fill, which nothing else in this workflow
+      # can see - not tsc, and not the analyser, which reads markup rather than
+      # pixels. The migration that introduced the rule got it wrong in seven
+      # places, so it is checked rather than remembered.
+      - name: Check that no surface ink sits on a saturated fill
+        run: npm run check:colours
+
       - name: Run the scoring engine's tests
         run: npm run test:analyze
 
