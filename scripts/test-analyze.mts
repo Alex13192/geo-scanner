@@ -378,7 +378,12 @@ console.log("\n=== published check count stated in the source ===");
    * "checksRun":38, which this pattern cannot match because the word precedes the
    * number - it is historical data and should stay as it is.)
    */
-  const HISTORICAL = ["38 documented checks were run over the result."];
+  const HISTORICAL = [
+    "38 documented checks were run over the result.",
+    // The data endpoint states the same caveat in two places - a comment and the CSV header
+    // comment - because a downloaded file has to explain itself without the page.
+    "published 38 checks",
+  ];
 
   const files: string[] = [];
   const walk = (dir: string) => {
@@ -475,6 +480,59 @@ console.log("\n=== no source file declares the Edge Runtime ===");
     );
     for (const file of offending) console.log(`        - ${relative(process.cwd(), file)}`);
     console.log('        remove: export const runtime = "edge";');
+    process.exitCode = 1;
+  }
+}
+
+/* 4g. The study's prose must agree with the study's data.
+      The rows moved out of the page and into lib/study-data.ts so that the page, the JSON
+      endpoint at /study/data/ and this guard all read one array. What is left to check is the
+      part that rots: the description and the sentences around the table state numbers, and
+      nothing else compared them with the rows underneath.
+
+      The stated average is read out of the page source rather than hardcoded here, so this
+      fails when the prose and the data disagree, not when either one changes. */
+console.log("\n=== study prose agrees with study data ===");
+{
+  const { STUDY_ROWS, ANSWERED, AVERAGE, NEWS, NEWS_BLOCKED } = await import(
+    "../lib/study-data.ts"
+  );
+  const page = readFileSync(join(process.cwd(), "app", "(en)", "study", "page.tsx"), "utf8");
+  const problems: string[] = [];
+
+  const statedAverage = page.match(/the average was (\d+)/)?.[1];
+  if (statedAverage === undefined) {
+    problems.push('the description no longer states "the average was N"');
+  } else if (Number(statedAverage) !== AVERAGE) {
+    problems.push(
+      `the description says the average was ${statedAverage}, the rows compute ${AVERAGE}`
+    );
+  }
+
+  if (STUDY_ROWS.length !== 30) {
+    problems.push(`the study is described as 30 homepages; the array holds ${STUDY_ROWS.length}`);
+  }
+  const aGrades = STUDY_ROWS.filter((row) => row.grade === "A").length;
+  if (/None of the 30 homepages scored an A/.test(page) && aGrades > 0) {
+    problems.push(`the page claims none scored an A; ${aGrades} row(s) are graded A`);
+  }
+  if (
+    /Every news publisher in the sample is in that group/.test(page) &&
+    NEWS.length !== NEWS_BLOCKED.length
+  ) {
+    problems.push(
+      `the page claims every news publisher is blocked; ${NEWS_BLOCKED.length} of ${NEWS.length} are`
+    );
+  }
+
+  if (problems.length === 0) {
+    console.log(
+      `  PASS  30 rows, average ${AVERAGE}, no A, news blocked ${NEWS_BLOCKED.length}/${NEWS.length}, ` +
+        `${ANSWERED.length} answered`
+    );
+  } else {
+    console.log("  FAIL  the study page and its data disagree:");
+    for (const p of problems) console.log(`        - ${p}`);
     process.exitCode = 1;
   }
 }

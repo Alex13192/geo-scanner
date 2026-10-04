@@ -32,6 +32,20 @@ import { SITE_URL } from "@/lib/site";
  *    observation rather than a property of the site.
  */
 import { og } from "@/lib/og";
+// The rows, the aggregates and the scan date live in one module so the page, the
+// machine-readable endpoint at /study/data/ and the tests all read the same array.
+import {
+  ANSWERED,
+  AVERAGE,
+  BLOCKED,
+  NEWS,
+  NEWS_BLOCKED,
+  REFUSED,
+  SCAN_DATE,
+  STUDY_DATA_PATH,
+  STUDY_ROWS,
+  gradeCount,
+} from "@/lib/study-data";
 
 const TITLE = "We scanned 30 major sites for AI visibility";
 const DESCRIPTION =
@@ -47,85 +61,6 @@ export const metadata: Metadata = {
     url: "/study/",
   }),
 };
-
-const SCAN_DATE = "3 October 2026";
-
-type Row = {
-  domain: string;
-  status: number;
-  /**
-   * What a browser-shaped request to the same URL returned, or null when the
-   * homepage answered 200 and no second request was needed.
-   */
-  browserStatus: number | null;
-  score: number;
-  grade: string;
-  /** A non-200 answer, so the score describes that response rather than a page. */
-  aborted: boolean;
-  /**
-   * AI crawlers are not admitted: robots.txt disallows one of the five tracked
-   * agents at root, or the server refuses a crawler-shaped request. The two
-   * mechanisms are separated by `refused` below.
-   */
-  blocked: boolean;
-  /**
-   * Refused to a crawler-shaped request while the same URL served a browser-shaped
-   * one. This is the case a robots.txt line cannot express: the block happens
-   * before robots.txt is read, and because GPTBot, ClaudeBot, PerplexityBot and
-   * OAI-SearchBot all present as bots, a rule like that turns every one of them away.
-   */
-  refused: boolean;
-  entity: boolean;
-  sameAs: boolean;
-  category: string;
-};
-
-/**
- * Raw results, transcribed from /api/scan?brief=1, re-run on 3 October 2026.
- *
- * Ordered by score so the table reads as a ranking, which is how a reader will
- * look for their own site.
- */
-const RESULTS: Row[] = [
-  { domain: "salesforce.com", status: 200, browserStatus: null, score: 83, grade: "B", aborted: false, blocked: false, refused: false, entity: true, sameAs: false, category: "Enterprise software" },
-  { domain: "siemens.com", status: 200, browserStatus: null, score: 80, grade: "B", aborted: false, blocked: false, refused: false, entity: true, sameAs: false, category: "Industry" },
-  { domain: "vercel.com", status: 200, browserStatus: null, score: 79, grade: "C", aborted: false, blocked: false, refused: false, entity: true, sameAs: true, category: "Developer platform" },
-  { domain: "cloudflare.com", status: 200, browserStatus: null, score: 77, grade: "C", aborted: false, blocked: false, refused: false, entity: true, sameAs: true, category: "Infrastructure" },
-  { domain: "stripe.com", status: 200, browserStatus: null, score: 75, grade: "C", aborted: false, blocked: false, refused: false, entity: true, sameAs: true, category: "Payments" },
-  { domain: "shopify.com", status: 200, browserStatus: null, score: 72, grade: "C", aborted: false, blocked: false, refused: false, entity: false, sameAs: true, category: "Commerce" },
-  { domain: "apple.com", status: 200, browserStatus: null, score: 69, grade: "D", aborted: false, blocked: false, refused: false, entity: true, sameAs: true, category: "Consumer hardware" },
-  { domain: "developer.mozilla.org", status: 200, browserStatus: null, score: 64, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Documentation" },
-  { domain: "anthropic.com", status: 200, browserStatus: null, score: 62, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "AI lab" },
-  { domain: "notion.so", status: 200, browserStatus: null, score: 62, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Software" },
-  { domain: "figma.com", status: 200, browserStatus: null, score: 62, grade: "D", aborted: false, blocked: true, refused: false, entity: true, sameAs: true, category: "Design software" },
-  { domain: "bbc.com", status: 200, browserStatus: null, score: 61, grade: "D", aborted: false, blocked: true, refused: false, entity: false, sameAs: true, category: "News" },
-  { domain: "nvidia.com", status: 200, browserStatus: null, score: 61, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: true, category: "Semiconductors" },
-  { domain: "github.com", status: 200, browserStatus: null, score: 60, grade: "D", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Developer platform" },
-  { domain: "spiegel.de", status: 200, browserStatus: null, score: 56, grade: "F", aborted: false, blocked: true, refused: false, entity: true, sameAs: true, category: "News" },
-  { domain: "telekom.com", status: 200, browserStatus: null, score: 54, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Telecoms" },
-  { domain: "bahn.de", status: 200, browserStatus: null, score: 52, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Transport" },
-  { domain: "microsoft.com", status: 200, browserStatus: null, score: 48, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Enterprise software" },
-  { domain: "theguardian.com", status: 200, browserStatus: null, score: 47, grade: "F", aborted: false, blocked: true, refused: false, entity: false, sameAs: false, category: "News" },
-  { domain: "wikipedia.org", status: 200, browserStatus: null, score: 47, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Reference" },
-  { domain: "sap.com", status: 200, browserStatus: null, score: 41, grade: "F", aborted: false, blocked: false, refused: false, entity: false, sameAs: false, category: "Enterprise software" },
-  { domain: "zeit.de", status: 403, browserStatus: 200, score: 26, grade: "F", aborted: true, blocked: true, refused: true, entity: false, sameAs: false, category: "News" },
-  { domain: "google.com", status: 429, browserStatus: 429, score: 26, grade: "F", aborted: true, blocked: false, refused: false, entity: false, sameAs: false, category: "Search" },
-  { domain: "perplexity.ai", status: 403, browserStatus: 403, score: 19, grade: "F", aborted: true, blocked: false, refused: false, entity: false, sameAs: false, category: "AI search" },
-  { domain: "amazon.com", status: 202, browserStatus: 202, score: 14, grade: "F", aborted: true, blocked: true, refused: false, entity: false, sameAs: false, category: "Commerce" },
-  { domain: "openai.com", status: 403, browserStatus: 200, score: 13, grade: "F", aborted: true, blocked: true, refused: true, entity: false, sameAs: false, category: "AI lab" },
-  { domain: "stackoverflow.com", status: 403, browserStatus: 403, score: 12, grade: "F", aborted: true, blocked: false, refused: false, entity: false, sameAs: false, category: "Developer Q&A" },
-  { domain: "nytimes.com", status: 403, browserStatus: 403, score: 12, grade: "F", aborted: true, blocked: true, refused: false, entity: false, sameAs: false, category: "News" },
-  { domain: "reuters.com", status: 401, browserStatus: 401, score: 12, grade: "F", aborted: true, blocked: true, refused: false, entity: false, sameAs: false, category: "News" },
-  { domain: "bmw.com", status: 520, browserStatus: 520, score: 8, grade: "F", aborted: true, blocked: false, refused: false, entity: false, sameAs: false, category: "Automotive" },
-];
-
-const answered = RESULTS.filter((r) => !r.aborted);
-const blocked = RESULTS.filter((r) => r.blocked);
-const refused = RESULTS.filter((r) => r.refused);
-const news = RESULTS.filter((r) => r.category === "News");
-const newsBlocked = news.filter((r) => r.blocked);
-const average = Math.round(answered.reduce((sum, r) => sum + r.score, 0) / answered.length);
-const gradeCount = (g: string) => RESULTS.filter((r) => r.grade === g).length;
 
 function gradeClass(grade: string): string {
   if (grade === "B") return "text-emerald-400";
@@ -172,7 +107,7 @@ export default function StudyPage() {
         {/* Headline numbers */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5">
-            <div className="text-3xl font-black text-white font-mono">{average}</div>
+            <div className="text-3xl font-black text-white font-mono">{AVERAGE}</div>
             <div className="text-[11px] text-gray-400 pt-1 leading-snug">
               average score, out of 100
             </div>
@@ -185,8 +120,8 @@ export default function StudyPage() {
           </div>
           <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5">
             <div className="text-3xl font-black text-amber-400 font-mono">
-              {blocked.length}
-              <span className="text-lg text-gray-500">/{RESULTS.length}</span>
+              {BLOCKED.length}
+              <span className="text-lg text-gray-500">/{STUDY_ROWS.length}</span>
             </div>
             <div className="text-[11px] text-gray-400 pt-1 leading-snug">
               do not admit AI crawlers, by policy or by refusal
@@ -194,7 +129,7 @@ export default function StudyPage() {
           </div>
           <div className="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5">
             <div className="text-3xl font-black text-gray-300 font-mono">
-              {RESULTS.length - answered.length}
+              {STUDY_ROWS.length - ANSWERED.length}
             </div>
             <div className="text-[11px] text-gray-400 pt-1 leading-snug">
               did not return a normal 200
@@ -206,23 +141,23 @@ export default function StudyPage() {
           <h2>What we found</h2>
           <p>
             <strong>Not one of the 30 homepages scored an A.</strong> The highest was{" "}
-            {RESULTS[0].domain} at {RESULTS[0].score}, and only {gradeCount("B")} sites reached a B.
-            Of the {answered.length} that answered with a normal page, the average was{" "}
-            {average} out of 100 — a D on this scale.
+            {STUDY_ROWS[0].domain} at {STUDY_ROWS[0].score}, and only {gradeCount("B")} sites reached a B.
+            Of the {ANSWERED.length} that answered with a normal page, the average was{" "}
+            {AVERAGE} out of 100 — a D on this scale.
           </p>
           <p>
-            The second finding is sharper. <strong>{blocked.length} of the 30 domains do not admit
+            The second finding is sharper. <strong>{BLOCKED.length} of the 30 domains do not admit
             at least one of GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot or Google-Extended at
-            their site root</strong> — {blocked.length - refused.length} of them say so in
-            robots.txt, and {refused.length} refuse the request at the server before robots.txt is
+            their site root</strong> — {BLOCKED.length - REFUSED.length} of them say so in
+            robots.txt, and {REFUSED.length} refuse the request at the server before robots.txt is
             even read. Every news publisher in the sample is in that group:{" "}
-            {newsBlocked.length} of {news.length}. The publishing industry has not drifted into
+            {NEWS_BLOCKED.length} of {NEWS.length}. The publishing industry has not drifted into
             blocking AI crawlers by accident — it has chosen to.
           </p>
           <p>
             The third finding is about the companies selling AI. <strong>OpenAI's own homepage
-            scores {RESULTS.find((r) => r.domain === "openai.com")?.score} and Anthropic's{" "}
-            {RESULTS.find((r) => r.domain === "anthropic.com")?.score}</strong>, both below the
+            scores {STUDY_ROWS.find((r) => r.domain === "openai.com")?.score} and Anthropic's{" "}
+            {STUDY_ROWS.find((r) => r.domain === "anthropic.com")?.score}</strong>, both below the
             average of the sample, and OpenAI's is the sharper case: a crawler-shaped request to
             openai.com was refused with HTTP 403 in the same run that served a browser-shaped
             request to the same URL normally. Neither declares an Organization entity. The sites
@@ -241,7 +176,7 @@ export default function StudyPage() {
             What it does mean is that <strong>the page an AI system lands on first gives it
             almost nothing to quote</strong>. No statistics, no quotation, usually no
             question-shaped heading and often no entity markup that says which organisation the
-            domain belongs to. On {RESULTS.filter((r) => !r.entity).length} of the 30, a model
+            domain belongs to. On {STUDY_ROWS.filter((r) => !r.entity).length} of the 30, a model
             reading the homepage has no structured statement of who owns the site.
           </p>
 
@@ -253,14 +188,14 @@ export default function StudyPage() {
             crawler-shaped request with an error while serving a browser-shaped request to the same
             URL normally: the block happens before robots.txt is consulted, and because GPTBot,
             ClaudeBot, PerplexityBot and OAI-SearchBot all present as bots, a rule like that turns
-            away every engine this page is about. {refused.length} domains in this table are that
+            away every engine this page is about. {REFUSED.length} domains in this table are that
             case.
           </p>
           <p>
             A refusal of <em>both</em> request shapes is a third thing and is not counted as a
             block. It says the request was turned away from the network this scan runs on, which is
             evidence about the scanner rather than about AI access.{" "}
-            {RESULTS.filter((r) => r.aborted && !r.blocked).length} domains are in that position,
+            {STUDY_ROWS.filter((r) => r.aborted && !r.blocked).length} domains are in that position,
             and the table records them as neither disallowed nor refused.
           </p>
 
@@ -280,7 +215,7 @@ export default function StudyPage() {
               </tr>
             </thead>
             <tbody className="text-gray-300">
-              {RESULTS.map((row) => (
+              {STUDY_ROWS.map((row) => (
                 <tr key={row.domain} className="border-t border-gray-800/60">
                   <td className="px-3 py-2 font-mono text-gray-200">
                     <a
@@ -384,6 +319,22 @@ export default function StudyPage() {
           </ul>
 
           <h2>Reproduce it</h2>
+          <p>
+            The whole table is published as data, so its arithmetic can be checked without
+            scraping this page:{" "}
+            <a href={STUDY_DATA_PATH} className="text-blue-400 hover:text-blue-300 underline">
+              <code>{STUDY_DATA_PATH}</code>
+            </a>{" "}
+            returns JSON with the rows, the counts, the average and the grade distribution, and{" "}
+            <a
+              href={`${STUDY_DATA_PATH}?format=csv`}
+              className="text-blue-400 hover:text-blue-300 underline"
+            >
+              <code>?format=csv</code>
+            </a>{" "}
+            returns the same rows as a spreadsheet. Both are generated from the array this page
+            renders, so they cannot disagree with it.
+          </p>
           <p>
             Every row above comes from one public endpoint, and{" "}
             <code>brief=1</code> returns just the headline numbers:
