@@ -22,6 +22,9 @@
  *     does NOT follow - its catalogue note says so, so somebody has to
  *   - /report/ not claiming to be the homepage, which was a real bug
  *   - robots.txt stating a Content-Signal, and /llms.txt being served at all
+ *   - /ads.txt being served as plain text that names Google. It cannot be verified from
+ *     the repository at all: the file can be present and correct and still never reach a
+ *     browser, which is exactly what the other hostname in this zone does.
  *
  * Run it after a deploy. It exits non-zero, so it can be wired into a post-deploy step
  * whenever you want one.
@@ -140,6 +143,83 @@ console.log("\n=== llms.txt ===");
   else if (res.status !== 200 || body.trim().length < 20) {
     bad("llms.txt is not served usefully", `HTTP ${res.status}, ${body.trim().length} bytes`);
   } else ok("served", `${body.length} bytes`);
+}
+
+/* ---- ads.txt ---- */
+console.log("\n=== ads.txt ===");
+{
+  /*
+   * WHY THIS IS ASSERTED RATHER THAN ASSUMED: the file lives in public/, and whether a
+   * public/ file reaches a browser under this route depends on the asset routing rather
+   * than on the file existing. public/robots.txt is evidence that it works, not evidence
+   * that it keeps working, and the other hostname in this zone already serves a 200 with
+   * an HTML body at /ads.txt. That failure is invisible from inside the repository: the
+   * file is present, correct, and never served.
+   *
+   * The content type is checked because it is the half that was wrong elsewhere - a 200
+   * does not mean the file was served, it means something was.
+   */
+  const { res, body, error } = await get("/ads.txt");
+  if (error) bad("could not fetch ads.txt", error);
+  else if (res.status !== 200) bad("ads.txt did not return 200", `HTTP ${res.status}`);
+  else {
+    const type = res.headers.get("content-type") || "";
+    if (type.includes("text/plain")) ok("served as text/plain", type);
+    else bad("ads.txt is not served as plain text", type || "(no content-type)");
+
+    if (/^\s*google\.com\s*,\s*pub-\d+\s*,\s*(DIRECT|RESELLER)\s*,/im.test(body)) {
+      ok("authorises Google as a seller", body.trim().split(/\r?\n/)[0]);
+    } else {
+      bad("ads.txt carries no google.com seller line", body.trim().slice(0, 80) || "(empty)");
+    }
+  }
+}
+
+/* ---- the withdrawn pages ---- */
+console.log("\n=== withdrawn pages ===");
+{
+  /*
+   * WHY THIS IS ASSERTED RATHER THAN ASSUMED: these redirects live in middleware.ts, and
+   * this repository has already been bitten once by a redirect mechanism that was correct
+   * on disk and inert in production - middleware.ts documents public/_redirects doing
+   * exactly that under next-on-pages. A matcher array is configuration of the same kind:
+   * a path missing from it does not redirect, it 404s, and nothing in the repository says
+   * so. The pages were listed in the sitemap, so a 404 is a real loss rather than a
+   * cosmetic one.
+   *
+   * The target is checked as well as the status, because a 301 to the wrong place is worse
+   * than a 404 - it is followed, and whatever it lands on is credited with the link.
+   */
+  for (const path of ["/pricing/", "/refund/", "/withdrawal/"]) {
+    const { res, error } = await get(path);
+    if (error) bad(`could not fetch ${path}`, error);
+    else if (res.status !== 301) bad(`${path} does not redirect permanently`, `HTTP ${res.status}`);
+    else {
+      const target = (res.headers.get("location") || "").replace(/^https?:\/\/[^/]+/, "");
+      if (target === "/") ok(`${path} redirects to /`, "HTTP 301");
+      else bad(`${path} redirects somewhere unexpected`, `301 -> ${target || "(no location)"}`);
+    }
+  }
+
+  /*
+   * This one used to point at the English withdrawal notice. That page is gone with the
+   * paid audit, so the redirect was repointed at the homepage: a chain through a URL that
+   * itself redirects is a slower 301 with an extra hop for every crawler to record.
+   *
+   * THE TRAILING SLASH IS PART OF THE ASSERTION, not a detail. next.config.ts sets
+   * `trailingSlash`, so a bare path is normalised by Next with a 308 BEFORE middleware
+   * runs and only the slashed form reaches the redirect map. Asserting the bare path
+   * therefore tests the normaliser rather than this map, and fails for a reason that has
+   * nothing to do with what is being checked - which is exactly what the first version of
+   * this section did, reporting a failure against a redirect that works.
+   */
+  const { res, error } = await get("/de/widerrufsrecht/");
+  if (error) bad("could not fetch /de/widerrufsrecht/", error);
+  else {
+    const target = (res.headers.get("location") || "").replace(/^https?:\/\/[^/]+/, "");
+    if (target === "/") ok("/de/widerrufsrecht/ resolves in one hop to /");
+    else bad("/de/widerrufsrecht/ does not resolve to /", `HTTP ${res.status} -> ${target || "(no location)"}`);
+  }
 }
 
 /* ---- /report/ must not claim to be the homepage ---- */
