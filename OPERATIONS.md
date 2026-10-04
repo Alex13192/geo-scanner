@@ -83,6 +83,13 @@ point no cold start approaches it. It needs no code change, no Cache Rule and no
 the limit being exceeded stops being 10 ms. In the dashboard it is under **Workers & Pages ->
 Plans**, which is also where the account is shown to be on Free.
 
+**It is not the zone plan, and this is worth stating because the mistake is the obvious one.**
+The domain's own Plans page offers Free, Pro at USD 20 and Business at USD 200, and Workers
+Paid appears nowhere on it - it is a separate subscription on the Workers side. Following the
+instruction above from the domain rather than from Workers & Pages lands on a page whose
+cheapest paid tier is four times the actual fix, which is enough to make somebody decide the
+fix is not worth it for the wrong reason.
+
 This is the recommendation rather than the rule below, on the ground that a fix nobody can
 confirm is not a fix. The site carries advertising, so the comparison is between that plan and
 showing a viewer an error page instead of the site.
