@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { LEGACY_HOST, SITE_URL } from "@/lib/site";
 
 /**
- * Permanent redirects for paths that were published and are not coming back.
+ * Two redirects, and they live in the same file because they are the same kind of
+ * decision: a request that should not be answered where it arrived.
  *
  * WHY THIS IS MIDDLEWARE AND NOT public/_redirects:
  * A `_redirects` file was the obvious first attempt and it did nothing. The
@@ -14,13 +16,18 @@ import { NextResponse, type NextRequest } from "next/server";
  * the next person to touch this would trust it.
  *
  * Middleware runs inside the Next.js server, which is what the worker executes,
- * so this is the layer that actually gets a say in the response.
+ * so this is the layer that actually gets a say in the response. The alternative for
+ * the hostname move below was a Cloudflare Redirect Rule, which would work and would
+ * be faster, and was rejected for the reason the paragraph above gives: a redirect that
+ * exists only in a dashboard cannot be read, reviewed or run against a local server by
+ * anyone reading this repository.
  *
- * Why redirect at all instead of letting these 404: every URL below was
- * published in the sitemap and may be indexed, and a 404 throws away whatever
- * equity it holds. 301 is permanent, which is the honest signal for a section
- * that is not coming back.
+ * Why redirect at all instead of letting these 404: every URL below was published in
+ * the sitemap and may be indexed, and a 404 throws away whatever equity it holds. 301
+ * is permanent, which is the honest signal for a section that is not coming back.
  */
+
+/** Dead paths on this site: where a path used to be -> where it goes now. */
 const GONE: Record<string, string> = {
   // The German half of the site, removed before the English-only decision.
   "/de": "/",
@@ -47,6 +54,28 @@ const GONE: Record<string, string> = {
 };
 
 export function middleware(request: NextRequest) {
+  /*
+   * 1. The old hostname moves to the site's own domain.
+   *
+   * Checked before the path table, and that order is deliberate: this applies to every
+   * path, including paths that do not exist and paths that are themselves withdrawn. A
+   * request to a hostname being retired should reach the new one whatever it asked for;
+   * answering it with a 404, or with a second redirect chain, are both worse than
+   * sending it where the site now lives.
+   *
+   * Path AND query string are carried over. Dropping the query would break
+   * /report/?domain=... links, which is the one URL here whose entire meaning is in its
+   * query string.
+   */
+  if ((request.headers.get("host") ?? "") === LEGACY_HOST) {
+    return NextResponse.redirect(
+      new URL(request.nextUrl.pathname + request.nextUrl.search, SITE_URL),
+      301
+    );
+  }
+
+  /* 2. Dead paths on the current hostname. */
+
   const { pathname } = request.nextUrl;
 
   // trailingSlash is on, so both forms arrive. Normalise before lookup.
@@ -76,10 +105,24 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   /*
-   * Only the removed paths. Middleware sits in front of every request it matches,
-   * so matching everything would tax the whole site for redirects that concern a
-   * handful of dead URLs. The withdrawn pages are listed without a trailing slash
-   * because the normalisation above strips it before the lookup.
+   * THIS MATCHER IS BROAD, AND IT HAS TO BE - which reverses what used to be written
+   * here. It listed five dead paths and said that matching everything "would tax the
+   * whole site for redirects that concern a handful of dead URLs". That was correct
+   * while those five paths were the only job.
+   *
+   * A hostname redirect cannot be scoped by path: every URL on the old host has to reach
+   * this function for the decision to be possible at all. A narrow matcher would mean the
+   * move worked for the paths somebody listed and silently not for the rest - and the
+   * paths it missed would be exactly the ones nobody thought of.
+   *
+   * WHAT IT COSTS: one function invocation per request, on both hostnames, for a string
+   * comparison.
+   * WHAT WOULD LET IT NARROW AGAIN: the old hostname having no inbound links left. The
+   * readiness badge snippets are the long tail and they sit in other people's
+   * repositories, so that is a when-rather-than-if that nobody here can date.
+   *
+   * _next/static and _next/image are excluded because they need no decision: a request
+   * for a content-hashed asset is for the same asset on either hostname.
    */
-  matcher: ["/de", "/de/:path*", "/pricing", "/refund", "/withdrawal"],
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };

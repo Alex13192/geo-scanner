@@ -24,6 +24,25 @@ export const SITE_URL = "https://llmention-geo.com";
 /** Host only, for the `?domain=` links that re-audit this site. */
 export const SITE_HOST = new URL(SITE_URL).host;
 
+/**
+ * The hostname this site answered on before it had a domain of its own.
+ *
+ * Kept as a value rather than as prose because it is still load-bearing, and the
+ * reasons are all traffic that arrives without asking this repository first:
+ *
+ *   - pages under it are indexed, and the sitemap that named them was published
+ *   - the readiness badge snippets embed the origin, and those snippets are in other
+ *     people's repositories and footers, where they cannot be updated
+ *   - both API routes carry it inside a user-agent string, so a host that stops
+ *     resolving sends real crawlers to a domain that is not there and makes the scanner
+ *     look like it is lying about who it is
+ *
+ * middleware.ts redirects it here permanently rather than leaving two hostnames serving
+ * the same pages forever. It can be deleted when nothing is left pointing at it, which
+ * is not a date anybody can set: the badge long tail is not in this repository.
+ */
+export const LEGACY_HOST = "geo-scanner.ccie13192.com";
+
 export const BRAND = "LLMention";
 
 /**
