@@ -66,16 +66,16 @@ weight, which is visible in a chart label. An English report is the default case
 Latin font and falls back to the CJK files only if none is present.
 """
 FONT_CANDIDATES_EN = [
-    r"C:\Windows\Fonts\segoeui.ttf",
     r"C:\Windows\Fonts\arial.ttf",
+    r"C:\Windows\Fonts\segoeui.ttf",
     r"C:\Windows\Fonts\calibri.ttf",
     "/System/Library/Fonts/Helvetica.ttc",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
 ] + FONT_CANDIDATES_ZH
 FONT_BOLD_CANDIDATES_EN = [
-    r"C:\Windows\Fonts\segoeuib.ttf",
     r"C:\Windows\Fonts\arialbd.ttf",
+    r"C:\Windows\Fonts\segoeuib.ttf",
     r"C:\Windows\Fonts\calibrib.ttf",
     "/System/Library/Fonts/Helvetica.ttc",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -256,7 +256,18 @@ def build_docx(model: dict, out: Path, charts: dict) -> None:
 
     C = model["copy"]
     meta, score = model["meta"], model["score"]
-    LATIN, EA = "Segoe UI", "Microsoft YaHei"
+    """
+    LATIN IS ARIAL, AND PORTABILITY IS THE WHOLE REASON. This report is sent to clients who may open
+    it in Word on Windows, Word or Pages on macOS, LibreOffice, or Google Docs, and only one
+    sans-serif is present by default on all of them. Segoe UI - the obvious choice, and the first
+    one used here - exists on Windows and nowhere else, so a macOS reader gets whatever their
+    substitution table picks. Arial also has metric-compatible substitutes on Linux (Liberation
+    Sans) and in Google Docs, so the line breaks a reader sees match the ones this file laid out.
+
+    The East Asian slot stays Microsoft YaHei: it only applies to runs that contain CJK, which an
+    English report does not have, and a Chinese report is read on a machine that has it.
+    """
+    LATIN, EA = "Arial", "Microsoft YaHei"
 
     def set_run(run, size=None, bold=None, color=None, latin=LATIN, ea=EA):
         run.font.name = latin

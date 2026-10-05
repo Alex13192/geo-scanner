@@ -31,15 +31,21 @@
  * formula (a check's share of its dimension times that dimension's weight) and is computed from
  * the analyser's own earned/possible/applicableWeight rather than from a second opinion.
  *
- * Usage:
- *   node scripts/report/build-report.mts --domain=example.com [--out=reports/...] [--lang=zh|en]
+ * Usage (English by default, since the product is sold globally; the site itself is app/(en)/):
  *
- * Then, for the DOCX and XLSX (needs Python with python-docx, openpyxl and Pillow):
- *   npm run report:render -- --model=<out>/report-model.json --out=<out>
- * which build-report.mts also attempts automatically.
+ *   npm run report -- --domain=example.com [--out=reports/...] [--lang=zh] [--no-pdf]
+ *
+ * WHAT EACH OUTPUT NEEDS, and each one degrades on its own rather than taking the run down with it:
+ *
+ *   report-model.json, report.md   Node only. Always written.
+ *   report.docx, report.xlsx       Python with python-docx, openpyxl and Pillow. Auto-detected;
+ *                                  REPORT_PYTHON names an interpreter that has them.
+ *   report.pdf                     A LibreOffice kit, named by REPORT_PDF_KIT_NODE and
+ *                                  REPORT_PDF_KIT_CLI. Skipped when unset, and a failure is fatal
+ *                                  when they are set - see exportPdf below for why those differ.
  */
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -270,9 +276,21 @@ function arg(name: string): string | undefined {
   return hit ? hit.slice(name.length + 3) : undefined;
 }
 
+const fromModelArg = arg("from-model");
 const domain = (arg("domain") || "").trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
-if (!domain) {
-  console.error("Usage: node scripts/report/build-report.mts --domain=example.com [--out=DIR] [--lang=zh|en]");
+
+if (!domain && !fromModelArg) {
+  console.error(
+    [
+      "Usage:",
+      "  npm run report -- --domain=example.com [--out=DIR] [--lang=zh] [--no-pdf]",
+      "  npm run report -- --from-model=reports/<dir>/report-model.json [--out=DIR] [--no-pdf]",
+      "",
+      "--from-model re-renders a report that was already scanned, without touching the domain",
+      "again. That is what makes adding a format - or fixing a heading - cheap, and it matters:",
+      "a client's site should not be crawled five times while somebody adjusts typography.",
+    ].join("\n")
+  );
   process.exit(2);
 }
 
@@ -285,7 +303,21 @@ if (!domain) {
 const lang: "zh" | "en" = arg("lang") === "zh" ? "zh" : "en";
 const C = COPY[lang];
 const stamp = new Date().toISOString().slice(0, 10);
-const outDir = resolve(REPO, arg("out") || join("reports", `${domain.replace(/[^a-z0-9.-]/gi, "_")}-${stamp}`));
+
+/**
+ * Where the outputs go. A re-render lands beside the model it read, which is the only sensible
+ * default: the first version of this fell through to the scan's naming rule with an empty domain
+ * and wrote to `reports/-2026-10-05/`, silently producing a second copy of the report in a
+ * directory whose name means nothing.
+ */
+const fromModelPath = fromModelArg ? resolve(REPO, fromModelArg) : null;
+const outDir = resolve(
+  REPO,
+  arg("out") ||
+    (fromModelPath
+      ? dirname(fromModelPath)
+      : join("reports", `${domain.replace(/[^a-z0-9.-]/gi, "_")}-${stamp}`))
+);
 mkdirSync(outDir, { recursive: true });
 
 const fill = (template: string, vars: Record<string, string | number>) =>
@@ -317,127 +349,174 @@ function displayDate(iso: string, forLang: "zh" | "en"): string {
 /* Scan                                                               */
 /* ------------------------------------------------------------------ */
 
-console.log(`Scanning ${domain} …`);
-const scan = await runScan(domain);
+/**
+ * The scan and the model it produces, as a unit, so that --from-model can skip both.
+ *
+ * WHY THIS IS A FUNCTION RATHER THAN AN `if` AROUND THE WHOLE SECTION: the section ends by writing
+ * the model, and the two outcomes - a fresh scan and a re-render - have to converge on exactly the
+ * same value. Wrapping it keeps one construction path, which is the property that makes
+ * `--from-model` trustworthy: a re-rendered report cannot differ from a freshly scanned one except
+ * in the copy, because the same code built both.
+ */
+async function scanAndBuildModel(): Promise<{ model: ReportModel; modelPath: string }> {
+  console.log(`Scanning ${domain} …`);
+  const scan = await runScan(domain);
 
-if (!scan.reachable) {
-  console.error(`\n${domain} could not be reached over https or http. Nothing was written.`);
-  console.error("A report is only produced from a real response; there is no partial or assumed version.");
-  process.exit(1);
+  if (!scan.reachable) {
+    console.error(`\n${domain} could not be reached over https or http. Nothing was written.`);
+    console.error("A report is only produced from a real response; there is no partial or assumed version.");
+    process.exit(1);
+  }
+
+    const r = scan.result;
+
+  /*
+   * The one derived number, and it is the site's own formula rather than a second opinion:
+   * a check's share of its dimension's applicable weight, times that dimension's applicable
+   * weight, against the renormalised total. See the /methodology/ page.
+   */
+  const dimById = new Map(r.dimensions.map((d) => [d.id, d]));
+  const totalApplicable = r.dimensions.reduce((s, d) => s + d.applicableWeight, 0) || 100;
+  const checkById = new Map(r.checks.map((c) => [c.id, c]));
+
+  const pointsAtStake = (checkId: string): number => {
+    const check = checkById.get(checkId);
+    if (!check) return 0;
+    const dim = dimById.get(check.dimension);
+    if (!dim || dim.possible <= 0) return 0;
+    return (check.weight / dim.possible) * dim.applicableWeight * (100 / totalApplicable);
+  };
+
+  const label = (id: string) => (lang === "zh" ? DIMENSION_ZH[id] ?? id : dimById.get(id)?.label ?? id);
+
+  const fixes = r.issues
+    .map((issue) => ({
+      id: issue.id,
+      title: issue.title,
+      dimensionId: checkById.get(issue.id)?.dimension ?? "",
+      dimension: label(checkById.get(issue.id)?.dimension ?? ""),
+      severity: issue.severity,
+      pointsAtStake: Number(pointsAtStake(issue.id).toFixed(2)),
+      evidence: issue.evidence,
+      recommendation: issue.recommendation,
+    }))
+    .sort((a, b) => b.pointsAtStake - a.pointsAtStake)
+    .map((fix, i) => ({ ...fix, priority: i + 1 }));
+
+  /*
+   * The callout is derived from the data, never written by hand. It leads with the check that is
+   * worth the most rather than with the worst-scoring dimension, because those are not the same
+   * thing: on the first real run the lowest-scoring dimension carried 3% of the weight, so naming
+   * it first would have pointed the reader at the cheapest possible fix.
+   */
+  const applicable = r.dimensions.filter((d) => d.applicableWeight > 0);
+  const weakest = [...applicable].sort((a, b) => a.score - b.score)[0];
+  const callout =
+    fixes.length === 0
+      ? C.calloutAllPass
+      : fill(C.calloutFixes, {
+          count: fixes.length,
+          topFix: fixes[0].title,
+          topPoints: fixes[0].pointsAtStake.toFixed(2),
+          weakLabel: label(weakest.id),
+          weakScore: weakest.score,
+          weakWeight: weakest.applicableWeight,
+        });
+
+  const model = {
+    generatedBy: "geo-scanner scripts/report/build-report.mts",
+    site: SITE_URL,
+    siteHost: SITE_HOST,
+    lang,
+    copy: C,
+    dimensionLabels: DIMENSION_ZH,
+    meta: {
+      domain,
+      scannedAt: scan.reachable ? new Date().toISOString() : new Date().toISOString(),
+      scannedAtDisplay: displayDate(new Date().toISOString(), lang),
+      scanDate: stamp,
+      scheme: scan.scheme,
+      homeStatus: scan.homeStatus,
+      browserStatus: scan.browserStatus,
+      finalUrl: scan.finalUrl,
+      truncated: scan.truncated,
+      pageType: r.pageType,
+    },
+    score: {
+      total: r.score,
+      grade: r.grade,
+      gradeLabel: r.gradeLabel,
+      checksRun: r.checksRun,
+      checksPassed: r.checksPassed,
+      checksNotApplicable: r.checksNotApplicable,
+      totalApplicableWeight: totalApplicable,
+    },
+    callout,
+    dimensions: r.dimensions.map((d) => ({
+      id: d.id,
+      label: label(d.id),
+      labelEn: d.label,
+      nominalWeight: d.weight,
+      applicableWeight: d.applicableWeight,
+      score: d.score,
+      earned: d.earned,
+      possible: d.possible,
+      rationale: d.rationale,
+    })),
+    metrics: Object.entries(r.metrics).map(([id, score]) => {
+      const dimensionId = METRIC_DIMENSION[id];
+      return { id, dimensionId, label: dimensionId ? label(dimensionId) : id, score };
+    }),
+    fixes,
+    checks: r.checks.map((c) => ({
+      id: c.id,
+      title: c.title,
+      dimensionId: c.dimension,
+      dimension: label(c.dimension),
+      status: c.status,
+      weight: c.weight,
+    })),
+  };
+
+  const modelPath = join(outDir, "report-model.json");
+  writeFileSync(modelPath, JSON.stringify(model, null, 2), "utf8");
+  return { model, modelPath };
 }
 
-const r = scan.result;
-
-/*
- * The one derived number, and it is the site's own formula rather than a second opinion:
- * a check's share of its dimension's applicable weight, times that dimension's applicable
- * weight, against the renormalised total. See the /methodology/ page.
+/**
+ * The model as it exists on disk. Typed loosely on purpose: this file is the only thing that
+ * writes it, and a full type would be a second description of the same shape to keep in step.
  */
-const dimById = new Map(r.dimensions.map((d) => [d.id, d]));
-const totalApplicable = r.dimensions.reduce((s, d) => s + d.applicableWeight, 0) || 100;
-const checkById = new Map(r.checks.map((c) => [c.id, c]));
-
-const pointsAtStake = (checkId: string): number => {
-  const check = checkById.get(checkId);
-  if (!check) return 0;
-  const dim = dimById.get(check.dimension);
-  if (!dim || dim.possible <= 0) return 0;
-  return (check.weight / dim.possible) * dim.applicableWeight * (100 / totalApplicable);
+type ReportModel = {
+  site: string;
+  lang: "zh" | "en";
+  copy: Record<string, string>;
+  meta: Record<string, string | number | boolean | null>;
+  score: Record<string, number | string>;
+  callout: string;
+  dimensions: { id: string; label: string; applicableWeight: number; score: number; earned: number; possible: number; rationale: string }[];
+  metrics: { id: string; dimensionId?: string; label: string; score: number }[];
+  fixes: { priority: number; id: string; title: string; dimension: string; severity: string; pointsAtStake: number; evidence: string; recommendation: string }[];
+  checks: { id: string; title: string; dimensionId: string; dimension: string; status: string; weight: number }[];
 };
 
-const label = (id: string) => (lang === "zh" ? DIMENSION_ZH[id] ?? id : dimById.get(id)?.label ?? id);
+const loaded = fromModelArg
+  ? (() => {
+      const p = resolve(REPO, fromModelArg);
+      if (!existsSync(p)) {
+        console.error(`--from-model points at ${p}, which does not exist.`);
+        process.exit(1);
+      }
+      const parsed = JSON.parse(readFileSync(p, "utf8")) as ReportModel;
+      console.log(
+        `Re-rendering ${parsed.meta.domain} from ${p} - no scan, so that site is not contacted again.`
+      );
+      return { model: parsed, modelPath: p };
+    })()
+  : await scanAndBuildModel();
 
-const fixes = r.issues
-  .map((issue) => ({
-    id: issue.id,
-    title: issue.title,
-    dimensionId: checkById.get(issue.id)?.dimension ?? "",
-    dimension: label(checkById.get(issue.id)?.dimension ?? ""),
-    severity: issue.severity,
-    pointsAtStake: Number(pointsAtStake(issue.id).toFixed(2)),
-    evidence: issue.evidence,
-    recommendation: issue.recommendation,
-  }))
-  .sort((a, b) => b.pointsAtStake - a.pointsAtStake)
-  .map((fix, i) => ({ ...fix, priority: i + 1 }));
-
-/*
- * The callout is derived from the data, never written by hand. It leads with the check that is
- * worth the most rather than with the worst-scoring dimension, because those are not the same
- * thing: on the first real run the lowest-scoring dimension carried 3% of the weight, so naming
- * it first would have pointed the reader at the cheapest possible fix.
- */
-const applicable = r.dimensions.filter((d) => d.applicableWeight > 0);
-const weakest = [...applicable].sort((a, b) => a.score - b.score)[0];
-const callout =
-  fixes.length === 0
-    ? C.calloutAllPass
-    : fill(C.calloutFixes, {
-        count: fixes.length,
-        topFix: fixes[0].title,
-        topPoints: fixes[0].pointsAtStake.toFixed(2),
-        weakLabel: label(weakest.id),
-        weakScore: weakest.score,
-        weakWeight: weakest.applicableWeight,
-      });
-
-const model = {
-  generatedBy: "geo-scanner scripts/report/build-report.mts",
-  site: SITE_URL,
-  siteHost: SITE_HOST,
-  lang,
-  copy: C,
-  dimensionLabels: DIMENSION_ZH,
-  meta: {
-    domain,
-    scannedAt: scan.reachable ? new Date().toISOString() : new Date().toISOString(),
-    scannedAtDisplay: displayDate(new Date().toISOString(), lang),
-    scanDate: stamp,
-    scheme: scan.scheme,
-    homeStatus: scan.homeStatus,
-    browserStatus: scan.browserStatus,
-    finalUrl: scan.finalUrl,
-    truncated: scan.truncated,
-    pageType: r.pageType,
-  },
-  score: {
-    total: r.score,
-    grade: r.grade,
-    gradeLabel: r.gradeLabel,
-    checksRun: r.checksRun,
-    checksPassed: r.checksPassed,
-    checksNotApplicable: r.checksNotApplicable,
-    totalApplicableWeight: totalApplicable,
-  },
-  callout,
-  dimensions: r.dimensions.map((d) => ({
-    id: d.id,
-    label: label(d.id),
-    labelEn: d.label,
-    nominalWeight: d.weight,
-    applicableWeight: d.applicableWeight,
-    score: d.score,
-    earned: d.earned,
-    possible: d.possible,
-    rationale: d.rationale,
-  })),
-  metrics: Object.entries(r.metrics).map(([id, score]) => {
-    const dimensionId = METRIC_DIMENSION[id];
-    return { id, dimensionId, label: dimensionId ? label(dimensionId) : id, score };
-  }),
-  fixes,
-  checks: r.checks.map((c) => ({
-    id: c.id,
-    title: c.title,
-    dimensionId: c.dimension,
-    dimension: label(c.dimension),
-    status: c.status,
-    weight: c.weight,
-  })),
-};
-
-const modelPath = join(outDir, "report-model.json");
-writeFileSync(modelPath, JSON.stringify(model, null, 2), "utf8");
+const model = loaded.model;
+const modelPath = loaded.modelPath;
 
 /* ------------------------------------------------------------------ */
 /* Markdown - rendered here so the text formats need no Python.        */
@@ -450,27 +529,27 @@ const sevText = (s: string) =>
 const esc = (s: string) => String(s).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
 
 const md: string[] = [];
-md.push(`# ${domain} ${C.reportName}`);
+md.push(`# ${model.meta.domain} ${C.reportName}`);
 md.push("");
-md.push(`**${r.score} / 100** — ${C.scoreCaption} · ${r.grade} (${r.gradeLabel})`);
+md.push(`**${model.score.total} / 100** — ${C.scoreCaption} · ${model.score.grade} (${model.score.gradeLabel})`);
 md.push("");
-md.push(`> ${callout}`);
+md.push(`> ${model.callout}`);
 md.push("");
 md.push(`## ${C.overview}`);
 md.push("");
 md.push(`| ${C.tableItem} | ${C.tableValue} |`);
 md.push("| --- | --- |");
-md.push(`| ${C.kScore} | ${r.score} / 100 (${r.grade}) |`);
-md.push(`| ${C.kPassed} | ${r.checksPassed} / ${r.checksRun} |`);
-md.push(`| ${C.kNotApplicable} | ${r.checksNotApplicable} |`);
-md.push(`| ${C.kPageType} | ${r.pageType} |`);
-md.push(`| ${C.kScheme} | ${scan.scheme} |`);
-md.push(`| ${C.kHomeStatus} | ${scan.homeStatus} |`);
+md.push(`| ${C.kScore} | ${model.score.total} / 100 (${model.score.grade}) |`);
+md.push(`| ${C.kPassed} | ${model.score.checksPassed} / ${model.score.checksRun} |`);
+md.push(`| ${C.kNotApplicable} | ${model.score.checksNotApplicable} |`);
+md.push(`| ${C.kPageType} | ${model.meta.pageType} |`);
+md.push(`| ${C.kScheme} | ${model.meta.scheme} |`);
+md.push(`| ${C.kHomeStatus} | ${model.meta.homeStatus} |`);
 md.push(
-  `| ${C.kBrowserProbe} | ${scan.browserStatus === null ? C.probeNotNeeded : scan.browserStatus} |`
+  `| ${C.kBrowserProbe} | ${model.meta.browserStatus === null ? C.probeNotNeeded : model.meta.browserStatus} |`
 );
-md.push(`| ${C.kFinalUrl} | ${scan.finalUrl} |`);
-md.push(`| ${C.kTruncated} | ${scan.truncated ? C.yes : C.no} |`);
+md.push(`| ${C.kFinalUrl} | ${model.meta.finalUrl} |`);
+md.push(`| ${C.kTruncated} | ${model.meta.truncated ? C.yes : C.no} |`);
 md.push(`| ${C.kScannedAt} | ${model.meta.scannedAtDisplay} |`);
 md.push("");
 md.push(`![${C.figBar}](charts/dimensions.png)`);
@@ -525,7 +604,7 @@ for (const key of [
   "limitNoCitation",
   "limitWaf",
   "limitCwv",
-  ...(scan.browserStatus === null ? [] : ["limitIpHint"]),
+  ...(model.meta.browserStatus === null ? [] : ["limitIpHint"]),
 ]) {
   md.push(`- ${C[key]}`);
 }
@@ -534,10 +613,10 @@ md.push(`## ${C.sectionMethod}`);
 md.push("");
 for (const [key, vars] of [
   ["methodEngine", {}],
-  ["methodWeights", { url: SITE_URL }],
+  ["methodWeights", { url: model.site }],
   ["methodPointsAtStake", {}],
   ["methodApplicable", {}],
-  ["methodGenerated", { url: SITE_URL, date: stamp }],
+  ["methodGenerated", { url: model.site, date: model.meta.scanDate }],
 ] as [string, Record<string, string>][]) {
   md.push(`- ${fill(C[key], vars)}`);
 }
@@ -545,8 +624,13 @@ md.push("");
 
 const mdPath = join(outDir, "report.md");
 writeFileSync(mdPath, md.join("\n"), "utf8");
-console.log(`wrote ${modelPath}`);
-console.log(`wrote ${mdPath}  (${r.score}/100 ${r.grade}, ${model.fixes.length} fix item(s))`);
+/*
+ * Reported differently depending on how this run got its model: claiming to have "written" a file
+ * that was read from disk is a small lie, and a small lie in a log is what sends somebody looking
+ * for a file that was never produced.
+ */
+console.log(fromModelArg ? `model     ${modelPath}  (read)` : `wrote ${modelPath}`);
+console.log(`wrote ${mdPath}  (${model.score.total}/100 ${model.score.grade}, ${model.fixes.length} fix item(s))`);
 
 /* ------------------------------------------------------------------ */
 /* Office formats, via the Python renderer                            */
@@ -601,3 +685,105 @@ if (rendered.status !== 0) {
 }
 
 console.log(`\nReport written to ${outDir}`);
+
+/* ------------------------------------------------------------------ */
+/* PDF, when a LibreOffice kit has been pointed at                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A PDF, because that is what an overseas client forwards.
+ *
+ * WHY THIS IS CONFIGURATION AND NOT A SEARCH. The kit ships with the harness this project is
+ * developed in, not with this repository, so its location is not a fact about the code - hardcoding
+ * it would be wrong on any other machine and would publish one developer's directory layout in a
+ * public repository. The alternative, looking for a system LibreOffice, is worse: the conversion
+ * would then use whatever version happened to be installed, which is the same class of mistake as
+ * two scoring implementations. So the two paths are named explicitly, and without them the step is
+ * skipped with the variables printed.
+ *
+ * WHY A FAILURE HERE IS LOUD. "No kit configured" and "the kit is configured and did not work" are
+ * different situations, and only the first is fine to walk past. Collapsing them is how a report
+ * gets sent to a client with the PDF missing and nobody notices, so the second one exits non-zero
+ * and says explicitly that the other three files are still complete on disk.
+ */
+function exportPdf(dir: string): void {
+  const docx = join(dir, "report.docx");
+  const pdf = join(dir, "report.pdf");
+  const kitNode = process.env.REPORT_PDF_KIT_NODE;
+  const kitCli = process.env.REPORT_PDF_KIT_CLI;
+
+  if (process.argv.includes("--no-pdf")) {
+    console.log("PDF: skipped (--no-pdf was given)");
+    return;
+  }
+
+  if (!kitNode || !kitCli) {
+    console.log(
+      [
+        "",
+        "PDF: skipped - no LibreOffice kit is configured.",
+        "The DOCX, XLSX and Markdown above are complete. To also get a PDF, set both variables",
+        "and run again:",
+        "",
+        "  REPORT_PDF_KIT_NODE=<node executable>",
+        "  REPORT_PDF_KIT_CLI=<.../libreoffice-kit/lib/cli.js>",
+        "",
+      ].join("\n")
+    );
+    return;
+  }
+
+  for (const [name, value] of [
+    ["REPORT_PDF_KIT_NODE", kitNode],
+    ["REPORT_PDF_KIT_CLI", kitCli],
+  ] as const) {
+    if (!existsSync(value)) {
+      console.error(`\nPDF: ${name} points at ${value}, which does not exist. Nothing was converted.`);
+      process.exit(1);
+    }
+  }
+
+  if (!existsSync(docx)) {
+    console.error(`\nPDF: ${docx} is missing, so there is nothing to convert.`);
+    process.exit(1);
+  }
+
+  // Removed first rather than trusted to be overwritten: an older report.pdf left in place would
+  // otherwise be indistinguishable from a successful conversion, and a client would be sent last
+  // week's report under this week's name.
+  rmSync(pdf, { force: true });
+
+  const converted = spawnSync(
+    kitNode,
+    [kitCli, "convert", "--input", docx, "--output", pdf],
+    // stdout carries the kit's JSON manifest, which this step does not read; stderr is kept so a
+    // real conversion error is visible rather than swallowed.
+    { stdio: ["ignore", "ignore", "inherit"] }
+  );
+
+  /**
+   * The result is checked rather than assumed. A process that exits zero having written nothing, or
+   * having written an error page, is exactly the failure this check exists for - and %PDF- is the
+   * one thing every valid PDF starts with.
+   */
+  const head = existsSync(pdf) ? readFileSync(pdf).subarray(0, 5).toString("latin1") : "";
+  const size = existsSync(pdf) ? statSync(pdf).size : 0;
+
+  if (converted.status !== 0 || head !== "%PDF-" || size < 1024) {
+    console.error(
+      [
+        "",
+        "PDF EXPORT FAILED.",
+        `  converter exit : ${converted.status}`,
+        `  file written   : ${size} bytes, header ${JSON.stringify(head)}`,
+        "  the DOCX, XLSX and Markdown are still complete on disk.",
+        "",
+      ].join("\n")
+    );
+    process.exit(1);
+  }
+
+  console.log(`wrote ${pdf}  (${Math.round(size / 1024)} KB)`);
+}
+
+exportPdf(outDir);
