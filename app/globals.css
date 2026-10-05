@@ -223,10 +223,20 @@ body {
   color: var(--ink-1);
   font-weight: 600;
 }
+/*
+ * NO PERMANENT UNDERLINE, AND THAT IS THE POINT.
+ *
+ * This rule used to set `text-decoration: underline` on every prose link, which is a perfectly
+ * normal choice - and it silently made the hover underline below invisible, because growing an
+ * underline that is already there changes nothing a reader can see. The hover rule was added,
+ * built, verified present in the stylesheet, and did nothing at all.
+ *
+ * The colour carries discoverability instead: --accent on a grey body is unmistakably a link
+ * without a line under it, and the underline then means "the pointer is on me" rather than
+ * "this is a link" - which is the only thing it can mean if it is not always there.
+ */
 .doc-article a {
   color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 .doc-article code {
   background: var(--code-bg);
