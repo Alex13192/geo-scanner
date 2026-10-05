@@ -1,4 +1,21 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
+/*
+ * Makes the bindings in wrangler.jsonc available to `next dev`.
+ *
+ * WHY THIS IS NEEDED AT ALL: `next dev` runs the app in Node, where there is no D1 and no
+ * assets binding, so `getCloudflareContext()` throws and every route that touches the
+ * database fails locally while working in production - the least useful way round. This
+ * call starts a wrangler platform proxy in the dev server and hands the same bindings to
+ * it, reading them from wrangler.jsonc, so there is one description of the environment
+ * rather than a second one maintained for local work.
+ *
+ * It is called unconditionally, which is what the adapter's documentation shows: during a
+ * production build the call is inert, and the Worker that OpenNext produces gets its
+ * bindings from the platform rather than from here.
+ */
+initOpenNextCloudflareForDev();
 
 /**
  * Security response headers.

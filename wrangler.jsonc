@@ -102,6 +102,35 @@
       "binding": "WORKER_SELF_REFERENCE",
       "service": "geo-scanner"
     }
+  ],
+
+  /*
+   * THE FIRST RESOURCE THIS PROJECT HAS EVER NEEDED. Everything above is a deployment
+   * mechanism; this is state, and adding state is a different kind of decision.
+   *
+   * WHY IT IS HERE WHEN THE NOTE BELOW STILL REFUSES R2 AND IMAGES: the weekly report has
+   * to remember which domains to scan and which address to send the result to. Nothing in
+   * a Worker can hold that between requests, and the alternatives are worse than a
+   * binding - KV cannot be queried by "everyone who is confirmed", and an external
+   * database would put a second vendor and a network hop inside the cron path, which is
+   * the one place with a 10 ms CPU budget.
+   *
+   * THE ID IS A PLACEHOLDER BECAUSE THE DATABASE DOES NOT EXIST YET. This is on the
+   * `feat/subscription` branch, nothing is deployed from it, and the resource has
+   * deliberately not been created. `wrangler d1 create geo-scanner-subscribers` prints
+   * the real id to put here. Local development is unaffected in the meantime: `wrangler
+   * dev` and `next dev` build a local SQLite from migrations/ and never contact the API.
+   *
+   * `migrations_dir` is what makes the schema reviewable in a diff rather than typed into
+   * a dashboard. Apply locally with `npx wrangler d1 migrations apply DB --local`.
+   */
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "geo-scanner-subscribers",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
   ]
 
   // DELIBERATELY ABSENT, both for now and for a stated reason:
