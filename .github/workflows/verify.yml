@@ -105,6 +105,14 @@ jobs:
       - name: Run the rate limiter's tests
         run: npm run test:rate-limit
 
+      # The webhook endpoint is public by necessity - it is called by a third party - so the
+      # signature check is the only thing between it and anyone who learns its URL. Every case in
+      # that suite exists because of a specific way to get this wrong, and every positive case is
+      # signed with node:crypto rather than with the module under test, because a test that signs
+      # with the implementation only proves the implementation agrees with itself.
+      - name: Run the webhook signature tests
+        run: npm run test:webhooks
+
       - name: Type check
         run: npx tsc --noEmit
 

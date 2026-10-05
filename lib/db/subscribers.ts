@@ -300,3 +300,40 @@ export async function recordScan(
 export async function markBounced(db: D1DatabaseLike, id: string): Promise<void> {
   await db.prepare(`UPDATE subscribers SET status = 'bounced' WHERE id = ?1`).bind(id).run();
 }
+
+/**
+ * Stop sending to an address the provider says does not exist.
+ *
+ * BY EMAIL RATHER THAN BY ID, because a bounce webhook carries the address and not our row id -
+ * the provider has never heard of our subscribers table. Matching on the address is also correct
+ * rather than merely convenient: an address that bounces for one domain bounces for all of them,
+ * and the schema allows one address to hold several subscriptions.
+ *
+ * The status is `bounced`, which is deliberately not `unsubscribed`. One is an address that
+ * stopped existing and may come back; the other is a person who asked to stop. Collapsing them
+ * is how a sender ends up either mailing the dead or refusing the living - see the note at the
+ * top of the migration.
+ */
+export async function markBouncedByEmail(db: D1DatabaseLike, email: string): Promise<number> {
+  const result = await db
+    .prepare(`UPDATE subscribers SET status = 'bounced' WHERE email = ?1 AND status != 'unsubscribed'`)
+    .bind(email)
+    .run();
+  return result.meta?.changes ?? 0;
+}
+
+/**
+ * Stop sending to an address whose owner marked a message as spam.
+ *
+ * Recorded as `unsubscribed`, not as `bounced`: the address is perfectly alive and the person
+ * made a decision. It is also the strongest possible signal that continuation is unwelcome, so
+ * it is address-wide for the same reason the unsubscribe link is - one more message to somebody
+ * who has already complained is what turns a reputation problem into a blocklisting.
+ */
+export async function unsubscribeByEmail(db: D1DatabaseLike, email: string): Promise<number> {
+  const result = await db
+    .prepare(`UPDATE subscribers SET status = 'unsubscribed' WHERE email = ?1 AND status != 'unsubscribed'`)
+    .bind(email)
+    .run();
+  return result.meta?.changes ?? 0;
+}

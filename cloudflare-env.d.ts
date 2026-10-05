@@ -72,5 +72,15 @@ interface CloudflareEnv {
    * a failure in production rather than pretending to have sent something.
    */
   RESEND_API_KEY?: string;
+
+  /**
+   * The `whsec_...` value Resend shows when a webhook is created.
+   *
+   * Optional for the same reason RESEND_API_KEY is, and with the same failure direction: with no
+   * secret configured the webhook endpoint REFUSES every delivery rather than accepting them.
+   * Failing open there would leave a public endpoint that anyone can use to mark arbitrary
+   * subscribers as bounced, which is worse than not having the endpoint at all.
+   */
+  RESEND_WEBHOOK_SECRET?: string;
   EMAIL_FROM?: string;
 }
