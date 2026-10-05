@@ -70,13 +70,20 @@ const DIMENSION_ZH: Record<string, string> = {
   delivery: "交付与移动端",
 };
 
-const METRIC_ZH: Record<string, string> = {
-  crawlability: "可抓取性",
-  understandability: "可理解性",
-  answerReadiness: "答案就绪",
-  citability: "可引用性",
-  trustAuthority: "信任权威",
-  contentDepth: "内容深度",
+/**
+ * The six legacy metrics ARE six of the twelve dimensions under different keys, and the site
+ * already says so: app/(en)/report/ReportWidget.tsx renders them with the dimension labels in
+ * legacyDimensions(). Reusing that mapping is the reason this file has no second label map for
+ * them - an English report briefly showed "trustAuthority" on the radar, which is what inventing
+ * one's own names for numbers the product has already named looks like.
+ */
+const METRIC_DIMENSION: Record<string, string> = {
+  crawlability: "ai-crawler-access",
+  understandability: "semantic-structure",
+  answerReadiness: "answer-readiness",
+  citability: "citability",
+  trustAuthority: "trust-authority",
+  contentDepth: "content-depth",
 };
 
 const COPY: Record<"zh" | "en", Copy> = {
@@ -269,7 +276,13 @@ if (!domain) {
   process.exit(2);
 }
 
-const lang: "zh" | "en" = arg("lang") === "en" ? "en" : arg("lang") === "zh" ? "zh" : "zh";
+/**
+ * English is the DEFAULT, and that is a product decision rather than a technical one: every route
+ * on this site lives under app/(en)/, the scanner's published method is written in English, and the
+ * market is global. A Chinese report is the exception a client asks for, not the case to fall into
+ * by accident - which is what a `zh` default would make it.
+ */
+const lang: "zh" | "en" = arg("lang") === "zh" ? "zh" : "en";
 const C = COPY[lang];
 const stamp = new Date().toISOString().slice(0, 10);
 const outDir = resolve(REPO, arg("out") || join("reports", `${domain.replace(/[^a-z0-9.-]/gi, "_")}-${stamp}`));
@@ -277,6 +290,28 @@ mkdirSync(outDir, { recursive: true });
 
 const fill = (template: string, vars: Record<string, string | number>) =>
   template.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? `{${k}}`));
+
+/**
+ * A timestamp a client can read, built by hand rather than with toLocaleString.
+ *
+ * WHY NOT THE LOCALE: toLocaleString depends on the machine and the runtime's ICU build, so the
+ * same scan would print differently on two machines and a report could change without the data
+ * changing. The raw ISO string stays in the model and in the workbook's metadata sheet, which is
+ * where a machine should read it from.
+ */
+function displayDate(iso: string, forLang: "zh" | "en"): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const time = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+  if (forLang === "zh") {
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${time}`;
+  }
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ];
+  return `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()}, ${time}`;
+}
 
 /* ------------------------------------------------------------------ */
 /* Scan                                                               */
@@ -353,10 +388,10 @@ const model = {
   lang,
   copy: C,
   dimensionLabels: DIMENSION_ZH,
-  metricLabels: METRIC_ZH,
   meta: {
     domain,
     scannedAt: scan.reachable ? new Date().toISOString() : new Date().toISOString(),
+    scannedAtDisplay: displayDate(new Date().toISOString(), lang),
     scanDate: stamp,
     scheme: scan.scheme,
     homeStatus: scan.homeStatus,
@@ -386,11 +421,10 @@ const model = {
     possible: d.possible,
     rationale: d.rationale,
   })),
-  metrics: Object.entries(r.metrics).map(([id, score]) => ({
-    id,
-    label: lang === "zh" ? METRIC_ZH[id] ?? id : id,
-    score,
-  })),
+  metrics: Object.entries(r.metrics).map(([id, score]) => {
+    const dimensionId = METRIC_DIMENSION[id];
+    return { id, dimensionId, label: dimensionId ? label(dimensionId) : id, score };
+  }),
   fixes,
   checks: r.checks.map((c) => ({
     id: c.id,
@@ -437,7 +471,7 @@ md.push(
 );
 md.push(`| ${C.kFinalUrl} | ${scan.finalUrl} |`);
 md.push(`| ${C.kTruncated} | ${scan.truncated ? C.yes : C.no} |`);
-md.push(`| ${C.kScannedAt} | ${model.meta.scannedAt} |`);
+md.push(`| ${C.kScannedAt} | ${model.meta.scannedAtDisplay} |`);
 md.push("");
 md.push(`![${C.figBar}](charts/dimensions.png)`);
 md.push("");

@@ -40,7 +40,7 @@ ACCENT = "#0071e3"
 OK = "#1a7f37"
 WARN = "#9a6700"
 
-FONT_CANDIDATES = [
+FONT_CANDIDATES_ZH = [
     r"C:\Windows\Fonts\msyh.ttc",
     r"C:\Windows\Fonts\msyhbd.ttc",
     r"C:\Windows\Fonts\simhei.ttf",
@@ -50,12 +50,41 @@ FONT_CANDIDATES = [
     "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
     "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
 ]
-FONT_BOLD_CANDIDATES = [
+FONT_BOLD_CANDIDATES_ZH = [
     r"C:\Windows\Fonts\msyhbd.ttc",
     r"C:\Windows\Fonts\simhei.ttf",
     "/System/Library/Fonts/PingFang.ttc",
     "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
 ]
+
+"""
+TL;DR the charts get a font chosen for the report's language, not one font for both.
+
+A CJK font renders Latin, so using the Chinese font everywhere "works" - and it looks wrong: the
+Latin glyphs in a CJK font are designed to sit beside ideographs, with wider spacing and a different
+weight, which is visible in a chart label. An English report is the default case here, so it gets a
+Latin font and falls back to the CJK files only if none is present.
+"""
+FONT_CANDIDATES_EN = [
+    r"C:\Windows\Fonts\segoeui.ttf",
+    r"C:\Windows\Fonts\arial.ttf",
+    r"C:\Windows\Fonts\calibri.ttf",
+    "/System/Library/Fonts/Helvetica.ttc",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+] + FONT_CANDIDATES_ZH
+FONT_BOLD_CANDIDATES_EN = [
+    r"C:\Windows\Fonts\segoeuib.ttf",
+    r"C:\Windows\Fonts\arialbd.ttf",
+    r"C:\Windows\Fonts\calibrib.ttf",
+    "/System/Library/Fonts/Helvetica.ttc",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+] + FONT_BOLD_CANDIDATES_ZH
+
+# Selected once in main() from the model's language.
+REGULAR: str | None = None
+BOLD: str | None = None
 
 
 def pick_font(candidates: list[str]) -> str | None:
@@ -65,8 +94,14 @@ def pick_font(candidates: list[str]) -> str | None:
     return None
 
 
-REGULAR = pick_font(FONT_CANDIDATES)
-BOLD = pick_font(FONT_BOLD_CANDIDATES) or REGULAR
+def select_fonts(lang: str) -> None:
+    global REGULAR, BOLD
+    if lang == "zh":
+        REGULAR = pick_font(FONT_CANDIDATES_ZH)
+        BOLD = pick_font(FONT_BOLD_CANDIDATES_ZH) or REGULAR
+    else:
+        REGULAR = pick_font(FONT_CANDIDATES_EN)
+        BOLD = pick_font(FONT_BOLD_CANDIDATES_EN) or REGULAR
 
 
 def font(size: int, bold: bool = False):
@@ -93,29 +128,43 @@ def text_w(draw: ImageDraw.ImageDraw, s: str, f) -> int:
 # Figure 1: dimension bars
 # --------------------------------------------------------------------------------------
 def chart_dimensions(model: dict, out: Path) -> None:
+    """
+    The label column is measured from the labels, not fixed.
+
+    WHY: it was fixed at 250 units, which fits Chinese dimension names ("机器可读性", four or five
+    characters) and does not fit English ones ("Metadata & Discoverability", twenty-six). The bars
+    are drawn after the labels, so the overflow was covered by the bar rather than reported - the
+    first English chart showed "AI Crawler Acces" and half a bar over the rest of the word. The
+    width now comes from the longest label as rendered in the chosen font, so a longer language or
+    a renamed dimension cannot reintroduce it.
+    """
     dims = model["dimensions"]
     scale = 2
     pad = 28 * scale
-    label_w = 250 * scale
+    tag_w = 78 * scale
+    gap = 30 * scale
     value_w = 90 * scale
     row_h = 46 * scale
     track_w = 900 * scale
+
+    f_label = font(22 * scale, bold=True)
+    f_small = font(18 * scale)
+    probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+    widest = max((probe.textlength(d["label"], font=f_label) for d in dims), default=0)
+    label_w = tag_w + int(widest) + gap
+
     width = pad * 2 + label_w + track_w + value_w
     height = pad * 2 + row_h * len(dims)
     img = Image.new("RGB", (width, height), SURFACE_2)
     d = ImageDraw.Draw(img)
-    f_label = font(22 * scale, bold=True)
-    f_small = font(18 * scale)
 
     for i, dim in enumerate(dims):
         y = pad + i * row_h
         cy = y + row_h // 2
 
         # weight tag, so the bar length is never read as importance
-        tag = f"{dim['applicableWeight']}%"
-        d.text((pad, cy), tag, font=f_small, fill=INK_3, anchor="lm")
-
-        d.text((pad + 78 * scale, cy), dim["label"], font=f_label, fill=INK_1, anchor="lm")
+        d.text((pad, cy), f"{dim['applicableWeight']}%", font=f_small, fill=INK_3, anchor="lm")
+        d.text((pad + tag_w, cy), dim["label"], font=f_label, fill=INK_1, anchor="lm")
 
         x0 = pad + label_w
         d.rectangle([x0, cy - 12 * scale, x0 + track_w, cy + 12 * scale], fill=SURFACE_1)
@@ -131,16 +180,30 @@ def chart_dimensions(model: dict, out: Path) -> None:
 # Figure 2: six-metric radar
 # --------------------------------------------------------------------------------------
 def chart_radar(model: dict, out: Path) -> None:
+    """
+    The canvas is sized to the labels, which the English ones need and the Chinese ones did not.
+
+    A radar's labels hang off the ends of the axes, outside the polygon, so the canvas has to be
+    wider than the ring by the width of the longest label on each side. At the original fixed size
+    the English labels ("Crawlability 100") were cut off by the canvas edge - the same latent
+    assumption as the bar chart's label column, in the other figure.
+    """
     metrics = model["metrics"]
     scale = 2
-    size = 620 * scale
-    img = Image.new("RGB", (size, int(size * 0.98)), SURFACE_2)
-    d = ImageDraw.Draw(img)
     f_label = font(19 * scale, bold=True)
     f_ring = font(14 * scale)
 
-    cx, cy = size // 2, int(size * 0.47)
-    radius = int(size * 0.33)
+    probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+    widest = max((probe.textlength(f"{m['label']} {m['score']}", font=f_label) for m in metrics), default=0)
+    margin = int(widest) + 24 * scale
+
+    radius = 300 * scale
+    width = 2 * (radius + margin)
+    height = 2 * (radius + margin) + 40 * scale
+    img = Image.new("RGB", (width, height), SURFACE_2)
+    d = ImageDraw.Draw(img)
+
+    cx, cy = width // 2, int(height * 0.47)
     n = len(metrics)
 
     def point(i: int, value: float):
@@ -166,7 +229,6 @@ def chart_radar(model: dict, out: Path) -> None:
     for i, m in enumerate(metrics):
         x, y = point(i, 100)
         dx, dy = x - cx, y - cy
-        anchor = "mm"
         if abs(dx) > abs(dy):
             anchor = "lm" if dx > 0 else "rm"
         elif dy < 0:
@@ -433,7 +495,7 @@ def build_docx(model: dict, out: Path, charts: dict) -> None:
             [C["kBrowserProbe"], C["probeNotNeeded"] if meta["browserStatus"] is None else str(meta["browserStatus"])],
             [C["kFinalUrl"], meta["finalUrl"]],
             [C["kTruncated"], C["yes"] if meta["truncated"] else C["no"]],
-            [C["kScannedAt"], meta["scannedAt"]],
+            [C["kScannedAt"], meta.get("scannedAtDisplay", meta["scannedAt"])],
         ],
         [5.0, 11.4],
     )
@@ -567,7 +629,7 @@ def build_xlsx(model: dict, out: Path) -> None:
             [C["kBrowserProbe"], C["probeNotNeeded"] if meta["browserStatus"] is None else meta["browserStatus"]],
             [C["kFinalUrl"], meta["finalUrl"]],
             [C["kTruncated"], C["yes"] if meta["truncated"] else C["no"]],
-            [C["kScannedAt"], meta["scannedAt"]],
+            [C["kScannedAt"], meta.get("scannedAtDisplay", meta["scannedAt"])],
             ["—", model["callout"]],
         ],
         [22, 90],
@@ -620,6 +682,7 @@ def build_xlsx(model: dict, out: Path) -> None:
         [
             ["domain", meta["domain"]],
             ["scanned_at", meta["scannedAt"]],
+            ["scanned_at_display", meta.get("scannedAtDisplay", meta["scannedAt"])],
             ["scan_date", meta["scanDate"]],
             ["scheme", meta["scheme"]],
             ["home_status", meta["homeStatus"]],
@@ -738,6 +801,7 @@ def main() -> int:
     args = ap.parse_args()
 
     model = json.loads(Path(args.model).read_text(encoding="utf-8"))
+    select_fonts(model.get("lang", "en"))
     out = Path(args.out)
     charts_dir = out / "charts"
     charts_dir.mkdir(parents=True, exist_ok=True)
