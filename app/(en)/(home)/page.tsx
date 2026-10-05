@@ -556,8 +556,31 @@ export default function HomePage() {
 
               <dl className="grid gap-px bg-[var(--line)] sm:grid-cols-2 lg:grid-cols-4">
                 {DIMENSION_CATALOG.map((dimension) => (
-                  <div key={dimension.id} className="bg-[var(--surface-1)] px-5 py-4">
-                    <dt className="mb-2.5 text-xs text-[var(--ink-3)]">{dimension.label}</dt>
+                  /*
+                   * A LINK, NOT A CARD. This section's own heading argues that "a score you cannot
+                   * interrogate is a score you cannot act on", and it was then presenting twelve
+                   * dimensions nobody could interrogate at all - the copy making a claim the markup
+                   * contradicted. Each one now lands on its own section of the methodology page,
+                   * which is where the weight and the reasoning behind it are written down.
+                   *
+                   * The arrow is hidden until hover rather than always present: twelve arrows in a
+                   * grid is noise, and one appearing under the pointer is a response. The target is
+                   * a real destination, so nothing is being promised that does not exist.
+                   */
+                  <a
+                    key={dimension.id}
+                    href={`/methodology/#${dimension.id}`}
+                    className="group bg-[var(--surface-1)] px-5 py-4 transition-colors hover:bg-[var(--surface-2)]"
+                  >
+                    <dt className="mb-2.5 flex items-center gap-1.5 text-xs text-[var(--ink-3)]">
+                      {dimension.label}
+                      <span
+                        aria-hidden="true"
+                        className="-translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+                      >
+                        →
+                      </span>
+                    </dt>
                     <dd>
                       <div className="h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
                         <div
@@ -569,7 +592,7 @@ export default function HomePage() {
                         {dimension.weight}% of the score
                       </p>
                     </dd>
-                  </div>
+                  </a>
                 ))}
               </dl>
             </div>

@@ -157,7 +157,19 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
             return (
               <section
                 key={dim.id}
-                className="bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-6"
+                /*
+                 * The id is what makes a dimension addressable, and the homepage's twelve cards
+                 * now link here. Without it those cards had nowhere specific to land and pointed
+                 * at the top of this page - which is worse than not being clickable, because it
+                 * looks like it worked.
+                 *
+                 * scroll-mt-28 is not decoration. The header is sticky and 105px tall (a 40px
+                 * announcement strip over a 64px bar), so an anchor without a scroll margin puts
+                 * the heading underneath it and the reader arrives at a section whose title they
+                 * cannot see. 7rem clears it at every breakpoint the site serves.
+                 */
+                id={dim.id}
+                className="scroll-mt-28 bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-6"
               >
                 <div className="flex items-baseline justify-between gap-4 pb-3 border-b border-[var(--line)]">
                   <h3 className="text-base font-bold text-[var(--ink-1)]">
