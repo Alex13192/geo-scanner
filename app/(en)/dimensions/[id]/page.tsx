@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ProsePage from "@/app/components/ProsePage";
+import Faq from "@/app/components/Faq";
+import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
 
 import { og } from "@/lib/og";
@@ -73,6 +75,32 @@ export default async function DimensionPage({ params }: Params) {
    */
   const dimensionPoints = checks.reduce((sum, check) => sum + check.points, 0) || 1;
   const shareOfTotal = (points: number) => ((points / dimensionPoints) * dimension.weight).toFixed(1);
+
+  /*
+   * QUESTIONS BUILT FROM THIS DIMENSION, NOT COPIED ACROSS TWELVE PAGES.
+   *
+   * The same four questions on every dimension page would be the definition of thin content -
+   * which is the rule these pages are scored against in the first place. The shape of this project
+   * makes the honest version cheap: the rationale, the weighting and the failure notes are already
+   * written per dimension, so the answers are what those fields say rather than new prose that
+   * would drift away from them.
+   */
+  const failNotes = checks.map((check) => check.onFail).filter((note): note is string => Boolean(note));
+  const faqItems = [
+    { q: `What does the ${dimension.label} dimension measure?`, a: dimension.rationale },
+    { q: `Why is ${dimension.label} worth ${dimension.weight}% of the score?`, a: dimension.weighting },
+    {
+      q: `What does failing ${dimension.label} look like?`,
+      a:
+        failNotes.length > 0
+          ? failNotes.join(" ")
+          : "The rules above describe it precisely. Each states the condition it tests, and a scan reports which of them a page does not meet.",
+    },
+    {
+      q: `How do I improve ${dimension.label}?`,
+      a: "Start with the rules worth the most, because that is where the points are. Every rule links to a page explaining what it checks and what evidence satisfies it, and a scan reports which ones a specific page currently fails.",
+    },
+  ];
   const index = DIMENSION_CATALOG.findIndex((d) => d.id === dimension.id);
   const next = DIMENSION_CATALOG[(index + 1) % DIMENSION_CATALOG.length];
 
@@ -128,6 +156,17 @@ export default async function DimensionPage({ params }: Params) {
           <a href="/methodology/">methodology page</a> rather than implied here.
         </p>
       </article>
+
+      <div className="mt-16 space-y-10 text-[15px] leading-relaxed text-[var(--ink-2)]">
+        <Faq title={`Questions about ${dimension.label}`} items={faqItems} level="h3" />
+        <Evidence
+          quote={GEO_PRIMARY_QUOTE}
+          attribution="Generative Engine Optimization, KDD 2024"
+          attributionUrl="https://arxiv.org/abs/2311.09735"
+          sources={GEO_PRIMARY_SOURCES}
+          note={`The weighting behind this dimension follows that measurement. A failure here is reported as a rule rather than a score, so it can be checked against the page instead of taken on trust.`}
+        />
+      </div>
 
       <nav
         aria-label="Dimensions"
