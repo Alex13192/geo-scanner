@@ -10,6 +10,7 @@
 // It is deliberately conservative: it only claims what it can see on one page,
 // and it says so in the generated file.
 import { NextResponse } from "next/server";
+import { MAX_LINKS } from "@/lib/llms-txt";
 import { fetchText, inspectTarget } from "@/lib/net/fetch-safe";
 import { clientKey, takeToken } from "@/lib/net/rate-limit";
 import { SITE_URL } from "@/lib/site";
@@ -22,7 +23,6 @@ export const dynamic = "force-dynamic";
 const UA = `Mozilla/5.0 (compatible; LLMentionBot/1.0; +${SITE_URL}/methodology/)`;
 
 const FETCH_TIMEOUT_MS = 9000;
-const MAX_LINKS = 12;
 
 /**
  * Boilerplate for the generated file, in the language of the studio the reader

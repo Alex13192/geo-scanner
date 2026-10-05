@@ -1,6 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    // ES2018, up from ES2017, and the reason is not stylistic: scripts/generate-check-copy.mts uses
+    // the `s` (dotAll) regular expression flag, which TypeScript refuses below ES2018 with TS1501.
+    // While `scripts/` was excluded from this program that error could not surface - and excluding
+    // it also meant `npx tsc --noEmit`, the step CI calls "Type check", covered none of the seven
+    // scripts in this repository. The measured cost of turning it on was exactly those three TS1501
+    // errors; the alternative to this line is a check that does not check the thing it is named for.
+    "target": "ES2018",
     "lib": [
       "dom",
       "dom.iterable",
@@ -44,7 +50,6 @@
     "**/*.mts"
   ],
   "exclude": [
-    "node_modules",
-    "scripts"
+    "node_modules"
   ]
 }
