@@ -8,7 +8,14 @@
  * the value check keeps proving it.
  */
 
-import { BRAND, CONTACT_EMAIL, SITE_URL } from "@/lib/site";
+/*
+ * A relative import rather than `@/lib/site`: this module is bundled into the cron worker as
+ * well, which is a second wrangler config, and path-alias resolution there is not something to
+ * depend on. The explicit .ts extension matches the convention inside lib/geo and is what lets
+ * a plain `node` script import this file.
+ */
+import { BRAND, CONTACT_EMAIL, SITE_URL } from "../site.ts";
+
 import type { EmailMessage } from "./send";
 
 /** Wrap a body in the smallest HTML that still looks deliberate in a mail client. */
@@ -71,11 +78,126 @@ export function confirmationEmail(domain: string, confirmUrl: string, unsubUrl: 
   };
 }
 
+export type ReportInput = {
+  domain: string;
+  score: number;
+  grade: string;
+  checksPassed: number;
+  checksRun: number;
+  /** Titles of checks that pass now and failed at the previous run. */
+  fixed: string[];
+  /** Titles of checks that failed now and passed at the previous run. */
+  newFailures: string[];
+  /** Failing both weeks. Counted rather than listed - the list is what the site is for. */
+  unchangedFailures: number;
+  /** No previous run exists, so there is nothing to compare against and nothing to imply. */
+  firstRun: boolean;
+  reportUrl: string;
+  unsubUrl: string;
+};
+
+/** "97/100 (A)", or the move when there is one. */
+function headline(input: ReportInput): string {
+  const now = `${input.score}/100 (${input.grade})`;
+  if (input.firstRun) return now;
+  if (input.newFailures.length > 0) {
+    const n = input.newFailures.length;
+    return `${now} - ${n} new failure${n === 1 ? "" : "s"}`;
+  }
+  if (input.fixed.length > 0) {
+    const n = input.fixed.length;
+    return `${now} - ${n} fixed`;
+  }
+  return `${now} - no change`;
+}
+
 /**
- * Confirmation is a page, not an email, so there is no second message here yet.
+ * The weekly report.
  *
- * The weekly report is the next template, and it is deliberately absent until the cron that
- * fills it exists: a template written against data nothing produces is a template nobody
- * can check, which is how the site ended up with copy describing a paid audit it had
- * withdrawn. See OPERATIONS.md.
+ * WHAT THE SUBJECT LINE IS FOR, because it decides whether the rest is ever read. It carries
+ * the news rather than the product: "3 new failures" gets opened, "Your weekly GEO report for
+ * example.com" does not. The score is in there too, so the subject alone answers the question
+ * for a reader who never opens it - which is most of them, most weeks.
+ *
+ * WHY "NO CHANGE" IS A FIRST-CLASS SUBJECT rather than a reason not to send. A monitoring
+ * email that only arrives when something breaks teaches the reader that its arrival IS the
+ * alarm, and then a message that fails to send is indistinguishable from good news. Saying
+ * "no change" every week is what makes the one that says otherwise mean anything.
  */
+export function reportEmail(input: ReportInput): EmailMessage {
+  const { domain, score, grade, checksPassed, checksRun, fixed, newFailures, unchangedFailures } = input;
+
+  const changes: string[] = [];
+  if (newFailures.length > 0) {
+    changes.push(`Now failing (${newFailures.length}):`, ...newFailures.map((t) => `  - ${t}`), "");
+  }
+  if (fixed.length > 0) {
+    changes.push(`Fixed since last week (${fixed.length}):`, ...fixed.map((t) => `  - ${t}`), "");
+  }
+  if (unchangedFailures > 0) {
+    changes.push(
+      `${unchangedFailures} other check${unchangedFailures === 1 ? "" : "s"} ${
+        unchangedFailures === 1 ? "is" : "are"
+      } still failing.`,
+      ""
+    );
+  }
+
+  const opening = input.firstRun
+    ? `First report for ${domain}.`
+    : newFailures.length > 0
+      ? `Something changed on ${domain}.`
+      : `Nothing changed on ${domain} this week.`;
+
+  const text = [
+    opening,
+    "",
+    `${score}/100, grade ${grade}. ${checksPassed} of ${checksRun} published checks pass.`,
+    "",
+    ...(changes.length > 0 ? changes : []),
+    "The full breakdown, with the evidence behind each verdict:",
+    input.reportUrl,
+    "",
+    `Every rule this is scored against is published at ${SITE_URL}/methodology/.`,
+    "",
+    `— ${BRAND}`,
+    `Stop these emails: ${input.unsubUrl}`,
+  ].join("\n");
+
+  const list = (items: string[]) =>
+    `<ul style="margin:0 0 16px;padding-left:20px">${items.map((t) => `<li>${escapeText(t)}</li>`).join("")}</ul>`;
+
+  const html = layout(
+    headline(input),
+    [
+      escapeText(opening),
+      `<strong>${score}/100</strong>, grade ${grade}. ${checksPassed} of ${checksRun} published checks pass.`,
+      newFailures.length > 0 ? `<strong>Now failing</strong>${list(newFailures)}` : "",
+      fixed.length > 0 ? `<strong>Fixed since last week</strong>${list(fixed)}` : "",
+      unchangedFailures > 0
+        ? `${unchangedFailures} other check${unchangedFailures === 1 ? "" : "s"} still failing.`
+        : "",
+      `Every rule is published, so a verdict can be argued with rather than taken on trust: <a href="${SITE_URL}/methodology/" style="color:#0071e3">the methodology</a>.`,
+    ].filter(Boolean),
+    { label: "See the full breakdown", url: input.reportUrl }
+  );
+
+  return {
+    to: "",
+    subject: `${domain}: ${headline(input)}`,
+    text,
+    html,
+    replyTo: CONTACT_EMAIL,
+  };
+}
+
+/**
+ * The report lists check titles, which come from our own catalogue today.
+ *
+ * Escaped anyway. The domain in the subject is whatever a visitor typed, and a template that
+ * is safe only because of where its inputs currently come from is one refactor away from not
+ * being safe.
+ */
+function escapeText(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}

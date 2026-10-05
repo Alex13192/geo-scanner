@@ -32,6 +32,38 @@
     }
   ],
 
+  /*
+   * THE FAN-OUT, AND WHY max_batch_size IS 1.
+   *
+   * This is the config-level expression of the measurement in 邮件订阅设计稿-第0步.md: one scan
+   * costs 1-2.6 ms of CPU, so about four fit the Free plan's 10 ms budget and a hundred do not.
+   * A batch of one guarantees every scan its own invocation and its own budget, whatever the
+   * queue decides to hand over. Raising this number looks like harmless throughput tuning and
+   * is the change that would start producing 1102s again.
+   *
+   * max_retries is 3 rather than more: a send that failed is worth another attempt, and a domain
+   * that is down will still be down on the ninth. Next week's scheduled run is a better retry
+   * than any of them.
+   *
+   * NOT DECLARED IN ../wrangler.jsonc: the site never produces or consumes these messages. The
+   * queue exists between this worker and itself.
+   */
+  "queues": {
+    "producers": [
+      {
+        "binding": "REPORT_QUEUE",
+        "queue": "geo-scanner-reports"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "geo-scanner-reports",
+        "max_batch_size": 1,
+        "max_retries": 3
+      }
+    ]
+  },
+
   // Mondays at 03:00 UTC. Chosen for the quietest hour rather than the most convenient one:
   // the run makes outbound requests to subscribers' sites, and a tool that audits other
   // people's servers has no business doing it at their peak.

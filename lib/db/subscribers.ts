@@ -23,14 +23,28 @@ export type Subscriber = {
   last_scan_at: number | null;
   last_score: number | null;
   last_grade: string | null;
+  /**
+   * Selected so the weekly report can carry a working unsubscribe link.
+   *
+   * Optional because most callers have no use for it - the confirmation route and the producer
+   * would only be handed a secret they do not need. The consumer is the one place that must
+   * have it, and an `undefined` there produces an unsubscribe URL that silently does nothing,
+   * which is the worst possible failure for this particular link.
+   */
+  unsub_token?: string;
 };
 
 export type CreateOutcome =
   | { ok: true; subscriber: Subscriber; created: boolean }
   | { ok: false; reason: "already_subscribed" };
 
+/*
+ * unsub_token is in this list because the weekly report has to carry a working unsubscribe
+ * link, and an undefined token there would produce a URL that silently does nothing - the
+ * worst possible failure for that particular link. Every other caller ignores the column.
+ */
 const COLUMNS =
-  "id, domain, email, status, created_at, confirmed_at, last_scan_at, last_score, last_grade";
+  "id, domain, email, status, created_at, confirmed_at, last_scan_at, last_score, last_grade, unsub_token";
 
 /**
  * Write a pending row, or report that the address is already confirmed.
@@ -196,4 +210,93 @@ export async function listConfirmed(db: D1DatabaseLike, limit: number): Promise<
     .all<Subscriber>();
 
   return result.results ?? [];
+}
+
+/**
+ * Re-read one subscriber at the moment of the scan.
+ *
+ * The queue message carries an id rather than a row, so this is what the consumer calls
+ * instead of trusting a snapshot taken when the batch was built. Between those two moments a
+ * reader can unsubscribe, and emailing them anyway is the one mistake this product cannot
+ * afford to make twice.
+ */
+export async function getById(db: D1DatabaseLike, id: string): Promise<Subscriber | null> {
+  return db
+    .prepare(`SELECT ${COLUMNS} FROM subscribers WHERE id = ?1 LIMIT 1`)
+    .bind(id)
+    .first<Subscriber>();
+}
+
+export type ScanRecord = {
+  id: string;
+  subscriber_id: string;
+  at: number;
+  score: number;
+  grade: string;
+  checks_passed: number;
+  checks_run: number;
+  /** JSON array of check ids, as stored. */
+  failed_check_ids: string;
+};
+
+/** The previous run, which is the only reason the scans table exists. */
+export async function latestScan(db: D1DatabaseLike, subscriberId: string): Promise<ScanRecord | null> {
+  return db
+    .prepare(`SELECT * FROM scans WHERE subscriber_id = ?1 ORDER BY at DESC LIMIT 1`)
+    .bind(subscriberId)
+    .first<ScanRecord>();
+}
+
+/**
+ * Write the run and update the denormalised columns in one batch.
+ *
+ * Both statements or neither. A scan row without the subscriber's last_score would make next
+ * week's report compare against a score the subscriber was never shown, and the reverse would
+ * lose the history the comparison needs. D1's batch is one transaction, which is what makes
+ * that guarantee available for the price of a single call.
+ */
+export async function recordScan(
+  db: D1DatabaseLike,
+  input: {
+    id: string;
+    subscriberId: string;
+    at: number;
+    score: number;
+    grade: string;
+    checksPassed: number;
+    checksRun: number;
+    failedCheckIds: string[];
+  }
+): Promise<void> {
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO scans (id, subscriber_id, at, score, grade, checks_passed, checks_run, failed_check_ids)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`
+      )
+      .bind(
+        input.id,
+        input.subscriberId,
+        input.at,
+        input.score,
+        input.grade,
+        input.checksPassed,
+        input.checksRun,
+        JSON.stringify(input.failedCheckIds)
+      ),
+    db
+      .prepare(`UPDATE subscribers SET last_scan_at = ?1, last_score = ?2, last_grade = ?3 WHERE id = ?4`)
+      .bind(input.at, input.score, input.grade, input.subscriberId),
+  ]);
+}
+
+/**
+ * Mark an address the provider refused permanently.
+ *
+ * Distinct from unsubscribed on purpose - see the note at the top of the migration. A bounce
+ * is an address that stopped existing; it has to stop the sending without recording that
+ * somebody asked to stop.
+ */
+export async function markBounced(db: D1DatabaseLike, id: string): Promise<void> {
+  await db.prepare(`UPDATE subscribers SET status = 'bounced' WHERE id = ?1`).bind(id).run();
 }

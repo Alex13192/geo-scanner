@@ -1,82 +1,218 @@
 /**
- * The weekly report runner.
+ * The weekly report runner: a producer that decides what to scan, and a consumer that scans it.
  *
- * A second Worker, and this is the first half of it: the scheduled handler that decides what
- * needs scanning. The queue consumer that does the scanning comes next, and the shape of the
- * two is already fixed by a measurement rather than by taste.
+ * WHY THIS IS A SECOND WORKER RATHER THAN A scheduled() EXPORT ON THE SITE'S. The site's worker
+ * imports the entire Next.js server at module scope, so any isolate it starts pays for the
+ * framework whatever the request was. A scan measures 1-2.6 ms of actual work on workerd
+ * against a 10 ms CPU budget, and the framework costs several times that before the work
+ * starts. This Worker is 5.86 KiB gzip against the site's 1.14 MB.
  *
- * WHY THE WORK IS SPLIT ACROSS INVOCATIONS AT ALL. One scan measures 1-2.6 ms of CPU on
- * workerd, which fits the Free plan's 10 ms budget. A loop over a hundred subscribers does
- * not - it is 100-260 ms in a single invocation, twenty times over budget. So the scheduled
- * handler must not scan anything: its job is to enumerate and enqueue, one message per
- * domain, and each message is then handled by its own invocation with its own budget.
- *
- * That is not an optimisation to apply later. A cron that loops over subscribers works
- * perfectly until the hundredth one and then fails in production, at three in the morning,
- * for the person who signed up last.
+ * WHY THE WORK IS SPLIT ACROSS INVOCATIONS. One scan fits the budget; a loop over a hundred
+ * does not - 100-260 ms in one invocation, twenty times over. So `scheduled` enumerates and
+ * enqueues one message per subscriber, and each message gets its own invocation and its own
+ * budget. A cron that loops over subscribers works perfectly until the hundredth one and then
+ * fails at three in the morning for whoever signed up last.
  */
-import { listConfirmed, type Subscriber } from "../lib/db/subscribers";
+import {
+  getById,
+  latestScan,
+  listConfirmed,
+  recordScan,
+  type Subscriber,
+} from "../lib/db/subscribers.ts";
+import { reportEmail } from "../lib/email/messages.ts";
+import { sendEmail } from "../lib/email/send.ts";
+import { runScan } from "../lib/geo/scan.ts";
+import { unsubscribeUrl } from "../lib/subscribe/flow.ts";
+import { newId } from "../lib/subscribe/tokens.ts";
 
 /**
  * A message is an id, not a row.
  *
  * Passing the whole subscriber would mean the consumer acts on a snapshot taken minutes
- * earlier - so somebody who unsubscribes between the two steps would still be emailed. The
- * consumer re-reads by id and re-checks the status, which costs one query and removes that
- * entire class of race.
+ * earlier - so somebody who unsubscribes in between still gets emailed. The consumer re-reads
+ * by id and re-checks the status, which costs one query and removes that whole class of race.
  */
-export type ReportJob = {
-  subscriberId: string;
-};
+export type ReportJob = { subscriberId: string };
 
 /** Bounded so one invocation cannot be asked to enqueue an unbounded number of messages. */
 const BATCH = 200;
 
-/**
- * The slice of the Queues API this uses, declared rather than imported.
+/*
+ * The slices of the Queues API this file uses, declared rather than imported.
  *
- * The same trade cloudflare-env.d.ts documents for D1: the only source of the real `Queue<T>`
- * type also drags in workerd's global type set, which redeclares Response and breaks twelve
- * existing lines elsewhere in the project. A structurally declared subset keeps this file
- * checked - a wrong method name is a compile error - at the cost of adding members here when
- * a Queues feature is first used.
+ * The same trade cloudflare-env.d.ts documents for D1: the only source of the real types also
+ * drags in workerd's global type set, which redeclares Response and breaks twelve existing
+ * lines elsewhere in the project. Declaring the subset keeps this file checked - a wrong method
+ * name is a compile error - at the cost of adding members here when a feature is first used.
  */
-type ReportQueue = {
-  sendBatch(messages: { body: ReportJob }[]): Promise<void>;
-};
+type ReportQueue = { sendBatch(messages: { body: ReportJob }[]): Promise<void> };
+type ReportMessage = { body: ReportJob; ack(): void; retry(): void };
+type ReportBatch = { queue: string; messages: ReportMessage[] };
+
+type CronEnv = CloudflareEnv & { REPORT_QUEUE?: ReportQueue };
+
+/** Titles for a set of ids, taken from this run's catalogue. Ids are what gets stored. */
+function titlesFor(checks: { id: string; title: string }[], ids: string[]): string[] {
+  const byId = new Map(checks.map((c) => [c.id, c.title]));
+  return ids.map((id) => byId.get(id) ?? id);
+}
 
 export default {
-  /*
-   * `_event` is unknown and `ctx` is not taken, rather than typed with ScheduledController
-   * and ExecutionContext. Both are workerd globals this project does not declare, and neither
-   * is used here: the handler reads a binding and writes a binding, and nothing needs to
-   * outlive the response.
+  /**
+   * `_event` is unknown rather than ScheduledController, and `ctx` is not taken: both are
+   * workerd globals this project does not declare, and neither is used. The handler reads a
+   * binding and writes a binding, and nothing needs to outlive the invocation.
    */
-  async scheduled(_event: unknown, env: CloudflareEnv) {
+  async scheduled(_event: unknown, env: CronEnv) {
     const due = await listConfirmed(env.DB, BATCH);
 
-    console.log(`[reports] ${due.length} confirmed subscription(s) due`);
-
-    if (due.length === 0) return;
-
-    /*
-     * The queue binding does not exist yet, so this reports what it would enqueue. Written as
-     * a visible branch rather than as a `TODO` because the next increment is defined by it:
-     * the moment REPORT_QUEUE is declared in wrangler.jsonc, the other side of this `if` is
-     * the whole of the remaining producer work.
-     */
-    const queue = (env as CloudflareEnv & { REPORT_QUEUE?: ReportQueue }).REPORT_QUEUE;
-
-    if (!queue) {
-      console.log(
-        `[reports] no queue bound yet; would enqueue ${due.length}: ` +
-          due.map((s: Subscriber) => `${s.domain} <${s.email}>`).join(", ")
-      );
+    if (due.length === 0) {
+      console.log("[reports] nothing due");
       return;
     }
 
-    await queue.sendBatch(due.map((s) => ({ body: { subscriberId: s.id } })));
+    if (!env.REPORT_QUEUE) {
+      /*
+       * Logged as an error rather than quietly skipped. Without the binding every subscriber
+       * simply stops receiving reports, and the only symptom would be their absence - which
+       * nobody reports and no check catches.
+       */
+      console.error(`[reports] REPORT_QUEUE is not bound; ${due.length} subscription(s) skipped`);
+      return;
+    }
 
+    await env.REPORT_QUEUE.sendBatch(due.map((s: Subscriber) => ({ body: { subscriberId: s.id } })));
     console.log(`[reports] enqueued ${due.length}`);
+  },
+
+  /**
+   * One message, one domain, one scan.
+   *
+   * Acked explicitly rather than by returning, because "do not retry" and "this failed" are
+   * different decisions. A domain that is down at three in the morning is not worth three more
+   * attempts; a database that refused a write is.
+   */
+  async queue(batch: ReportBatch, env: CronEnv) {
+    for (const item of batch.messages) {
+      const subscriber = await getById(env.DB, item.body.subscriberId);
+
+      /*
+       * THE RE-CHECK, and the reason the message carries an id rather than a row. Somebody who
+       * unsubscribed in the minutes since the batch was built must not be emailed, and the only
+       * way to know that is to look now instead of trusting the snapshot.
+       */
+      if (!subscriber) {
+        console.log(`[reports] ${item.body.subscriberId} no longer exists; skipping`);
+        item.ack();
+        continue;
+      }
+      if (subscriber.status !== "confirmed") {
+        console.log(`[reports] ${subscriber.domain} is ${subscriber.status}; skipping`);
+        item.ack();
+        continue;
+      }
+      if (!subscriber.unsub_token) {
+        /*
+         * Refuses to send rather than sending without a working unsubscribe link. Every message
+         * this product sends has to carry one, and an email that cannot be stopped is worse
+         * than an email that was never sent - so this is logged and skipped, and it means the
+         * SELECT and the template have drifted apart.
+         */
+        console.error(`[reports] ${subscriber.domain} has no unsubscribe token; not sending`);
+        item.ack();
+        continue;
+      }
+
+      const scan = await runScan(subscriber.domain);
+
+      if (!scan.reachable) {
+        /*
+         * No email for an unreachable domain. "We could not reach your site" is not a GEO
+         * finding, and sending it every week to somebody whose site is simply down would train
+         * them to ignore the reports that matter. Acked rather than retried: the next scheduled
+         * run tries again, and three retries tonight would not.
+         */
+        console.log(`[reports] ${subscriber.domain} was unreachable; no email sent`);
+        item.ack();
+        continue;
+      }
+
+      const failedIds = scan.result.checks.filter((c) => c.status === "fail").map((c) => c.id);
+      const previous = await latestScan(env.DB, subscriber.id);
+      const previousIds = previous ? (JSON.parse(previous.failed_check_ids) as string[]) : null;
+
+      const previousSet = new Set(previousIds ?? []);
+      const currentSet = new Set(failedIds);
+
+      // `null` means there is no previous run, which is not the same as a previous run that
+      // failed nothing - so both sides of the comparison are guarded rather than defaulted.
+      const newFailureIds = previousIds ? failedIds.filter((id) => !previousSet.has(id)) : [];
+      const fixedIds = previousIds ? previousIds.filter((id) => !currentSet.has(id)) : [];
+      const unchangedFailures = previousIds
+        ? failedIds.filter((id) => previousSet.has(id)).length
+        : failedIds.length;
+
+      const at = Date.now();
+
+      /*
+       * Written before the email, not after. A report describing a run the database has no
+       * record of makes next week's comparison wrong, and an email cannot be recalled - so the
+       * durable half goes first. If the send then fails the scan is recorded twice on retry,
+       * which costs a duplicate row; the other order costs a subscriber a week of history.
+       */
+      await recordScan(env.DB, {
+        id: newId(),
+        subscriberId: subscriber.id,
+        at,
+        score: scan.result.score,
+        grade: scan.result.grade,
+        checksPassed: scan.result.checksPassed,
+        checksRun: scan.result.checksRun,
+        failedCheckIds: failedIds,
+      });
+
+      const report = reportEmail({
+        domain: subscriber.domain,
+        score: scan.result.score,
+        grade: scan.result.grade,
+        checksPassed: scan.result.checksPassed,
+        checksRun: scan.result.checksRun,
+        fixed: titlesFor(scan.result.checks, fixedIds),
+        newFailures: titlesFor(scan.result.checks, newFailureIds),
+        unchangedFailures,
+        firstRun: previousIds === null,
+        // The domain's own homepage, not our report page: the reader's next question is what
+        // the site looks like now, and the full check list is one click from there.
+        reportUrl: `https://${subscriber.domain}/`,
+        unsubUrl: unsubscribeUrl(subscriber.unsub_token),
+      });
+
+      const sent = await sendEmail(env, { ...report, to: subscriber.email });
+
+      if (!sent.ok) {
+        console.error(`[reports] send failed for ${subscriber.domain}: ${sent.reason}`);
+        /*
+         * Retried rather than acked. The scan is already recorded, so a retry re-sends the
+         * report instead of re-scanning and duplicating a week - and a duplicate email is a far
+         * cheaper mistake than a subscriber who silently stops hearing from the product.
+         */
+        item.retry();
+        continue;
+      }
+
+      console.log(
+        `[reports] ${subscriber.domain}: ${scan.result.score} (${scan.result.grade}) via ${sent.via}`
+      );
+      item.ack();
+    }
+  },
+
+  /**
+   * There is no way to reach this worker over HTTP, and a deployed Worker with no `fetch`
+   * export answers 404 by default. Keeping one makes that explicit rather than accidental.
+   */
+  async fetch() {
+    return new Response("This worker runs on a schedule and has no pages.", { status: 404 });
   },
 };

@@ -19,7 +19,9 @@
  * silent lie the rest of this repository spends its comments avoiding.
  */
 
-import { SITE_HOST } from "@/lib/site";
+/* Relative, with the extension, for the same reason as in messages.ts: the cron worker bundles
+ * this file under a second wrangler config, where path-alias resolution is not guaranteed. */
+import { SITE_HOST } from "../site.ts";
 
 export type EmailMessage = {
   to: string;
