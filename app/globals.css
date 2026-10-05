@@ -382,11 +382,25 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .reveal-stagger > * {
+      /*
+       * ORDER MATTERS AND IS NOT COSMETIC. The `animation` shorthand resets every sub-property
+       * including animation-timeline, so the two longhands below MUST come after it. Written the
+       * other way round the timeline is silently discarded and nothing animates - which is exactly
+       * what the first version of this rule looked like it was doing.
+       */
       animation: llm-reveal linear both;
       animation-timeline: view();
-      /* Starts as the element crosses into view and finishes well before it reaches the middle,
-         so nothing is still animating while it is being read. */
-      animation-range: entry 5% cover 32%;
+      /*
+       * HOW FAR, AND WHY IT CHANGED. This was `entry 5% cover 32%`, on the reasoning that nothing
+       * should still be moving while it is being read. Measured, that range completes while the
+       * element is still in the LOWER THIRD of the viewport - the reader's eye has not arrived
+       * yet, so the effect is over before it is seen. It was reported as "no change", and it was
+       * right: the mechanism worked and nobody could tell.
+       *
+       * `cover 55%` finishes when the element is around the middle of the screen, which is when
+       * it starts being read. The translate is 32px rather than 18px for the same reason.
+       */
+      animation-range: entry 10% cover 55%;
     }
   }
 }
@@ -394,11 +408,11 @@ body {
 @keyframes llm-reveal {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(32px) scale(0.985);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
