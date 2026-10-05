@@ -62,6 +62,18 @@ export function unsubscribeUrl(token: string): string {
 }
 
 /**
+ * The report link, and it takes the REPORT token rather than either of the other two.
+ *
+ * The mistake this exists to prevent is one line long and destructive: passing `unsubToken` here
+ * produces a URL that anyone the report is forwarded to can open, and opening it ends the
+ * subscription. The three builders are deliberately separate functions with separate arguments so
+ * that mixing two of them up is a type error at the call site rather than a silent unsubscribe.
+ */
+export function reportUrl(token: string): string {
+  return `${SITE_URL}/monitor/report/${encodeURIComponent(token)}/`;
+}
+
+/**
  * The page both link endpoints return.
  *
  * Returned as HTML from the route rather than as a redirect to a page, for one reason that

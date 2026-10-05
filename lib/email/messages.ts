@@ -92,7 +92,21 @@ export type ReportInput = {
   unchangedFailures: number;
   /** No previous run exists, so there is nothing to compare against and nothing to imply. */
   firstRun: boolean;
-  reportUrl: string;
+  /**
+   * The subscriber's own homepage. Named for what it is: this used to be called `reportUrl`, which
+   * stopped being an honest name the moment there was a real report URL to distinguish it from.
+   */
+  homepageUrl: string;
+  /**
+   * The monitoring page for this subscription, which is the link that can be forwarded: it needs no
+   * domain typed and it shows the history rather than one live scan.
+   *
+   * Optional, because a send must not depend on it. A report whose "see more" link is missing is
+   * still the weekly report; a report that does not arrive because an extra link could not be built
+   * is a subscriber who silently stops hearing from the product, which is the worse failure. The
+   * consumer logs the absence rather than swallowing it - see cron/index.ts.
+   */
+  historyUrl?: string;
   unsubUrl: string;
 };
 
@@ -156,7 +170,15 @@ export function reportEmail(input: ReportInput): EmailMessage {
     "",
     ...(changes.length > 0 ? changes : []),
     "The full breakdown, with the evidence behind each verdict:",
-    input.reportUrl,
+    input.homepageUrl,
+    ...(input.historyUrl
+      ? [
+          "",
+          "Your scan history, including what has been failing and for how long. This link is yours to",
+          "forward - it needs no domain typed:",
+          input.historyUrl,
+        ]
+      : []),
     "",
     `Every rule this is scored against is published at ${SITE_URL}/methodology/.`,
     "",
@@ -177,9 +199,12 @@ export function reportEmail(input: ReportInput): EmailMessage {
       unchangedFailures > 0
         ? `${unchangedFailures} other check${unchangedFailures === 1 ? "" : "s"} still failing.`
         : "",
+      input.historyUrl
+        ? `Your scan history, and what each failing check needs: <a href="${input.historyUrl}" style="color:#0071e3">your monitoring report</a>. This link is yours to forward.`
+        : "",
       `Every rule is published, so a verdict can be argued with rather than taken on trust: <a href="${SITE_URL}/methodology/" style="color:#0071e3">the methodology</a>.`,
     ].filter(Boolean),
-    { label: "See the full breakdown", url: input.reportUrl }
+    { label: "See the full breakdown", url: input.homepageUrl }
   );
 
   return {

@@ -80,6 +80,13 @@ Allow: /
 # Scan result pages are user-specific and thin - keep them out of the index.
 Disallow: /report/
 
+# Report links carry a token that stands for one subscription, so the URL is a capability rather
+# than a page. Disallowed here AND marked noindex in the route's layout, which is not redundant: a
+# Disallow stops a crawler fetching the URL at all, so it never reads the noindex tag either. The
+# Disallow is what protects a URL nobody links to publicly; the tag is what protects it if a link is
+# ever posted somewhere a crawler might follow it.
+Disallow: /monitor/report/
+
 # API endpoints
 Disallow: /api/
 

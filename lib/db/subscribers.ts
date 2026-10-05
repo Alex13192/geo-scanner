@@ -32,6 +32,12 @@ export type Subscriber = {
    * which is the worst possible failure for this particular link.
    */
   unsub_token?: string;
+  /**
+   * The capability behind a report link that can be forwarded, and a different secret from the
+   * two above on purpose - see the note in migrations/0002_report_token.sql. Optional for the
+   * same reason unsub_token is: only the code that builds a report URL needs it.
+   */
+  report_token?: string;
 };
 
 export type CreateOutcome =
@@ -44,7 +50,7 @@ export type CreateOutcome =
  * worst possible failure for that particular link. Every other caller ignores the column.
  */
 const COLUMNS =
-  "id, domain, email, status, created_at, confirmed_at, last_scan_at, last_score, last_grade, unsub_token";
+  "id, domain, email, status, created_at, confirmed_at, last_scan_at, last_score, last_grade, unsub_token, report_token";
 
 /**
  * Write a pending row, or report that the address is already confirmed.
@@ -60,7 +66,15 @@ const COLUMNS =
  */
 export async function createPending(
   db: D1DatabaseLike,
-  input: { domain: string; email: string; id: string; confirmToken: string; unsubToken: string; now: number }
+  input: {
+    domain: string;
+    email: string;
+    id: string;
+    confirmToken: string;
+    unsubToken: string;
+    reportToken: string;
+    now: number;
+  }
 ): Promise<CreateOutcome> {
   const existing = await findByEmailAndDomain(db, input.email, input.domain);
 
@@ -69,16 +83,18 @@ export async function createPending(
   }
 
   if (existing) {
-    // pending, unsubscribed or bounced: reuse the row, refresh both tokens, and reset the
-    // status to pending so the confirmation has to happen again for a new address.
+    // pending, unsubscribed or bounced: reuse the row, refresh every token, and reset the status
+    // to pending so the confirmation has to happen again for a new address. The report token is
+    // refreshed with the others rather than kept: a link that stops working when somebody signs up
+    // again is better than one that keeps resolving to a subscription they had abandoned.
     await db
       .prepare(
         `UPDATE subscribers
-            SET status = 'pending', confirm_token = ?1, unsub_token = ?2, created_at = ?3,
-                confirmed_at = NULL
-          WHERE id = ?4`
+            SET status = 'pending', confirm_token = ?1, unsub_token = ?2, report_token = ?3,
+                created_at = ?4, confirmed_at = NULL
+          WHERE id = ?5`
       )
-      .bind(input.confirmToken, input.unsubToken, input.now, existing.id)
+      .bind(input.confirmToken, input.unsubToken, input.reportToken, input.now, existing.id)
       .run();
 
     return {
@@ -89,16 +105,26 @@ export async function createPending(
         status: "pending",
         confirmed_at: null,
         created_at: input.now,
+        report_token: input.reportToken,
       },
     };
   }
 
   await db
     .prepare(
-      `INSERT INTO subscribers (id, domain, email, status, confirm_token, unsub_token, created_at)
-       VALUES (?1, ?2, ?3, 'pending', ?4, ?5, ?6)`
+      `INSERT INTO subscribers
+         (id, domain, email, status, confirm_token, unsub_token, report_token, created_at)
+       VALUES (?1, ?2, ?3, 'pending', ?4, ?5, ?6, ?7)`
     )
-    .bind(input.id, input.domain, input.email, input.confirmToken, input.unsubToken, input.now)
+    .bind(
+      input.id,
+      input.domain,
+      input.email,
+      input.confirmToken,
+      input.unsubToken,
+      input.reportToken,
+      input.now
+    )
     .run();
 
   return {
@@ -114,6 +140,7 @@ export async function createPending(
       last_scan_at: null,
       last_score: null,
       last_grade: null,
+      report_token: input.reportToken,
     },
   };
 }
@@ -245,6 +272,51 @@ export async function latestScan(db: D1DatabaseLike, subscriberId: string): Prom
     .prepare(`SELECT * FROM scans WHERE subscriber_id = ?1 ORDER BY at DESC LIMIT 1`)
     .bind(subscriberId)
     .first<ScanRecord>();
+}
+
+/**
+ * The history a report link shows, newest first.
+ *
+ * Bounded by BOTH a cutoff and a row limit, and the two are not redundant: the cutoff is the
+ * product decision about how far back a chart is still worth reading (lib/monitor/report.ts owns
+ * the number), and the limit is what stops one abandoned subscription with years of weekly rows
+ * from making a page load slow. The cutoff is applied in SQL rather than in JavaScript so the index
+ * on (subscriber_id, at) does the work.
+ */
+export async function listScans(
+  db: D1DatabaseLike,
+  subscriberId: string,
+  since: number,
+  limit: number
+): Promise<ScanRecord[]> {
+  const result = await db
+    .prepare(
+      `SELECT * FROM scans WHERE subscriber_id = ?1 AND at >= ?2 ORDER BY at DESC LIMIT ?3`
+    )
+    .bind(subscriberId, since, limit)
+    .all<ScanRecord>();
+  return result.results ?? [];
+}
+
+/**
+ * The row a report link resolves to.
+ *
+ * CONFIRMED ONLY, and that is the security-relevant half rather than a nicety. A pending row means
+ * nobody has proved they can read the mailbox the report would describe, and an unsubscribed or
+ * bounced one means the person asked us to stop - so neither should be reached by a URL that can be
+ * forwarded to anyone. The status check lives in the query rather than at the call site for the
+ * same reason the email-sending filters do: a second copy of the rule is how the wrong rows get
+ * served.
+ */
+export async function getByReportToken(
+  db: D1DatabaseLike,
+  token: string
+): Promise<Subscriber | null> {
+  if (!token) return null;
+  return db
+    .prepare(`SELECT ${COLUMNS} FROM subscribers WHERE report_token = ?1 AND status = 'confirmed' LIMIT 1`)
+    .bind(token)
+    .first<Subscriber>();
 }
 
 /**

@@ -23,7 +23,7 @@ import {
 import { reportEmail } from "../lib/email/messages.ts";
 import { sendEmail } from "../lib/email/send.ts";
 import { runScan } from "../lib/geo/scan.ts";
-import { unsubscribeUrl } from "../lib/subscribe/flow.ts";
+import { reportUrl, unsubscribeUrl } from "../lib/subscribe/flow.ts";
 import { newId, tokensMatch } from "../lib/subscribe/tokens.ts";
 
 /**
@@ -232,9 +232,23 @@ export default {
         firstRun: previousIds === null,
         // The domain's own homepage, not our report page: the reader's next question is what
         // the site looks like now, and the full check list is one click from there.
-        reportUrl: `https://${subscriber.domain}/`,
+        homepageUrl: `https://${subscriber.domain}/`,
+        /*
+         * The shareable report, when the row has a token for it. A missing token is logged rather
+         * than silently dropped: the migration backfills every existing row, so an absence here
+         * means the SELECT and the schema have drifted - and an absence is the one kind of failure
+         * nobody reports, which is the lesson OPERATIONS.md records about the report worker itself.
+         *
+         * The email is still sent. The alternative - refusing to send the weekly report because an
+         * extra link could not be built - trades a missing sentence for a missing report.
+         */
+        historyUrl: subscriber.report_token ? reportUrl(subscriber.report_token) : undefined,
         unsubUrl: unsubscribeUrl(subscriber.unsub_token),
       });
+
+      if (!subscriber.report_token) {
+        console.error(`[reports] ${subscriber.domain} has no report token; the history link is missing from this email`);
+      }
 
       const sent = await sendEmail(env, { ...report, to: subscriber.email });
 

@@ -113,6 +113,15 @@ jobs:
       - name: Run the webhook signature tests
         run: npm run test:webhooks
 
+      # The report link is the first page on this site addressed by a secret rather than by a
+      # domain, and every rule around it fails silently rather than loudly: a token that keeps
+      # resolving after the subscription it belongs to ended, a "failing since" date that resets
+      # each week and makes a six-week-old problem read as new, an email address leaking into a
+      # page that exists to be forwarded. None of those raise an error anywhere - they produce a
+      # page that looks correct, which is the class of failure this workflow exists to catch.
+      - name: Run the report-link tests
+        run: npm run test:report-link
+
       - name: Type check
         run: npx tsc --noEmit
 

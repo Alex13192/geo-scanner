@@ -75,6 +75,12 @@ export async function POST(request: Request) {
 
   const confirmToken = newToken();
   const unsubToken = newToken();
+  /*
+   * A third token, and it is not the unsubscribe one. Both land in links in an email, and only the
+   * unsubscribe link acts on a GET - so a forwarded report link carrying that token would silently
+   * end the subscription it was meant to be showing. See migrations/0002_report_token.sql.
+   */
+  const reportToken = newToken();
 
   const outcome = await createPending(env.DB, {
     domain,
@@ -82,6 +88,7 @@ export async function POST(request: Request) {
     id: newId(),
     confirmToken,
     unsubToken,
+    reportToken,
     now: Date.now(),
   });
 
