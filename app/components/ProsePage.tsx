@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import PageFooter from "@/app/components/PageFooter";
+import SiteNav from "@/app/components/SiteNav";
 
 /**
  * The shell for the site's prose routes.
@@ -81,32 +82,21 @@ export default function ProsePage({
 
   return (
     <div className="min-h-screen bg-[var(--surface-0)] text-[var(--ink-1)] selection:bg-blue-500 selection:text-white font-sans">
-      <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--nav-bg)] backdrop-blur-xl backdrop-saturate-150">
-        <div className="wrap flex h-[52px] items-center justify-between gap-4">
-          <a href="/" className="flex items-center gap-2.5">
-            <span
-              aria-hidden="true"
-              className="grid h-6 w-6 place-items-center rounded-[7px] bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 text-[11px] font-black text-white"
-            >
-              L
-            </span>
-            <span className="text-[15px] font-semibold tracking-tight text-[var(--ink-1)]">
-              LLMention
-            </span>
-          </a>
-          <a
-            href={action.href}
-            className="shrink-0 whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-4 py-1.5 text-[13px] font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--ink-1)]"
-          >
-            {action.label}
-          </a>
-        </div>
-      </header>
+      <SiteNav />
 
       <main>
         <section className="band band--alt border-b border-[var(--line)]">
           <div className="wrap py-14 md:py-20">
             <div className={`mx-auto ${column} space-y-4`}>
+              {/* The page's own back-link, moved here from the header this shell used to
+                  carry by hand. It is page-specific - "back to the scanner", "all guides" - so
+                  it belongs with the page rather than in navigation shared by 47 routes. */}
+              <a
+                href={action.href}
+                className="inline-block text-[14px] font-medium text-[var(--accent)] transition-opacity hover:opacity-75"
+              >
+                {action.label}
+              </a>
               {eyebrow ? (
                 <span className="inline-block rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-[var(--accent)]">
                   {eyebrow}
