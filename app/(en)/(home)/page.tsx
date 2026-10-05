@@ -569,7 +569,7 @@ export default function HomePage() {
                    */
                   <a
                     key={dimension.id}
-                    href={`/methodology/#${dimension.id}`}
+                    href={`/dimensions/${dimension.id}/`}
                     className="group bg-[var(--surface-1)] px-5 py-4 transition-colors hover:bg-[var(--surface-2)]"
                   >
                     <dt className="mb-2.5 flex items-center gap-1.5 text-xs text-[var(--ink-3)]">

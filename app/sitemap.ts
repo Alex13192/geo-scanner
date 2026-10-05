@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
-import { CHECK_CATALOG } from '@/lib/geo/catalog';
+import { CHECK_CATALOG, DIMENSION_CATALOG } from '@/lib/geo/catalog';
 
 /**
  * Bump this date whenever you meaningfully change page content.
@@ -135,7 +135,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'yearly',
       priority: 0.5,
     },
-    /* The rule reference: the hub, then one page per rule. */
+    /* One page per scoring dimension, generated from the same catalog the scanner scores
+       against - so a dimension cannot exist in the engine without a page explaining it. */
+        ...DIMENSION_CATALOG.map((dimension) => ({
+      /*
+       * Delegates to a template literal rather than being written out, so the origin comes from
+       * lib/site.ts and the id comes from the catalog. Both are single sources of truth and
+       * scripts/check-values.mjs refuses a second copy of the origin anywhere under app/.
+       */
+      url: SITE_URL + '/dimensions/' + dimension.id + '/',
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    })),    /* The rule reference: the hub, then one page per rule. */
     {
       url: `${SITE_URL}/checks/`,
       lastModified: LAST_MODIFIED,

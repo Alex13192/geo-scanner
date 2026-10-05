@@ -38,6 +38,21 @@ const ROUTES: Route[] = [
   { route: "/", file: "index.html", indexable: true },
   { route: "/llms-txt-studio/", file: "llms-txt-studio.html", indexable: true },
   { route: "/readiness-badge/", file: "readiness-badge.html", indexable: true },
+  /* One per scoring dimension. Listed individually because this script reads the built tree by
+     filename, so a generated route it does not name is a route it cannot score - which is the
+     hole that let two thin pages ship with every check green. */
+  { route: "/dimensions/ai-crawler-access/", file: "dimensions/ai-crawler-access.html", indexable: true },
+  { route: "/dimensions/machine-readability/", file: "dimensions/machine-readability.html", indexable: true },
+  { route: "/dimensions/content-depth/", file: "dimensions/content-depth.html", indexable: true },
+  { route: "/dimensions/citability/", file: "dimensions/citability.html", indexable: true },
+  { route: "/dimensions/answer-readiness/", file: "dimensions/answer-readiness.html", indexable: true },
+  { route: "/dimensions/trust-authority/", file: "dimensions/trust-authority.html", indexable: true },
+  { route: "/dimensions/semantic-structure/", file: "dimensions/semantic-structure.html", indexable: true },
+  { route: "/dimensions/metadata/", file: "dimensions/metadata.html", indexable: true },
+  { route: "/dimensions/llms-txt/", file: "dimensions/llms-txt.html", indexable: true },
+  { route: "/dimensions/freshness/", file: "dimensions/freshness.html", indexable: true },
+  { route: "/dimensions/multilingual/", file: "dimensions/multilingual.html", indexable: true },
+  { route: "/dimensions/delivery/", file: "dimensions/delivery.html", indexable: true },
   // The weekly-report signup. Scored like any other page: it is mostly prose and a form,
   // and a form is not a reason to let a page fall below the floor the rest of the site holds.
   { route: "/monitor/", file: "monitor.html", indexable: true },
