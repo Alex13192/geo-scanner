@@ -38,7 +38,13 @@ yarn-error.log*
 /.open-next/
 # wrangler's local state (dev registry, sqlite, cached types). It appeared as an
 # untracked directory the first time `opennextjs-cloudflare preview` ran.
-/.wrangler/
+#
+# NOT anchored to the root, and that is load-bearing. A second wrangler config exists
+# under cron/, and miniflare resolves its persistence directory relative to the CONFIG
+# FILE rather than to the repository - so running the cron worker locally creates
+# cron/.wrangler/state/v3/ and a root-anchored pattern does not cover it. The visible
+# symptom of getting this wrong is a local database with no tables.
+.wrangler/
 # Local Worker variables. The committed template is .dev.vars.example; this file is
 # ignored because it is where a real secret would eventually be put.
 .dev.vars

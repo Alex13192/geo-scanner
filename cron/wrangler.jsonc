@@ -1,0 +1,64 @@
+{
+  // The weekly report runner: a second Worker, deliberately not the Next.js one.
+  //
+  // WHY THIS IS NOT PART OF THE MAIN WORKER, WHICH IS THE WHOLE POINT OF THE FILE: the site's
+  // worker imports the entire Next.js server at module scope, so any isolate it starts pays
+  // for the framework whatever the request was. That is affordable for a page view and not
+  // affordable here - a scheduled scan measured 2.3 ms of actual work, against a 10 ms CPU
+  // budget on the Free plan, and the framework costs several times that before the work
+  // starts. This worker imports the scoring engine and the database helpers and nothing else.
+  //
+  // The measurement is in 邮件订阅设计稿-第0步.md section 2: 1.05 ms for a 43 KB page, 2.27 ms
+  // for the 125 KB homepage, on workerd rather than on Node.
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "geo-scanner-reports",
+  "main": "index.ts",
+  "compatibility_date": "2024-12-30",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // THE SAME DATABASE AS THE SITE, and the same placeholder id, for the same reason: nothing
+  // is deployed from this branch. `wrangler d1 create geo-scanner-subscribers` prints the real
+  // id, and it has to be put in both files - this one and ../wrangler.jsonc - or the two
+  // Workers will disagree about which database holds the subscriptions.
+  //
+  // migrations_dir is deliberately absent here. Migrations are owned by ../wrangler.jsonc so
+  // there is one place that can change the schema; a second config pointing at the same
+  // directory is a second way to apply them out of order.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "geo-scanner-subscribers",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+
+  // Mondays at 03:00 UTC. Chosen for the quietest hour rather than the most convenient one:
+  // the run makes outbound requests to subscribers' sites, and a tool that audits other
+  // people's servers has no business doing it at their peak.
+  "triggers": {
+    "crons": ["0 3 * * 1"]
+  }
+
+  /*
+   * RUNNING THIS LOCALLY NEEDS --persist-to, AND THE SYMPTOM OF NOT PASSING IT IS MISLEADING.
+   *
+   * Miniflare resolves its state directory relative to the CONFIG FILE, not to the repository.
+   * A bare `wrangler dev -c cron/wrangler.jsonc` therefore opens an empty database under
+   * cron/.wrangler/state/v3/ and every query fails with "no such table: subscribers" - which
+   * reads as a migration that did not run, and is not one. The migrations are fine; they were
+   * applied to the site's copy of the database.
+   *
+   *   npx wrangler dev -c cron/wrangler.jsonc --persist-to .wrangler/state --test-scheduled
+   *
+   * THE PATH STOPS AT `state`. wrangler appends the version directory itself, so
+   * `--persist-to .wrangler/state/v3` writes to .wrangler/state/v3/v3/ and leaves the
+   * database just as invisible as passing nothing - with a different cause and the same
+   * error message. That mistake was made here first, which is why the sentence exists.
+   *
+   * `--test-scheduled` exposes the scheduled handler at /__scheduled, which is how the
+   * producer was verified without waiting for a Monday.
+   *
+   * None of this arises in production: both Workers bind the same D1 by id, and D1 has no
+   * notion of which directory a config was read from.
+   */
+}
