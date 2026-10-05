@@ -354,3 +354,50 @@ body {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * SCROLL-DRIVEN REVEALS
+ *
+ * WHY THIS IS PURE CSS AND WRAPPED IN TWO GUARDS.
+ *
+ * `animation-timeline: view()` ties an animation to the element's own progress through the
+ * viewport, so there is no IntersectionObserver, no scroll listener and no JavaScript at all -
+ * the compositor does it. That matters on a site whose heaviest route is already CPU-bound.
+ *
+ * The outer @supports is the whole safety story. A browser without scroll-driven animations
+ * never matches the block, so it renders the content normally: no fade, no transform, nothing
+ * hidden. Progressive enhancement rather than a fallback that has to be maintained - the failure
+ * mode of getting this wrong is invisible content, which is the one outcome worth designing
+ * against.
+ *
+ * The inner prefers-reduced-motion guard is not a courtesy. Motion that follows the scroll is
+ * exactly the kind that triggers vestibular discomfort, and the site already honours this
+ * preference for the scan console.
+ *
+ * WHY IT APPLIES TO CHILDREN RATHER THAN TO THE CONTAINER. Each child is timed against its own
+ * position, so paragraphs arrive one after another as the reader reaches them instead of the
+ * whole article appearing as one block. The stagger is a property of the mechanism rather than
+ * of a delay that has to be tuned.
+ * --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal-stagger > * {
+      animation: llm-reveal linear both;
+      animation-timeline: view();
+      /* Starts as the element crosses into view and finishes well before it reaches the middle,
+         so nothing is still animating while it is being read. */
+      animation-range: entry 5% cover 32%;
+    }
+  }
+}
+
+@keyframes llm-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

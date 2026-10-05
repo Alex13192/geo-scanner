@@ -126,11 +126,13 @@ export default function ArticleShell({
               roughly a third past the point where a reader starts losing their
               place on the return sweep.
             */}
-            <article className="doc-article mx-auto max-w-3xl text-[17px] leading-[1.65] text-[var(--ink-2)]">
+            <article className="doc-article reveal-stagger mx-auto max-w-3xl text-[17px] leading-[1.65] text-[var(--ink-2)]">
               {children}
             </article>
 
-            <div className="mx-auto mt-16 max-w-3xl space-y-10 text-[15px] leading-relaxed text-[var(--ink-2)]">
+            {/* Outside the article, so the FAQ and the evidence block reveal on their own rather
+                than being grandchildren of a staggered container. */}
+            <div className="reveal-stagger mx-auto mt-16 max-w-3xl space-y-10 text-[15px] leading-relaxed text-[var(--ink-2)]">
               {faq ? <Faq title={faq.title} items={faq.items} level="h3" /> : null}
               <Evidence
                 quote={GEO_PRIMARY_QUOTE}

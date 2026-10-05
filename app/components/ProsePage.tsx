@@ -132,7 +132,13 @@ export default function ProsePage({
 
         <section className="band">
           <div className="wrap py-14 md:py-16">
-            <div className={`mx-auto ${column}`}>{children}</div>
+            {/*
+              `reveal-stagger` is a no-op in three cases and that is deliberate: JavaScript is
+              disabled, the browser has no scroll-driven animations, or the reader asked for
+              reduced motion. In all three the children render normally - see the note on the rule
+              in globals.css, where the failure mode is stated as the reason for the two guards.
+            */}
+            <div className={`reveal-stagger mx-auto ${column}`}>{children}</div>
           </div>
         </section>
       </main>
