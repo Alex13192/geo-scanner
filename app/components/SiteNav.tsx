@@ -2,6 +2,7 @@ import { BRAND } from "@/lib/site";
 import {
   BadgeCheck,
   BarChart3,
+  ArrowRight,
   BookOpen,
   ChevronDown,
   FileText,
@@ -112,6 +113,25 @@ const GROUPS: Group[] = [
 export default function SiteNav() {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--nav-bg)] backdrop-blur-xl backdrop-saturate-150">
+      {/*
+        The announcement strip. It sits inside the sticky header rather than above it so the two
+        travel together, and it carries the one sentence a first-time visitor needs before they
+        know what GEO is. Borrowed from every site in this category, which is the point: it works,
+        and it costs 40px of a bar that was already there.
+      */}
+      <div className="bg-[var(--accent)] text-[var(--on-accent)]">
+        <div className="wrap flex h-10 items-center justify-center gap-2.5 text-[13.5px]">
+          <span className="opacity-90">See where you rank in AI search</span>
+          <a href="/#scan" className="group inline-flex items-center gap-1 font-semibold">
+            Get a free report
+            <ArrowRight
+              className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </a>
+        </div>
+      </div>
+
       <div className="wrap flex h-[64px] items-center gap-9">
         <a href="/" className="flex shrink-0 items-center gap-2.5">
           <span
@@ -187,12 +207,31 @@ export default function SiteNav() {
           </a>
         </nav>
 
-        <a
-          href="/#scan"
-          className="ml-auto shrink-0 rounded-full bg-[var(--accent)] px-5 py-2.5 text-[14px] font-medium text-[var(--on-accent)] transition-opacity hover:opacity-85 lg:ml-0"
-        >
-          Run a free scan
-        </a>
+        {/*
+          Two calls to action, secondary first. One button asks a visitor to decide between acting
+          and leaving; two let them pick which action, which is what every site this is measured
+          against does. The filled one keeps the accent; the outline one is a real destination
+          rather than decoration, so it is not hidden.
+        */}
+        <div className="ml-auto flex shrink-0 items-center gap-2.5 lg:ml-0">
+          <a
+            href="/monitor/"
+            className="hidden rounded-full border border-[var(--line)] px-4 py-2.5 text-[14px] font-medium text-[var(--ink-2)] transition-colors hover:border-[var(--ink-3)] hover:text-[var(--ink-1)] sm:inline-block"
+          >
+            Weekly report
+          </a>
+          {/*
+            scale rather than opacity, because a button that fades reads as disabled and a button
+            that grows reads as ready. The active state is slightly smaller than rest, so a click
+            feels like a press.
+          */}
+          <a
+            href="/#scan"
+            className="rounded-full bg-[var(--accent)] px-5 py-2.5 text-[14px] font-medium text-[var(--on-accent)] transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
+          >
+            Run a free scan
+          </a>
+        </div>
       </div>
     </header>
   );

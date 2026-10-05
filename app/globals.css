@@ -550,3 +550,65 @@ body {
 .doc-article a:focus-visible {
   background-size: 100% 1px;
 }
+
+/* ---------------------------------------------------------------------------
+ * EVERYTHING ELSE THAT RESPONDS TO THE POINTER
+ *
+ * The single principle taken from the sites this is measured against: nothing clickable or
+ * hoverable is inert. Navigation, cards and prose links are covered elsewhere; these are the
+ * surfaces that were left - table rows, expandable questions, and the check lists.
+ *
+ * Row highlighting is the one that carries the most weight here. The methodology and check tables
+ * are wide, and a reader tracking across eight columns loses their line without it. That is a
+ * usability fix that happens to look like polish rather than the other way round.
+ * --------------------------------------------------------------------------- */
+.doc-article tbody tr,
+.prose-table tbody tr {
+  transition: background-color 160ms ease;
+}
+
+.doc-article tbody tr:hover,
+.prose-table tbody tr:hover {
+  background-color: var(--surface-2);
+}
+
+/* The expandable questions. They were already interactive and gave no sign of it. */
+.doc-article details > summary,
+details > summary {
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+details > summary:hover {
+  color: var(--ink-1);
+}
+
+details > summary::marker {
+  color: var(--ink-3);
+}
+
+/* Footer and legal links: a small lift, matching the nav's treatment rather than inventing one. */
+footer a,
+[aria-label="Legal and contact"] a {
+  transition:
+    color 200ms ease,
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  display: inline-block;
+}
+
+footer a:hover,
+[aria-label="Legal and contact"] a:hover {
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  footer a,
+  [aria-label="Legal and contact"] a {
+    transition: color 200ms ease;
+  }
+
+  footer a:hover,
+  [aria-label="Legal and contact"] a:hover {
+    transform: none;
+  }
+}
