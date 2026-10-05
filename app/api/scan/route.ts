@@ -7,10 +7,9 @@
 // place allowed to call fetch with a hostname supplied by the caller. Read that
 // file before adding another one here.
 import { NextResponse } from "next/server";
-import { analyze } from "@/lib/geo/analyze";
-import { fetchText, inspectTarget, type SafeFetchResult } from "@/lib/net/fetch-safe";
+import { runScan } from "@/lib/geo/scan";
+import { inspectTarget } from "@/lib/net/fetch-safe";
 import { clientKey, takeToken } from "@/lib/net/rate-limit";
-import { SITE_URL } from "@/lib/site";
 
 /*
  * THERE IS DELIBERATELY NO `export const runtime = "edge"` HERE ANY MORE.
@@ -30,39 +29,15 @@ import { SITE_URL } from "@/lib/site";
  */
 export const dynamic = "force-dynamic"; // 强制声明为动态接口，防止静态编译拦截
 
-/**
- * We identify ourselves honestly rather than impersonating GPTBot.
+/*
+ * The scanner's user agents, its timeout, and the whole fetch-and-analyse sequence moved to
+ * lib/geo/scan.ts, which the weekly report runner also calls. They are policy about what a
+ * GEO scan is, not about being an HTTP endpoint, and they were only here because this route
+ * was the first thing that needed them.
  *
- * Impersonating a crawler is why the previous version produced false positives
- * on cisco.com and 163.com: those sites verify crawlers by IP address, so a
- * spoofed GPTBot user-agent from our infrastructure is refused as a spoofer
- * even when real GPTBot traffic is perfectly welcome. Whether a site blocks AI
- * crawlers is answered authoritatively by robots.txt, not by guessing.
+ * The comments explaining the two user agents went with them. Read that file before changing
+ * either, and note that the published rule for robots-ai-allowed discloses the second probe.
  */
-const CRAWLER_UA = `Mozilla/5.0 (compatible; LLMentionBot/1.0; +${SITE_URL}/methodology/)`;
-
-/**
- * Sent only as a second probe, and only when the first request was refused.
- *
- * WHY A SCANNER MAY DO THIS AT ALL: the refusal has two completely different
- * meanings and nothing else separates them. If a browser-shaped request is served
- * while a crawler-shaped one is refused, the site is running a rule aimed at
- * identified bots - and GPTBot, ClaudeBot, PerplexityBot and OAI-SearchBot all
- * present as bots, so the rule blocks the engines the audit is about. If both are
- * refused, the block is about the address the scan came from and says nothing
- * about the site. Reporting the first case as "not a GEO problem", which is what
- * the old copy did, was backwards.
- *
- * This is a diagnostic, not a disguise: its result is used only for the access
- * verdict, never to score page content, and it is disclosed in the published rule
- * for robots-ai-allowed. Impersonating GPTBot - the thing the comment above
- * rejects - would be different in kind, because that claims to be a specific
- * crawler whose access rules the site set deliberately.
- */
-const BROWSER_PROBE_UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-
-const FETCH_TIMEOUT_MS = 9000;
 
 function cleanDomain(domain: string): string {
   if (!domain) return "";
@@ -112,40 +87,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: target.reason }, { status: 400 });
   }
 
-  const options = {
-    userAgent: CRAWLER_UA,
-    acceptLanguage: "en;q=0.9,*;q=0.5",
-    timeoutMs: FETCH_TIMEOUT_MS,
-  };
-
-  // 1. Homepage, over https first and http as a fallback. Remember which scheme
-  //    worked: it decides the HTTPS check, and the support files have to be
-  //    requested over the same scheme. Fetching robots.txt, llms.txt and
-  //    sitemap.xml over https:// for an http-only site invented three failures.
-  let scheme: "https" | "http" = "https";
-  let home: SafeFetchResult | null = await fetchText(`${scheme}://${domain}`, options);
-
-  if (!home && inspectTarget(`http://${domain}`).ok) {
-    scheme = "http";
-    home = await fetchText(`${scheme}://${domain}`, options);
-  }
-
-  // 1b. One extra request, and only when the first was refused: ask the same URL
-  //     again as a browser. This is what tells "your WAF refuses identified bots"
-  //     apart from "our address is blocked", which the score should not conflate.
-  //     The access verdict still honours robots.txt first: a site can refuse us
-  //     *and* publish a disallow, and the disallow is the certain fact of the two.
-  let browserStatus: number | null = null;
-  if (home && home.status !== 200) {
-    const probe = await fetchText(`${scheme}://${domain}`, {
-      ...options,
-      userAgent: BROWSER_PROBE_UA,
-    });
-    browserStatus = probe ? probe.status : null;
-  }
+  /*
+   * Everything from here to the response is one call. The sequence - https with an http
+   * fallback, the browser probe when the first request was refused, and the three support
+   * files in parallel - lives in lib/geo/scan.ts, because the weekly report runner needs the
+   * same sequence and cannot come through this endpoint to get it: the rate limit above would
+   * refuse a run over a hundred subscribers a fifth of the way in.
+   */
+  const scan = await runScan(domain);
 
   // No HTTP response at all on either scheme: the domain really is unreachable.
-  if (!home) {
+  if (!scan.reachable) {
     return NextResponse.json({
       reachable: false,
       score: 0,
@@ -154,38 +106,7 @@ export async function GET(request: Request) {
     });
   }
 
-  // 2. The three support files, fetched in parallel. A failure here is itself
-  //    a finding, so each returns null rather than throwing.
-  const [robots, llms, sitemap] = await Promise.all([
-    fetchText(`${scheme}://${domain}/robots.txt`, options),
-    fetchText(`${scheme}://${domain}/llms.txt`, options),
-    fetchText(`${scheme}://${domain}/sitemap.xml`, options),
-  ]);
-
-  const result = analyze({
-    domain,
-    scheme,
-    homeStatus: home.status,
-    browserStatus,
-    html: home.body,
-    robotsText: robots && robots.status === 200 ? robots.body : null,
-    llmsText: llms && llms.status === 200 ? llms.body : null,
-    sitemapText: sitemap && sitemap.status === 200 ? sitemap.body : null,
-    lastModifiedHeader: home.lastModified,
-    /*
-     * The path the page was finally served from, which is what decides whether
-     * checks like `quotations` or `about-contact` are fair questions for this page
-     * at all. Taken from the final URL rather than the requested domain, so a
-     * redirect to /privacy/ is classified as the page that was actually read.
-     */
-    path: (() => {
-      try {
-        return new URL(home.finalUrl).pathname;
-      } catch {
-        return undefined;
-      }
-    })(),
-  });
+  const { result, homeStatus, scheme, browserStatus, truncated } = scan;
 
   // `brief=1` returns the headline numbers without the twelve dimension objects
   // or the issue list, so a caller collecting many sites at once does not have
@@ -194,10 +115,10 @@ export async function GET(request: Request) {
   if (searchParams.get("brief") === "1") {
     return NextResponse.json({
       domain,
-      status: home.status,
+      status: homeStatus,
       browserStatus,
-      scoreBasis: home.status === 200 ? "homepage" : `${home.status} error response`,
-      truncated: home.truncated,
+      scoreBasis: homeStatus === 200 ? "homepage" : `${homeStatus} error response`,
+      truncated,
       score: result.score,
       grade: result.grade,
       checksRun: result.checksRun,
@@ -226,13 +147,13 @@ export async function GET(request: Request) {
   // page was read.
   return NextResponse.json({
     reachable: true,
-    status: home.status,
+    status: homeStatus,
     scheme,
     browserStatus,
     // Phrased to read correctly inside "This score describes ...": a leading
     // "HTTP" would make the banner say "describes a HTTP 403 response".
-    scoreBasis: home.status === 200 ? "homepage" : `${home.status} error response`,
-    truncated: home.truncated,
+    scoreBasis: homeStatus === 200 ? "homepage" : `${homeStatus} error response`,
+    truncated,
     score: result.score,
     grade: result.grade,
     gradeLabel: result.gradeLabel,
