@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
+import DiagramHeadingRetrieval from "../_components/DiagramHeadingRetrieval";
 
 import { og } from "@/lib/og";
 
@@ -52,6 +53,14 @@ export default function Page() {
         matched directly — and it can be quoted without the reader needing surrounding
         context.
       </p>
+
+      {/*
+        Placed after this section and before the rewrite advice, because it answers the question
+        this section raises: whether retrieval really is passage-level. A reader who has not seen
+        that a span of text is what gets lifted will read the next section as advice about wording
+        rather than as the difference between a passage that can be quoted and one that cannot.
+      */}
+      <DiagramHeadingRetrieval />
 
       <h2>What does a citation-ready heading look like?</h2>
       <p>
