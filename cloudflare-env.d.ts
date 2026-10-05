@@ -82,5 +82,15 @@ interface CloudflareEnv {
    * subscribers as bounced, which is worse than not having the endpoint at all.
    */
   RESEND_WEBHOOK_SECRET?: string;
+
+  /**
+   * Guards the report Worker's on-demand run. Set with `wrangler secret put` on
+   * geo-scanner-reports only.
+   *
+   * Optional, and the endpoint fails closed without it: no secret means every request gets the
+   * same 404 the Worker returned before the route existed, rather than an open trigger that can
+   * enqueue a report for every subscriber.
+   */
+  MANUAL_TRIGGER_SECRET?: string;
   EMAIL_FROM?: string;
 }

@@ -24,7 +24,7 @@ import { reportEmail } from "../lib/email/messages.ts";
 import { sendEmail } from "../lib/email/send.ts";
 import { runScan } from "../lib/geo/scan.ts";
 import { unsubscribeUrl } from "../lib/subscribe/flow.ts";
-import { newId } from "../lib/subscribe/tokens.ts";
+import { newId, tokensMatch } from "../lib/subscribe/tokens.ts";
 
 /**
  * A message is an id, not a row.
@@ -58,6 +58,37 @@ function titlesFor(checks: { id: string; title: string }[], ids: string[]): stri
   return ids.map((id) => byId.get(id) ?? id);
 }
 
+/**
+ * Enumerate what is due and enqueue one message per subscriber.
+ *
+ * Extracted from the scheduled handler so the manual trigger below can run exactly the same
+ * thing. A second copy for the manual path would be a second answer to "who is due", and the two
+ * would drift - which is the whole reason the scan sequence lives in lib/geo/scan.ts instead of
+ * in the route.
+ */
+async function runProducer(env: CronEnv): Promise<{ due: number; enqueued: number }> {
+  const due = await listConfirmed(env.DB, BATCH);
+
+  if (due.length === 0) {
+    console.log("[reports] nothing due");
+    return { due: 0, enqueued: 0 };
+  }
+
+  if (!env.REPORT_QUEUE) {
+    /*
+     * Logged as an error rather than quietly skipped. Without the binding every subscriber
+     * simply stops receiving reports, and the only symptom would be their absence - which
+     * nobody reports and no check catches.
+     */
+    console.error(`[reports] REPORT_QUEUE is not bound; ${due.length} subscription(s) skipped`);
+    return { due: due.length, enqueued: 0 };
+  }
+
+  await env.REPORT_QUEUE.sendBatch(due.map((s: Subscriber) => ({ body: { subscriberId: s.id } })));
+  console.log(`[reports] enqueued ${due.length}`);
+  return { due: due.length, enqueued: due.length };
+}
+
 export default {
   /**
    * `_event` is unknown rather than ScheduledController, and `ctx` is not taken: both are
@@ -65,25 +96,7 @@ export default {
    * binding and writes a binding, and nothing needs to outlive the invocation.
    */
   async scheduled(_event: unknown, env: CronEnv) {
-    const due = await listConfirmed(env.DB, BATCH);
-
-    if (due.length === 0) {
-      console.log("[reports] nothing due");
-      return;
-    }
-
-    if (!env.REPORT_QUEUE) {
-      /*
-       * Logged as an error rather than quietly skipped. Without the binding every subscriber
-       * simply stops receiving reports, and the only symptom would be their absence - which
-       * nobody reports and no check catches.
-       */
-      console.error(`[reports] REPORT_QUEUE is not bound; ${due.length} subscription(s) skipped`);
-      return;
-    }
-
-    await env.REPORT_QUEUE.sendBatch(due.map((s: Subscriber) => ({ body: { subscriberId: s.id } })));
-    console.log(`[reports] enqueued ${due.length}`);
+    await runProducer(env);
   },
 
   /**
@@ -209,10 +222,45 @@ export default {
   },
 
   /**
-   * There is no way to reach this worker over HTTP, and a deployed Worker with no `fetch`
-   * export answers 404 by default. Keeping one makes that explicit rather than accidental.
+   * A guarded way to run one pass on demand.
+   *
+   * WHY THIS EXISTS, in the words of the incident that produced it. Exercising the runner
+   * outside its schedule used to mean temporarily editing the cron to every five minutes,
+   * deploying, waiting, editing back and deploying again - three state changes that all have to
+   * land, where a failure of the last one is invisible in every place a person would look. It
+   * failed exactly that way: the dashboard and `wrangler deploy` both reported `0 3 * * 1` while
+   * the Worker kept firing every five minutes, and the only symptom was duplicate report emails
+   * and a spent sending allowance. See OPERATIONS.md.
+   *
+   * This cannot get stuck. It changes no state and leaves nothing to remember.
+   *
+   * WHY 404 RATHER THAN 401. A 401 confirms the endpoint exists and is worth attacking; a 404 is
+   * also exactly what this Worker returned before the route existed, so a prober learns nothing
+   * either way.
+   *
+   * WHY IT FAILS CLOSED ON A MISSING SECRET, like the Resend webhook: the tempting alternative is
+   * to allow everything until a secret is configured, which means the endpoint is open for
+   * exactly as long as nobody remembers to set it.
+   *
+   * The comparison is constant-time for the same reason the tokens in lib/subscribe/tokens.ts
+   * are: the caller controls the input and can measure the reply, and `===` exits at the first
+   * differing byte.
    */
-  async fetch() {
-    return new Response("This worker runs on a schedule and has no pages.", { status: 404 });
+  async fetch(request: Request, env: CronEnv) {
+    const secret = env.MANUAL_TRIGGER_SECRET;
+    const provided = request.headers.get("x-manual-trigger");
+
+    if (!secret || !provided || !tokensMatch(provided, secret)) {
+      return new Response("This worker runs on a schedule and has no pages.", { status: 404 });
+    }
+
+    const result = await runProducer(env);
+
+    /*
+     * The counts are returned rather than only logged. The point of this endpoint is to answer
+     * "did it work" from outside, and Workers Logs are disabled on this plan - so a response that
+     * said only "ok" would leave the caller exactly where they started.
+     */
+    return Response.json({ ran: "producer", ...result });
   },
 };
