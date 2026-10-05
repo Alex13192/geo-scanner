@@ -498,3 +498,45 @@ body {
     transform: translate3d(3%, 2%, 0) scale(1.08);
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * LINKS THAT ANSWER THE POINTER
+ *
+ * The single rule from the sites this one is measured against: everything clickable responds to
+ * the pointer. Their links do not change colour on hover, which is the cheap version - they grow
+ * an underline from the left, which reads as the link acknowledging you rather than as a state
+ * change.
+ *
+ * WHY A BACKGROUND GRADIENT RATHER THAN text-decoration. `text-decoration` cannot be animated in
+ * any browser that matters, and `border-bottom` would change the element's height and reflow the
+ * line. A background image sized to 0% and grown to 100% costs nothing, cannot move anything, and
+ * animates on the compositor.
+ *
+ * `background-position: left` with `background-repeat: no-repeat` makes it grow from the left
+ * rather than fade in place, which is the difference between a link that responds and a link that
+ * blinks.
+ *
+ * SCOPED TO THE PROSE COLUMN. Navigation and footer links already have their own treatment, and
+ * two underlines on the same element is worse than one.
+ * --------------------------------------------------------------------------- */
+.doc-article a {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  padding-bottom: 1px;
+  transition: background-size 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The underline still appears, it simply does not travel. Removing it entirely would take away
+     the affordance rather than the motion. */
+  .doc-article a {
+    transition: none;
+  }
+}
+
+.doc-article a:hover,
+.doc-article a:focus-visible {
+  background-size: 100% 1px;
+}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import PageFooter from "@/app/components/PageFooter";
+import SiteNav from "@/app/components/SiteNav";
 import Evidence, {
   type EvidenceSource,
   GEO_PRIMARY_QUOTE,
@@ -69,27 +70,20 @@ export default function ArticleShell({
 }: ArticleShellProps) {
   return (
     <div className="min-h-screen bg-[var(--surface-0)] text-[var(--ink-1)] selection:bg-blue-500 selection:text-white font-sans">
-      <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--nav-bg)] backdrop-blur-xl backdrop-saturate-150">
-        <div className="wrap flex h-[52px] items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span
-              aria-hidden="true"
-              className="grid h-6 w-6 place-items-center rounded-[7px] bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-600 text-[11px] font-black text-white"
-            >
-              L
-            </span>
-            <span className="text-[15px] font-semibold tracking-tight text-[var(--ink-1)]">
-              LLMention Docs
-            </span>
-          </Link>
+      <SiteNav />
+
+      {/* The way back to the index, kept as a slim strip under the navigation rather than dropped.
+          A docs reader arriving from a search result needs it more than they need the menu. */}
+      <div className="border-b border-[var(--line)] bg-[var(--surface-1)]">
+        <div className="wrap flex h-11 items-center">
           <Link
             href="/docs/"
-            className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-4 py-1.5 text-[13px] font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--ink-1)]"
+            className="text-[14px] font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--ink-1)]"
           >
             ← All guides
           </Link>
         </div>
-      </header>
+      </div>
 
       <main>
         {/* Full-bleed title band: the colour step is what marks the margin. */}
