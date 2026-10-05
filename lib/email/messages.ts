@@ -26,7 +26,7 @@ function layout(heading: string, paragraphs: string[], action?: { label: string;
        <p style="margin:0 0 16px;font-size:13px;color:#6e6e73">Or paste this into your browser:<br><span style="word-break:break-all">${action.url}</span></p>`
     : "";
 
-  return `<!doctype html><html><body style="margin:0;background:#f5f5f7;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1d1d1f;font-size:16px;line-height:1.6">
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${heading}</title></head><body style="margin:0;background:#f5f5f7;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1d1d1f;font-size:16px;line-height:1.6">
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;padding:36px;border:1px solid #d2d2d7">
     <p style="margin:0 0 24px;font-weight:600;letter-spacing:-0.02em">${BRAND}</p>
     <h1 style="margin:0 0 20px;font-size:24px;line-height:1.25;letter-spacing:-0.02em">${heading}</h1>
