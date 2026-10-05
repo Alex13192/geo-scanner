@@ -612,3 +612,45 @@ footer a:hover,
     transform: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * THE DIAGRAM ASSEMBLES ITSELF
+ *
+ * HOW THIS WAS ARRIVED AT, because the obvious approach does not work. The site's other motion uses
+ * `animation-timeline: view()`, so that was the first attempt. Measured: SVG children accept
+ * `animation-name` and `animation-timeline: view()` and then never animate - all thirty-four of
+ * them stayed at opacity 1 with the figure centred in the viewport. HTML elements honour a scroll
+ * timeline; their SVG counterparts do not.
+ *
+ * So the trigger is JavaScript and the animation is time-based, which SVG does honour. The delays
+ * are inline on each group because they mark a reading order - request, lookup, fork, the two
+ * branches, the conclusion - rather than an index anybody has to count.
+ *
+ * `is-armed` IS THE WHOLE SAFETY STORY. It is added by the effect that starts the observer, so it
+ * only ever exists when JavaScript is running. A browser with scripting disabled, or a script that
+ * fails, has no class at all and therefore shows the finished diagram. The elements hide
+ * themselves only once something is in a position to reveal them.
+ *
+ * `backwards` fill rather than `both`: during a group's delay it holds the opening state, and once
+ * it has played it returns to the element's own styles rather than staying pinned to the keyframe.
+ * --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .diagram-build.is-armed:not(.is-shown) > g {
+    opacity: 0;
+  }
+
+  .diagram-build.is-shown > g {
+    animation: llm-diagram-in 500ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+}
+
+@keyframes llm-diagram-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
