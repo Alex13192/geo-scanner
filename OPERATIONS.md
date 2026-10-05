@@ -121,3 +121,55 @@ the visitor's own domain. Caching one visitor's scan and serving it to the next 
 correctness bug, not a performance trade - which is why the comment there records that
 `/report/` was "one platform behaviour away from being cached for a year".
 
+## The weekly report's first run (5 October 2026)
+
+Step 0 of the subscription work went live on this date: /monitor/, D1, a queue, and a second
+Worker that scans every confirmed domain once a week. The notes worth keeping are the ones that
+cost time to find rather than the ones that were obvious.
+
+### The two Workers deploy by different paths, and one of them was missing
+
+`cron/` is a second wrangler config. `deploy.yml` knew nothing about it until the day this
+shipped, so a merge would have deployed the site and not the runner - and that failure is
+completely silent. /monitor/ renders, the form posts, the confirmation email arrives, the
+subscriber is written to D1 and confirmed. No report is ever sent. Nothing errors anywhere,
+because nothing is broken; the worker that sends it was simply never uploaded. The only symptom
+is an absence, and absences are not reported by anybody.
+
+`verify.yml` did not build it either, so a bad import or an unresolvable binding would have
+reached production unchallenged. Both are now steps in those files.
+
+### There is no button that runs a cron Worker once
+
+The dashboard shows the schedule under Triggers as text. It is not clickable, and Settings ->
+Trigger Events does not offer a manual run either. To exercise the runner outside its schedule:
+
+    edit cron/wrangler.jsonc    "0 3 * * 1"  ->  "*/5 * * * *"
+    npx wrangler deploy -c cron/wrangler.jsonc
+    wait ten minutes - it fires on :00/:05/:10, so reverting sooner than that does nothing
+    edit it back, then DEPLOY the revert
+
+THE REVERT HAS TO BE DEPLOYED. Editing the file alone leaves the live schedule at every five
+minutes, and the symptom is not an error - it is a slow drip of duplicate report emails, two per
+subscriber per run, which is also how the free Resend allowance gets spent.
+
+### The database is the log
+
+Workers Logs and Workers Traces are disabled on both Workers and may not be available on this
+plan. Nothing about the product depends on them: every run writes a row to `scans` and updates
+`subscribers.last_score`, so a run can be confirmed from outside by counting rows rather than by
+reading logs. That is how the first successful run was verified - two rows, 97/A, 38 of 40,
+failing exactly `markdown-alternate` and `hreflang`, which is what the homepage's own SELF_AUDIT
+constant records. The weekly scan and a manual scan agreeing is the promise /monitor/ makes, and
+that agreement is itself checkable from the database.
+
+The second run is worth having too. With a previous scan present, the same unchanged site
+produced the subject `llmention-geo.com: 97/100 (A) - no change`, which is the diff path
+exercised for real rather than assumed.
+
+### Still open
+
+Bounces. `markBounced` exists in lib/db/subscribers.ts and nothing calls it, because a bounce
+arrives from the provider as a webhook and no webhook is connected. Until one is, an address that
+stops existing stays `pending` or `confirmed` and is retried every week. The refusal to send
+without an unsubscribe token is deliberate and unrelated to this.
