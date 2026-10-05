@@ -59,19 +59,53 @@ function titlesFor(checks: { id: string; title: string }[], ids: string[]): stri
 }
 
 /**
- * Enumerate what is due and enqueue one message per subscriber.
+ * Enumerate what is due, and optionally enqueue one message per subscriber.
  *
  * Extracted from the scheduled handler so the manual trigger below can run exactly the same
  * thing. A second copy for the manual path would be a second answer to "who is due", and the two
  * would drift - which is the whole reason the scan sequence lives in lib/geo/scan.ts instead of
  * in the route.
+ *
+ * `send` DEFAULTS TO FALSE HERE, which is the opposite of the scheduled handler's behaviour and
+ * deliberately so. The first version of the manual trigger always enqueued, which meant that
+ * checking "is anything due?" emailed every real subscriber a report. With two test addresses
+ * that is an annoyance; with two hundred it is a mistake nobody can take back. The safe outcome
+ * is now the one that happens by accident, and sending has to be asked for.
  */
-async function runProducer(env: CronEnv): Promise<{ due: number; enqueued: number }> {
-  const due = await listConfirmed(env.DB, BATCH);
+async function runProducer(
+  env: CronEnv,
+  options: { send?: boolean; only?: string } = {}
+): Promise<{ due: number; enqueued: number; send: boolean; recipients: string[] }> {
+  const wantSend = options.send === true;
+
+  let due = await listConfirmed(env.DB, BATCH);
+
+  /*
+   * `only` narrows the run to one address, which is what makes this usable once there are real
+   * subscribers: verify the whole path end to end without involving anybody else.
+   *
+   * Applied AFTER the LIMIT, so an address beyond the first BATCH would not be found. That is
+   * accepted rather than fixed - BATCH is 200 and a manual test is for checking the pipeline, not
+   * for reaching subscriber number 201 - but it is the kind of thing that would otherwise be
+   * discovered by wondering why a valid address produced nothing.
+   */
+  if (options.only) {
+    const wanted = options.only.toLowerCase();
+    due = due.filter((s) => s.email.toLowerCase() === wanted);
+  }
+
+  // Reported as domains rather than addresses: the caller needs to recognise who is affected, and
+  // a list of addresses in a response body is a list of addresses somewhere it does not need to be.
+  const recipients = due.map((s) => s.domain);
 
   if (due.length === 0) {
     console.log("[reports] nothing due");
-    return { due: 0, enqueued: 0 };
+    return { due: 0, enqueued: 0, send: wantSend, recipients };
+  }
+
+  if (!wantSend) {
+    console.log(`[reports] dry run: ${due.length} due, nothing enqueued`);
+    return { due: due.length, enqueued: 0, send: false, recipients };
   }
 
   if (!env.REPORT_QUEUE) {
@@ -81,12 +115,12 @@ async function runProducer(env: CronEnv): Promise<{ due: number; enqueued: numbe
      * nobody reports and no check catches.
      */
     console.error(`[reports] REPORT_QUEUE is not bound; ${due.length} subscription(s) skipped`);
-    return { due: due.length, enqueued: 0 };
+    return { due: due.length, enqueued: 0, send: true, recipients };
   }
 
   await env.REPORT_QUEUE.sendBatch(due.map((s: Subscriber) => ({ body: { subscriberId: s.id } })));
   console.log(`[reports] enqueued ${due.length}`);
-  return { due: due.length, enqueued: due.length };
+  return { due: due.length, enqueued: due.length, send: true, recipients };
 }
 
 export default {
@@ -96,7 +130,8 @@ export default {
    * binding and writes a binding, and nothing needs to outlive the invocation.
    */
   async scheduled(_event: unknown, env: CronEnv) {
-    await runProducer(env);
+    // The one caller that sends without being asked, because sending is the point of a schedule.
+    await runProducer(env, { send: true });
   },
 
   /**
@@ -242,6 +277,21 @@ export default {
    * to allow everything until a secret is configured, which means the endpoint is open for
    * exactly as long as nobody remembers to set it.
    *
+   * IT DOES NOT SEND ANYTHING UNLESS TOLD TO. A bare request reports which subscriptions are due
+   * and enqueues nothing:
+   *
+   *   GET /                        dry run - counts only
+   *   GET /?send=1                 the real thing, everyone due
+   *   GET /?only=you@example.com   the real thing, one address
+   *
+   * The first version always sent, which meant asking "is anything due?" emailed every
+   * subscriber. With two test addresses that is an annoyance; with two hundred it is a mistake
+   * nobody can take back. So the safe outcome is what happens by accident, and `send` is spelled
+   * out rather than implied.
+   *
+   * `only` exists for the same reason and is the one to reach for once there are real readers:
+   * it verifies the whole path without involving anybody else.
+   *
    * The comparison is constant-time for the same reason the tokens in lib/subscribe/tokens.ts
    * are: the caller controls the input and can measure the reply, and `===` exits at the first
    * differing byte.
@@ -254,7 +304,14 @@ export default {
       return new Response("This worker runs on a schedule and has no pages.", { status: 404 });
     }
 
-    const result = await runProducer(env);
+    const params = new URL(request.url).searchParams;
+    const only = params.get("only") ?? undefined;
+
+    const result = await runProducer(env, {
+      // Anything other than the exact string "1" is a dry run. A typo sends nothing.
+      send: params.get("send") === "1",
+      only: only || undefined,
+    });
 
     /*
      * The counts are returned rather than only logged. The point of this endpoint is to answer
