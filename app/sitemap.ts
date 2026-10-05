@@ -91,6 +91,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      /* The weekly-report signup. Listed rather than hidden: it is a page people arrive on
+         from a newsletter or a link, and the one page on the site whose job is conversion
+         rather than explanation. */
+      url: `${SITE_URL}/monitor/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${SITE_URL}/methodology/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',

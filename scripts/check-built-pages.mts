@@ -38,6 +38,9 @@ const ROUTES: Route[] = [
   { route: "/", file: "index.html", indexable: true },
   { route: "/llms-txt-studio/", file: "llms-txt-studio.html", indexable: true },
   { route: "/readiness-badge/", file: "readiness-badge.html", indexable: true },
+  // The weekly-report signup. Scored like any other page: it is mostly prose and a form,
+  // and a form is not a reason to let a page fall below the floor the rest of the site holds.
+  { route: "/monitor/", file: "monitor.html", indexable: true },
   { route: "/methodology/", file: "methodology.html", indexable: true },
   { route: "/study/", file: "study.html", indexable: true },
   { route: "/about/", file: "about.html", indexable: true },
