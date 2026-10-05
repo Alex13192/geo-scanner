@@ -173,3 +173,32 @@ Bounces. `markBounced` exists in lib/db/subscribers.ts and nothing calls it, bec
 arrives from the provider as a webhook and no webhook is connected. Until one is, an address that
 stops existing stays `pending` or `confirmed` and is retried every week. The refusal to send
 without an unsubscribe token is deliberate and unrelated to this.
+
+### A cron schedule that would not change (5 October 2026)
+
+Found the hard way, and the symptom is what makes it worth writing down: the dashboard showed the
+correct schedule while the wrong one kept executing.
+
+The runner was put on `*/5 * * * *` to exercise it once, then changed back to `0 3 * * 1` and
+deployed. `wrangler deploy` printed `schedule: 0 3 * * 1`, and the Worker's Settings -> Triggers
+page showed `At 03:00 AM on Sunday` with a next-run of the following Sunday. It kept firing every
+five minutes anyway - `scans` grew by two rows every five minutes, at :10, :15, :20, :25 and so on,
+across two further deploys that each reported success for the report-worker step and each printed
+the correct schedule.
+
+WHAT ACTUALLY FIXED IT was deleting the trigger in the dashboard, confirming the runs stopped, and
+deploying again. The re-deployed trigger does not fire early - checked by counting `scans` six
+minutes later, which is the only check that means anything here. Reading the deploy output, or the
+settings page, or the deployment history, all said it was already correct.
+
+WHAT IS NOT ESTABLISHED: why. Both later deploys may have updated the displayed configuration
+without replacing the registered trigger, or the platform may have kept serving a stale schedule.
+The evidence is consistent with either and does not distinguish them, so this records the fix and
+the symptom rather than a mechanism nobody has proved.
+
+THE PROCESS LESSON IS THE USEFUL PART. Temporarily changing a live schedule to test a cron job
+means three state changes that must all land - edit, deploy, and later edit back and deploy again -
+and a failure of the last one is invisible in every place a person would look. The symptoms are
+duplicate emails and a spent sending allowance, not an error. If this has to be done again, prefer
+a mechanism that cannot get stuck: a guarded endpoint that runs one pass on demand, or accepting
+the wait for the real schedule.
