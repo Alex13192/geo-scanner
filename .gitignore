@@ -57,3 +57,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python bytecode. scripts/report/render-report.py is imported by the geometry negative-control
+# check, and importing it writes this directory next to the source.
+__pycache__/
+*.pyc
+
+# Generated client reports - scripts/report/build-report.mts writes here by default.
+#
+# IGNORED ON PURPOSE, and not only to keep the tree tidy. These files name a client's domain, quote
+# their page content and carry their scores, and this repository is public: anything committed here
+# is published whether or not a page renders it. That is the same reason OPERATIONS.md gives for
+# why an Impressum address could not live in this repository.
+/reports/
