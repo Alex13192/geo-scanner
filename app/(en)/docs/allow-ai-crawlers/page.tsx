@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
+import DiagramRobotsMatch from "../_components/DiagramRobotsMatch";
 
 import { og } from "@/lib/og";
 
@@ -55,6 +56,14 @@ export default function Page() {
         because a person just asked about it, so blocking them changes what an individual user
         sees right now — not just what gets indexed later.
       </p>
+
+      {/*
+        Placed before the "how do I allow them" section rather than after it, because the question
+        it answers comes first: whether your file even applies to the agent you are worried about.
+        A reader who does not know that an unlisted agent is allowed will read the next section as
+        instructions for a problem they may not have.
+      */}
+      <DiagramRobotsMatch />
 
       <h2>How do I allow them in robots.txt?</h2>
       <p>
