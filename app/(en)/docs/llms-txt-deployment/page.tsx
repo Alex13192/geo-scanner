@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
+import DiagramFileRoles from "../_components/DiagramFileRoles";
 
 import { og } from "@/lib/og";
 
@@ -42,6 +43,20 @@ export default function Page() {
         standard, and it takes about ten minutes to add. This guide covers the format, the
         deployment, and how to verify it is actually reachable.
       </p>
+
+
+      {/*
+
+        The mental model comes first. Every mistake this article corrects - adding an llms.txt and
+
+        expecting pages to be found, submitting a sitemap and expecting permission - comes from
+
+        treating the three files as three ways of saying one thing.
+
+      */}
+
+      <DiagramFileRoles />
+
 
       <h2>What is llms.txt?</h2>
       <p>
