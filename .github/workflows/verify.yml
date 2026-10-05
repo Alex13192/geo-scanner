@@ -78,6 +78,18 @@ jobs:
       - name: Check that declared values agree
         run: npm run check:values
 
+      # The database id has to appear in wrangler.jsonc AND cron/wrangler.jsonc, and the two
+      # have to match. A divergence there produces no error at runtime: the site writes
+      # subscriptions to one database while the weekly runner reads from the other, both work
+      # perfectly, and the only symptom is that no report ever arrives. Nothing logs anything,
+      # because nothing is broken - they are simply two different databases.
+      #
+      # It also fails while both still hold the placeholder, which is the state of a checkout
+      # that has never been deployed. A check that accepted that would be green on exactly the
+      # repository it exists to catch.
+      - name: Check that both wrangler configs name the same database
+        run: npm run d1:check
+
       # The light theme made text colour context-dependent: text-white is correct
       # only on a saturated fill, and the --ink tokens only on a surface. Swapping
       # them produces dark ink on a dark fill, which nothing else in this workflow
@@ -113,6 +125,21 @@ jobs:
           # next/font downloads Geist at build time, so this job needs network
           # access; telemetry does not need to be part of it.
           NEXT_TELEMETRY_DISABLED: "1"
+
+      # THE SECOND WORKER, WHICH THE STEP ABOVE DOES NOT COVER.
+      #
+      # cron/ is a separate wrangler config, so `opennextjs-cloudflare build` says nothing
+      # about whether it bundles, whether its bindings resolve, or whether the queue name in
+      # its config matches anything. Without this step the first sign of a bad import would be
+      # the deploy - and that worker serves no pages, so a broken deploy is invisible until a
+      # subscriber notices their report never arrived.
+      #
+      # --dry-run builds the whole thing and reports it without shipping. The output goes to
+      # the runner's temp directory rather than the working tree: wrangler resolves --outdir
+      # relative to the CONFIG file, so a relative path here would drop a build artefact
+      # inside cron/ where nothing ignores it.
+      - name: Build the report worker
+        run: npx wrangler deploy -c cron/wrangler.jsonc --dry-run --outdir "$RUNNER_TEMP/cron-build"
 
       - name: Score the built site with its own analyser
         run: npm run check:built

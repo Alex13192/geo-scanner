@@ -21,12 +21,43 @@
  * which prints a snippet containing `"database_id": "..."`.
  */
 import { readFileSync, writeFileSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const MAIN = join(ROOT, "wrangler.jsonc");
 const CRON = join(ROOT, "cron", "wrangler.jsonc");
+
+const DB_NAME = "geo-scanner-subscribers";
+
+/**
+ * Ask wrangler for the id rather than asking the human.
+ *
+ * Returns null on any failure - not logged in, database absent, wrangler missing, output not
+ * JSON - because every one of those has the same next step for the caller, and a stack trace
+ * here would be less useful than the sentence the caller prints.
+ *
+ * The field is `uuid` in current wrangler and `database_id` in older output; both are accepted
+ * so this does not become the thing that breaks on an upgrade.
+ */
+function lookupId() {
+  try {
+    const raw = execSync("npx wrangler d1 list --json", {
+      cwd: ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    // wrangler can print a banner before the JSON, so start at the first bracket.
+    const start = raw.indexOf("[");
+    if (start < 0) return null;
+    const list = JSON.parse(raw.slice(start));
+    const match = list.find((entry) => entry.name === DB_NAME);
+    return match ? (match.uuid ?? match.database_id ?? null) : null;
+  } catch {
+    return null;
+  }
+}
 
 /** The placeholder both files ship with. Finding it means the resource was never created. */
 const PLACEHOLDER = "00000000-0000-0000-0000-000000000000";
@@ -92,19 +123,37 @@ if (arg) {
   process.exit(0);
 }
 
-// No argument: treat the main config as the source of truth and copy it across.
-if (!mainId) {
-  console.error("No database_id in wrangler.jsonc. Run `npx wrangler d1 create geo-scanner-subscribers` first.");
-  process.exit(1);
-}
-if (mainId === PLACEHOLDER) {
-  console.error(
-    "wrangler.jsonc still holds the placeholder.\n\n" +
-      "Run `npx wrangler d1 create geo-scanner-subscribers`, then either\n" +
-      "  node scripts/set-d1-id.mjs <the id it prints>\n" +
-      "or paste the id into wrangler.jsonc and run this again with no argument."
-  );
-  process.exit(1);
+/*
+ * No argument: look the database up, then write it into both configs.
+ *
+ * WHY THIS ASKS WRANGLER RATHER THAN MAKING THE HUMAN COPY A UUID. The first version of this
+ * script required the id as an argument, documented as `<uuid>`, and the very first person to
+ * use it typed those six characters literally - which PowerShell rejects outright, because
+ * `<` is a reserved redirection operator. A placeholder that looks like a value is a trap, and
+ * the fix is not a better placeholder: it is not needing one. `wrangler d1 list --json`
+ * already knows the answer.
+ *
+ * The explicit-argument form above stays, because it is the only one that works before the
+ * database exists in a form this can query, and because it is what a script or CI would use.
+ */
+if (!mainId || mainId === PLACEHOLDER) {
+  const found = lookupId();
+
+  if (!found) {
+    console.error(
+      "No database_id in wrangler.jsonc, and could not find one named " +
+        `"${DB_NAME}" via \`wrangler d1 list\`.\n\n` +
+        `Create it first:\n  npx wrangler d1 create ${DB_NAME}\n\n` +
+        "If it already exists, check that you are logged in with `npx wrangler whoami`."
+    );
+    process.exit(1);
+  }
+
+  writeId(MAIN, found);
+  writeId(CRON, found);
+  console.log(`Found ${DB_NAME} and wrote its id into both configs.\n`);
+  report(readId(MAIN), readId(CRON));
+  process.exit(0);
 }
 
 writeId(CRON, mainId);
