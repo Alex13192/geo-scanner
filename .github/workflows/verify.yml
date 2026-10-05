@@ -38,8 +38,21 @@ name: verify
 # exception, not for a red build somebody wants to merge anyway.
 
 on:
+  # EVERY branch, not just main, so work in progress is verified while it is still in
+  # progress. Shipping is a separate question and is answered in deploy.yml, which
+  # listens to main alone - so a branch can be pushed as often as its author likes
+  # without anything reaching production, and the push doubles as the backup.
+  #
+  # WHY NOT main-ONLY, which is what this said before: a branch pushed without a pull
+  # request open got no checks at all, so the first feedback arrived once the work was
+  # finished. That is the wrong end of the change to find out from.
+  #
+  # WHAT IT COSTS, stated rather than discovered: a merge to main now runs these gates
+  # twice, once from here and once from deploy.yml's call. That is a few minutes of CI
+  # rather than a correctness problem. Excluding main here would avoid it, at the price
+  # of making main's coverage depend on deploy.yml continuing to call this file - which
+  # is a worse thing to depend on than a duplicated run.
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
   # Callable, so deploy.yml runs exactly these gates before anything is shipped instead
