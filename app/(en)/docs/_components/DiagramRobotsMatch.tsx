@@ -112,7 +112,7 @@ export default function DiagramRobotsMatch() {
         </g>
 
         {/* 2. The lookup. */}
-        <g style={{ animationDelay: "140ms" }}>
+        <g style={{ animationDelay: "240ms" }}>
           <rect x="200" y="88" width="320" height="58" rx="12" fill={node} stroke={line} />
           <text x="360" y="112" textAnchor="middle" fontSize="14" fill={inkStrong}>
             Read robots.txt
@@ -123,7 +123,7 @@ export default function DiagramRobotsMatch() {
         </g>
 
         {/* 3. The fork. */}
-        <g style={{ animationDelay: "280ms" }}>
+        <g style={{ animationDelay: "480ms" }}>
           <line x1="360" y1="146" x2="360" y2="170" stroke={line} strokeWidth="1.5" />
           <line x1="170" y1="170" x2="550" y2="170" stroke={line} strokeWidth="1.5" />
           <line x1="170" y1="170" x2="170" y2="196" stroke={line} strokeWidth="1.5" />
@@ -133,7 +133,7 @@ export default function DiagramRobotsMatch() {
         </g>
 
         {/* 4. Branch one: a group names the agent. */}
-        <g style={{ animationDelay: "420ms" }}>
+        <g style={{ animationDelay: "720ms" }}>
           <rect x="40" y="204" width="260" height="46" rx="12" fill="none" stroke={line} strokeDasharray="4 4" />
           <text x="170" y="224" textAnchor="middle" fontSize="13.5" fill={inkStrong}>
             A group names it
@@ -153,7 +153,7 @@ export default function DiagramRobotsMatch() {
         </g>
 
         {/* 5. Branch two, which is the one readers get backwards, so it lands last. */}
-        <g style={{ animationDelay: "560ms" }}>
+        <g style={{ animationDelay: "960ms" }}>
           <rect x="420" y="204" width="260" height="46" rx="12" fill="none" stroke={line} strokeDasharray="4 4" />
           <text x="550" y="224" textAnchor="middle" fontSize="13.5" fill={inkStrong}>
             No group names it
@@ -173,7 +173,7 @@ export default function DiagramRobotsMatch() {
         </g>
 
         {/* 6. The sentence the whole diagram exists to land. */}
-        <g style={{ animationDelay: "700ms" }}>
+        <g style={{ animationDelay: "1200ms" }}>
           <rect x="70" y="372" width="580" height="46" rx="12" fill="none" stroke={line} />
           <text x="360" y="393" textAnchor="middle" fontSize="12.5" fill={inkSoft}>
             An unlisted agent is allowed — unless a <tspan fontFamily={mono}>User-agent: *</tspan> group
