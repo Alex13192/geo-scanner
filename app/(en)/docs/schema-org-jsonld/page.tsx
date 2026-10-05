@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
+import DiagramEntityGraph from "../_components/DiagramEntityGraph";
 
 import { og } from "@/lib/og";
 
@@ -50,6 +51,15 @@ export default function Page() {
         to you. <code>Organization</code> markup with a stable <code>@id</code>, a canonical{" "}
         <code>url</code> and a <code>sameAs</code> list gives it the joins it needs.
       </p>
+
+      {/*
+        Placed here rather than beside the @graph example further down, because it answers the
+        sentence immediately above it - a stable @id, a canonical url and a sameAs list are the
+        joins - and that sentence is the one a reader is most likely to read as decoration. The
+        code block below then shows the syntax of a shape the reader has already seen, instead of
+        asking them to infer the shape from the syntax.
+      */}
+      <DiagramEntityGraph />
 
       <h2>Which schema types matter most for GEO?</h2>
       <ul>
