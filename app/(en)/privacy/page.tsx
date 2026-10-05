@@ -28,7 +28,7 @@ import { og } from "@/lib/og";
 const TITLE = "Privacy policy";
 const DESCRIPTION =
   "What LLMention processes when you run a scan, what the server logs contain, how advertising cookies are handled, and how to exercise your data rights.";
-const UPDATED = "4 October 2026";
+const UPDATED = "5 October 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -89,6 +89,27 @@ export default function PrivacyPage() {
           </ul>
           <p>
             No account, name or email address is required to run a scan, and we do not ask for one.
+          </p>
+
+          <h2>"What a subscription stores</h2>
+          <p>
+            The weekly report is separate from the scanner, and it is the only part of this site
+            that holds anything about a person. It needs an address to send to and a domain to check.
+          </p>
+          <ul>
+            <li>The email address, so the report can be sent to it.</li>
+            <li>The domain, so the same site is checked each week.</li>
+            <li>The score history for that domain, so a report can say what changed.</li>
+            <li>The time the address was confirmed, and the time it was withdrawn.</li>
+          </ul>
+          <p>
+            Nothing else, and no account is created. A confirmation link proves the address asked for
+            the report, and the unsubscribe link in every message stops it without signing in.
+            Unsubscribing stops every report to that address, not only the one the link arrived from.
+          </p>
+          <p>
+            A withdrawal is recorded rather than the row deleted, which is why the last item above
+            exists: "when did this person ask us to stop" cannot be answered from a row that is gone.
           </p>
 
           <h2>What is deliberately not done</h2>

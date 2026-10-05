@@ -1,4 +1,21 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
+/*
+ * Makes the bindings in wrangler.jsonc available to `next dev`.
+ *
+ * WHY THIS IS NEEDED AT ALL: `next dev` runs the app in Node, where there is no D1 and no
+ * assets binding, so `getCloudflareContext()` throws and every route that touches the
+ * database fails locally while working in production - the least useful way round. This
+ * call starts a wrangler platform proxy in the dev server and hands the same bindings to
+ * it, reading them from wrangler.jsonc, so there is one description of the environment
+ * rather than a second one maintained for local work.
+ *
+ * It is called unconditionally, which is what the adapter's documentation shows: during a
+ * production build the call is inert, and the Worker that OpenNext produces gets its
+ * bindings from the platform rather than from here.
+ */
+initOpenNextCloudflareForDev();
 
 /**
  * Security response headers.
@@ -87,6 +104,14 @@ const SECURITY_HEADERS = [
  * `npm run check:live` therefore reports cf-cache-status for these paths. The answer is
  * meant to come from the deployment, not from this comment, and the values below are the
  * ones to change if it comes back DYNAMIC.
+ *
+ * WHAT CAME BACK, AND WHERE THE REST OF THE FIX IS. Not HIT and not DYNAMIC but absent
+ * altogether, on a Free-plan Worker whose 10 ms CPU budget a cold Next.js runtime exceeds -
+ * which surfaced as intermittent 1102s, because every page view boots the runtime and
+ * nothing is cached. OPERATIONS.md records what that means: the paid plan is the certain
+ * fix, and the Cache Rule named above is worth adding but could not be confirmed from
+ * outside, because this Worker's responses carry no cf-cache-status to read. The headers
+ * below are still inert either way.
  */
 const CACHE_LONG = [
   { key: "Cache-Control", value: "public, s-maxage=86400, stale-while-revalidate=604800" },

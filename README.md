@@ -44,6 +44,15 @@ repository secrets exist**:
 Without them the deploy job fails with a wrangler error and ships nothing, which is the
 correct failure. `npm run deploy` from a development machine always works as a fallback.
 
+**Working on something without shipping it.** `verify.yml` runs on every branch, so a feature
+branch can be pushed as often as its author likes: the push is a backup and a set of checks,
+and neither of those reaches production. Only `deploy.yml` ships, and it listens to `main`
+alone, which makes `main` the gate - merge when the work is finished, not when it compiles.
+A merge runs the gates twice, once from `verify.yml` and once from `deploy.yml`'s call to it.
+That is a few minutes of CI rather than a correctness problem; excluding `main` from
+`verify.yml` would avoid the duplicate at the cost of making production's coverage depend on
+`deploy.yml` continuing to call that file.
+
 `wrangler.jsonc` attaches the production hostname as a **route**, not as a `custom_domain`.
 That is deliberate: attaching it as a custom domain is refused with `code: 100117` because
 the hostname carries an externally managed DNS record left by the Pages integration. A route

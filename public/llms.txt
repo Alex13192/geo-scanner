@@ -69,4 +69,4 @@ Claude-SearchBot, anthropic-ai (Anthropic); PerplexityBot, Perplexity-User
 - The scanner and the llms.txt generator are free and do not require an account.
 - Scan result pages under /report/ are generated per request and are excluded from
   search indexing via robots.txt.
-- The tool is operated by the LLMention team, reachable at alex.xu@ccie13192.com.
+- The tool is operated by the LLMention team, reachable at services@llmention-geo.com.
