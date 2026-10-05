@@ -55,4 +55,4 @@ export const BRAND = "LLMention";
  * nobody monitors is worse than no contact address, because it looks like a
  * working channel and is not.
  */
-export const CONTACT_EMAIL = "alex.xu@ccie13192.com";
+export const CONTACT_EMAIL = "services@llmention-geo.com";

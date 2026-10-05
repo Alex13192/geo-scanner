@@ -21,7 +21,7 @@
 
 /* Relative, with the extension, for the same reason as in messages.ts: the cron worker bundles
  * this file under a second wrangler config, where path-alias resolution is not guaranteed. */
-import { SITE_HOST } from "../site.ts";
+import { CONTACT_EMAIL } from "../site.ts";
 
 export type EmailMessage = {
   to: string;
@@ -52,12 +52,18 @@ export async function sendEmail(env: CloudflareEnv, message: EmailMessage): Prom
       },
       body: JSON.stringify({
         /*
-         * The from-address is built from SITE_HOST rather than written out, because it is
-         * the same origin claim as every other link in the product and scripts/check-values.mjs
-         * refuses a second copy of it anywhere under lib/. It caught this line when the
-         * address was a literal, which is the check working rather than an inconvenience.
+         * The SAME ADDRESS THE SITE PUBLISHES, rather than a no-reply one built from the host.
+         *
+         * It used to be `reports@<host>`, which was tidy and wrong: that mailbox does not exist,
+         * and a from-address the domain cannot actually send as is the first thing a receiving
+         * server checks. It also meant a reply went nowhere, while every other page on the site
+         * tells the reader to write to CONTACT_EMAIL.
+         *
+         * Reusing CONTACT_EMAIL has a second effect worth naming: scripts/check-values.mjs
+         * refuses a second copy of it anywhere under lib/, so this line cannot drift away from
+         * the address in the footer. It caught this line when the address was a literal.
          */
-        from: env.EMAIL_FROM ?? `LLMention <reports@${SITE_HOST}>`,
+        from: env.EMAIL_FROM ?? `LLMention <${CONTACT_EMAIL}>`,
         to: [message.to],
         subject: message.subject,
         text: message.text,

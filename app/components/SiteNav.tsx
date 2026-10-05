@@ -21,6 +21,15 @@ import { BRAND } from "@/lib/site";
  * a separate change from the theme and the homepage.
  */
 const LINKS = [
+  /*
+   * First, because it is the only entry here with a job beyond explaining something. The weekly
+   * report is where a visitor who has read enough becomes a subscriber, so it belongs ahead of
+   * the four links that answer questions rather than ask for anything.
+   *
+   * It arrives in the same change as the cron worker that makes the page true. Before that, this
+   * link would have pointed at a promise nothing kept - see the note in app/(en)/monitor/page.tsx.
+   */
+  { href: "/monitor/", label: "Weekly report" },
   { href: "/llms-txt-studio/", label: "llms.txt studio" },
   { href: "/methodology/", label: "Methodology" },
   { href: "/docs/", label: "Guides" },
