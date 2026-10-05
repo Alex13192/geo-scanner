@@ -401,3 +401,86 @@ body {
     transform: translateY(0);
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * CARD LIFT
+ *
+ * The cheapest interaction on the site and the one a visitor feels most often. Applied to the
+ * tile grids rather than to everything, because a card that lifts when it is not clickable is a
+ * lie about what it does.
+ *
+ * translate3d rather than translateY: it promotes the element to its own compositor layer, so the
+ * hover costs no layout and no repaint of the page behind it. The shadow is on the pseudo-element
+ * rather than the card, so the two can be timed separately and the shadow does not inherit the
+ * card's own transition on every other property.
+ * --------------------------------------------------------------------------- */
+.lift {
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 320ms ease,
+    box-shadow 320ms ease;
+  will-change: transform;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .lift:hover {
+    transform: translate3d(0, -4px, 0);
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+    box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.22);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * AMBIENT BACKGROUND
+ *
+ * Three very slow radial gradients behind a band, drifting on cycles of 40 to 70 seconds. The
+ * point is that the page is never perfectly static to the eye without anything ever visibly
+ * moving - a visitor should not be able to catch it happening.
+ *
+ * WHY IT IS TIED TO prefers-reduced-motion AND NOT TO @supports. Unlike the scroll reveals, this
+ * degrades perfectly: a browser that does not understand the gradients simply shows the band's own
+ * background, and the pseudo-element contributes nothing. So the only question is whether the
+ * reader wants movement, and that is the preference this asks about.
+ *
+ * The gradients use the accent and the ok colour at very low alpha so they read as light rather
+ * than as decoration, and they never sit under text at a contrast that would change legibility.
+ * --------------------------------------------------------------------------- */
+.ambient {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.ambient::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(38rem 26rem at 18% 22%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%),
+    radial-gradient(32rem 24rem at 82% 34%, color-mix(in srgb, var(--ok) 16%, transparent), transparent 68%),
+    radial-gradient(30rem 22rem at 52% 88%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ambient::before {
+    animation: llm-drift 54s ease-in-out infinite alternate;
+  }
+}
+
+/* Reduced motion still gets the light; it just does not move. Written as a separate rule rather
+   than as an `else`, because the opacity is the part that should not depend on the preference. */
+.ambient::before {
+  opacity: 0.55;
+}
+
+@keyframes llm-drift {
+  from {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) scale(1.08);
+  }
+}

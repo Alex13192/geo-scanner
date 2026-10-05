@@ -193,7 +193,7 @@ export default function HomePage() {
 
       <main>
         {/* ============================ HERO ============================ */}
-        <section className="band band-dark">
+        <section className="band band-dark ambient">
           <div className="wrap pt-20 pb-16 text-center sm:pt-24">
             <span className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
               <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--accent)]" />
@@ -372,7 +372,7 @@ export default function HomePage() {
             <div className="mt-14 grid gap-5 sm:grid-cols-3">
               <a
                 href="/docs/allow-ai-crawlers/"
-                className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 transition-shadow hover:shadow-lg"
+                className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 lift hover:shadow-lg"
               >
                 <Bot className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
                 <h3 className="text-lg font-semibold tracking-tight">AI Crawler Passability</h3>
@@ -387,7 +387,7 @@ export default function HomePage() {
 
               <a
                 href="/docs/schema-org-jsonld/"
-                className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 transition-shadow hover:shadow-lg"
+                className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 lift hover:shadow-lg"
               >
                 <Braces className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
                 <h3 className="text-lg font-semibold tracking-tight">Entity &amp; Structured Data</h3>
@@ -402,7 +402,7 @@ export default function HomePage() {
 
               <a
                 href="/readiness-badge/"
-                className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 transition-shadow hover:shadow-lg"
+                className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 lift hover:shadow-lg"
               >
                 <BadgeCheck className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
                 <h3 className="text-lg font-semibold tracking-tight">Dynamic Score Badge</h3>

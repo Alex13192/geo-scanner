@@ -141,7 +141,7 @@ export default function DocsPage() {
                 <Link
                   key={guide.id}
                   href={`/docs/${guide.id}/`}
-                  className="flex flex-col justify-between gap-5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 transition-all hover:border-blue-500/50 hover:shadow-lg"
+                  className="flex flex-col justify-between gap-5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 liftion-all hover:border-blue-500/50 hover:shadow-lg"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-xs">
