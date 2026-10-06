@@ -121,6 +121,47 @@ the visitor's own domain. Caching one visitor's scan and serving it to the next 
 correctness bug, not a performance trade - which is why the comment there records that
 `/report/` was "one platform behaviour away from being cached for a year".
 
+### Follow-up, 6 October 2026: that Cache Rule cannot work, and what can
+
+**The rule described above is inert.** It was created in the dashboard, and the site still invoked
+the Worker on every page view. Measured on the deployed site, twice per route, on both hostnames:
+
+| request | `cf-cache-status` | Worker ran? |
+| --- | --- | --- |
+| `/_next/static/*.css`, `*.js` | `HIT` | no |
+| `/`, a `/checks/` page, the legacy hostname | absent | **yes, every time** |
+
+`x-opennext: 1` and `Server-Timing: cfEdge;dur=9,cfOrigin;dur=0,cfWorker;dur=78` are the evidence
+that the Worker ran. The absence of `cf-cache-status` is what a Worker-produced response looks like
+here - so the instrument this section previously called unusable is usable for **assets** and
+misleading for **pages**.
+
+**Why the rule cannot work**, quoted from Cloudflare's documentation rather than inferred:
+
+- "When a request arrives, it hits the Worker before the cache is checked."
+- "When using cache rules with Workers, the cache rule must match the properties of the URL in the
+  `fetch()` request - not the original visitor URL/host. Otherwise, the rule will not be applied."
+  This Worker generates its responses and fetches no origin, so there is no `fetch()` for a rule to
+  match.
+- And decisively: "**No zone configuration for caching applies to Workers Caching.** Cache Rules,
+  Cache Response Rules, Page Rules, cache level settings... have no effect on a Worker's cache."
+
+**What was done instead**: `"cache": { "enabled": true }` in `wrangler.jsonc` - Workers Cache,
+released 3 October 2026. A cache hit returns the response *without running the Worker*, so it consumes
+no CPU and cannot produce a 1102. It is configured per Worker and lives in this repository, so there
+is no dashboard state to keep in sync.
+
+**Checked before switching it on**, because a response with no `Cache-Control` is still cached
+heuristically - a `200` for two hours. Every GET route was measured and each sets a directive:
+`/api/scan` and `/api/llms-txt` are `no-store`, `/report/` and `/monitor/report/<token>/` are
+`no-store` and `private`, the content pages carry `s-maxage`. Nothing that must not be cached would
+have been cached by this change.
+
+**Still true, and not fixed by caching**: the Free plan's 10 ms CPU ceiling, and the weekly cron
+trigger's 10 ms budget. The cache removes the page-view cliff; Workers Paid remains the fix for the
+cron and for the first request after each deployment - which is a cache miss by design, because the
+Worker version is part of the cache key.
+
 ## The weekly report's first run (5 October 2026)
 
 Step 0 of the subscription work went live on this date: /monitor/, D1, a queue, and a second

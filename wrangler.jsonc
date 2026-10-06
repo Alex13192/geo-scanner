@@ -32,6 +32,48 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+
+  /*
+   * WORKERS CACHE, WHICH IS THE FIX FOR THE 1102 OUTAGES.
+   *
+   * WHY THIS LINE AND NOT A CACHE RULE. The site used to return Error 1102 intermittently, worst
+   * right after a deployment, and the recorded cause is that every page view booted the Next.js
+   * runtime inside the Worker against the Free plan's 10 ms CPU ceiling - cold isolates exceeded it
+   * and were terminated. The obvious fix was a zone Cache Rule, and a prediction to that effect was
+   * written into next.config.ts. It cannot work, and Cloudflare's own documentation says why: when a
+   * Worker is on a route, the request hits the Worker BEFORE the cache is consulted, and a Cache Rule
+   * has to match the URL of the Worker's outgoing fetch() rather than the visitor's request. This
+   * Worker generates its responses and fetches no origin, so there is no fetch() for the rule to
+   * match - and separately, "no zone configuration for caching applies to Workers Caching".
+   *
+   * Workers Cache sits in front of the Worker instead: a cache hit returns the response WITHOUT
+   * running the Worker, so it consumes no CPU at all. It is configured here rather than in the
+   * dashboard, there is no zone rule to keep in sync, and it honours the Cache-Control headers the
+   * app already sets. Requires Wrangler 4.69.0 or above.
+   *
+   * WHY THE COMPATIBILITY DATE IS NOT BUMPED ALONGSIDE IT. Cloudflare's configuration examples
+   * annotate compatibility_date with "set this to today's date", which is boilerplate for all their
+   * examples rather than a requirement of this feature - the cache block is the switch. Moving this
+   * Worker 21 months forward in runtime behaviour to enable caching would be a second, unrelated and
+   * much riskier change. If caching does not take effect after a deploy, the date is the next thing
+   * to test, and `cf-cache-status` on a second request is how to tell.
+   *
+   * cross_version_cache IS DELIBERATELY NOT SET. The Worker version is part of the cache key by
+   * default, so every deployment starts from an empty cache - which sounds like a cost and is
+   * actually correct here, because this site's deployments change page content. The cost is one
+   * cache miss per URL after each deploy, collapsed by request collapsing and absorbed by the upper
+   * cache tier, rather than the previous behaviour of every request being a fresh render.
+   *
+   * WHAT WAS CHECKED BEFORE SWITCHING IT ON: a response with NO Cache-Control is still cached
+   * heuristically (200 for two hours), so a GET route that forgot the header would start serving
+   * stale answers. Measured against the deployed site, every GET route sets one explicitly -
+   * /api/scan and /api/llms-txt are no-store, /report/ and /monitor/report/<token>/ are no-store and
+   * private, and the content pages carry s-maxage. That was true before this change; it is a
+   * precondition of it, not a consequence.
+   */
+  "cache": {
+    "enabled": true
+  },
   /*
    * ⛔ DO NOT DELETE THE `geo-scanner` CLOUDFLARE PAGES PROJECT.
    *
