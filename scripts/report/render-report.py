@@ -124,6 +124,50 @@ def text_w(draw: ImageDraw.ImageDraw, s: str, f) -> int:
     return int(draw.textlength(s, font=f))
 
 
+def status_marker(competitor: dict) -> str:
+    """
+    "(HTTP 403)", appended to every cell of a competitor that did not answer 200 - or "".
+
+    WHY THIS IS ON THE CELL AND NOT ONLY IN THE PARAGRAPH ABOVE THE TABLE. The engine scores an
+    error response on purpose (see app/api/scan/route.ts: "a non-200 homepage is NOT treated as
+    unreachable"), so a rival that refuses this scanner has a real score that describes the
+    refusal. "14 / 100 F (HTTP 403)" cannot be read as "this rival scores 14 at GEO"; a bare 14 in
+    a column otherwise full of zeros can, and that is a fabricated finding about a third party.
+    It repeats on every row because a reader quotes one row, not the footnote, and it is shared by
+    the DOCX and the workbook so the two cannot mark different columns.
+    """
+    status = competitor.get("homeStatus")
+    if competitor.get("measured") and status is not None and status != 200:
+        return f" (HTTP {status})"
+    return ""
+
+
+def competitor_cell(competitor: dict, unmeasured_label: str, suffix: str | int | None = None) -> str:
+    """
+    One comparison cell: "52 / 100 F", "14 / 100 F (HTTP 403)", "42", "0 (HTTP 403)", or "not
+    measured".
+
+    ONE FUNCTION FOR BOTH RENDERERS, for the reason this whole file opens with: the DOCX and the
+    workbook are two renderings of one model, and the way they drift is by each formatting the same
+    field its own way. `suffix` is what a per-dimension cell carries (a bare score) where the
+    overall row carries the score and grade; the status marker is added here, so no caller can
+    forget it and print a refusal as if it were a page score.
+
+    WHY `suffix is None` AND NOT `if suffix`. The first version of this tested the value's truth,
+    and a dimension score of 0 is falsy - so every dimension a refused competitor scored zero on
+    rendered as "52 / 100 F", the OVERALL cell of a different column, because the row passed 0 and
+    the function took its other branch. That is not a cosmetic bug: a reader would have seen a rival
+    with four 52s and thought the tool was repeating the overall score down the table. Absence is
+    None here, and the falsy-but-real value 0 is a number like any other.
+    """
+    if not competitor.get("measured"):
+        return unmeasured_label
+    if suffix is None:
+        value = f"{competitor['score']} / 100 {competitor.get('grade') or ''}".strip()
+        return value + status_marker(competitor)
+    return f"{suffix}{status_marker(competitor)}"
+
+
 # --------------------------------------------------------------------------------------
 # Figure 1: dimension bars
 # --------------------------------------------------------------------------------------
@@ -528,6 +572,92 @@ def build_docx(model: dict, out: Path, charts: dict) -> None:
         align=[None, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, None],
     )
 
+    # --- Competitor comparison ------------------------------------------------------
+    """
+    ONE ENGINE, MANY COLUMNS: WHAT THIS TABLE IS AND IS NOT.
+
+    It is the twelve dimension scores of this site beside the same twelve scores for the sites the
+    client named, scanned by the same code on the same day. It is not a market view, not a ranking
+    and not a sample of the industry, and the paragraph above the table says all three in the
+    client's language rather than leaving the reader to assume the columns are representative.
+
+    WHY "NOT MEASURED" IS TYPESET AND NOT SKIPPED. A rival whose scan returned nothing has no
+    score, and the failure this table must not have is a fabricated 0 - a client reads a zero as
+    "this competitor is worse than us at GEO" and acts on it. So the cell says "not measured" and
+    the note under the table names the domains and the reason. Nothing in this section sums,
+    averages or ranks the columns: an average over a column containing "not measured" would be a
+    number this run did not measure, which is the whole thing the repository refuses.
+    """
+    rivals = model.get("competitors") or []
+    if rivals:
+        unmeasured_label = C.get("competitorsUnmeasured") or "not measured"
+
+        """
+        The paragraph and the two caveats are printed exactly as the model carries them, and this
+        file deliberately does NOT rebuild them from `competitors`. build-report.mts composes them,
+        for one reason worth repeating here: it is the only process that knows which rivals the run
+        actually attempted, and it is the process that writes the Markdown. Rebuilding the same
+        sentences in Python would give one run two authors for one caveat, which is the drift
+        lib/geo/scan.ts exists to prevent on the scoring side. The `.get` chains serve a model
+        written before this section existed; a fresh model always carries both keys.
+        """
+        heading(C.get("sectionCompetitors") or "Competitor comparison")
+        doc.add_paragraph(model.get("competitorsNote") or "")
+        header_row = (
+            [
+                C.get("competitorsHeaderDimension") or C["tableDimension"],
+                # "This site: example.com" rather than the bare domain, which beside three rival
+                # domains reads as a fourth competitor - and this is the only column the reader
+                # can act on.
+                f"{C.get('competitorsHeaderSite') or 'This site'}: {meta['domain']}",
+            ]
+            + [c["domain"] for c in rivals]
+        )
+        body_rows = [
+            [
+                C.get("competitorsOverallRow") or "Overall",
+                f"{score['total']} / 100 {score['grade']}",
+            ]
+            + [competitor_cell(c, unmeasured_label) for c in rivals]
+        ]
+        for d in model["dimensions"]:
+            body_rows.append(
+                [d["label"], str(d["score"])]
+                + [
+                    competitor_cell(
+                        c,
+                        unmeasured_label,
+                        str((c.get("dimensions") or {}).get(d["id"]))
+                        if c.get("measured") and (c.get("dimensions") or {}).get(d["id"]) is not None
+                        else None,
+                    )
+                    for c in rivals
+                ]
+            )
+
+        """
+        Column widths are solved from the text area rather than written per table, because the
+        number of competitors is the client's choice and this file cannot know it. Summing to 16.4
+        of the 16.6cm text area keeps the margin the other tables already keep; the first version
+        of this report asked for 17.0cm and clipped the last column, which is the bug
+        set_table_geometry's docstring is about. The dimension column never goes below 3.2cm (it
+        holds "Metadata & Discoverability" and its Chinese equivalent) and no value column below
+        2.2cm, so a wide comparison stays legible instead of becoming twelve slivers.
+        """
+        value_cols = len(rivals) + 1
+        value_width = max(2.2, (16.4 - 3.2) / value_cols)
+        widths = [3.2] + [value_width] * value_cols
+        widths = [w * (16.4 / sum(widths)) for w in widths]
+        make_table(
+            header_row,
+            body_rows,
+            widths,
+            align=[None] + [WD_ALIGN_PARAGRAPH.CENTER] * value_cols,
+        )
+
+        for warning in model.get("competitorsWarnings") or []:
+            doc.add_paragraph(warning, style="Small")
+
     # --- Fix list ------------------------------------------------------------------
     heading(C["sectionFixes"])
     if not model["fixes"]:
@@ -687,6 +817,62 @@ def build_xlsx(model: dict, out: Path) -> None:
         wrap_cols=(2,),
     )
 
+    """
+    The comparison as its own sheet, and the reason it is a sheet rather than an addition to the
+    Dimensions one: the two are keyed differently. Dimensions is one row per dimension for THIS
+    site; the comparison is one row per dimension with a column per site, and appending columns to
+    the first sheet would leave every row about this site carrying four empty cells. It is a small
+    addition only because it is exactly the shape `sheet()` already writes - no new helper, no new
+    geometry rule, and the workbook's own text area is not a constraint.
+
+    A not-measured competitor gets the same word the other two formats print, not an empty cell:
+    a blank cell in a spreadsheet column of numbers is read as a zero by every average anyone will
+    ever run over it, which is the invented number this feature exists to avoid.
+
+    A refused competitor keeps its number here too, and carries the "(HTTP 403)" marker in the
+    same cell through competitor_cell() - a workbook is where somebody will run =AVERAGE() down a
+    column, so the marker has to travel with the value rather than sit in a note. The overall row
+    is the one row here that is a STRING ("14 / 100 F (HTTP 403)") rather than a number, because
+    that row is the score and its grade; the twelve rows below it stay numeric so the column can
+    actually be averaged, which is the only reason a spreadsheet exists.
+    """
+    rivals = model.get("competitors") or []
+    if rivals:
+        unmeasured_label = C.get("competitorsUnmeasured") or "not measured"
+        """
+        Sheet names are capped at 31 characters by the format itself and openpyxl only warns, so
+        the cap is applied here: the Chinese heading for this section is longer than that, and a
+        workbook whose sheet name the format does not allow is one a client's Excel may refuse to
+        open. The full heading is still the section title in the DOCX and the Markdown, which have
+        no such limit.
+        """
+        sheet_title = (C.get("sectionCompetitors") or "Competitors")[:31]
+        sheet(
+            sheet_title,
+            [C.get("competitorsHeaderDimension") or C["tableDimension"]]
+            + [f"{C.get('competitorsHeaderSite') or 'This site'}: {meta['domain']}"]
+            + [c["domain"] for c in rivals],
+            [
+                [C.get("competitorsOverallRow") or "Overall", score["total"]]
+                + [competitor_cell(c, unmeasured_label) for c in rivals]
+            ]
+            + [
+                [d["label"], d["score"]]
+                + [
+                    competitor_cell(
+                        c,
+                        unmeasured_label,
+                        (c.get("dimensions") or {}).get(d["id"])
+                        if c.get("measured") and (c.get("dimensions") or {}).get(d["id"]) is not None
+                        else None,
+                    )
+                    for c in rivals
+                ]
+                for d in model["dimensions"]
+            ],
+            [26] + [22] * (len(rivals) + 1),
+        )
+
     sheet(
         C["sheetMeta"],
         ["key", "value"],
@@ -708,6 +894,17 @@ def build_xlsx(model: dict, out: Path) -> None:
             ["engine", model["generatedBy"]],
             ["site", model["site"]],
             ["lang", model["lang"]],
+            # The comparison's method and its caveats, in the machine-readable sheet as well as the
+            # About one: whoever pulls this workbook into a spreadsheet is exactly the reader who
+            # will average a column, and that reader needs "HTTP 403" and "not measured" to be in
+            # the data rather than in a paragraph on another tab.
+            *(
+                [[f"competitor_{i + 1}", c["domain"]] for i, c in enumerate(model.get("competitors") or [])]
+                + [["competitors_note", model.get("competitorsNote") or ""]]
+                + [[f"competitors_warning_{i + 1}", w] for i, w in enumerate(model.get("competitorsWarnings") or [])]
+                if model.get("competitors")
+                else []
+            ),
         ],
         [28, 80],
         wrap_cols=(2,),
@@ -728,6 +925,14 @@ def build_xlsx(model: dict, out: Path) -> None:
             ["", C["methodPointsAtStake"]],
             ["", C["methodApplicable"]],
             ["", C["methodGenerated"].replace("{url}", model["site"]).replace("{date}", meta["scanDate"])],
+            # The comparison's own method and caveats, so the workbook is not the one format a
+            # reader has to open the DOCX beside to find out what its columns mean.
+            *(
+                [[C.get("sectionCompetitors") or "Competitors", model.get("competitorsNote") or ""]]
+                + [["", w] for w in (model.get("competitorsWarnings") or [])]
+                if model.get("competitors")
+                else []
+            ),
         ],
         [22, 100],
         wrap_cols=(2,),

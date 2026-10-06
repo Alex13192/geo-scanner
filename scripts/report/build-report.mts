@@ -50,6 +50,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { runScan } from "../../lib/geo/scan.ts";
+import { inspectTarget } from "../../lib/net/fetch-safe.ts";
 import { SITE_HOST, SITE_URL } from "../../lib/site.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -120,10 +121,17 @@ const COPY: Record<"zh" | "en", Copy> = {
     notMeasured: "未测量",
     probeNotNeeded: "未发起（首页正常返回）",
     sectionDimensions: "维度分解",
-    sectionFixes: "修复清单（按分值排序）",
-    sectionChecks: "全部检查结果",
-    sectionLimits: "这份报告不能告诉你什么",
-    sectionMethod: "方法与口径",
+    sectionCompetitors: "同业对照（客户指定站点）",
+    competitorsNote:
+      "对照使用同一套引擎、同一天、对客户指定的 {n} 个站点各做一次单 URL 扫描。它不代表该品牌的真实市场，不是排名，也不是行业抽样：对手由客户点名，未点名的对手不在这里。未被测量的对象在表中标为“未测量”，其单元格不得被读作 0 分。",
+    competitorsUnmeasured: "未测量",
+    competitorsSomeUnmeasured:
+      "下列站点本次未取得响应，因此没有任何分数，本报告也不据此对其作出任何判断：{list}。",
+    competitorsNoteErrorStatus:
+      "⚠ 下列站点没有返回 200：{list}。这些分数描述的是那次错误响应，不是对方的页面——被拒绝的请求可能来自对方的防爬规则，与对方的 GEO 水平无关。",
+    competitorsOverallRow: "综合评分",
+    competitorsHeaderDimension: "维度（满分 100）",
+    competitorsHeaderSite: "本站",
     tableDimension: "维度",
     tableWeight: "权重",
     tableScore: "得分",
@@ -136,6 +144,10 @@ const COPY: Record<"zh" | "en", Copy> = {
     tableEvidence: "观察到的证据",
     tableFix: "建议动作",
     tableStatus: "状态",
+    sectionFixes: "修复清单（按分值排序）",
+    sectionChecks: "全部检查结果",
+    sectionLimits: "这份报告不能告诉你什么",
+    sectionMethod: "方法与口径",
     severityHigh: "高",
     severityMedium: "中",
     severityLow: "低",
@@ -205,10 +217,17 @@ const COPY: Record<"zh" | "en", Copy> = {
     notMeasured: "not measured",
     probeNotNeeded: "not made (the homepage answered normally)",
     sectionDimensions: "Dimensions",
-    sectionFixes: "Fix list, ordered by points at stake",
-    sectionChecks: "Every check",
-    sectionLimits: "What this report cannot tell you",
-    sectionMethod: "Method and definitions",
+    sectionCompetitors: "Competitor comparison (sites the client named)",
+    competitorsNote:
+      "The comparison runs the same engine on the same day, once over each of the {n} sites the client named. It is not the brand's real market, not a ranking, and not a sample of the industry: the sites are the client's choice, and competitors they did not name are not here. An unmeasured site is marked \"not measured\"; its cell must not be read as a zero.",
+    competitorsUnmeasured: "not measured",
+    competitorsSomeUnmeasured:
+      "No response was obtained for the following site(s) on this run, so there is no score for them and this report draws no conclusion about them: {list}.",
+    competitorsNoteErrorStatus:
+      "Warning: the following site(s) did not answer 200: {list}. Those scores describe the error response, not the rival's page - a refusal can be an anti-bot rule and says nothing about their GEO.",
+    competitorsOverallRow: "Overall",
+    competitorsHeaderDimension: "Dimension (out of 100)",
+    competitorsHeaderSite: "This site",
     tableDimension: "Dimension",
     tableWeight: "Weight",
     tableScore: "Score",
@@ -221,6 +240,10 @@ const COPY: Record<"zh" | "en", Copy> = {
     tableEvidence: "Observed evidence",
     tableFix: "Recommended action",
     tableStatus: "Status",
+    sectionFixes: "Fix list, ordered by points at stake",
+    sectionChecks: "Every check",
+    sectionLimits: "What this report cannot tell you",
+    sectionMethod: "Method and definitions",
     severityHigh: "high",
     severityMedium: "medium",
     severityLow: "low",
@@ -283,12 +306,17 @@ if (!domain && !fromModelArg) {
   console.error(
     [
       "Usage:",
-      "  npm run report -- --domain=example.com [--out=DIR] [--lang=zh] [--no-pdf]",
+      "  npm run report -- --domain=example.com [--competitors=a.com,b.com] [--out=DIR] [--lang=zh] [--no-pdf]",
       "  npm run report -- --from-model=reports/<dir>/report-model.json [--out=DIR] [--no-pdf]",
       "",
       "--from-model re-renders a report that was already scanned, without touching the domain",
       "again. That is what makes adding a format - or fixing a heading - cheap, and it matters:",
       "a client's site should not be crawled five times while somebody adjusts typography.",
+      "",
+      "Competitors are scanned in the order they are typed, one at a time and paced (see",
+      "COMPETITOR_GAP_MS). They are NOT scanned on a --from-model re-render: the comparison",
+      "travels in the model, so re-rendering cannot silently show yesterday's rival scores",
+      "under today's date, and it cannot spend three crawls to fix a heading.",
     ].join("\n")
   );
   process.exit(2);
@@ -346,8 +374,306 @@ function displayDate(iso: string, forLang: "zh" | "en"): string {
 }
 
 /* ------------------------------------------------------------------ */
+/* Competitors                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * One competitor's scan, as it enters the model, and the reason a failed one has no numbers in it.
+ *
+ * WHY "measured" IS A FIELD AND NOT AN INFERENCE FROM A MISSING SCORE. A JSON null and a zero are
+ * the same thing to a renderer that is not told the difference, and the failure this repository
+ * cannot afford is a competitor's 403 or a DNS timeout printed as "0/100" - which reads as "this
+ * rival is terrible at GEO" and is a fabricated finding about a third party the client will act
+ * on. The flag is what lets all three renderers put "not measured" in the cell instead.
+ *
+ * `dimensions` is keyed by the engine's own dimension id rather than by position, because that is
+ * the key the rest of this pipeline already joins on (ReportWidget.tsx, cron/report.ts) and a
+ * positional array would silently mis-align if the engine ever reorders its dimensions.
+ */
+type Competitor = {
+  domain: string;
+  measured: boolean;
+  score: number | null;
+  grade: string | null;
+  gradeLabel: string | null;
+  /** Of the model's 12 dimension ids; empty when not measured. */
+  dimensions: Record<string, number>;
+  /**
+   * The homepage status the score was computed from, and the browser-probe answer when there was
+   * one. Null when the competitor was not measured at all.
+   *
+   * WHY THESE TRAVEL WITH THE SCORE. A scan of otterly.ai answered HTTP 403, and the engine scored
+   * that refusal at 14/100 - correctly, because the site's published rule for a non-200 homepage is
+   * to score the error response and say so. A column of mostly zeros under a WAF refusal is not,
+   * however, a statement that the rival is bad at GEO, and a report that prints "14" with no status
+   * beside it has made one. The status is what lets the note under the table say which columns
+   * describe a page and which describe a refusal, and `browserStatus` is the same diagnostic the
+   * site's own report uses: served to a browser but refused to a crawler is a rule aimed at bots,
+   * while refused to both is a restriction on this scanner's address and says nothing about them.
+   */
+  homeStatus: number | null;
+  browserStatus: number | null;
+  /** Why there are no numbers. Present exactly when `measured` is false. */
+  reason: string | null;
+};
+
+/**
+ * The floor on the gap between two competitor scans, and the number that is actually load-bearing.
+ *
+ * WHY THIS EXISTS AT ALL. The site's own /api/scan token bucket allows 20 requests per 60 seconds
+ * per isolate (lib/net/rate-limit.ts), and this run leaves from one address, so a client who names
+ * a dozen rivals is asking for a dozen crawls from one place in under a minute. Pacing is therefore
+ * part of the method rather than politeness: without it the site starts refusing this script, and a
+ * refusal must not be recorded as a finding about the competitor - which is the one way this
+ * feature can produce a number that is worse than no number.
+ *
+ * WHY IT ALSO COVERS THE CLIENT'S OWN SCAN, which is longer than four seconds. The gap is measured
+ * from the START of the previous scan, not the end, so the three or four support-file requests that
+ * follow the homepage are inside the window rather than added to it. A sleep-after-each-scan
+ * version left more than twice this gap between scans - it worked, and it was a slower promise than
+ * the comment claimed, which is how a stated pace and an actual one drift apart.
+ */
+const COMPETITOR_GAP_MS = 4000;
+
+/**
+ * How many competitors one run will attempt, and why there is a number at all.
+ *
+ * Not a technical limit: twelve dimension rows against an unbounded number of columns is a table
+ * that stops being readable long before it stops fitting a page, and each column costs a crawl of
+ * somebody else's site. The cap says so out loud instead of letting a typo in a comma-separated
+ * list turn into a crawler run over a domain nobody chose.
+ */
+const COMPETITOR_MAX = 8;
+
+/**
+ * Normalise a competitor to the same hostname shape the API route's own cleanDomain produces, so a
+ * pasted https://rival.com/pricing and a typed rival.com are the same request and the same column.
+ */
+function cleanDomain(raw: string): string {
+  if (!raw) return "";
+  return raw
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .split("/")[0]
+    .split("?")[0]
+    .toLowerCase();
+}
+
+/**
+ * The domains named with --competitors, in the order they were typed.
+ *
+ * ORDER IS THE USER'S, and it is preserved rather than sorted: the columns come out in the order
+ * the client listed their rivals, which is the order they will read them in. De-duplication is by
+ * the cleaned hostname, so `www.rival-a.com` and `rival-a.com` cannot become two columns carrying
+ * the same numbers, and the site's own domain is dropped because a competitor column that is this
+ * site's column is a comparison the client would read as a coincidence.
+ */
+const competitorDomains = [
+  ...new Set(
+    (arg("competitors") || "")
+      .split(",")
+      .map(cleanDomain)
+      .filter(Boolean)
+  ),
+].filter((d) => d !== cleanDomain(domain));
+
+if (competitorDomains.length > COMPETITOR_MAX) {
+  console.warn(
+    [
+      `--competitors names ${competitorDomains.length} domains; only the first ${COMPETITOR_MAX} will be scanned.`,
+      `Each column is a crawl of somebody else's site, paced at ${COMPETITOR_GAP_MS / 1000}s, and a 12-row`,
+      "table stops being readable well before it stops fitting the page. Split the list over two runs",
+      "rather than raising this: the model of the second run is a complete report too.",
+    ].join("\n")
+  );
+  competitorDomains.length = COMPETITOR_MAX;
+}
+
+/**
+ * Scan the competitors named on the command line, one at a time and paced.
+ *
+ * WHY THIS DOES NOT GO THROUGH `${SITE_URL}/api/scan?brief=1`, which is how scripts/run-study.mts
+ * gathers the published study - and this is the file's biggest deliberate departure, so here is
+ * what was rejected and why:
+ *
+ *   - The brief form is what that endpoint offers for a sweep, and it returns ONE score with no
+ *     dimension objects. The table this feature adds is twelve dimension rows, so the brief form
+ *     cannot fill it, and the full form is the same bytes the client's own scan already pulls.
+ *   - The route's token bucket is the thing lib/geo/scan.ts was written for. Its header says so:
+ *     the weekly report "cannot call that endpoint instead ... a run over a hundred subscribers
+ *     would be refused by its own site a fifth of the way in", and the fix was to import this
+ *     module. A client-named competitor list is the same shape of problem at a smaller size, and
+ *     reaching for runScan here is the repository's existing answer rather than a new one.
+ *   - The site's own scan in this same script already calls runScan directly. Going over HTTP for
+ *     the rivals would have the comparison scored by a different entry point from the column it
+ *     is compared against, which is the one thing the comparison must not be.
+ *
+ * So the pacing below is not what protects a shared limit here - there is no shared limit on this
+ * path. It is kept because the crawls are still this machine's, they still land on somebody
+ * else's origin, and the number the comment in run-study.mts defends (roughly 4s) is the pace this
+ * product has already decided it is willing to be measured at.
+ *
+ * A competitor that produces nothing gets `measured: false` and a human-readable reason. There is
+ * no path through this function that returns a score that was not read off a scan.
+ */
+async function scanCompetitors(
+  domains: string[],
+  forLang: "zh" | "en",
+  context: { domain: string; scanned: boolean }
+): Promise<Competitor[]> {
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const out: Competitor[] = [];
+
+  if (domains.length === 0) return out;
+
+  /*
+   * The generic "we got nothing" reason, per language, because the model's other prose is per
+   * language and a fixed English string here would surface in the middle of a Chinese report.
+   * The per-target inspectTarget reason is the engine's own sentence and is quoted as the engine
+   * wrote it rather than translated: it names the rule that refused the target, and paraphrasing
+   * a rule is how a report stops matching its own method page.
+   */
+  const genericReason =
+    forLang === "zh"
+      ? "未取得响应：请求超时或域名无法解析"
+      : "no response: the request timed out or the domain did not resolve";
+
+  let previousStart = context.scanned ? null : Date.now();
+
+  for (const rival of domains) {
+    if (previousStart !== null) {
+      const wait = COMPETITOR_GAP_MS - (Date.now() - previousStart);
+      if (wait > 0) await sleep(wait);
+    }
+    previousStart = Date.now();
+
+    console.log(`Scanning competitor ${rival} …`);
+
+    /*
+     * Refuse a target that points at a network rather than a website before loading the engine.
+     * The API route does this too (app/api/scan/route.ts) and for the same reason: the alternative
+     * is a fetch timeout, which is indistinguishable in the output from "their site was down" -
+     * a statement about the competitor that this run has not established.
+     */
+    const target = inspectTarget(`https://${rival}`);
+    if (!target.ok) {
+      console.log(`  ${rival}: not scanned - ${target.reason}`);
+      out.push({
+        domain: rival,
+        measured: false,
+        score: null,
+        grade: null,
+        gradeLabel: null,
+        dimensions: {},
+        homeStatus: null,
+        browserStatus: null,
+        reason: target.reason,
+      });
+      continue;
+    }
+
+    const scan = await runScan(rival);
+    if (!scan.reachable) {
+      console.log(`  ${rival}: no response - recorded as not measured`);
+      out.push({
+        domain: rival,
+        measured: false,
+        score: null,
+        grade: null,
+        gradeLabel: null,
+        dimensions: {},
+        homeStatus: null,
+        browserStatus: null,
+        reason: genericReason,
+      });
+      continue;
+    }
+
+    const r = scan.result;
+    out.push({
+      domain: rival,
+      measured: true,
+      score: r.score,
+      grade: r.grade,
+      gradeLabel: forLang === "zh" ? "" : r.gradeLabel,
+      dimensions: Object.fromEntries(r.dimensions.map((d) => [d.id, d.score])),
+      homeStatus: scan.homeStatus,
+      browserStatus: scan.browserStatus,
+      reason: null,
+    });
+    /*
+     * The status is printed for every competitor rather than only for the ones that failed, so
+     * that "200" here and "no 200" in the report's own table are visibly the same measurement. A
+     * refused rival is marked with the same warning the site's own scan would get, because the run
+     * has produced a number and the reader has to be told what that number is about.
+     */
+    console.log(
+      `  ${rival}: ${r.score}/100 ${r.grade} (homepage HTTP ${scan.homeStatus}` +
+        `${scan.homeStatus === 200 ? "" : ", so this score describes an error response, not the page"})`
+    );
+  }
+
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
 /* Scan                                                               */
 /* ------------------------------------------------------------------ */
+
+/**
+ * The comparison's prose, composed from the competitor array and the copy block, in one place.
+ *
+ * WHY THIS IS A FUNCTION AND NOT THREE TOP-LEVEL CONSTANTS, which is how it was written first and
+ * why the first end-to-end run died on "Cannot access 'comparisonNote' before initialization": the
+ * model is built INSIDE scanAndBuildModel(), which runs before any later top-level const exists, so
+ * a constant that the model needs cannot be one. Making it a hoisted function removes the ordering
+ * question for both callers - the scan, which needs these strings to put into the model, and the
+ * re-render, which reads them back out - and both call it with the same C, so the DOCX and the
+ * Markdown still cannot disagree.
+ *
+ * WHAT IT COMPOSES, and these are two different statements rather than one list of complaints:
+ *   - the method paragraph, which is true of every comparison and says what this is NOT;
+ *   - the error-status warning, for rivals that answered but not with 200. Their column holds real
+ *     scores that describe a refusal, and a reader has to be told that before quoting them;
+ *   - the not-measured warning, for rivals that answered with nothing. Their column holds no score
+ *     at all, and the report draws no conclusion from it.
+ * The reason strings inside those lists are already in the report's language, because
+ * scanCompetitors writes them in the client's language rather than in this function.
+ */
+function composeComparisonProse(
+  rivals: Competitor[],
+  copy: Copy
+): { note: string; warnings: string[] } {
+  const fill = (template: string, vars: Record<string, string | number>) =>
+    template.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? `{${k}}`));
+
+  const errored = rivals.filter((c) => c.measured && c.homeStatus !== null && c.homeStatus !== 200);
+  const missing = rivals.filter((c) => !c.measured);
+
+  return {
+    note: fill(copy.competitorsNote ?? "", { n: rivals.length }),
+    warnings: [
+      errored.length === 0
+        ? ""
+        : fill(copy.competitorsNoteErrorStatus ?? "", {
+            list: errored
+              .map(
+                (c) =>
+                  `${c.domain} (HTTP ${c.homeStatus}${
+                    c.browserStatus === null ? "" : `, browser probe ${c.browserStatus}`
+                  })`
+              )
+              .join("; "),
+          }),
+      missing.length === 0
+        ? ""
+        : fill(copy.competitorsSomeUnmeasured ?? "", {
+            list: missing.map((c) => `${c.domain} (${c.reason})`).join("; "),
+          }),
+    ].filter(Boolean),
+  };
+}
 
 /**
  * The scan and the model it produces, as a unit, so that --from-model can skip both.
@@ -388,6 +714,15 @@ async function scanAndBuildModel(): Promise<{ model: ReportModel; modelPath: str
   };
 
   const label = (id: string) => (lang === "zh" ? DIMENSION_ZH[id] ?? id : dimById.get(id)?.label ?? id);
+
+  /**
+   * The rivals, scanned AFTER this site and never before it, for one reason that is about honesty
+   * rather than speed: if a competitor crawl throws or the process is interrupted, the client's own
+   * report is already fully in memory, and this run's failure mode is a missing comparison rather
+   * than a missing report.
+   */
+  const competitors = await scanCompetitors(competitorDomains, lang, { domain, scanned: true });
+  const comparisonProse = composeComparisonProse(competitors, C);
 
   const fixes = r.issues
     .map((issue) => ({
@@ -452,6 +787,21 @@ async function scanAndBuildModel(): Promise<{ model: ReportModel; modelPath: str
       totalApplicableWeight: totalApplicable,
     },
     callout,
+    /*
+     * The comparison lives in the model rather than being recomputed per format, for the same
+     * reason the copy does: the Markdown and the DOCX cannot disagree about what a rival scored
+     * if there is one array and both read it. It is also what lets --from-model re-render the
+     * comparison without contacting the rivals again - the numbers were paid for once, at scan
+     * time, and a re-render must not be able to produce different ones.
+     */
+    competitors,
+    /**
+     * The comparison's prose, composed once at scan time and carried in the model. The DOCX and
+     * XLSX renderers print these verbatim and add nothing of their own - see
+     * composeComparisonProse above for why that is a correctness property and not tidiness.
+     */
+    competitorsNote: comparisonProse.note,
+    competitorsWarnings: comparisonProse.warnings,
     dimensions: r.dimensions.map((d) => ({
       id: d.id,
       label: label(d.id),
@@ -494,6 +844,17 @@ type ReportModel = {
   meta: Record<string, string | number | boolean | null>;
   score: Record<string, number | string>;
   callout: string;
+  /**
+   * Optional, because models written before this feature existed are still on disk in reports/
+   * and --from-model is documented as re-rendering an already-scanned report. Requiring the field
+   * would turn re-rendering an older model into a crash, which is the one thing --from-model is
+   * for; every reader below treats a missing array as "no comparison was run", which is true of
+   * those models.
+   */
+  competitors?: Competitor[];
+  /** Composed by this script; see comparisonNote and comparisonWarnings. Optional for older models. */
+  competitorsNote?: string;
+  competitorsWarnings?: string[];
   dimensions: { id: string; label: string; applicableWeight: number; score: number; earned: number; possible: number; rationale: string }[];
   metrics: { id: string; dimensionId?: string; label: string; score: number }[];
   fixes: { priority: number; id: string; title: string; dimension: string; severity: string; pointsAtStake: number; evidence: string; recommendation: string }[];
@@ -511,6 +872,27 @@ const loaded = fromModelArg
       console.log(
         `Re-rendering ${parsed.meta.domain} from ${p} - no scan, so that site is not contacted again.`
       );
+      /*
+       * A language given on a re-render is IGNORED, and said so rather than obeyed halfway.
+       *
+       * The model carries the whole copy block it was built with - that is the property that makes
+       * a re-render byte-identical to the original apart from the change being made. Half of a
+       * report's strings are not in that block at all: every dimension label, every rationale, the
+       * callout and the check titles were written in the model at scan time. Switching the copy
+       * block to another language here would therefore produce a document that is Chinese in its
+       * headings and English in its body, and it would change the report's language without a new
+       * scan - which is the opposite of what --from-model promises. Re-rendering in Chinese means
+       * scanning with --lang=zh, which the usage line above already says.
+       */
+      if (arg("lang") && arg("lang") !== parsed.lang) {
+        console.warn(
+          [
+            `--lang=${arg("lang")} was given, but this model was written in "${parsed.lang}" and its copy`,
+            "block is part of the model. Re-rendering keeps that language; run the scan again with",
+            `--lang=${arg("lang")} for a report in it.`,
+          ].join("\n")
+        );
+      }
       return { model: parsed, modelPath: p };
     })()
   : await scanAndBuildModel();
@@ -527,6 +909,123 @@ const statusText = (s: string) =>
 const sevText = (s: string) =>
   s === "high" ? C.severityHigh : s === "medium" ? C.severityMedium : C.severityLow;
 const esc = (s: string) => String(s).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+
+/* ------------------------------------------------------------------ */
+/* Competitor comparison - one construction, three formats              */
+/* ------------------------------------------------------------------ */
+
+const competitors = model.competitors ?? [];
+
+/**
+ * Every string the comparison needs, in one place, with a fallback for a key a copy block written
+ * before this feature does not have.
+ *
+ * WHY THE FALLBACKS EXIST rather than the keys being required: `copy` arrives from the model, and a
+ * model can be older than this script - that is exactly what --from-model is. `C.x` on a missing
+ * key is `undefined`, which python-docx renders as "None" and Markdown as "undefined"; a report
+ * with "undefined" printed in a client's table is worse than one with a plain English word in it.
+ */
+const CX = {
+  section: C.sectionCompetitors ?? "Competitor comparison",
+  note: C.competitorsNote ?? "",
+  unmeasured: C.competitorsUnmeasured ?? "not measured",
+  someUnmeasured: C.competitorsSomeUnmeasured ?? "",
+  noteErrorStatus: C.competitorsNoteErrorStatus ?? "",
+  overall: C.competitorsOverallRow ?? "Overall",
+  headerDimension: C.competitorsHeaderDimension ?? "Dimension",
+  /**
+   * The first data column holds this site's own score, and it is labelled rather than left to the
+   * header's domain. A bare domain heading beside three rival domains reads as a fourth
+   * competitor - and it is the column the reader most needs to identify, because it is the only
+   * one they can act on.
+   */
+  headerSite: C.competitorsHeaderSite ?? "This site",
+};
+
+/**
+ * The comparison as matrix rows, built once and consumed by all three renderers.
+ *
+ * WHY THIS IS EXPORTED AS DATA AND NOT AS THREE RENDERINGS. The rows are the part that must agree:
+ * row 0 is the header, row 1 the overall score, rows 2.. the twelve dimensions. If the DOCX built
+ * its own rows and the workbook built its own, the day one of them forgot the overall row would be
+ * the day a client compared two documents from the same run and found different tables. Column
+ * order is the caller's - this site first, then the competitors in the order they were named - and
+ * a not-measured cell says so in words rather than being blank or zero.
+ */
+function comparisonRows(): string[][] {
+  const siteDomain = String(model.meta.domain);
+
+  /**
+   * "(HTTP 403)" for a rival that answered with an error status, and "" otherwise.
+   *
+   * WHY IT GOES ON THE CELL. The engine scores a non-200 homepage on purpose - that is a published
+   * rule and app/api/scan/route.ts says so in as many words - so a rival that refuses this scanner
+   * has a real score that describes the refusal. "14 / 100 F (HTTP 403)" cannot be read as "this
+   * rival scores 14 at GEO"; a bare 14 in a column otherwise full of zeros can. Python's
+   * status_marker() does the same job for the DOCX and the workbook, and both were written because
+   * the first end-to-end run scored otterly.ai at 14/100 off an HTTP 403 and printed it as though a
+   * page had been read.
+   */
+  const statusMarker = (c: Competitor) =>
+    c.measured && c.homeStatus !== null && c.homeStatus !== 200 ? ` (HTTP ${c.homeStatus})` : "";
+
+  /**
+   * The domain and the value share one cell on purpose: with four or more columns there is not
+   * enough of a 16.6cm page for a separate score column per competitor, and a header that is only
+   * a domain name would leave the numbers under it unattributed if the table ever broke across a
+   * page.
+   */
+  const cell = (c: Competitor) =>
+    c.measured
+      ? `${c.domain}\n${c.score} / 100 ${c.grade}${statusMarker(c)}`
+      : `${c.domain}\n${CX.unmeasured}`;
+
+  return [
+    [
+      CX.headerDimension,
+      // "This site: example.com", not a bare domain: see CX.headerSite for why the own column is
+      // named rather than left to be inferred from the four domains beside it.
+      `${CX.headerSite}: ${siteDomain}`,
+      ...competitors.map(cell),
+    ],
+    [
+      CX.overall,
+      `${model.score.total} / 100 ${model.score.grade}`,
+      ...competitors.map((c) =>
+        c.measured ? `${c.score} / 100 ${c.grade}${statusMarker(c)}` : CX.unmeasured
+      ),
+    ],
+    ...model.dimensions.map((d) => [
+      d.label,
+      String(d.score),
+      ...competitors.map((c) => {
+        const value = c.dimensions?.[d.id];
+        // A measured competitor with no value for this dimension is a key mismatch, not a zero.
+        // Saying "not measured" in that one cell is the conservative reading; printing 0 would be
+        // a finding about a rival that no scan produced.
+        return c.measured && typeof value === "number"
+          ? `${value}${statusMarker(c)}`
+          : CX.unmeasured;
+      }),
+    ]),
+  ];
+}
+
+/**
+ * The comparison's prose as this run should print it: the model's own copy when there is one, and
+ * a recomposition from the competitors when there is not.
+ *
+ * WHY THE FALLBACK IS HERE AT ALL: --from-model reads a model that a previous version of this
+ * script wrote, and the models in reports/ from before this feature have no prose keys. Printing
+ * the table with no paragraph under it would drop the "this is not your market, not a ranking, not
+ * a sample" sentence - which is the sentence that makes the table honest - so a re-render composes
+ * it from the same function the scan used. The model's own strings win when present, so a
+ * re-render never rewrites what was published.
+ */
+const comparisonProse = {
+  note: model.competitorsNote ?? composeComparisonProse(competitors, C as Copy).note,
+  warnings: model.competitorsWarnings ?? composeComparisonProse(competitors, C as Copy).warnings,
+};
 
 const md: string[] = [];
 md.push(`# ${model.meta.domain} ${C.reportName}`);
@@ -572,6 +1071,41 @@ for (const d of model.dimensions) {
   );
 }
 md.push("");
+/*
+ * The comparison sits between the dimension table and the fix list, which is where it is worth
+ * something: "machine readability 62" becomes a diagnosis one paragraph later instead of a number
+ * the reader has no reference point for. It is skipped entirely when no competitors were named -
+ * an empty table under a heading about competitors reads as a failure rather than as a choice.
+ */
+if (competitors.length > 0) {
+  md.push(`## ${CX.section}`);
+  md.push("");
+  md.push(comparisonProse.note);
+  md.push("");
+  /*
+   * The same matrix the DOCX uses, flattened: Markdown cannot put two lines in one cell, so the
+   * domain and its value are separated by a middle dot. Building the rows from comparisonRows()
+   * rather than writing a second loop here is what keeps the two formats from disagreeing about
+   * which dimensions are in the table.
+   */
+  const rows = comparisonRows();
+  md.push(`| ${rows[0].map((h) => esc(h.replace(/\n/g, " · "))).join(" | ")} |`);
+  md.push(`| ${rows[0].map(() => "---").join(" | ")} |`);
+  for (const row of rows.slice(1)) {
+    md.push(`| ${row.map((cell) => esc(cell.replace(/\n/g, " · "))).join(" | ")} |`);
+  }
+  md.push("");
+  /*
+   * The caveats come from the model's own builder rather than being reassembled here, so the
+   * Markdown cannot say something the DOCX does not. A competitor that answered 403 is a caveat
+   * about a NUMBER in the table and a competitor that answered nothing is a caveat about a MISSING
+   * one; they are different sentences because a reader has to act on them differently.
+   */
+  for (const warning of comparisonProse.warnings) {
+    md.push(`> ${esc(warning)}`);
+    md.push("");
+  }
+}
 md.push(`## ${C.sectionFixes}`);
 md.push("");
 if (model.fixes.length === 0) {
