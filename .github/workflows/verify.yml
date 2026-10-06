@@ -122,6 +122,15 @@ jobs:
       - name: Run the report-link tests
         run: npm run test:report-link
 
+      # The answer checker tells a stranger what their own brand does and does not look like in an
+      # AI answer, using six rules that are each wrong in a way that looks right: a Latin name
+      # matched without word boundaries crosses "Ramp" with "ramp-up", a CJK name matched WITH them
+      # matches nothing at all so a Chinese brand scores zero on every signal, and a list signal
+      # that only reads the first mention reports "not found" for an answer that does list the
+      # brand. All three produce a report that reads as a verdict rather than as a bug.
+      - name: Run the answer-check rule tests
+        run: npm run test:answer-check
+
       - name: Type check
         run: npx tsc --noEmit
 

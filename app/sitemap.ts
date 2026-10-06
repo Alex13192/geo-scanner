@@ -94,6 +94,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      /* The answer checker. Same priority as the studio: a page people arrive on directly, and the
+         one that shows what the guide is describing. */
+      url: `${SITE_URL}/answer-check/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${SITE_URL}/readiness-badge/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',

@@ -22,7 +22,8 @@
     "study:run": "node scripts/run-study.mts",
     "test:analyze": "node scripts/test-analyze.mts",
     "test:rate-limit": "node scripts/test-rate-limit.mts",
-    "test:report-link": "node scripts/test-report-link.mts"
+    "test:report-link": "node scripts/test-report-link.mts",
+    "test:answer-check": "node scripts/test-answer-check.mts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.8",

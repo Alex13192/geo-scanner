@@ -48,7 +48,10 @@ export default function Page() {
         asks an AI engine anything. That is a deliberate limit rather than a gap — measuring what an
         engine says means querying it, which costs money per run, and this site does not make claims
         it has not measured. The method below is what we recommend instead, and we would rather you
-        run it yourself than buy a number from someone who cannot show you how it was produced.
+        run it yourself than buy a number from someone who cannot show you how it was produced. If you
+        want the six signals judged for you, the{" "}
+        <a href="/answer-check/">answer checker</a> applies exactly the rules in this guide to an
+        answer you paste — in your browser, so the text never leaves the page.
       </p>
 
       <h2>Why is one AI answer not a measurement?</h2>
