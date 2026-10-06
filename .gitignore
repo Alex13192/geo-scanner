@@ -63,10 +63,13 @@ next-env.d.ts
 __pycache__/
 *.pyc
 
-# Generated client reports - scripts/report/build-report.mts writes here by default.
+# Generated client reports - scripts/report/build-report.mts (technical GEO diagnosis) and
+# scripts/report/build-visibility.mts (AI visibility, from measured answers) write here by default.
 #
 # IGNORED ON PURPOSE, and not only to keep the tree tidy. These files name a client's domain, quote
 # their page content and carry their scores, and this repository is public: anything committed here
-# is published whether or not a page renders it. That is the same reason OPERATIONS.md gives for
-# why an Impressum address could not live in this repository.
+# is published whether or not a page renders it. The AI-visibility report is the stronger case of the
+# two - it carries verbatim AI answers about a named company and the list of domains those answers
+# cited. That is the same reason OPERATIONS.md gives for why an Impressum address could not live in
+# this repository.
 /reports/

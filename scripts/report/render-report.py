@@ -1,5 +1,6 @@
 """
-Render a report model (written by build-report.mts) into DOCX and XLSX, plus the charts.
+Render a report model (written by build-report.mts or build-visibility.mts) into DOCX and XLSX,
+plus the charts.
 
 WHY PYTHON, AND WHY IT READS THE MODEL RATHER THAN THE SCAN. The engine is TypeScript and stays
 the only thing that scores a page. This file owns presentation only: it never computes a score,
@@ -7,9 +8,24 @@ a weight or a point value, and it never invents a string - every heading, label 
 from the model's `copy` block, which build-report.mts fills for both languages. That is what keeps
 the Markdown, the DOCX and the XLSX saying the same thing.
 
+TWO REPORT TYPES, ONE SET OF PRIMITIVES. `model["reportType"]` selects the document: the default
+("geo-scan") is the technical GEO diagnosis of one domain, and "ai-visibility" is the report built
+from measured answers to questions put to a model (scripts/report/build-visibility.mts). They are
+different documents with different sections - that is the point of a second type - so they have
+separate builders. What they do NOT have separately is the machinery underneath: docx_tools(),
+docx_scaffold(), xlsx_tools() and verify_geometry() are shared, which is why both documents are A4
+with the same text area and both are checked against it. A second copy of set_table_geometry is how
+one report gets fixed and the other keeps clipping its columns.
+
+WHY THE DISPATCH IS IN THIS FILE AND NOT A SECOND PYTHON FILE. verify_geometry() is the file's
+closing guarantee, and a sibling renderer would either import this module (whose name has a hyphen
+and therefore cannot be imported by name) or carry a second geometry check - and a second check is
+a second thing to keep in step. Adding a branch here keeps the assertion on the path of every
+document this pipeline produces.
+
 WHY THE CHARTS ARE DRAWN WITH PILLOW RATHER THAN MATPLOTLIB. matplotlib is not in the runtime this
 repository is developed against, and installing one for a report generator is not worth a
-dependency. Pillow is present, and the two figures here - a labelled bar chart and a radar - are
+dependency. Pillow is present, and the figures here - labelled bars, a radar, and a count axis - are
 shapes rather than plots. Chinese labels need a CJK font, so the font is chosen from the system's
 own files with an explicit East Asian fallback rather than left to the renderer's default.
 
@@ -24,6 +40,7 @@ import json
 import math
 import os
 from pathlib import Path
+from types import SimpleNamespace
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -289,29 +306,45 @@ def chart_radar(model: dict, out: Path) -> None:
 # --------------------------------------------------------------------------------------
 # DOCX
 # --------------------------------------------------------------------------------------
-def build_docx(model: dict, out: Path, charts: dict) -> None:
-    from docx import Document
-    from docx.enum.section import WD_SECTION
+DOCX_LATIN = "Arial"
+"""
+LATIN IS ARIAL, AND PORTABILITY IS THE WHOLE REASON. This report is sent to clients who may open
+it in Word on Windows, Word or Pages on macOS, LibreOffice, or Google Docs, and only one
+sans-serif is present by default on all of them. Segoe UI - the obvious choice, and the first one
+used here - exists on Windows and nowhere else, so a macOS reader gets whatever their substitution
+table picks. Arial also has metric-compatible substitutes on Linux (Liberation Sans) and in Google
+Docs, so the line breaks a reader sees match the ones this file laid out.
+
+The East Asian slot stays Microsoft YaHei: it only applies to runs that contain CJK, which an
+English report does not have, and a Chinese report is read on a machine that has it.
+"""
+DOCX_EA = "Microsoft YaHei"
+
+
+def docx_tools(doc):
+    """
+    Every DOCX primitive this file has, built against one document and handed back by name.
+
+    WHY THESE MOVED OUT OF build_docx. Until the AI-visibility report existed, build_docx was the
+    only DOCX writer here and the helpers could be nested inside it. There are two writers now, and
+    the thing this repository refuses everywhere else is exactly what a second copy would create: a
+    second `set_table_geometry` is a second definition of "16.4cm inside a 16.6cm text area", and
+    the day somebody fixes the clipping in one of them the other report still runs past the margin.
+    verify_geometry() is the check that is supposed to catch that, and it can only do its job if
+    there is one geometry rule to check documents against.
+
+    WHY THIS RETURNS A NAMESPACE RATHER THAN BEING A CLASS. These are functions over a document they
+    close over; a class would add a `self` to every call site for no other reason. What matters is
+    that build_docx binds them back to the names it already used, so the scan report's layout is
+    unchanged by the move - the refactor is a move, not a rewrite.
+    """
     from docx.enum.table import WD_TABLE_ALIGNMENT
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
-    from docx.shared import Cm, Inches, Pt, RGBColor
+    from docx.shared import Cm, Pt, RGBColor
 
-    C = model["copy"]
-    meta, score = model["meta"], model["score"]
-    """
-    LATIN IS ARIAL, AND PORTABILITY IS THE WHOLE REASON. This report is sent to clients who may open
-    it in Word on Windows, Word or Pages on macOS, LibreOffice, or Google Docs, and only one
-    sans-serif is present by default on all of them. Segoe UI - the obvious choice, and the first
-    one used here - exists on Windows and nowhere else, so a macOS reader gets whatever their
-    substitution table picks. Arial also has metric-compatible substitutes on Linux (Liberation
-    Sans) and in Google Docs, so the line breaks a reader sees match the ones this file laid out.
-
-    The East Asian slot stays Microsoft YaHei: it only applies to runs that contain CJK, which an
-    English report does not have, and a Chinese report is read on a machine that has it.
-    """
-    LATIN, EA = "Arial", "Microsoft YaHei"
+    LATIN, EA = DOCX_LATIN, DOCX_EA
 
     def set_run(run, size=None, bold=None, color=None, latin=LATIN, ea=EA):
         run.font.name = latin
@@ -454,11 +487,11 @@ def build_docx(model: dict, out: Path, charts: dict) -> None:
         set_table_geometry(t, widths_cm)
         return t
 
-    def callout(text):
+    def callout(text, size=10):
         t = doc.add_table(rows=1, cols=1)
         t.autofit = False
         c = t.rows[0].cells[0]
-        cell_text(c, text, size=10, bold=False, color=INK_1)
+        cell_text(c, text, size=size, bold=False, color=INK_1)
         shade(c, SURFACE_1)
         left_accent(c)
         set_table_geometry(t, [16.4])
@@ -486,20 +519,58 @@ def build_docx(model: dict, out: Path, charts: dict) -> None:
         h.paragraph_format.keep_with_next = True
         return h
 
+    return SimpleNamespace(
+        set_run=set_run,
+        style_font=style_font,
+        shade=shade,
+        left_accent=left_accent,
+        cell_text=cell_text,
+        set_table_geometry=set_table_geometry,
+        make_table=make_table,
+        callout=callout,
+        figure=figure,
+        heading=heading,
+    )
+
+
+def docx_scaffold(model: dict):
+    """
+    A document carrying this product's styles, page box, header and footer - and nothing else.
+
+    WHY THIS IS SHARED RATHER THAN COPIED PER REPORT. The two reports have to look like documents
+    from the same product, and the parts that carry that are exactly these: Arial in the Latin
+    slots, Microsoft YaHei in the East Asian one, A4 with 2.2cm side margins (which is where the
+    16.6cm text area that verify_geometry asserts against comes from), the Small/Score/Subtitle2
+    styles the cover uses, and a header naming the subject and the date. A second copy of these
+    numbers is how the second report quietly gets a different text width while the geometry check
+    still passes - because it would be checking the number the first report declared.
+
+    The header's subject falls back from `domain` to `subject`, because a scan report is about a
+    domain and an AI-visibility report is about a named company. The date falls back the same way,
+    from the scan's `scanDate` to the measurement's `measuredOn`.
+    """
+    from docx import Document
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from docx.shared import Cm, Pt
+
+    C, meta = model["copy"], model["meta"]
     doc = Document()
+    T = docx_tools(doc)
 
     # Default body font, including the East Asian slot: without this a Chinese report can fall
     # back to a font the reader does not have.
-    style_font("Normal", 10, space_after=6)
-    style_font("Heading 1", 16, bold=True, space_before=16, space_after=8)
-    style_font("Heading 2", 12, bold=True, space_before=12, space_after=6)
-    style_font("Title", 26, bold=True, space_after=4)
-    caption_style = doc.styles.add_style("Small", 1)
-    style_font("Small", 8.5, color=INK_3, space_after=10)
-    score_style = doc.styles.add_style("Score", 1)
-    style_font("Score", 40, bold=True, color=ACCENT, space_before=4, space_after=2)
-    sub_style = doc.styles.add_style("Subtitle2", 1)
-    style_font("Subtitle2", 11, color=INK_2, space_after=12)
+    T.style_font("Normal", 10, space_after=6)
+    T.style_font("Heading 1", 16, bold=True, space_before=16, space_after=8)
+    T.style_font("Heading 2", 12, bold=True, space_before=12, space_after=6)
+    T.style_font("Title", 26, bold=True, space_after=4)
+    doc.styles.add_style("Small", 1)
+    T.style_font("Small", 8.5, color=INK_3, space_after=10)
+    doc.styles.add_style("Score", 1)
+    T.style_font("Score", 40, bold=True, color=ACCENT, space_before=4, space_after=2)
+    doc.styles.add_style("Subtitle2", 1)
+    T.style_font("Subtitle2", 11, color=INK_2, space_after=12)
 
     sec = doc.sections[0]
     sec.page_width = Cm(21.0)
@@ -507,16 +578,19 @@ def build_docx(model: dict, out: Path, charts: dict) -> None:
     for attr, val in (("left_margin", 2.2), ("right_margin", 2.2), ("top_margin", 2.0), ("bottom_margin", 1.8)):
         setattr(sec, attr, Cm(val))
 
+    subject = meta.get("domain") or meta.get("subject") or ""
+    stamp = meta.get("scanDate") or meta.get("measuredOn") or ""
+
     # Header / footer
     hp = sec.header.paragraphs[0]
     hp.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    set_run(hp.add_run(f"{meta['domain']}  /  {C['reportName']}"), size=8, color=INK_3)
-    set_run(hp.add_run(f"        {meta['scanDate']}"), size=8, color=INK_3)
+    T.set_run(hp.add_run(f"{subject}  /  {C['reportName']}"), size=8, color=INK_3)
+    T.set_run(hp.add_run(f"        {stamp}"), size=8, color=INK_3)
     fp = sec.footer.paragraphs[0]
     fp.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    set_run(fp.add_run(f"{C['footer']}   |   "), size=8, color=INK_3)
+    T.set_run(fp.add_run(f"{C['footer']}   |   "), size=8, color=INK_3)
     fld_run = fp.add_run()
-    set_run(fld_run, size=8, color=INK_3)
+    T.set_run(fld_run, size=8, color=INK_3)
     for el, attr, text in (
         ("w:fldChar", "begin", None),
         ("w:instrText", None, "PAGE"),
@@ -529,6 +603,28 @@ def build_docx(model: dict, out: Path, charts: dict) -> None:
             e.set(qn("xml:space"), "preserve")
             e.text = text
         fld_run._r.append(e)
+
+    return doc, T
+
+
+def build_docx(model: dict, out: Path, charts: dict) -> None:
+    doc, T = docx_scaffold(model)
+
+    """
+    THE HELPERS KEEP THE NAMES THEY HAD WHEN THEY WERE NESTED IN THIS FUNCTION, so every call site
+    below is untouched by the move into docx_tools(). If a future edit needs a primitive that does
+    not exist yet, it belongs in docx_tools and not here - a helper defined next to one report's
+    layout is a helper the other report cannot have.
+    """
+    set_run, style_font = T.set_run, T.style_font
+    shade, left_accent, cell_text = T.shade, T.left_accent, T.cell_text
+    make_table, callout, figure, heading = T.make_table, T.callout, T.figure, T.heading
+    set_table_geometry = T.set_table_geometry
+
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    C = model["copy"]
+    meta, score = model["meta"], model["score"]
 
     # --- Cover / one-page overview -------------------------------------------------
     doc.add_paragraph(C["reportName"], style="Heading 1")
@@ -713,14 +809,22 @@ def build_docx(model: dict, out: Path, charts: dict) -> None:
 # --------------------------------------------------------------------------------------
 # XLSX
 # --------------------------------------------------------------------------------------
-def build_xlsx(model: dict, out: Path) -> None:
-    from openpyxl import Workbook
+def xlsx_tools(wb):
+    """
+    The workbook's one sheet writer and its house style, in one place for both report types.
+
+    WHY THE SAME ARGUMENT AS docx_tools APPLIES HERE. `sheet()` is the only thing in this file that
+    writes a worksheet: it sets the header fill and font, the thin border, the column widths, the
+    freeze pane and the autofilter, and every sheet in both workbooks goes through it. A second copy
+    for the AI-visibility workbook would be a second answer to "what does a header row look like",
+    and the first thing to drift would be the autofilter - which is the one part of a spreadsheet
+    that a reader notices only when it is missing.
+
+    `used` is returned rather than hidden because the workbook's first sheet is the one openpyxl
+    creates for free, and the caller decides at the end whether that default sheet was consumed.
+    """
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
-
-    C = model["copy"]
-    meta, score = model["meta"], model["score"]
-    wb = Workbook()
 
     head_fill = PatternFill("solid", fgColor="0071E3")
     head_font = Font(color="FFFFFF", bold=True, size=10)
@@ -728,12 +832,13 @@ def build_xlsx(model: dict, out: Path) -> None:
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
     wrap = Alignment(vertical="top", wrap_text=True)
     top = Alignment(vertical="top")
+    used = [False]
 
     def sheet(title, headers, rows, widths, wrap_cols=()):
-        ws = wb.create_sheet(title) if wb.sheetnames != ["Sheet"] or ws_used[0] else wb.active
+        ws = wb.create_sheet(title) if wb.sheetnames != ["Sheet"] or used[0] else wb.active
         if ws.title == "Sheet":
             ws.title = title
-        ws_used[0] = True
+        used[0] = True
         ws.append(headers)
         for i, h in enumerate(headers, start=1):
             c = ws.cell(row=1, column=i)
@@ -754,7 +859,18 @@ def build_xlsx(model: dict, out: Path) -> None:
             ws.auto_filter.ref = f"A1:{get_column_letter(len(headers))}{ws.max_row}"
         return ws
 
-    ws_used = [False]
+    return SimpleNamespace(sheet=sheet, used=used)
+
+
+def build_xlsx(model: dict, out: Path) -> None:
+    from openpyxl import Workbook
+
+    C = model["copy"]
+    meta, score = model["meta"], model["score"]
+    wb = Workbook()
+
+    T = xlsx_tools(wb)
+    sheet, ws_used = T.sheet, T.used
 
     sheet(
         C["sheetOverview"],
@@ -943,6 +1059,554 @@ def build_xlsx(model: dict, out: Path) -> None:
     wb.save(out)
 
 
+# --------------------------------------------------------------------------------------
+# Figure: brand mentions per question, counted in runs
+# --------------------------------------------------------------------------------------
+def truncate(text: str, limit: int) -> str:
+    text = str(text).strip()
+    return text if len(text) <= limit else text[:limit] + "…"
+
+
+def chart_mentions(model: dict, out: Path) -> None:
+    """
+    One bar per question: how many of that question's runs mentioned the brand.
+
+    THE AXIS IS RUNS - 0, 1, 2, 3 - AND NOT A PERCENTAGE, which is the whole reason this figure
+    looks unlike the scan report's charts. A 0-100 axis would invite the reader to divide, and the
+    service definition for this product refuses percentages outright: three runs cannot support
+    one, and a chart is where a percentage is most likely to appear without anybody deciding to
+    write it. The value beside each bar is printed as "2 / 3", which is the same form the tables
+    use, so the figure and the tables cannot be read differently.
+
+    THE LABEL COLUMN IS MEASURED FROM THE LABELS, for the reason chart_dimensions gives: a fixed
+    width fits one language's questions and clips another's. The question text is truncated rather
+    than wrapped - a wrapped row would need a variable row height and a legend explaining where the
+    column went; the tables below carry every question in full.
+    """
+    questions = model["questions"]
+    scale = 2
+    pad = 28 * scale
+    tag_w = 44 * scale
+    gap = 24 * scale
+    value_w = 150 * scale
+    row_h = 46 * scale
+    track_w = 420 * scale
+    axis_h = 34 * scale
+
+    f_label = font(20 * scale, bold=True)
+    f_small = font(16 * scale)
+    f_tick = font(15 * scale)
+    probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+
+    labels = [f"Q{q['q']}  {truncate(q['question'], 16)}" for q in questions]
+    widest = max((probe.textlength(label, font=f_label) for label in labels), default=0)
+    label_w = tag_w + int(widest) + gap
+
+    width = pad * 2 + label_w + track_w + value_w
+    height = pad * 2 + row_h * len(questions) + axis_h
+    img = Image.new("RGB", (width, height), SURFACE_2)
+    d = ImageDraw.Draw(img)
+
+    x0 = pad + label_w
+    base = pad + row_h * len(questions) + 4 * scale
+
+    """
+    THE GRID LINES ARE DRAWN BEFORE THE BARS, not after. The first version drew the rows first and the
+    axis second, and the vertical rules at 1, 2 and 3 landed ON TOP of every bar - a full bar read as
+    three coloured segments, which is the opposite of what a count chart is for. Drawing the scale
+    first puts the bars over it and keeps the ticks visible in the whitespace beside them.
+    """
+    for tick in range(4):
+        x = x0 + int(track_w * tick / 3)
+        d.line([x, pad, x, base], fill=SURFACE_1)
+
+    for i, q in enumerate(questions):
+        y = pad + i * row_h
+        cy = y + row_h // 2
+        runs = max(1, int(q.get("okRuns") or 0))
+        count = int(q["brandMentions"])
+
+        d.text((pad, cy), q.get("groupShort", ""), font=f_small, fill=INK_3, anchor="lm")
+        d.text((pad + tag_w, cy), labels[i], font=f_label, fill=INK_1, anchor="lm")
+
+        d.rectangle([x0, cy - 12 * scale, x0 + track_w, cy + 12 * scale], fill=SURFACE_1)
+        filled = int(track_w * min(count, runs) / runs)
+        if count > 0:
+            # Two tokens, no invented colour: full marks gets the "ok" green, any other mention the
+            # accent. A zero bar stays the surface colour rather than being drawn as a red - a
+            # question that was not mentioned is a measurement, not a failure.
+            d.rectangle([x0, cy - 12 * scale, x0 + max(filled, 2 * scale), cy + 12 * scale],
+                        fill=OK if count >= runs else ACCENT)
+        if count == 0:
+            d.rectangle([x0, cy - 12 * scale, x0 + 2 * scale, cy + 12 * scale], fill=LINE)
+        d.text((x0 + track_w + 16 * scale, cy), f"{count} / {runs}", font=f_label, fill=INK_1, anchor="lm")
+
+    # The axis says what it counts. The unit is written out because "3/3" alone could be read as a score.
+    for tick in range(4):
+        x = x0 + int(track_w * tick / 3)
+        d.text((x, base + 6 * scale), str(tick), font=f_tick, fill=INK_3, anchor="mm")
+    d.text((x0 + track_w + value_w - 4 * scale, base + 6 * scale),
+           model["copy"].get("figMentionsAxis", ""), font=f_tick, fill=INK_3, anchor="rm")
+
+    img.save(out, dpi=(2 * 96, 2 * 96))
+
+
+# --------------------------------------------------------------------------------------
+# DOCX - AI visibility report
+# --------------------------------------------------------------------------------------
+def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
+    """
+    The AI-visibility report: measured answers in, a document out, and no score anywhere in it.
+
+    WHY THERE IS NO HEADLINE SCORE AND NO WEIGHTED APPENDIX. The reference document this report's
+    STRUCTURE follows publishes a score out of 100 built from six weighted indicators. That is a
+    legitimate thing to do with 400 synthesised records; it is not a legitimate thing to do with 30
+    measured answers, three per question. A weighted score would be a number with no measurement
+    behind it, and it is the one number a client would quote. So the headline slot holds the reach
+    count ("4 / 12") and the appendix says in as many words why no score is given.
+    """
+    doc, T = docx_scaffold(model)
+    set_run, make_table = T.set_run, T.make_table
+    callout, figure, heading = T.callout, T.figure, T.heading
+
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    C = model["copy"]
+    meta = model["meta"]
+
+    def para(text, style=None):
+        return doc.add_paragraph(text, style=style) if style else doc.add_paragraph(text)
+
+    def bullets(items, style="List Bullet"):
+        for item in items:
+            doc.add_paragraph(item, style=style)
+
+    def count_cell(mentions, runs):
+        """Counts, or the words that say there is no count - never a zero standing in for neither."""
+        if not runs:
+            return C["notMeasured"]
+        return f"{mentions} / {runs}"
+
+    # --- Cover / one-page overview -------------------------------------------------
+    doc.add_paragraph(C["reportName"], style="Heading 1")
+    p = doc.add_paragraph(style="Score")
+    set_run(p.add_run(model["headline"]["value"]), size=40, bold=True, color=ACCENT)
+    p = doc.add_paragraph(style="Subtitle2")
+    set_run(p.add_run(model["headline"]["caption"]), size=11, color=INK_2)
+    callout(model["headline"]["callout"])
+
+    make_table(
+        [C["tableItem"], C["tableValue"]],
+        [
+            [C["kSubject"], meta["subject"]],
+            [C["kModel"], meta["model"]],
+            [C["kMeasuredOn"], meta["measuredOn"]],
+            [C["kWebSearch"], C["yes"] if meta["webSearch"] else C["no"]],
+            [C["kRunsPerQuestion"], f"{meta['runsPerQuestion']}"],
+            [C["kAnswersFile"], meta["answersFile"]],
+            [C["kCompleted"], f"{meta['answersOk']} / {meta['answersFileLines']}"],
+            [C["kExcluded"], meta["failureSummary"]],
+            [C["kTokens"], f"{meta['totalTokens']:,}"],
+            [C["kCitations"], f"{meta['citationEvents']} / {meta['distinctDomains']}"],
+            [C["kGeneratedAt"], meta["generatedAtDisplay"]],
+        ],
+        [5.0, 11.4],
+    )
+
+    if charts.get("mentions"):
+        figure(charts["mentions"], 16.4, C["figMentions"])
+
+    # --- 一、执行摘要 ---------------------------------------------------------------
+    heading(C["sectionSummary"])
+    callout(C["summaryCallout"])
+
+    heading(C["sectionSummaryConclusions"], 2)
+    for key in ("summaryReach", "summaryEntity", "summaryFacts"):
+        para(C[key])
+
+    heading(C["sectionCoverage"], 2)
+    para(C["coverageLead"])
+    make_table(
+        [C["thGroup"], C["thQuestions"], C["thRuns"], C["thBrand"], C["thCoatings"]],
+        [
+            [
+                g["label"],
+                str(g["questions"]),
+                str(g["runs"]),
+                count_cell(g["brandMentions"], g["runs"]),
+                count_cell(g["coatingsMentions"], g["runs"]),
+            ]
+            for g in model["groups"]
+        ]
+        + [[
+            C["thTotal"],
+            str(len(model["questions"])),
+            str(model["totals"]["runs"]),
+            count_cell(model["totals"]["brandMentions"], model["totals"]["runs"]),
+            count_cell(model["totals"]["coatingsMentions"], model["totals"]["runs"]),
+        ]],
+        [4.6, 3.6, 2.6, 3.0, 2.6],
+        align=[None, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER],
+    )
+    para(C["coverageNote"])
+
+    heading(C["sectionNotMeasured"], 2)
+    bullets(model["limits"])
+
+    # --- 二、AI 可见度总览 ----------------------------------------------------------
+    heading(C["sectionOverview"])
+    para(C["overviewLead"])
+    make_table(
+        [C["thNo"], C["thQuestion"], C["thGroup"], C["thBrand"], C["thCoatings"]],
+        [
+            [
+                f"Q{q['q']}",
+                q["question"],
+                q["groupShort"],
+                count_cell(q["brandMentions"], q["okRuns"]),
+                count_cell(q["coatingsMentions"], q["okRuns"]),
+            ]
+            for q in model["questions"]
+        ],
+        [1.4, 7.8, 2.1, 2.6, 2.5],
+        align=[WD_ALIGN_PARAGRAPH.CENTER, None, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER],
+    )
+    for key in ("overviewTotals", "overviewPrompted"):
+        para(C[key])
+
+    heading(C["sectionHowToRead"], 2)
+    bullets([C[key] for key in ("readCounts", "readPrompted", "readDenominator", "readSameDay")])
+
+    # --- 三、实体识别 ----------------------------------------------------------------
+    heading(C["sectionEntity"])
+    para(C["entityLead"])
+    for quote in model["quotes"][:1]:
+        callout(quote["text"], size=9)
+        para(quote["note"], style="Small")
+
+    heading(C["sectionEntityRuns"], 2)
+    para(C["entityRunsLead"])
+    make_table(
+        [C["thRun"], C["thExcerpt"]],
+        [[C["runLabel"].replace("{n}", str(r["run"])), r["text"]] for r in model["entityRuns"]],
+        [2.0, 14.4],
+    )
+    para(C["entityFinding"])
+
+    # --- 四、按问题组拆解 ------------------------------------------------------------
+    heading(C["sectionGroups"])
+    para(C["groupsLead"])
+    for g in model["groups"]:
+        heading(g["label"], 2)
+        para(g["reading"])
+        make_table(
+            [C["thNo"], C["thQuestion"], C["thBrand"], C["thCoatings"]],
+            [
+                [
+                    f"Q{q['q']}",
+                    q["question"],
+                    count_cell(q["brandMentions"], q["okRuns"]),
+                    count_cell(q["coatingsMentions"], q["okRuns"]),
+                ]
+                for q in model["questions"]
+                if q["group"] == g["id"]
+            ],
+            [1.4, 9.9, 2.5, 2.6],
+            align=[WD_ALIGN_PARAGRAPH.CENTER, None, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER],
+        )
+
+    # --- 五、竞品 --------------------------------------------------------------------
+    heading(C["sectionCompetitors"])
+    callout(C["competitorsCallout"])
+    para(C["competitorsBody"])
+    bullets([C[key] for key in ("competitorsNone1", "competitorsNone2", "competitorsNone3")])
+
+    # --- 六、信源网络 ----------------------------------------------------------------
+    heading(C["sectionSources"])
+    para(C["sourcesLead"])
+    make_table(
+        [C["thDomain"], C["thCount"], C["thWhere"]],
+        [[d["domain"], str(d["count"]), "、".join(d["groups"])] for d in model["domains"]],
+        [4.8, 2.0, 9.6],
+        align=[None, WD_ALIGN_PARAGRAPH.CENTER, None],
+    )
+    para(C["sourcesNote"])
+    heading(C["sectionSourcesCaveat"], 2)
+    bullets([C[key] for key in ("sourcesCaveat1", "sourcesCaveat2", "sourcesCaveat3")])
+
+    # --- 七、回答里的事实断言 --------------------------------------------------------
+    heading(C["sectionClaims"])
+    callout(C["claimsCallout"])
+    make_table(
+        [C["thClaim"], C["thSource"], C["thHandling"]],
+        [[c["claim"], c["source"], c["handling"]] for c in model["claims"]],
+        [6.0, 2.0, 8.4],
+        align=[None, WD_ALIGN_PARAGRAPH.CENTER, None],
+    )
+    para(C["claimsNote"])
+
+    # --- 八、原文摘录 ----------------------------------------------------------------
+    heading(C["sectionQuotes"])
+    para(C["quotesLead"])
+    for quote in model["quotes"]:
+        heading(quote["label"], 2)
+        p = doc.add_paragraph()
+        set_run(p.add_run(C["quoteQuestion"]), size=10, bold=True, color=INK_2)
+        set_run(p.add_run(quote["question"]), size=10)
+        p = doc.add_paragraph()
+        set_run(p.add_run(C["quoteAnswer"]), size=10, bold=True, color=INK_2)
+        set_run(p.add_run(quote["text"]), size=10)
+        para(quote["note"], style="Small")
+
+    # --- 九、建议 --------------------------------------------------------------------
+    heading(C["sectionAdvice"])
+    para(C["adviceLead"])
+    for item in model["advice"]:
+        heading(item["title"], 2)
+        for label, key in (
+            (C["adviceProblem"], "problem"),
+            (C["adviceAction"], "action"),
+            (C["adviceDeliverable"], "deliverable"),
+            (C["adviceAcceptance"], "acceptance"),
+        ):
+            p = doc.add_paragraph()
+            set_run(p.add_run(label), size=10, bold=True, color=INK_2)
+            set_run(p.add_run(item[key]), size=10)
+
+    # --- 复测计划 --------------------------------------------------------------------
+    heading(C["sectionPlan"])
+    make_table(
+        [C["thStage"], C["thWork"], C["thOutput"]],
+        model["plan"],
+        [2.6, 6.9, 6.9],
+    )
+    para(C["planNote"])
+
+    # --- 附录：为什么没有评分 --------------------------------------------------------
+    heading(C["sectionNoScore"])
+    para(C["noScoreLead"])
+    bullets([C[key] for key in ("noScore1", "noScore2", "noScore3", "noScore4")])
+
+    # --- 附录：采样设计、方法与限制 --------------------------------------------------
+    heading(C["sectionMethodAppendix"])
+    heading(C["sectionSampleDesign"], 2)
+    para(C["sampleDesignLead"])
+    make_table(
+        [C["thGroup"], C["thPurpose"], C["thQuestions"], C["thRuns"]],
+        [[g["label"], g["purpose"], str(g["questions"]), str(g["runs"])] for g in model["groups"]],
+        [4.0, 6.6, 3.0, 2.8],
+        align=[None, None, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER],
+    )
+
+    heading(C["sectionGeneration"], 2)
+    for text in model["method"]:
+        para(text)
+
+    heading(C["sectionCoding"], 2)
+    make_table(
+        [C["thField"], C["thMeaning"], C["thUsage"]],
+        model["coding"],
+        [3.4, 6.0, 7.0],
+    )
+
+    heading(C["sectionReplication"], 2)
+    bullets([C[key] for key in ("replication1", "replication2", "replication3")])
+
+    # --- 完整问题库与标注 ------------------------------------------------------------
+    heading(C["sectionQuestions"])
+    para(C["questionsLead"], style="Small")
+    make_table(
+        [C["thNo"], C["thQuestion"], C["thRun1"], C["thRun2"], C["thRun3"], C["thBrand"], C["thCoatings"]],
+        [
+            [
+                f"Q{q['q']}",
+                q["question"],
+                *[q["runMarks"][i] for i in range(3)],
+                count_cell(q["brandMentions"], q["okRuns"]),
+                count_cell(q["coatingsMentions"], q["okRuns"]),
+            ]
+            for q in model["questions"]
+        ],
+        [1.1, 7.8, 1.1, 1.1, 1.1, 1.9, 1.9],
+        align=[WD_ALIGN_PARAGRAPH.CENTER, None, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER,
+               WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER],
+        size=8,
+    )
+
+    # --- 资料来源与核验记录 ----------------------------------------------------------
+    heading(C["sectionProvenance"])
+    bullets(model["provenance"])
+
+    doc.save(out)
+
+
+# --------------------------------------------------------------------------------------
+# XLSX - AI visibility report
+# --------------------------------------------------------------------------------------
+def build_visibility_xlsx(model: dict, out: Path) -> None:
+    """
+    The same measurements as a workbook.
+
+    WHY THESE TABLES MAP ONTO A WORKBOOK CLEANLY, and why that is worth saying rather than assumed:
+    every table in this report is one row per question or one row per domain, with counts in the
+    value columns - which is exactly the shape a spreadsheet is for. Nothing here is a score, so
+    nothing here invites a =SUM over numbers that were never measured, and a question with no
+    completed runs carries the word for "not measured" rather than an empty cell that any average
+    would read as a zero.
+    """
+    from openpyxl import Workbook
+
+    C = model["copy"]
+    meta = model["meta"]
+    wb = Workbook()
+    T = xlsx_tools(wb)
+    sheet, ws_used = T.sheet, T.used
+
+    def count_cell(mentions, runs):
+        return C["notMeasured"] if not runs else f"{mentions} / {runs}"
+
+    sheet(
+        C["sheetOverview"],
+        [C["tableItem"], C["tableValue"]],
+        [
+            [C["kSubject"], meta["subject"]],
+            [C["kModel"], meta["model"]],
+            [C["kMeasuredOn"], meta["measuredOn"]],
+            [C["kWebSearch"], C["yes"] if meta["webSearch"] else C["no"]],
+            [C["kRunsPerQuestion"], meta["runsPerQuestion"]],
+            [C["kAnswersFile"], meta["answersFile"]],
+            [C["kCompleted"], f"{meta['answersOk']} / {meta['answersFileLines']}"],
+            [C["kExcluded"], meta["failureSummary"]],
+            [C["kTokens"], meta["totalTokens"]],
+            [C["kSearchCalls"], meta["webSearchCalls"]],
+            [C["kCitations"], f"{meta['citationEvents']} / {meta['distinctDomains']}"],
+            [C["kGeneratedAt"], meta["generatedAtDisplay"]],
+            [C["kHeadline"], f"{model['headline']['value']} — {model['headline']['caption']}"],
+            ["—", model["headline"]["callout"]],
+        ],
+        [24, 96],
+        wrap_cols=(2,),
+    )
+
+    """
+    TWO GROUP COLUMNS ON PURPOSE: the human label and the machine key. A reader sorting this sheet
+    wants "行业问题（不含品牌名）"; a formula or a re-import wants `category`. Printing only the key
+    (which the first version did) is the same inconsistency as printing only the label - and this is
+    the one sheet a reader is likely to filter and re-use, so it carries both.
+    """
+    sheet(
+        C["sheetQuestions"],
+        [C["thNo"], C["thQuestion"], C["thGroup"], "group", C["thBrand"], C["thCoatings"], C["thRun1"], C["thRun2"], C["thRun3"]],
+        [
+            [
+                f"Q{q['q']}",
+                q["question"],
+                q["groupShort"],
+                q["group"],
+                count_cell(q["brandMentions"], q["okRuns"]),
+                count_cell(q["coatingsMentions"], q["okRuns"]),
+                *q["runMarks"],
+            ]
+            for q in model["questions"]
+        ],
+        [8, 50, 22, 12, 12, 12, 8, 8, 8],
+        wrap_cols=(2, 3),
+    )
+
+    sheet(
+        C["sheetGroups"],
+        [C["thGroup"], C["thPurpose"], C["thQuestions"], C["thRuns"], C["thBrand"], C["thCoatings"]],
+        [
+            [
+                g["label"],
+                g["purpose"],
+                g["questions"],
+                g["runs"],
+                count_cell(g["brandMentions"], g["runs"]),
+                count_cell(g["coatingsMentions"], g["runs"]),
+            ]
+            for g in model["groups"]
+        ],
+        [16, 44, 10, 10, 14, 14],
+        wrap_cols=(2,),
+    )
+
+    sheet(
+        C["sheetDomains"],
+        [C["thDomain"], C["thCount"], C["thWhere"]],
+        [[d["domain"], d["count"], "、".join(d["groups"])] for d in model["domains"]],
+        [34, 12, 40],
+        wrap_cols=(3,),
+    )
+
+    sheet(
+        C["sheetClaims"],
+        [C["thClaim"], C["thSource"], C["thHandling"]],
+        [[c["claim"], c["source"], c["handling"]] for c in model["claims"]],
+        [46, 12, 50],
+        wrap_cols=(1, 3),
+    )
+
+    sheet(
+        C["sheetQuotes"],
+        ["label", C["thQuestion"], C["thRun"], "text"],
+        [[q["label"], q["question"], q["run"], q["text"]] for q in model["quotes"]],
+        [30, 40, 8, 80],
+        wrap_cols=(2, 4),
+    )
+
+    sheet(
+        C["sheetMeta"],
+        ["key", "value"],
+        [
+            ["report_type", model["reportType"]],
+            ["subject", meta["subject"]],
+            ["subject_short", meta["subjectShort"]],
+            ["model", meta["model"]],
+            ["model_source", meta["modelSource"]],
+            ["measured_on", meta["measuredOn"]],
+            ["date_source", meta["dateSource"]],
+            ["web_search", meta["webSearch"]],
+            ["runs_per_question", meta["runsPerQuestion"]],
+            ["answers_file", meta["answersFile"]],
+            ["answers_file_lines", meta["answersFileLines"]],
+            ["answers_ok", meta["answersOk"]],
+            ["answers_failed", meta["answersFailed"]],
+            ["failure_summary", meta["failureSummary"]],
+            ["total_tokens", meta["totalTokens"]],
+            ["web_search_calls", meta["webSearchCalls"]],
+            ["citation_events", meta["citationEvents"]],
+            ["distinct_domains", meta["distinctDomains"]],
+            ["brand_mentions_all_runs", model["totals"]["brandMentions"]],
+            ["brand_mentions_non_brand_questions", model["totals"]["nonBrandBrandMentions"]],
+            ["non_brand_runs", model["totals"]["nonBrandRuns"]],
+            ["engine", model["generatedBy"]],
+            ["lang", model["lang"]],
+        ],
+        [38, 80],
+        wrap_cols=(2,),
+    )
+
+    sheet(
+        C["sheetAbout"],
+        [C["tableItem"], C["tableValue"]],
+        [
+            [C["sectionNotMeasured"], model["limits"][0]],
+            *[["", item] for item in model["limits"][1:]],
+            [C["sectionNoScore"], C["noScoreLead"]],
+            *[["", C[key]] for key in ("noScore1", "noScore2", "noScore3", "noScore4")],
+            [C["sectionGeneration"], model["method"][0]],
+            *[["", text] for text in model["method"][1:]],
+        ],
+        [24, 100],
+        wrap_cols=(2,),
+    )
+
+    if "Sheet" in wb.sheetnames and not ws_used[0]:
+        del wb["Sheet"]
+    wb.save(out)
+
+
 def verify_geometry(docx_path: Path, text_width_cm: float) -> bool:
     """
     Check the saved file, not the object that built it.
@@ -1022,6 +1686,32 @@ def main() -> int:
     charts_dir = out / "charts"
     charts_dir.mkdir(parents=True, exist_ok=True)
 
+    docx_path = out / "report.docx"
+    xlsx_path = out / "report.xlsx"
+
+    """
+    WHICH DOCUMENT GETS BUILT COMES FROM THE MODEL, not from a command-line flag, and that is a
+    correctness choice rather than a convenience: the model is the thing that was produced by the
+    run, and a flag would let somebody render an AI-visibility model with the scan layout (or the
+    reverse) and get a document whose headings describe measurements it does not contain. A missing
+    reportType is the scan report, because every model on disk in reports/ was written before this
+    key existed and --from-model is documented as re-rendering them.
+
+    BOTH BRANCHES END AT THE SAME verify_geometry CALL. The scan report's 16.6cm text area is the
+    AI-visibility report's text area too - docx_scaffold() is the single source of that number - so
+    one assertion still covers both, and a new table in either document is checked rather than
+    trusted.
+    """
+    if model.get("reportType") == "ai-visibility":
+        chart = charts_dir / "mentions.png"
+        chart_mentions(model, chart)
+        build_visibility_docx(model, docx_path, {"mentions": chart})
+        build_visibility_xlsx(model, xlsx_path)
+        print(f"wrote {docx_path}")
+        print(f"wrote {xlsx_path}")
+        print(f"wrote {chart}")
+        return 0 if verify_geometry(docx_path, 16.6) else 1
+
     charts = {}
     bar = charts_dir / "dimensions.png"
     radar = charts_dir / "radar.png"
@@ -1029,8 +1719,6 @@ def main() -> int:
     chart_radar(model, radar)
     charts["dimensions"], charts["radar"] = bar, radar
 
-    docx_path = out / "report.docx"
-    xlsx_path = out / "report.xlsx"
     build_docx(model, docx_path, charts)
     build_xlsx(model, xlsx_path)
 

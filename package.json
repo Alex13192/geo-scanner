@@ -18,6 +18,7 @@
     "check:built": "node scripts/check-built-pages.mts",
     "check:live": "node scripts/check-live.mjs",
     "report": "node scripts/report/build-report.mts",
+    "report:visibility": "node scripts/report/build-visibility.mts",
     "generate:copy": "node scripts/generate-check-copy.mts",
     "study:run": "node scripts/run-study.mts",
     "test:analyze": "node scripts/test-analyze.mts",
