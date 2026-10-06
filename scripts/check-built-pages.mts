@@ -65,6 +65,7 @@ const ROUTES: Route[] = [
   { route: "/docs/allow-ai-crawlers/", file: "docs/allow-ai-crawlers.html", indexable: true },
   { route: "/docs/qa-style-headings/", file: "docs/qa-style-headings.html", indexable: true },
   { route: "/docs/schema-org-jsonld/", file: "docs/schema-org-jsonld.html", indexable: true },
+  { route: "/docs/ai-visibility-self-check/", file: "docs/ai-visibility-self-check.html", indexable: true },
   { route: "/privacy/", file: "privacy.html", indexable: true },
   { route: "/terms/", file: "terms.html", indexable: true },
   // Tool output, generated per request and disallowed in robots.txt.

@@ -22,7 +22,12 @@ import Faq from "@/app/components/Faq";
 
 interface Guide {
   id: string;
-  category: "Setup" | "Content" | "Technical" | "Schema";
+  /*
+   * "Method" exists because the first four guides are all "how to change something on your site",
+   * and this one is "how to measure something yourself". Filing it under Content would have made the
+   * label wrong on the index: the reader is not being told to rewrite anything.
+   */
+  category: "Setup" | "Content" | "Technical" | "Schema" | "Method";
   title: string;
   description: string;
   readTime: string;
@@ -30,6 +35,19 @@ interface Guide {
 }
 
 const guides: Guide[] = [
+  {
+    id: "ai-visibility-self-check",
+    category: "Method",
+    title: "How to Check Whether AI Engines Mention Your Brand",
+    description: "Twenty questions to ask an engine yourself, the six mechanical checks for scoring an answer, and why one run is an anecdote rather than a measurement.",
+    readTime: "6 min read",
+    codeSnippet: `Category  — no brand name in the question ("which vendors do X?")
+Scenario  — a problem, no brand name ("how do I solve Y?")
+Comparison — your brand against a named one
+Fact      — your brand by name, against verifiable details
+
+Ask each question three times. Report "2 of 3", never a percentage.`,
+  },
   {
     id: "llms-txt-deployment",
     category: "Setup",

@@ -79,6 +79,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      /* The self-check method. Priority matches the other guides rather than leading, because it is
+         long-tail content: it earns its place by answering a question people type into a search box
+         or an AI assistant, not by being linked from the homepage. */
+      url: `${SITE_URL}/docs/ai-visibility-self-check/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       url: `${SITE_URL}/llms-txt-studio/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
