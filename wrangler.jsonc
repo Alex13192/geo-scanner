@@ -34,45 +34,41 @@
   },
 
   /*
-   * WORKERS CACHE, WHICH IS THE FIX FOR THE 1102 OUTAGES.
+   * WORKERS CACHE: TRIED ON 6 OCTOBER 2026, TURNED OFF THE SAME DAY, BECAUSE IT BREAKS THE OLD
+   * HOSTNAME. Left here as a record rather than deleted, so the next person does not rediscover it.
    *
-   * WHY THIS LINE AND NOT A CACHE RULE. The site used to return Error 1102 intermittently, worst
-   * right after a deployment, and the recorded cause is that every page view booted the Next.js
-   * runtime inside the Worker against the Free plan's 10 ms CPU ceiling - cold isolates exceeded it
-   * and were terminated. The obvious fix was a zone Cache Rule, and a prediction to that effect was
-   * written into next.config.ts. It cannot work, and Cloudflare's own documentation says why: when a
-   * Worker is on a route, the request hits the Worker BEFORE the cache is consulted, and a Cache Rule
-   * has to match the URL of the Worker's outgoing fetch() rather than the visitor's request. This
-   * Worker generates its responses and fetches no origin, so there is no fetch() for the rule to
-   * match - and separately, "no zone configuration for caching applies to Workers Caching".
+   * IT DID WORK as a cure for the 1102 outages: three requests to `/` and `/methodology/` came back
+   * `cf-cache-status: HIT` with the Worker never running, which is exactly the CPU cost that used to
+   * exceed the Free plan's ceiling.
    *
-   * Workers Cache sits in front of the Worker instead: a cache hit returns the response WITHOUT
-   * running the Worker, so it consumes no CPU at all. It is configured here rather than in the
-   * dashboard, there is no zone rule to keep in sync, and it honours the Cache-Control headers the
-   * app already sets. Requires Wrangler 4.69.0 or above.
+   * WHAT IT BROKE. The cache key is "the request path, entrypoint, ctx.props, and (by default) the
+   * Worker version, NOT by hostname" - Cloudflare's words. This Worker is bound to two hostnames, and
+   * one of them has to REDIRECT: middleware.ts turns geo-scanner.ccie13192.com into a 301 to
+   * llmention-geo.com, because badge snippets in other people's footers and indexed pages still point
+   * at it. With caching on, a request for `/` on the old hostname was answered from the entry cached
+   * for `/` on the new one, so the Worker never ran, the middleware never saw the Host header, and the
+   * redirect became a 200 serving the same page on both hostnames.
    *
-   * WHY THE COMPATIBILITY DATE IS NOT BUMPED ALONGSIDE IT. Cloudflare's configuration examples
-   * annotate compatibility_date with "set this to today's date", which is boilerplate for all their
-   * examples rather than a requirement of this feature - the cache block is the switch. Moving this
-   * Worker 21 months forward in runtime behaviour to enable caching would be a second, unrelated and
-   * much riskier change. If caching does not take effect after a deploy, the date is the next thing
-   * to test, and `cf-cache-status` on a second request is how to tell.
+   * IT WAS CAUGHT BY scripts/check-live.mjs IN THE SMOKE JOB, which is the one gate that inspects the
+   * deployed site rather than local build output - `FAIL geo-scanner.ccie13192.com/ does not redirect
+   * permanently — HTTP 200`. The deploy step itself reported success; only this gate could see it.
    *
-   * cross_version_cache IS DELIBERATELY NOT SET. The Worker version is part of the cache key by
-   * default, so every deployment starts from an empty cache - which sounds like a cost and is
-   * actually correct here, because this site's deployments change page content. The cost is one
-   * cache miss per URL after each deploy, collapsed by request collapsing and absorbed by the upper
-   * cache tier, rather than the previous behaviour of every request being a fresh render.
+   * WHY OFF RATHER THAN FIXED. The account is on Workers Paid since 6 October 2026, so the 10 ms CPU
+   * ceiling that this cache was working around no longer applies - it was the free alternative to that
+   * purchase, and the purchase happened. A regression in a redirect contract is not worth carrying for
+   * an optimisation that is no longer needed.
    *
-   * WHAT WAS CHECKED BEFORE SWITCHING IT ON: a response with NO Cache-Control is still cached
-   * heuristically (200 for two hours), so a GET route that forgot the header would start serving
-   * stale answers. Measured against the deployed site, every GET route sets one explicitly -
-   * /api/scan and /api/llms-txt are no-store, /report/ and /monitor/report/<token>/ are no-store and
-   * private, and the content pages carry s-maxage. That was true before this change; it is a
-   * precondition of it, not a consequence.
+   * IF IT IS EVER WANTED BACK, the two candidates, neither of which has been tested:
+   *   1. Put the old hostname's redirect in a zone-level Redirect Rule and remove its route from this
+   *      Worker, so the Worker stops being the thing that has to tell the two hosts apart. Requires
+   *      confirming that the rule runs before the Worker for that hostname.
+   *   2. Give every response `Vary: Host`, which the documentation says is honoured as part of the
+   *      variant key ("all header names are honored"). APPENDING to Next's own Vary is the hard part -
+   *      it already varies RSC payloads on several headers, and replacing that header rather than
+   *      extending it would serve HTML where the router expects an RSC payload.
    */
   "cache": {
-    "enabled": true
+    "enabled": false
   },
   /*
    * ⛔ DO NOT DELETE THE `geo-scanner` CLOUDFLARE PAGES PROJECT.

@@ -151,6 +151,28 @@ released 3 October 2026. A cache hit returns the response *without running the W
 no CPU and cannot produce a 1102. It is configured per Worker and lives in this repository, so there
 is no dashboard state to keep in sync.
 
+**It worked, and it was turned off the same day, because it broke the old hostname.** The cache key is
+"the request path, entrypoint, `ctx.props`, and (by default) the Worker version, **not by hostname**".
+This Worker answers on two hostnames and one of them must redirect, so a request for `/` on
+`geo-scanner.ccie13192.com` was served from the entry cached for `/` on `llmention-geo.com`: the Worker
+never ran, `middleware.ts` never saw the Host header, and the 301 became a 200 carrying the canonical
+page on both hostnames.
+
+**The smoke job caught it, and it is the only gate that could have.** `Deploy to Cloudflare Workers`
+reported success; `scripts/check-live.mjs` reported `FAIL geo-scanner.ccie13192.com/ does not redirect
+permanently — HTTP 200`. Every other check in this workflow inspects local build output, where the
+redirect is a line of middleware that looks correct.
+
+Measured while it was on: `/` and `/methodology/` returned `cf-cache-status: HIT` on the first and
+second request with the Worker not running - the mechanism does what it claims. (Also measured, and
+worth keeping: `/methodology/` sends **no** `Cache-Control` at all, so heuristic freshness gave it a
+two-hour TTL. The pre-flight audit for enabling caching had missed that route.)
+
+**Why off rather than fixed**: the account moved to Workers Paid on 6 October 2026, so the 10 ms CPU
+ceiling this cache worked around no longer applies. It was the free alternative to that purchase, and
+the purchase happened. Two untested candidates are recorded in `wrangler.jsonc` for the day it is
+wanted back - a zone Redirect Rule outside the Worker, or `Vary: Host` appended to Next's own `Vary`.
+
 **Checked before switching it on**, because a response with no `Cache-Control` is still cached
 heuristically - a `200` for two hours. Every GET route was measured and each sets a directive:
 `/api/scan` and `/api/llms-txt` are `no-store`, `/report/` and `/monitor/report/<token>/` are
