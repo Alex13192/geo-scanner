@@ -1177,6 +1177,33 @@ export default function HomePage() {
             </span>
             <span>Not affiliated with OpenAI, Anthropic, Google or Perplexity.</span>
           </div>
+
+          {/*
+            The AI Agents Directory badge, on the homepage as well as in PageFooter. The homepage
+            does not render PageFooter - it has its own footer - so the badge added there reached
+            68 of the 74 built pages and not this one. A listing check most plausibly looks at the
+            homepage, and a badge that is everywhere except the page a reviewer opens is not a
+            condition met. Same reasoning as the component: their free tier requires it, the paid
+            tiers are what you buy to skip it, and their snippet is used as given.
+          */}
+          <div className="mt-6 flex justify-center">
+            <a
+              href="https://aiagentsdirectory.com/agent/llmention"
+              target="_blank"
+              rel="noopener"
+              title="Discover LLMention on AI Agents Directory"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://aiagentsdirectory.com/featured-badge.svg?v=2024"
+                alt="LLMention - Featured on AI Agents Directory"
+                width={200}
+                height={50}
+                loading="lazy"
+                decoding="async"
+              />
+            </a>
+          </div>
         </div>
       </footer>
 
