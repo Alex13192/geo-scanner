@@ -1500,8 +1500,15 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
             doc.add_paragraph(item, style=style)
 
     def count_cell(mentions, runs):
-        """Counts, or the words that say there is no count - never a zero standing in for neither."""
-        if not runs:
+        """
+        Counts, or the words that say there is no count - never a zero standing in for neither.
+
+        `mentions is None` is a column that could NOT be measured (the intake listed no category
+        vocabulary, so the collector recorded null): printing "0 / 3" there would be a finding about the
+        answers produced by a missing input. Two ways of having no number, and the cell must not turn
+        either of them into zero.
+        """
+        if not runs or mentions is None:
             return C["notMeasured"]
         return f"{mentions} / {runs}"
 
@@ -1518,6 +1525,7 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
         [
             [C["kSubject"], meta["subject"]],
             [C["kModel"], meta["model"]],
+            [C["kRunMode"], meta["runModeLabel"]],
             [C["kMeasuredOn"], meta["measuredOn"]],
             [C["kWebSearch"], C["yes"] if meta["webSearch"] else C["no"]],
             [C["kRunsPerQuestion"], f"{meta['runsPerQuestion']}"],
@@ -1539,7 +1547,47 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
     treating the chart as the finding and the table as the appendix.
     """
 
-    # --- 一、执行摘要 ---------------------------------------------------------------
+    # --- 一、本次问的是什么：题库与批准记录 ------------------------------------------
+    """
+    WHY THE BANK COMES FIRST, BEFORE ANY CONCLUSION.
+
+    The product's own process (intake/README.md) is: the client approves a bank, the bank is frozen, and
+    only then is anything measured. A reader who meets the headline count before meeting the questions
+    has no way to judge it, and after a re-test the fingerprint on this page is the only thing that says
+    whether the two numbers describe the same questions. Every string here comes from the model, which
+    took it from the run file's header - so this page describes the bank that was actually run, not the
+    bank somebody remembers approving.
+    """
+    bank = model.get("bank") or {}
+    heading(C["sectionBank"])
+    para(C["bankLead"])
+    if bank.get("rows"):
+        make_table(
+            [C["tableItem"], C["tableValue"]],
+            [[row["label"], row["value"]] for row in bank["rows"]],
+            [5.0, 11.4],
+        )
+    if C.get("bankFrozen"):
+        callout(C["bankFrozen"])
+    para(C["bankApprovalLine"])
+    if C.get("bankIntakeDrift"):
+        para(C["bankIntakeDrift"])
+    if bank.get("questions"):
+        heading(C["bankQuestionsTitle"], 2)
+        for a in bank.get("archetypes", []):
+            in_group = [q for q in bank["questions"] if q["group"] == a["id"]]
+            if not in_group:
+                continue
+            heading(a.get("heading") or a["label"], 2)
+            if a.get("measures"):
+                para(a["measures"])
+            make_table(
+                [C["thId"], C["thText"]],
+                [[q["id"], q["text"]] for q in in_group],
+                [3.0, 13.4],
+            )
+
+    # --- 二、执行摘要 ---------------------------------------------------------------
     heading(C["sectionSummary"])
     callout(C["summaryCallout"])
 
@@ -1604,23 +1652,31 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
     heading(C["sectionHowToRead"], 2)
     bullets([C[key] for key in ("readCounts", "readPrompted", "readDenominator", "readSameDay")])
 
-    # --- 三、实体识别 ----------------------------------------------------------------
+    # --- 四、实体识别 ----------------------------------------------------------------
+    """
+    THE SECTION IS ALWAYS PRINTED, ITS EVIDENCE ONLY WHEN THERE IS SOME. When the intake listed no
+    short name, alias or former name, the bank contains no name question, the run carries no
+    entityQuote and no per-run excerpts - and the lead paragraph says the question was never asked.
+    Skipping the section in that case would be the other failure: a reader would take its absence for
+    "the model resolved the name correctly".
+    """
     heading(C["sectionEntity"])
     para(C["entityLead"])
-    for quote in model["quotes"][:1]:
-        callout(quote["text"], size=9)
-        para(quote["note"], style="Small")
-
-    heading(C["sectionEntityRuns"], 2)
-    para(C["entityRunsLead"])
-    make_table(
-        [C["thRun"], C["thExcerpt"]],
-        [[C["runLabel"].replace("{n}", str(r["run"])), r["text"]] for r in model["entityRuns"]],
-        [2.0, 14.4],
-    )
-    para(C["entityFinding"])
-    if charts.get("entity"):
-        figure(charts["entity"], 16.4, C["figEntity"])
+    entity_quote = model.get("entityQuote")
+    if entity_quote:
+        callout(entity_quote["text"], size=9)
+        para(entity_quote["note"], style="Small")
+    if entity_quote and model.get("entityRuns"):
+        heading(C["sectionEntityRuns"], 2)
+        para(C["entityRunsLead"])
+        make_table(
+            [C["thRun"], C["thExcerpt"]],
+            [[C["runLabel"].replace("{n}", str(r["run"])), r["text"]] for r in model["entityRuns"]],
+            [2.0, 14.4],
+        )
+        para(C["entityFinding"])
+        if charts.get("entity"):
+            figure(charts["entity"], 16.4, C["figEntity"])
 
     # --- 四、按问题组拆解 ------------------------------------------------------------
     heading(C["sectionGroups"])
@@ -1665,15 +1721,16 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
     heading(C["sectionSourcesCaveat"], 2)
     bullets([C[key] for key in ("sourcesCaveat1", "sourcesCaveat2", "sourcesCaveat3")])
 
-    # --- 七、回答里的事实断言 --------------------------------------------------------
+    # --- 八、回答里的事实断言 --------------------------------------------------------
     heading(C["sectionClaims"])
     callout(C["claimsCallout"])
-    make_table(
-        [C["thClaim"], C["thSource"], C["thHandling"]],
-        [[c["claim"], c["source"], c["handling"]] for c in model["claims"]],
-        [6.0, 2.0, 8.4],
-        align=[None, WD_ALIGN_PARAGRAPH.CENTER, None],
-    )
+    if model["claims"]:
+        make_table(
+            [C["thClaim"], C["thSource"], C["thHandling"]],
+            [[c["claim"], c["source"], c["handling"]] for c in model["claims"]],
+            [6.0, 2.0, 8.4],
+            align=[None, WD_ALIGN_PARAGRAPH.CENTER, None],
+        )
     para(C["claimsNote"])
 
     # --- 八、原文摘录 ----------------------------------------------------------------
@@ -1794,7 +1851,28 @@ def build_visibility_xlsx(model: dict, out: Path) -> None:
     sheet, ws_used = T.sheet, T.used
 
     def count_cell(mentions, runs):
-        return C["notMeasured"] if not runs else f"{mentions} / {runs}"
+        """The same rule as the DOCX: no runs OR a column that was never measurable is 未测量, not 0."""
+        return C["notMeasured"] if not runs or mentions is None else f"{mentions} / {runs}"
+
+    """
+    THE BANK SHEET, because the workbook is where somebody re-uses the numbers: a filtered sheet of
+    counts whose bank, fingerprint and approval record live only in a Word page three tabs away is how
+    a re-test gets compared against questions nobody checked. The rows come from the model, so this sheet
+    and the document's first section cannot disagree.
+    """
+    bank = model.get("bank") or {}
+    sheet(
+        C["sheetBank"],
+        [C["tableItem"], C["tableValue"]],
+        [[row["label"], row["value"]] for row in bank.get("rows", [])]
+        + [["", ""]]
+        + [
+            [a.get("heading") or a["label"], f'{a.get("generated")} / {a.get("target")} · {a.get("status")}']
+            for a in bank.get("archetypes", [])
+        ],
+        [30, 90],
+        wrap_cols=(2,),
+    )
 
     sheet(
         C["sheetOverview"],
@@ -1802,6 +1880,7 @@ def build_visibility_xlsx(model: dict, out: Path) -> None:
         [
             [C["kSubject"], meta["subject"]],
             [C["kModel"], meta["model"]],
+            [C["kRunMode"], meta["runModeLabel"]],
             [C["kMeasuredOn"], meta["measuredOn"]],
             [C["kWebSearch"], C["yes"] if meta["webSearch"] else C["no"]],
             [C["kRunsPerQuestion"], meta["runsPerQuestion"]],
@@ -1899,6 +1978,19 @@ def build_visibility_xlsx(model: dict, out: Path) -> None:
             ["date_source", meta["dateSource"]],
             ["web_search", meta["webSearch"]],
             ["runs_per_question", meta["runsPerQuestion"]],
+            ["run_mode", meta.get("runMode")],
+            ["run_schema", meta.get("runSchema")],
+            ["attempts_total", meta.get("attemptsTotal")],
+            ["timeouts_total", meta.get("timeoutsTotal")],
+            ["truncated_total", meta.get("truncatedTotal")],
+            # The client-specific identity, in the machine-readable sheet as well as in section one:
+            # whoever re-runs this measurement needs the bank and the exact spellings it matched on.
+            ["bank_path", meta.get("bankPath")],
+            ["bank_fingerprint", meta.get("bankFingerprint")],
+            ["bank_approved_by", meta.get("bankApprovedBy")],
+            ["bank_approved_on", meta.get("bankApprovedOn")],
+            ["bank_language", meta.get("bankLanguage")],
+            ["brand_tokens", "、".join(meta.get("brandTokens") or [])],
             ["answers_file", meta["answersFile"]],
             ["answers_file_lines", meta["answersFileLines"]],
             ["answers_ok", meta["answersOk"]],
@@ -2051,12 +2143,18 @@ def main() -> int:
         charts = {
             "groups": charts_dir / "groups.png",
             "mentions": charts_dir / "mentions.png",
-            "entity": charts_dir / "entity-conclusion.png",
             "sources": charts_dir / "sources.png",
         }
         chart_groups(model, charts["groups"])
         chart_mentions(model, charts["mentions"])
-        chart_entity_conclusion(model, charts["entity"])
+        """
+        THE ENTITY FIGURE ONLY EXISTS WHEN THE ENTITY QUESTION DID. With no name question in the bank
+        there is nothing to classify, and a pie with no slices and a legend explaining two categories of
+        nothing is a figure that claims a measurement. The section still prints its "never asked" lead.
+        """
+        if int((model.get("entityConclusion") or {}).get("total") or 0) > 0:
+            charts["entity"] = charts_dir / "entity-conclusion.png"
+            chart_entity_conclusion(model, charts["entity"])
         chart_sources(model, charts["sources"])
         build_visibility_docx(model, docx_path, charts)
         build_visibility_xlsx(model, xlsx_path)

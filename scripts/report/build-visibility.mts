@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Build a client-facing AI-VISIBILITY report from MEASURED AI ANSWERS.
  *
@@ -7,28 +8,52 @@
  * the two must not be able to run as each other.
  *
  * ---------------------------------------------------------------------------------------------
- * WHY A SIBLING SCRIPT AND NOT `--from-answers=` ON build-report.mts
+ * WHAT CHANGED, AND WHY (the hardcoded-client defect this report used to have)
  * ---------------------------------------------------------------------------------------------
- * build-report.mts opens by stating what it does not contain: "any AI-visibility metric. No mention
- * rate, no recommendation rate, no per-platform breakdown ... A report that invented those numbers
- * would contradict the product's only real asset, which is that it does not claim what it has not
- * measured." This script IS those metrics, from real answers. Putting them behind a flag in that
- * file would mean the file's own opening paragraph, its usage line, its validation and its
- * competitor scanning all had to branch on which kind of input arrived - and the first thing to rot
- * would be the argument check, whose failure mode is a scan report built from answers or an answers
- * report built from a crawl. Two scripts, one model shape, one renderer: the shared part is the
- * renderer (render-report.py), which is where the geometry guarantee lives.
+ * The first version of this file was written against ONE dataset: the answers a throwaway probe
+ * collected by asking ten literal questions about one coatings company. The brand's spellings
+ * (["冠军股份","冠军科技","冠军漆","鲸海漆"]), the group names (category/ambig/fact), the entity
+ * analysis (which patterns in which answer meant the model had guessed the wrong company), the quote
+ * excerpts and the claims table were all literals in this file, and the model name had to be handed in
+ * again on the command line because the answers file recorded none of it.
  *
- * WHAT IS SHARED, stated so a future edit does not fork it: the model-JSON contract, the DOCX/XLSX
- * primitives and the 16.6cm text-area assertion in render-report.py, and the model-plus-Markdown-
- * plus-Office output shape. What is NOT shared is copy: every heading in this report is a different
- * sentence from the scan report's, because the two documents measure different things.
+ * Every one of those was a property of that ONE client, and the failure mode was not a crash: run it
+ * for a second client and the report would still print 冠军股份, still say 涂料, still call a question
+ * "Q6" and still claim the model had confused the brand with a Hong Kong listed company. A report that
+ * describes the wrong company is worse than no report, and nothing in the pipeline objected - which is
+ * the same failure the question-bank generator was written to prevent, one step earlier.
+ *
+ * So the client-specific layer is now DATA, written by scripts/report/run-bank.mts into the first line
+ * of the run file:
+ *
+ *   run-header       the bank path, its fingerprint, its questions and their archetypes, WHO approved
+ *                    the bank and WHEN, the brand's name and every alias with the intake field each
+ *                    came from, the model, the date, the runs per question and whether web search was
+ *                    on. This file reads all of that from the header, so --model-name is no longer a
+ *                    hand-passed flag for anything but a headerless legacy file.
+ *   answer lines     one per (question, run), carrying the bank's own `id` and `group`, the mention
+ *                    flags the collector computed, the domains, the token usage and the answer text.
+ *
+ * A headerless file still works (the old run files exist and are evidence), but then the identity has
+ * to be supplied by hand - --brand, --model-name and --web-search - and the report says the provenance
+ * is missing rather than inventing it.
+ *
+ * ---------------------------------------------------------------------------------------------
+ * THE FIRST SECTION IS THE QUESTION BANK PAGE, NOT A CONCLUSION
+ * ---------------------------------------------------------------------------------------------
+ * intake/README.md's three-step process says the client approves the bank before anything is measured,
+ * and that "the report's first section says who approved it". A reader has to be able to see WHAT WAS
+ * ASKED before seeing what was found: a reach count is uninterpretable until you know which questions
+ * produced it, and the frozen-bank rule (no question may be added, removed, reworded or reordered after
+ * approval) is what makes two measurements comparable at all. So section one prints the bank's
+ * fingerprint, its generator, the intake it came from, the approval record, and every question grouped
+ * by the bank's own archetype.
  *
  * ---------------------------------------------------------------------------------------------
  * THE STRUCTURE IS BORROWED FROM A REFERENCE DOCUMENT; THE WORDS ARE NOT
  * ---------------------------------------------------------------------------------------------
- * The section order below follows an external deliverable the owner supplied
- * (冠军股份_GEO监测诊断报告.docx, read with python-docx for its outline and table shapes):
+ * The section order below follows an external deliverable the owner supplied (read with python-docx
+ * for its outline and table shapes):
  *
  *   one-page overview -> executive summary -> entity / brand fact base -> measurement design ->
  *   visibility overview -> breakdown by engine or group -> competitor pressure -> source network ->
@@ -36,89 +61,94 @@
  *   recommendations -> 90-day plan -> appendix (scoring) -> appendix (sampling, coding, limits) ->
  *   full question bank -> sources and verification record
  *
- * WHY THE ORDER IS COPIED AND THE PROSE IS NOT. The structure is a professional convention - it is
- * the order a client reads a diagnostic in - and following it is what makes this document usable
- * without a second explanation. The prose is somebody else's deliverable: reproducing it would be an
- * authorship and licensing problem for a product that is meant to be shipped, and worse, that
- * document's numbers are SYNTHESISED (it says so itself: fixed seeds and preset counts, no platform
- * was called). Copying its sentences would make this report claim simulations as measurements.
+ * WHY THE ORDER IS COPIED AND THE PROSE IS NOT. The structure is a professional convention - it is the
+ * order a client reads a diagnostic in - and following it is what makes this document usable without a
+ * second explanation. The prose is somebody else's deliverable: reproducing it would be an authorship
+ * and licensing problem for a product that is meant to be shipped, and worse, that document's numbers
+ * are SYNTHESISED (it says so itself: fixed seeds and preset counts, no platform was called). Copying
+ * its sentences would make this report claim simulations as measurements.
  *
  * WHERE THIS REPORT DELIBERATELY PARTS COMPANY WITH IT, section by section, so the mapping can be
  * checked rather than taken on trust:
  *
- *   its score out of 100        -> the reach count "4 / 12". No score exists here; the appendix
- *                                  titled 为什么这份报告没有综合评分 says why, and the one figure has
- *                                  an integer 0-3 axis instead of a 0-100 one.
- *   its per-platform breakdown  -> 四、按问题组拆解. One model was measured, not four, so splitting
- *                                  by "engine" would be four copies of the same column.
- *   its brand fact base and      -> 三、实体识别 and 七、回答里的事实断言. That document could print a
- *   "product and scenario"         fact table because the client supplied material for it; this
+ *   its score out of 100        -> the reach count. No score exists here; the appendix titled 为什么
+ *                                 这份报告没有综合评分 says why, and the one figure has an integer
+ *                                 0-N axis instead of a 0-100 one.
+ *   its per-platform breakdown  -> the breakdown by the BANK'S archetypes. One model was measured, not
+ *                                  four, so splitting by "engine" would be four copies of one column.
+ *   its brand fact base and      -> the entity section and the claims list. That document could print
+ *   "product and scenario"         a fact table because the client supplied material for it; this
  *                                  dataset has no client-supplied facts, so the equivalent sections
  *                                  print what the ANSWERS asserted and label every line unverified.
- *   its "fact error list"       -> a claims list, not an error list. Nothing here establishes that
- *                                  any assertion is wrong, and calling an unverified claim an error
- *                                  would be the same fabrication in the other direction.
- *   its competitor pressure     -> 五、竞品：本次没有测量. The section is kept because a reader looks
- *                                  for it; it says the measurement does not exist rather than
- *                                  filling a table with something that is not one.
- *   its source network + detail -> 六、信源网络, with the caveats that make the order a fact about
- *                                  the answers (how often a domain was linked) and not a ranking.
+ *   its "fact error list"       -> a claims list, not an error list. Nothing here establishes that any
+ *                                  assertion is wrong, and calling an unverified claim an error would
+ *                                  be the same fabrication in the other direction.
+ *   its competitor pressure     -> 竞品：本次没有测量. The section is kept because a reader looks for
+ *                                  it; it says the measurement does not exist rather than filling a
+ *                                  table with something that is not one.
+ *   its source network + detail -> the source section, with the caveats that make the order a fact
+ *                                  about the answers (how often a domain was linked) and not a ranking.
  *   its 90-day plan             -> 复测计划, written as recommendations with countable acceptance,
  *                                  never as a forecast.
- *   its scoring appendix        -> 附录：为什么这份报告没有综合评分, which is the honest version of
- *                                  deleting the section.
+ *   its scoring appendix        -> 附录：为什么这份报告没有综合评分, the honest version of deleting it.
  *
  * ---------------------------------------------------------------------------------------------
  * THE HONESTY RULES THIS FILE EXISTS TO KEEP
  * ---------------------------------------------------------------------------------------------
- * 1. COUNTS, NEVER PERCENTAGES. Three runs cannot support a percentage; "2 of 3 runs" is the only
- *    form this pipeline is allowed to print. That is why no string in the copy block below contains
- *    a "%" character and why the one figure has an integer 0-3 axis. `assertNoPercent()` fails the
- *    run if a "数字%" pattern ever reaches the model.
- * 2. THE METHOD IS IN THE DOCUMENT: model, date, web search enabled, runs per question, and that
- *    these are same-day observations from one model. The date and the model name are not in the
- *    data, so `modelSource` and `dateSource` record where each one came from.
- * 3. VERBATIM QUOTES ARE VERBATIM, AND ATTRIBUTED. The excerpts are extracted from the answers at
- *    build time, never typed; only Markdown emphasis and heading markers are removed, and every
- *    excerpt's caption says so.
- * 4. WHAT WAS NOT MEASURED IS STATED: no competitor, no sentiment, no source ranking, one model,
- *    one day, API answers rather than what a browser would show.
- * 5. ok === false IS NEVER A ZERO. The rejected calls are counted, described and excluded; a
- *    question with no completed run renders "未测量" rather than 0.
- * 6. EVERY NUMBER IN THE PROSE IS COMPUTED from the answers, and the claims table asserts that its
- *    quoted evidence is present in the run it cites - a claim with a citation that no longer
- *    matches stops the build instead of reaching a client.
+ * 1. COUNTS, NEVER PERCENTAGES. Three runs cannot support a percentage; "2 of 3 runs" is the only form
+ *    this pipeline is allowed to print. That is why no string in the copy block below contains a "%"
+ *    character and why the figures have integer run axes. `assertNoPercent()` fails the run if a
+ *    "数字%" pattern ever reaches the model.
+ * 2. THE METHOD IS IN THE DOCUMENT: model, date, web search enabled, runs per question, and that these
+ *    are same-day observations from one model. All four now come from the run header, and `modelSource`
+ *    / `dateSource` record that they came from the collector's own record rather than from a flag
+ *    somebody typed at build time.
+ * 3. VERBATIM QUOTES ARE VERBATIM, AND ATTRIBUTED. The excerpts are extracted from the answers at build
+ *    time, never typed; only Markdown emphasis and heading markers are removed, and every excerpt's
+ *    caption says so.
+ * 4. WHAT WAS NOT MEASURED IS STATED: no competitor, no sentiment, no source ranking, one model, one
+ *    day, API answers rather than what a browser would show.
+ * 5. ok === false IS NEVER A ZERO. The rejected calls are counted, described and excluded; a question
+ *    with no completed run renders "未测量" rather than 0.
+ * 6. EVERY NUMBER IN THE PROSE IS COMPUTED from the answers, and the claims list asserts that its
+ *    quoted evidence is present in the run it cites - a claim with a citation that no longer matches
+ *    stops the build instead of reaching a client.
+ * 7. A MISSING INPUT DEGRADES LOUDLY. No aliases in the intake means the entity section says the
+ *    question was never asked, not that the model named the company correctly. No claims with numbers
+ *    means the claims section says so rather than printing a table of nothing. No category vocabulary
+ *    means the 品类词 column is 未测量 rather than a row of zeros.
  *
  * ---------------------------------------------------------------------------------------------
  * WHY THE DATA IS FILTERED BEFORE ANYTHING ELSE
  * ---------------------------------------------------------------------------------------------
- * The answers file contains 60 lines: 30 completed answers (ok: true) and 30 HTTP 429 rejections
- * written by an earlier run that used the same filename. The rejections have empty `answer` strings
- * and null mention flags. A report built over all 60 lines would be half blanks and would read as
- * "the brand was not mentioned" 30 extra times - a fabricated finding produced by a rate limit. So
- * the filter is the first statement in this file's logic, it is asserted (30 / 30), and the rejected
- * lines are reported in the document rather than silently dropped.
+ * A run file can contain failed calls: HTTP rejections with an empty `answer` and null mention flags.
+ * A report built over them would count "the brand was not mentioned" for every rejection - a fabricated
+ * finding produced by a rate limit. So the filter is the first statement in this file's logic, and the
+ * rejected lines are reported in the document rather than silently dropped.
  *
- * Usage (this report is written in Chinese on purpose: the measured object is a Chinese-language
- * model answering Chinese questions, and an English scaffold around Chinese quotes would be a
- * translation of a measurement - see the lang note below):
+ * Usage:
  *
- *   npm run report:visibility -- --answers=<file.jsonl> --model-name=doubao-seed-2-1-lite-260915
+ *   npm run report:visibility -- --answers=..\clients\runs\acme-2026-10-07.jsonl
  *
- *   --answers       required. The JSONL of recorded answers. A relative path is resolved against
- *                   this repository and then against the workspace above it.
- *   --model-name    required. NOT in the JSONL: the file has no model field (see methodSource* in
- *                   the copy block). A report that cannot name its model must not be produced, so
- *                   this is an error rather than an empty cell.
- *   --brand         legal name of the measured company.
+ *   --answers       required (--run is accepted as an alias). The JSONL written by
+ *                   scripts/report/run-bank.mts: a run-header line, one line per answer, an optional
+ *                   run-footer line. A relative path is resolved against this repository and then
+ *                   against the workspace above it.
+ *   --model-name    the model id, for a file with NO run-header. With a header this is checked against
+ *                   the header when given, and never required.
+ *   --brand         the measured company's name, for a file with NO run-header (whose aliases it must
+ *                   also carry, via --alias).
+ *   --alias         one alias per flag, for a file with NO run-header.
+ *   --web-search    yes|no, for a file with NO run-header (the header carries it otherwise).
  *   --slug          ASCII slug for the output directory.
- *   --date          measurement date; defaults to the YYYY-MM-DD in the answers filename.
+ *   --date          measurement date; defaults to the header's, then to the filename's YYYY-MM-DD.
  *   --out           output directory; defaults to reports/ai-visibility-<slug>-<date>.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { findMention } from "../../lib/answer-check/rules.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "..", "..");
@@ -132,34 +162,36 @@ function arg(name: string): string | undefined {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
   return hit ? hit.slice(name.length + 3) : undefined;
 }
+const argsOf = (name: string): string[] =>
+  process.argv.filter((a) => a.startsWith(`--${name}=`)).map((a) => a.slice(name.length + 3));
 
-const answersArg = arg("answers");
-const modelName = (arg("model-name") || "").trim();
+const answersArg = arg("answers") || arg("run");
 
-if (!answersArg || !modelName) {
+if (!answersArg) {
   console.error(
     [
       "Usage:",
-      "  npm run report:visibility -- --answers=<file.jsonl> --model-name=<model id>",
-      "      [--brand=<legal name>] [--slug=<ascii-slug>] [--date=YYYY-MM-DD] [--out=DIR]",
+      "  npm run report:visibility -- --answers=<run file.jsonl> [--slug=<ascii-slug>] [--out=DIR]",
       "",
-      "Both --answers and --model-name are required, and the second one is the point: the JSONL",
-      "records no model identifier (its fields are q, group, question, run, ok, status, errorBody,",
-      "ms, mentionsBrand, mentionsCoatings, domains, usage, answer), so the model name is an",
-      "input. Without it the document cannot state what was measured, and a visibility report that",
-      "cannot name its model is worse than no report: the reader has no way to know what the",
-      "counts describe, or when to re-measure.",
+      "  --answers   the JSONL written by scripts/report/run-bank.mts (--run is an alias). It starts",
+      "              with a `kind: run-header` line that carries the model, the date, the runs per",
+      "              question, the web-search state and the question bank - so none of those has to be",
+      "              passed in by hand, and the report's first section can print what was asked.",
+      "",
+      "              A file WITHOUT a header (the old probe's output) still renders, but then the",
+      "              identity has to come from the command line: --model-name, --brand, --alias,",
+      "              --web-search. The report says the provenance is missing rather than inventing it.",
     ].join("\n")
   );
   process.exit(2);
 }
 
 /**
- * --answers resolves against the repository first and the workspace second, because the measured
- * answers deliberately live OUTSIDE this repository: they quote a client, name a client, and
- * `reports/` is ignored for exactly that reason. The workspace above the repo is where runs are
- * kept, so both `study-runs/x.jsonl` and an absolute path work, and a typo fails loudly below
- * instead of producing an empty report from an empty file.
+ * --answers resolves against the repository first and the workspace second, because run files
+ * deliberately live OUTSIDE this repository: they quote a client, name a client, and `reports/` is
+ * ignored for exactly that reason. The workspace above the repo is where runs are kept, so both
+ * `clients/runs/x.jsonl` and an absolute path work, and a typo fails loudly below instead of producing
+ * an empty report from an empty file.
  */
 function resolveInput(p: string): string {
   if (/^[a-zA-Z]:[\\/]/.test(p) || p.startsWith("/")) return p;
@@ -174,18 +206,305 @@ if (!existsSync(answersPath)) {
   process.exit(1);
 }
 
-const BRAND = (arg("brand") || "江苏冠军科技集团股份有限公司").trim();
+/* ------------------------------------------------------------------ */
+/* The run file: header, answers, footer                              */
+/* ------------------------------------------------------------------ */
+
+type RunLine = {
+  kind?: string;
+  id?: string;
+  q: number;
+  group: string;
+  question: string;
+  run: number;
+  ok: boolean;
+  status: number | string | null;
+  errorBody: string | null;
+  ms: number;
+  attempts?: number;
+  questionAttempts?: number;
+  truncated?: boolean;
+  mentionsBrand: boolean | null;
+  mentionsPrimary?: boolean | null;
+  mentionsCoatings: boolean | null;
+  domains: string[];
+  usage: Record<string, any> | null;
+  answer: string;
+};
+
+type RunHeader = {
+  kind: "run-header";
+  schema?: number;
+  collector?: { script?: string; version?: number; script_sha256?: string; started_at?: string };
+  run?: {
+    mode?: string;
+    model?: string | null;
+    model_source?: string;
+    date?: string;
+    runs_per_question?: number;
+    web_search?: boolean;
+    language?: string;
+    out_file?: string;
+    endpoint?: string | null;
+    api_key_env?: string | null;
+    timeout_ms?: number;
+    attempts_per_run?: number;
+    gap_ms?: number;
+    backoff_ms?: number;
+    answers_source?: string;
+  };
+  bank?: {
+    kind?: string;
+    path?: string;
+    sha256?: string;
+    version?: number | string | null;
+    generated_at?: string | null;
+    generated_on?: string | null;
+    fingerprint?: string | null;
+    fingerprint_rule?: string | null;
+    fingerprint_verified?: boolean | null;
+    fingerprint_recomputed?: string | null;
+    generator?: { script?: string; version?: number; script_sha256?: string; git_commit?: string | null } | null;
+    approval?: {
+      approved_by?: string;
+      approved_on?: string;
+      frozen_note?: string;
+      expected_approver_from_intake?: string;
+    } | null;
+    totals?: Record<string, any> | null;
+    archetypes?: {
+      id: string;
+      label: string;
+      short: string;
+      measures: string;
+      target: number;
+      generated: number;
+      status: string;
+    }[];
+    questions?: { q: number; id: string; group: string; text: string }[];
+    name_questions?: { q: number; id: string; group: string; text: string; slot: string; value: string }[];
+  };
+  intake?: {
+    requested_path?: string;
+    resolved_path?: string | null;
+    sha256_expected?: string | null;
+    sha256_actual?: string | null;
+    sha256_matches?: boolean | null;
+    client?: string;
+    note?: string;
+  };
+  brand?: {
+    name?: string;
+    tokens?: { value: string; field: string }[];
+    tokens_source?: string;
+    bank_tokens_not_in_intake?: { value: string; field: string }[];
+  };
+  category_tokens?: { value: string; field: string }[];
+};
+
+type RunFooter = {
+  kind: "run-footer";
+  finished_at?: string;
+  calls?: {
+    attempted?: number;
+    completed?: number;
+    failed?: number;
+    timeouts?: number;
+    truncated?: number;
+    replay_missing?: number;
+    note?: string;
+  };
+  tokens_total?: number;
+  lines?: number;
+};
+
+const rawLines = readFileSync(answersPath, "utf8")
+  .split(/\r?\n/)
+  .filter((l) => l.trim().length > 0);
+
+const parsedAll: RunLine[] = rawLines.map((line, i) => {
+  try {
+    return JSON.parse(line) as RunLine;
+  } catch {
+    console.error(`Line ${i + 1} of ${answersPath} is not JSON. Nothing was written.`);
+    process.exit(1);
+  }
+});
+
+const header: RunHeader | null = (parsedAll.find((l) => l.kind === "run-header") as RunHeader) ?? null;
+const footer: RunFooter | null = (parsedAll.find((l) => l.kind === "run-footer") as RunFooter) ?? null;
+const parsed = parsedAll.filter((l) => l.kind === undefined || l.kind === "");
+const parsedLines = parsed.length;
 
 /**
- * The output directory slug is ASCII and separate from the brand on purpose: the brand is Chinese,
+ * THE FILTER. Everything downstream reads `answers`, and `rejected` exists only to be described.
+ *
+ * WHY IT IS THE FIRST STATEMENT. Including a rejected line adds a row whose mention flags are null and
+ * whose answer is empty, which a renderer turns into another "not mentioned" outcome and a headline
+ * that is wrong in the direction of bad news.
+ */
+const answers = parsed.filter((r) => r.ok === true);
+const rejected = parsed.filter((r) => r.ok !== true);
+
+if (answers.length === 0) {
+  console.error(
+    `${answersPath} has ${parsedLines} answer line(s) and none of them has ok === true. ` +
+      "There is nothing measured to report, and an empty report is not a report."
+  );
+  process.exit(1);
+}
+if (answers.some((r) => !r.answer || r.answer.trim().length === 0)) {
+  console.error(
+    "A line marked ok === true has an empty answer. That is a contradiction in the input, not a zero " +
+      "mention: it would be counted as 'the brand was not mentioned' when nothing was read."
+  );
+  process.exit(1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Identity: the brand, its aliases, the model, the date              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * THE BRAND COMES FROM THE RUN HEADER, which got it from the intake the bank records. This is the point
+ * of the whole pipeline: the previous version of this file carried one company's four spellings as a
+ * literal, so it could only ever describe that company.
+ */
+const headerBrandTokens = (header?.brand?.tokens ?? [])
+  .filter((t) => typeof t?.value === "string" && t.value.trim().length > 0)
+  .map((t) => ({ value: t.value.trim(), field: String(t.field ?? "") }));
+
+const brandArg = (arg("brand") || "").trim();
+const aliasArgs = argsOf("alias").map((a) => a.trim()).filter(Boolean);
+
+if (!header && !brandArg) {
+  console.error(
+    [
+      `${answersPath.split(/[\\/]/).pop()} has no run-header, so the measured brand cannot be read from it.`,
+      "",
+      "Pass --brand=<legal name> (and --alias=<name> for each other spelling the intake lists, plus",
+      "--model-name and --web-search). Mention detection is defined as 'the answer contains the brand",
+      "or one of its aliases': with no names every count would be zero for a reason that is not about",
+      "the model.",
+    ].join("\n")
+  );
+  process.exit(2);
+}
+
+const brandTokens: { value: string; field: string }[] = header
+  ? headerBrandTokens
+  : [{ value: brandArg, field: "--brand" }, ...aliasArgs.map((a) => ({ value: a, field: "--alias" }))];
+
+if (brandTokens.length === 0) {
+  console.error(
+    `${answersPath} has a run-header but it records no brand spellings, so nothing can be matched. ` +
+      "Re-run the measurement with scripts/report/run-bank.mts, which takes them from the intake."
+  );
+  process.exit(1);
+}
+const BRAND = header?.brand?.name?.trim() || brandArg || brandTokens[0].value;
+
+/**
+ * THE CATEGORY VOCABULARY, from the run header (which took it from the intake's
+ * industry.category_terms). It is what the 品类词 column counts, and it is declared here - before the
+ * per-question facts are built - because "was this column measurable at all" decides whether that column
+ * carries a count or 未测量. See coatingsOrNull().
+ */
+const categoryTokensForReport = (header?.category_tokens ?? []).filter(
+  (t) => typeof t?.value === "string" && t.value.trim().length > 0
+);
+/** False when the intake lists no category terms: the 品类词 column is then NOT MEASURED, not zero. */
+const hasCategoryTokens = categoryTokensForReport.length > 0;
+
+const modelName = (arg("model-name") || "").trim();
+const headerModel = (header?.run?.model ?? "").toString().trim();
+if (modelName && headerModel && modelName !== headerModel) {
+  console.error(
+    [
+      `--model-name=${modelName} contradicts the run header, which records ${headerModel}.`,
+      "",
+      "The header is the collector's own record of what was called; a flag passed to this script is not",
+      "evidence about the measurement. Refusing rather than picking one: a report that names the wrong",
+      "model describes a measurement nobody made.",
+    ].join("\n")
+  );
+  process.exit(2);
+}
+
+/**
+ * THE MODEL, AS THE DOCUMENT PRINTS IT. A headerless file needs --model-name. A dry run has no model at
+ * all and says so in those words - naming one would be the fabrication this whole section exists to
+ * prevent.
+ */
+const runMode = header?.run?.mode ?? "unknown";
+const modelDisplay = headerModel
+  ? headerModel
+  : runMode === "dry-run"
+    ? "未调用模型（dry-run 合成回答）"
+    : runMode === "replay"
+      ? "未调用模型（本次为回放上一次运行的记录）"
+      : modelName || "";
+if (!modelDisplay) {
+  console.error(
+    [
+      `${answersPath.split(/[\\/]/).pop()} has no run-header and --model-name was not given.`,
+      "",
+      "The document cannot state what was measured without it, and a visibility report that cannot name",
+      "its model is worse than no report: the reader has no way to know what the counts describe.",
+    ].join("\n")
+  );
+  process.exit(2);
+}
+
+const modelSource = headerModel
+  ? `运行文件 run-header 的 run.model（由采集脚本 ${header?.collector?.script ?? "scripts/report/run-bank.mts"} 写入）`
+  : runMode === "dry-run" || runMode === "replay"
+    ? `运行文件 run-header 的 run.mode=${runMode}：本次没有调用模型`
+    : "--model-name（运行文件没有 run-header）";
+
+const fileNameDate = (answersPath.match(/(\d{4}-\d{2}-\d{2})/) || [])[1];
+const measuredOn = (arg("date") || header?.run?.date || fileNameDate || "").trim();
+if (!measuredOn) {
+  console.error(
+    [
+      `No date: ${answersPath} has no YYYY-MM-DD in its name, its header carries none and --date was not given.`,
+      "The measurement date is part of the method paragraph; an undated report cannot be compared with a",
+      "re-test.",
+    ].join("\n")
+  );
+  process.exit(1);
+}
+const dateSource = arg("date")
+  ? "--date on the command line"
+  : header?.run?.date
+    ? "运行文件 run-header 的 run.date（由采集脚本写入）"
+    : `数据文件名 ${answersPath.split(/[\\/]/).pop()}`;
+
+const webSearch = header
+  ? header.run?.web_search === true
+  : (() => {
+      const raw = (arg("web-search") || "").trim().toLowerCase();
+      if (raw === "yes" || raw === "no") return raw === "yes";
+      console.error(
+        [
+          `${answersPath.split(/[\\/]/).pop()} has no run-header, so whether web search was enabled cannot be read from it.`,
+          "",
+          "Pass --web-search=yes or --web-search=no. This is a claim about how the answers were produced,",
+          "and the report prints it as fact; guessing it (the previous version assumed 'yes') is how a",
+          "method section starts describing a run configuration nobody used.",
+        ].join("\n")
+      );
+      process.exit(2);
+    })();
+
+/**
+ * The output directory slug is ASCII and separate from the brand on purpose: the brand is often Chinese,
  * a directory name derived from it by stripping non-ASCII characters would be empty, and a report
  * directory called `ai-visibility--2026-10-06` is one nobody can find again.
  *
- * THREE SOURCES, IN THIS ORDER: --slug, then the brand if it happens to be ASCII, then the answers
- * filename with its date removed (`champion-coatings-2026-10-06.jsonl` -> `champion-coatings`). The
- * filename fallback is what makes the documented command line work with no slug argument at all;
- * the one thing this file will not do is invent a name, because the directory is how a person finds
- * the report again six months later.
+ * SOURCES, IN THIS ORDER: --slug, then the brand if it happens to be ASCII, then the run filename with
+ * its date removed. The run filename fallback is what makes the documented command line work with no slug
+ * argument at all.
  */
 function asciiSlug(text: string): string {
   return text
@@ -196,32 +515,16 @@ function asciiSlug(text: string): string {
     .toLowerCase();
 }
 
-const slug = (
-  arg("slug") ||
-  asciiSlug(BRAND) ||
-  asciiSlug(answersPath.split(/[\\/]/).pop() ?? "")
-).toLowerCase();
+const slug = (arg("slug") || asciiSlug(BRAND) || asciiSlug(answersPath.split(/[\\/]/).pop() ?? "")).toLowerCase();
 if (!slug) {
   console.error(
     [
-      "No output-directory slug could be derived: --slug is empty, --brand has no ASCII characters",
-      `and ${answersPath.split(/[\\/]/).pop()} yields nothing either.`,
-      "Pass an ASCII --slug (for example --slug=champion-coatings).",
+      "No output-directory slug could be derived: --slug is empty, --brand has no ASCII characters and",
+      `${answersPath.split(/[\\/]/).pop()} yields nothing either.`,
+      "Pass an ASCII --slug.",
     ].join("\n")
   );
   process.exit(2);
-}
-
-const fileNameDate = (answersPath.match(/(\d{4}-\d{2}-\d{2})/) || [])[1];
-const measuredOn = (arg("date") || fileNameDate || "").trim();
-if (!measuredOn) {
-  console.error(
-    [
-      `No date: ${answersPath} has no YYYY-MM-DD in its name and --date was not given.`,
-      "The JSONL carries no timestamp either, so the date cannot be recovered from the data.",
-    ].join("\n")
-  );
-  process.exit(1);
 }
 
 const outDir = resolve(REPO, arg("out") || join("reports", `ai-visibility-${slug}-${measuredOn}`));
@@ -231,96 +534,272 @@ const generatedAt = new Date().toISOString();
 const stamp = generatedAt.slice(0, 10);
 
 /* ------------------------------------------------------------------ */
+/* The taxonomy: the bank's archetypes, not this file's own strings   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The groups come from the run header, which copied them from the bank. A headerless file is grouped by
+ * the `group` values its lines carry, with the group id as its own label: no fallback to a
+ * ["category","ambig","fact"] constant, because that constant is one client's three groups and printing
+ * "行业问题（不含品牌名）" over somebody else's questions is exactly the defect this rewrite removes.
+ */
+const headerArchetypes = header?.bank?.archetypes ?? [];
+const observedGroups: string[] = [];
+for (const r of answers) if (!observedGroups.includes(r.group)) observedGroups.push(r.group);
+
+const groupOrder = observedGroups.length > 0 ? observedGroups : headerArchetypes.map((a) => a.id);
+
+type GroupMeta = { id: string; label: string; short: string; measures: string; target: number; generated: number; status: string };
+const groupMeta: GroupMeta[] = groupOrder.map((id) => {
+  const fromHeader = headerArchetypes.find((a) => a.id === id);
+  return {
+    id,
+    label: fromHeader?.label ?? id,
+    short: fromHeader?.short ?? id,
+    measures: fromHeader?.measures ?? "",
+    target: Number(fromHeader?.target ?? 0),
+    generated: Number(fromHeader?.generated ?? 0),
+    status: String(fromHeader?.status ?? ""),
+  };
+});
+
+/* ------------------------------------------------------------------ */
+/* The bank page: what was asked, and who approved it                 */
+/* ------------------------------------------------------------------ */
+
+const bankQuestions = (
+  header?.bank?.questions ??
+  answers.map((r) => ({ q: r.q, id: r.id ?? `Q${r.q}`, group: r.group, text: r.question }))
+).map((q) => ({
+  q: Number(q.q),
+  id: String(q.id),
+  group: String(q.group),
+  text: String(q.text),
+  namesBrand: brandTokens.some((t) => findMention(String(q.text).toLowerCase(), t.value) !== -1),
+}));
+
+const nameQuestions = header?.bank?.name_questions ?? [];
+
+/**
+ * The bank's provenance, as rows, so the two renderers print the same labels and the same numbers. The
+ * DOCX and the Markdown are two renderings of one model; composing these sentences in Python would give
+ * the same fact two authors.
+ */
+const bankApprovedBy = (header?.bank?.approval?.approved_by ?? "").trim();
+const bankApprovedOn = (header?.bank?.approval?.approved_on ?? "").trim();
+const intakeExpectedApprover = (header?.bank?.approval?.expected_approver_from_intake ?? "").trim();
+const frozenNote = (header?.bank?.approval?.frozen_note ?? "").trim();
+const bankFingerprint = (header?.bank?.fingerprint ?? "").trim();
+const bankGenerator = header?.bank?.generator
+  ? `${header.bank.generator.script ?? "?"} · v${header.bank.generator.version ?? "?"}` +
+    (header.bank.generator.script_sha256 ? ` · script sha256 ${String(header.bank.generator.script_sha256).slice(0, 12)}` : "")
+  : "";
+const intakeDrift =
+  header?.intake?.sha256_matches === false
+    ? `注意：intake 在题库生成之后被改过（题库记录 ${header.intake.sha256_expected}，文件现在是 ${header.intake.sha256_actual}）。` +
+      "本次提问用的仍是题库里的原题面（题面按指纹冻结），但品牌名与别名的判定用的是文件当前内容：" +
+      `题库里还在问、而 intake 已经不再列出的写法是 ${(header.brand?.bank_tokens_not_in_intake ?? []).map((t) => t.value).join("、") || "（没有）"}。` +
+      "两次测量的判定口径不同时，数字不能直接并列。"
+    : "";
+
+const bankPageRows: [string, string][] = header
+  ? [
+      ["题库文件", header.bank?.path ?? ""],
+      [
+        "题库指纹（sha256，题面清单）",
+        `${bankFingerprint || "（题库没有记录指纹）"}` +
+          (header.bank?.fingerprint_verified === true
+            ? "　✓ 采集脚本按 bank.fingerprint_rule 重算并核对通过"
+            : header.bank?.fingerprint_verified === false
+              ? "　✗ 与重算结果不一致"
+              : "　（未核对：bank.fingerprint_rule 不是本采集脚本实现的规则）"),
+      ],
+      ["指纹规则", header.bank?.fingerprint_rule ?? "（未记录）"],
+      ["题库生成器", bankGenerator || "（未记录）"],
+      ["题库生成日期", String(header.bank?.generated_on ?? header.bank?.generated_at ?? "（未记录）")],
+      [
+        "来源 intake",
+        `${header.intake?.resolved_path ?? "（未记录）"}` +
+          (header.intake?.sha256_actual ? `　sha256 ${header.intake.sha256_actual}` : "") +
+          (header.intake?.sha256_matches === true
+            ? "　✓ 与题库记录一致"
+            : header.intake?.sha256_matches === false
+              ? "　✗ 与题库记录不一致（题库生成后被改过）"
+              : "　（题库未记录 intake 哈希）"),
+      ],
+      ["批准人 / 批准日期", bankApprovedBy ? `${bankApprovedBy}　${bankApprovedOn || "（未写日期）"}` : "（空：题库还没有人签字）"],
+      ["intake 里填写的确认人", intakeExpectedApprover || "（intake 未填）"],
+      ["本次运行的语言 / 题数", `${header.run?.language ?? "?"}　${bankQuestions.length} 题`],
+      [
+        "本次运行的文件",
+        `${answersPath}　（第 1 行是采集脚本写入的 provenance 头，共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`,
+      ],
+    ]
+  : [
+      ["题库文件", "（这份运行文件没有 run-header，所以没有题库路径）"],
+      ["题库指纹", "（未记录：本次运行由没有 provenance 头的采集脚本写入）"],
+      ["批准人 / 批准日期", "（未记录）"],
+      ["来源 intake", "（未记录）"],
+      ["题目来源", `按每行 answer 的 group 字段分组；共 ${bankQuestions.length} 题`],
+      ["本次运行的文件", `${answersPath}　（共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`],
+    ];
+
+/* ------------------------------------------------------------------ */
 /* The answers                                                        */
 /* ------------------------------------------------------------------ */
 
-type Answer = {
-  q: number;
-  group: string;
-  question: string;
-  run: number;
-  ok: boolean;
-  status: number | string | null;
-  errorBody: string | null;
-  ms: number;
-  mentionsBrand: boolean | null;
-  mentionsCoatings: boolean | null;
-  domains: string[];
-  usage: Record<string, any> | null;
-  answer: string;
-};
-
-const lines = readFileSync(answersPath, "utf8")
-  .split(/\r?\n/)
-  .filter((l) => l.trim().length > 0);
-
-const parsed: Answer[] = lines.map((line, i) => {
-  try {
-    return JSON.parse(line) as Answer;
-  } catch {
-    console.error(`Line ${i + 1} of ${answersPath} is not JSON. Nothing was written.`);
-    process.exit(1);
-  }
-});
-
-/**
- * THE FILTER. Everything downstream reads `answers`, and `rejected` exists only to be described.
- *
- * WHY IT IS ASSERTED RATHER THAN TRUSTED. The failure this guards against is silent: including the
- * rejected lines adds 30 rows whose mention flags are null and whose answers are empty, which a
- * renderer turns into 30 more "not mentioned" outcomes and a headline that is wrong in the
- * direction of bad news. The assertion below states the expected shape of this dataset so that a
- * different shape stops the run instead of quietly changing the numbers.
- */
-const answers = parsed.filter((r) => r.ok === true);
-const rejected = parsed.filter((r) => r.ok !== true);
-
-if (answers.length === 0) {
-  console.error(
-    `${answersPath} has ${parsed.length} line(s) and none of them has ok === true. ` +
-      "There is nothing measured to report, and an empty report is not a report."
-  );
-  process.exit(1);
-}
-if (answers.some((r) => !r.answer || r.answer.trim().length === 0)) {
-  console.error(
-    "A line marked ok === true has an empty answer. That is a contradiction in the input, not a " +
-      "zero mention: it would be counted as 'the brand was not mentioned' when nothing was read."
-  );
-  process.exit(1);
-}
-
-const RUNS_PER_QUESTION = Math.max(...answers.map((r) => r.run));
+const runsPerQuestion = Math.max(
+  Number(header?.run?.runs_per_question ?? 0) || 0,
+  Math.max(...answers.map((r) => r.run))
+);
 
 const questionIds = [...new Set(answers.map((r) => r.q))].sort((a, b) => a - b);
-const byQuestion = new Map<number, Answer[]>();
+const byQuestion = new Map<number, RunLine[]>();
 for (const r of answers) {
   if (!byQuestion.has(r.q)) byQuestion.set(r.q, []);
   byQuestion.get(r.q)!.push(r);
 }
 for (const list of byQuestion.values()) list.sort((a, b) => a.run - b.run);
 
-const GROUP_ORDER = ["category", "ambig", "fact"];
-
 const totalTokens = answers.reduce((s, r) => s + (r.usage?.total_tokens ?? 0), 0);
 const webSearchCalls = answers.reduce((s, r) => s + (r.usage?.tool_usage?.web_search ?? 0), 0);
 const citationEvents = answers.reduce((s, r) => s + (r.domains?.length ?? 0), 0);
 const answerLengths = answers.map((r) => r.answer.length);
 
+const attemptsFromLines =
+  answers.reduce((s, r) => s + Number(r.attempts ?? 0), 0) + rejected.reduce((s, r) => s + Number(r.attempts ?? 0), 0);
+const attemptsTotal = footer?.calls?.attempted ?? attemptsFromLines;
+const timeoutsTotal = footer?.calls?.timeouts ?? [...answers, ...rejected].filter((r) => r.status === "timeout").length;
+const truncatedTotal = footer?.calls?.truncated ?? [...answers, ...rejected].filter((r) => r.truncated === true).length;
+
+/* ------------------------------------------------------------------ */
+/* The measured facts, as numbers this file computes                  */
+/* ------------------------------------------------------------------ */
+
+type QuestionFact = {
+  q: number;
+  id: string;
+  group: string;
+  groupShort: string;
+  question: string;
+  namesBrand: boolean;
+  okRuns: number;
+  failedRuns: number;
+  runs: number;
+  brandMentions: number;
+  /** null when the run recorded no category vocabulary: NOT MEASURED, never 0. See coatingsOrNull(). */
+  coatingsMentions: number | null;
+  primaryMentions: number;
+  runMarks: string[];
+};
+
+/** How many per-run columns the report prints. Three is what the DOCX table's geometry has room for. */
+const RUN_COLUMNS = 3;
+
+const COPY_NOT_MEASURED = "未测量";
+const COPY_NOT_RUN = "未运行";
+
+/**
+ * A COLUMN THAT WAS NOT MEASURED IS null, NOT 0, and this is the one place where that decision is made.
+ *
+ * WHY IT MATTERS: the 品类词 mention count answers "was this answer demonstrably about the client's
+ * industry". When the intake lists no category terms there is nothing to match, and printing "0 / 3" per
+ * question would read as "the model never talked about this industry" - a finding produced by a missing
+ * input. null travels into the model, the DOCX, the workbook and the Markdown as 未测量.
+ */
+const coatingsOrNull = (count: number): number | null => (hasCategoryTokens ? count : null);
+
+const questions: QuestionFact[] = questionIds.map((q) => {
+  const list = byQuestion.get(q)!;
+  const sample = list[0];
+  const bankRecord = bankQuestions.find((b) => b.q === q);
+  const group = sample.group;
+  const meta = groupMeta.find((g) => g.id === group);
+  const marks = Array.from({ length: RUN_COLUMNS }, (_, i) => {
+    const runNo = i + 1;
+    if (runNo > runsPerQuestion) return COPY_NOT_RUN;
+    const r = list.find((x) => x.run === runNo);
+    if (!r) return COPY_NOT_MEASURED;
+    return r.mentionsBrand ? "✓" : "—";
+  });
+  return {
+    q,
+    id: bankRecord?.id ?? sample.id ?? `Q${q}`,
+    group,
+    groupShort: meta?.short ?? group,
+    question: sample.question,
+    namesBrand: bankRecord?.namesBrand ?? brandTokens.some((t) => findMention(sample.question.toLowerCase(), t.value) !== -1),
+    okRuns: list.length,
+    failedRuns: rejected.filter((r) => r.q === q).length,
+    runs: runsPerQuestion,
+    brandMentions: list.filter((r) => r.mentionsBrand === true).length,
+    coatingsMentions: coatingsOrNull(list.filter((r) => r.mentionsCoatings === true).length),
+    primaryMentions: list.filter((r) => primaryMentionOf(r) === true).length,
+    runMarks: marks,
+  };
+});
+
+/** A question "names the brand" when its own text carries one of the brand's spellings. */
+const nonBrandQuestions = questions.filter((q) => !q.namesBrand);
+const promptedQuestions = questions.filter((q) => q.namesBrand);
+
+const groups = groupOrder
+  .map((id) => {
+    const inGroup = questions.filter((q) => q.group === id);
+    const meta = groupMeta.find((g) => g.id === id)!;
+    return {
+      id,
+      label: meta.label,
+      short: meta.short,
+      purpose: meta.measures,
+      questions: inGroup.length,
+      runs: inGroup.reduce((s, q) => s + q.okRuns, 0),
+      brandMentions: inGroup.reduce((s, q) => s + q.brandMentions, 0),
+      coatingsMentions: coatingsOrNull(inGroup.reduce((s, q) => s + (q.coatingsMentions ?? 0), 0)),
+      namesBrand: inGroup.some((q) => q.namesBrand),
+    };
+  })
+  .filter((g) => g.questions > 0);
+
+const totals = {
+  runs: questions.reduce((s, q) => s + q.okRuns, 0),
+  brandMentions: questions.reduce((s, q) => s + q.brandMentions, 0),
+  coatingsMentions: coatingsOrNull(questions.reduce((s, q) => s + (q.coatingsMentions ?? 0), 0)),
+  primaryMentions: questions.reduce((s, q) => s + q.primaryMentions, 0),
+  nonBrandQuestions: nonBrandQuestions.length,
+  nonBrandRuns: nonBrandQuestions.reduce((s, q) => s + q.okRuns, 0),
+  nonBrandBrandMentions: nonBrandQuestions.reduce((s, q) => s + q.brandMentions, 0),
+  nonBrandCoatingsMentions: coatingsOrNull(nonBrandQuestions.reduce((s, q) => s + (q.coatingsMentions ?? 0), 0)),
+  promptedQuestions: promptedQuestions.length,
+  promptedRuns: promptedQuestions.reduce((s, q) => s + q.okRuns, 0),
+  promptedBrandMentions: promptedQuestions.reduce((s, q) => s + q.brandMentions, 0),
+};
+
+/** The questions in the no-brand groups that were never mentioned - the reach findings. */
+const zeroMentionNonBrand = nonBrandQuestions.filter((q) => q.brandMentions === 0);
+const mentionedNonBrand = nonBrandQuestions.filter((q) => q.brandMentions > 0);
+
+/**
+ * THE 品类词 CELL, in one function for both the Markdown tables and the model: "3 / 3" when the column was
+ * measured, 未测量 when the run recorded no category vocabulary. A cell that prints "0 / 3" for a column
+ * nobody could measure is the fabricated finding this whole pipeline is built to avoid, and one function is
+ * how the two renderers cannot format it differently.
+ */
+const coatingsCell = (mentions: number | null, runs: number): string =>
+  mentions === null ? COPY_NOT_MEASURED : `${mentions} / ${runs}`;
+
 /* ------------------------------------------------------------------ */
 /* Verbatim excerpts - extracted, never typed                         */
 /* ------------------------------------------------------------------ */
 
-const BRAND_TOKENS = ["冠军股份", "冠军科技", "冠军漆", "鲸海漆"];
-
 /**
  * Markdown emphasis and heading markers out, nothing else.
  *
- * WHY THIS IS THE ONLY EDIT PERMITTED. The finding in the entity section is about the model's own
- * words, so the words have to be the model's. `**` and a leading `#` are transport formatting that
- * the answer text carries because it was written as Markdown; keeping them in a Word table would
- * print asterisks at a client, and deleting them by hand is how a quote stops being a quote. The
- * rule is applied to every excerpt by this one function, and every excerpt's caption says so.
+ * WHY THIS IS THE ONLY EDIT PERMITTED. The finding is about the model's own words, so the words have to be
+ * the model's. `**` and a leading `#` are transport formatting that the answer text carries because it was
+ * written as Markdown; keeping them in a Word table would print asterisks at a client, and deleting them
+ * by hand is how a quote stops being a quote. The rule is applied to every excerpt by this one function,
+ * and every excerpt's caption says so.
  */
 function plain(text: string): string {
   return text
@@ -341,10 +820,6 @@ function headOf(text: string, limit: number): string {
 /**
  * A cut excerpt that ends on a section label ("补充信息：") loses that label, because the material it
  * labels is exactly what the cut removed - the words end up promising content that is not there.
- *
- * The rule is narrow on purpose: the line has to be short and end with a full-width colon, which is
- * what a Chinese subheading looks like. A sentence that happens to end with a colon is kept, and the
- * caption under every excerpt still says it was truncated.
  */
 function trimTrailingLabel(text: string): string {
   const lines = text.split("\n");
@@ -361,14 +836,10 @@ function trimTrailingLabel(text: string): string {
 }
 
 /**
- * The two lines that carry an answer's conclusion: its first non-empty line, and the next one -
- * unless that next line is only a label ("公司核心信息说明："), in which case it says nothing on its
- * own and is dropped.
- *
- * WHY THE SECOND LINE IS NEEDED AT ALL: the answer to Q6 run 3 opens with the question restated and
- * puts its actual conclusion on the following line as a heading ("不是同一家公司"). Quoting the
- * first line alone would hide the one sentence in this dataset that can be read as the opposite of
- * the other two runs - which is precisely the finding, so the excerpt rule has to keep it.
+ * The two lines that carry an answer's conclusion: its first non-empty line, and the next one - unless
+ * that next line is only a label, in which case it says nothing on its own and is dropped. An answer that
+ * restates the question and puts its conclusion on the following line as a heading would lose the
+ * conclusion if only the first line were quoted.
  */
 function conclusionExcerpt(answer: string): string {
   const lines = answer
@@ -381,312 +852,33 @@ function conclusionExcerpt(answer: string): string {
   return plain(!second || secondIsOnlyALabel ? head : `${head}\n${second}`);
 }
 
-function firstRun(q: number): Answer {
+function firstRun(q: number): RunLine {
   const list = byQuestion.get(q);
   if (!list || list.length === 0) throw new Error(`question ${q} has no completed run`);
   return list[0];
 }
 
-function run(q: number, n: number): Answer {
+function runOf(q: number, n: number): RunLine {
   const hit = byQuestion.get(q)?.find((r) => r.run === n);
   if (!hit) throw new Error(`question ${q} has no completed run ${n}`);
   return hit;
 }
-
-function sentenceWithBrand(answer: string): string {
-  const sentences = plain(answer)
-    .split(/(?<=。)/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const hit = sentences.find((s) => BRAND_TOKENS.some((t) => s.includes(t)));
-  return hit ?? sentences[0] ?? "";
-}
-
-/** Windows that follow each occurrence of 简称, used to read which abbreviation an answer used. */
-function abbreviationWindows(answer: string): string[] {
-  const out: string[] = [];
-  let i = answer.indexOf("简称");
-  while (i >= 0) {
-    out.push(answer.slice(i, i + 14));
-    i = answer.indexOf("简称", i + 2);
-  }
-  return out;
-}
-
-/* ------------------------------------------------------------------ */
-/* The measured facts, as numbers this file computes                  */
-/* ------------------------------------------------------------------ */
-
-type QuestionFact = {
-  q: number;
-  group: string;
-  groupShort: string;
-  question: string;
-  okRuns: number;
-  failedRuns: number;
-  runs: number;
-  brandMentions: number;
-  coatingsMentions: number;
-  runMarks: string[];
-};
-
-const groupLabel: Record<string, string> = {
-  category: "行业问题（不含品牌名）",
-  ambig: "消歧问题（问题里出现公司名）",
-  fact: "事实问题（问题里点名公司）",
-};
-const groupShort: Record<string, string> = { category: "行业", ambig: "消歧", fact: "事实" };
-const groupPurpose: Record<string, string> = {
-  category: "品牌在没有任何提示的行业问题里会不会被想到——这是触达数字",
-  ambig: "模型能不能把口语名对回法定主体，会不会和同名公司混淆",
-  fact: "提问者已经点名公司时，模型回答得对不对、三次之间一致不一致",
-};
-
-const questions: QuestionFact[] = questionIds.map((q) => {
-  const list = byQuestion.get(q)!;
-  const sample = list[0];
-  const okRuns = list.length;
-  const failedRuns = rejected.filter((r) => r.q === q).length;
-  const marks = Array.from({ length: RUNS_PER_QUESTION }, (_, i) => {
-    const r = list.find((x) => x.run === i + 1);
-    if (!r) return "未测量";
-    return r.mentionsBrand ? "✓" : "—";
-  });
-  return {
-    q,
-    group: sample.group,
-    groupShort: groupShort[sample.group] ?? sample.group,
-    question: sample.question,
-    okRuns,
-    failedRuns,
-    runs: RUNS_PER_QUESTION,
-    brandMentions: list.filter((r) => r.mentionsBrand === true).length,
-    coatingsMentions: list.filter((r) => r.mentionsCoatings === true).length,
-    runMarks: marks,
-  };
-});
-
-const groups = GROUP_ORDER.filter((g) => questions.some((q) => q.group === g)).map((g) => {
-  const inGroup = questions.filter((q) => q.group === g);
-  return {
-    id: g,
-    label: groupLabel[g] ?? g,
-    short: groupShort[g] ?? g,
-    purpose: groupPurpose[g] ?? "",
-    reading: "",
-    questions: inGroup.length,
-    runs: inGroup.reduce((s, q) => s + q.okRuns, 0),
-    brandMentions: inGroup.reduce((s, q) => s + q.brandMentions, 0),
-    coatingsMentions: inGroup.reduce((s, q) => s + q.coatingsMentions, 0),
-  };
-});
-
-const nonBrand = questions.filter((q) => q.group === "category");
-const prompted = questions.filter((q) => q.group !== "category");
-
-const totals = {
-  runs: questions.reduce((s, q) => s + q.okRuns, 0),
-  brandMentions: questions.reduce((s, q) => s + q.brandMentions, 0),
-  coatingsMentions: questions.reduce((s, q) => s + q.coatingsMentions, 0),
-  nonBrandQuestions: nonBrand.length,
-  nonBrandRuns: nonBrand.reduce((s, q) => s + q.okRuns, 0),
-  nonBrandBrandMentions: nonBrand.reduce((s, q) => s + q.brandMentions, 0),
-  nonBrandCoatingsMentions: nonBrand.reduce((s, q) => s + q.coatingsMentions, 0),
-  promptedRuns: prompted.reduce((s, q) => s + q.okRuns, 0),
-  promptedBrandMentions: prompted.reduce((s, q) => s + q.brandMentions, 0),
-};
-
-/**
- * The entity numbers, computed rather than asserted in prose.
- *
- * WHY THESE ARE COMPUTED FROM THE ANSWERS: the finding is about what the model wrote, so the count
- * of runs that wrote it has to come from the same text a reader can check. A hand-typed "3 of 3"
- * beside a quote that says something else is the failure this whole product is built not to have.
- */
-const q6Runs = byQuestion.get(6) ?? [];
-const entitySameRuns = q6Runs.filter((r) => /不规范简称|非规范简称/.test(r.answer)).length;
-
-/**
- * The two conclusions the entity figure counts, as patterns rather than as a sentence somebody
- * typed into the caption.
- *
- * WHY A SECOND PAIR OF COUNTS BESIDE entitySameRuns. `entitySameRuns` counts the runs that READ
- * '冠军股份' as an irregular abbreviation of this company, and all three do; the prose in 三 uses
- * that number and it means what it says. The pie is about the CONCLUSION the run ended on, which
- * is a different question on the same three answers, and in this data it has a different answer:
- * two runs concluded the two names are the same company (Q6 runs 1 and 2 - "指的是同一家公司",
- * "属于同一家主体的非规范简称"), and one concluded they are not (Q6 run 3, whose subtitle is
- * "不是同一家公司" because it compared the NEEQ-listed company with the Hong Kong Champion
- * Technology Holdings Limited). Deriving both slices from the answers keeps the figure and the
- * quoted text checkable against each other.
- *
- * THE RULES MUST BE MUTUALLY EXCLUSIVE AND EXHAUSTIVE, and the assertion below is what says so. A
- * future run that matches neither rule, or both, would produce a pie whose slices do not add up to
- * n - a chart of a classification nobody made - so it stops the build instead.
- */
-const ENTITY_SAME_PATTERNS = ["指的是同一家公司", "属于同一家主体的非规范简称"];
-const ENTITY_NOT_SAME_PATTERNS = ["不是同一家公司"];
-
-const notSameRuns = q6Runs.filter((r) =>
-  ENTITY_NOT_SAME_PATTERNS.some((p) => r.answer.includes(p))
-).length;
-const entityConclusionSameRuns = q6Runs.filter((r) =>
-  ENTITY_SAME_PATTERNS.some((p) => r.answer.includes(p))
-).length;
-
-if (entityConclusionSameRuns + notSameRuns !== q6Runs.length) {
-  throw new Error(
-    `Q6 的 ${q6Runs.length} 次运行里，${entityConclusionSameRuns} 次匹配『同一家公司』的写法、` +
-      `${notSameRuns} 次匹配『不是同一家公司』，两个数加起来不是 ${q6Runs.length}。` +
-      "实体识别结论图的两个扇区必须正好覆盖全部运行，否则这张图分类的不是这份数据。"
-  );
-}
-
-const q8Runs = byQuestion.get(8) ?? [];
-const q8AbbrevAsGufen = q8Runs.filter((r) => abbreviationWindows(r.answer).some((w) => w.includes("冠军股份"))).length;
-const q8OnlyKeji = q8Runs.filter((r) => {
-  const w = abbreviationWindows(r.answer);
-  return w.some((x) => x.includes("冠军科技")) && !w.some((x) => x.includes("冠军股份"));
-}).length;
-
-const rejectedByStatus = new Map<string, number>();
-for (const r of rejected) {
-  const key = String(r.status ?? "throw");
-  rejectedByStatus.set(key, (rejectedByStatus.get(key) ?? 0) + 1);
-}
-/** "HTTP 429 × 30", without the surrounding sentence, so two places can use it without nesting. */
-const failureDigest = [...rejectedByStatus.entries()].map(([s, n]) => `HTTP ${s} × ${n}`).join("、");
-const failureSummary = `${rejected.length} / ${parsed.length} 行` +
-  (rejected.length ? `（${failureDigest}，同题同次的另一次尝试，未计入任何计数）` : "（没有失败行）");
-
-/* ------------------------------------------------------------------ */
-/* Claims: assertions in the answers that this report does NOT verify  */
-/* ------------------------------------------------------------------ */
-
-type Claim = { claim: string; source: string; handling: string };
-
-/**
- * Every claim row names the run it came from AND the exact substring it was read off, and the build
- * fails if that substring is not in that answer.
- *
- * WHY THE ASSERTION IS THE POINT OF THIS TABLE. A "claims we could not verify" list is a list of
- * quotations; the way it goes wrong is by drifting from the text it quotes - a patent count typed
- * from memory, a customer name from the wrong run, a number that was never in any answer at all.
- * Checking the substring against the recorded answer makes the table a set of quotations with a
- * citation that cannot silently stop matching. It is deliberately a substring and not a semantic
- * check: this file has no way to know whether 33 invention patents is true, and it says so in every
- * row's handling.
- */
-function claimRow(q: number, n: number, evidence: string, claim: string, handling: string): Claim {
-  const source = run(q, n);
-  if (!source.answer.includes(evidence)) {
-    throw new Error(
-      `Claim evidence is not in Q${q} run ${n}: ${JSON.stringify(evidence.slice(0, 40))}. ` +
-        "The claims table quotes runs, so a claim whose text cannot be found in its run is a " +
-        "fabrication with a citation attached."
-    );
-  }
-  return { claim, source: `Q${q} 第 ${n} 次运行`, handling };
-}
-
-const claims: Claim[] = [
-  claimRow(
-    7,
-    2,
-    "拥有授权专利60余件",
-    "集团拥有授权专利 60 余件，其中国家发明专利 33 件，并主导起草和参与制定了多项国家及行业标准。",
-    "本报告未核验。引用前需要企业提供专利清单（区分申请、授权、软著与截止日）和标准编号。"
-  ),
-  claimRow(
-    4,
-    1,
-    "国内首家通过",
-    "公司是国家级专精特新“小巨人”企业，也是国内首家通过“低 VOCs 涂料产品认证”的企业。",
-    "本报告未核验。资质名称、颁发机构与取得时间需要企业文件确认，回答里没有给出处。"
-  ),
-  claimRow(
-    10,
-    2,
-    "中国寰球工程有限公司",
-    "客户包括中国石油旗下中国寰球工程有限公司（回答称 2026 年中标其涂料框架集中采购项目）、石横特钢等。",
-    "本报告未核验。客户名称出现在回答里不等于客户已授权公开；对外引用前需要取得客户同意。"
-  ),
-  claimRow(
-    6,
-    1,
-    "注册地位于江苏省南京市溧水区",
-    "公司成立于 1999 年，2016 年 6 月在新三板挂牌，注册地位于江苏省南京市溧水区。",
-    "本报告未核验。这类字段在多次运行里相互一致，但一致不等于正确；请以公开披露文件为准。"
-  ),
-  claimRow(
-    5,
-    3,
-    "冠农股份",
-    "回答把“冠军股份”与冠农股份、冠盛股份、金冠股份、台湾冠军建材、港股 Champion Technology Holdings Limited 等多个同名或谐音主体并列。",
-    "本报告未核验这些主体的任何信息，也不对它们作判断。记录它们只是因为回答把它们和本公司放在了一起——这是重名风险的直接证据。"
-  ),
-];
-
-/* ------------------------------------------------------------------ */
-/* Sources: the domains the answers cited                             */
-/* ------------------------------------------------------------------ */
-
-const domainMap = new Map<string, { count: number; groups: Set<string> }>();
-for (const r of answers) {
-  for (const d of r.domains ?? []) {
-    const entry = domainMap.get(d) ?? { count: 0, groups: new Set<string>() };
-    entry.count += 1;
-    entry.groups.add(groupShort[r.group] ?? r.group);
-    domainMap.set(d, entry);
-  }
-}
-
-/**
- * The twelve most-cited domains, and nothing that ranks them.
- *
- * ORDERED BY COUNT, WHICH IS A FACT ABOUT THE ANSWERS, NOT A JUDGEMENT ABOUT THE DOMAINS. The
- * rendering keeps saying so: a domain cited often is a domain the answers linked often. The report
- * does not know whether it is authoritative, whether the company already appears on it, or whether
- * the model weights it at all. Twelve is a table that fits a page; the counts of the rest are in the
- * workbook's own sheet and in the answers file.
- */
-const DOMAIN_TABLE_LIMIT = 12;
-const domains = [...domainMap.entries()]
-  .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]))
-  .slice(0, DOMAIN_TABLE_LIMIT)
-  .map(([domain, e]) => ({ domain, count: e.count, groups: [...e.groups] }));
-const topDomain = domains[0]?.domain ?? "";
-const topDomainCount = domains[0]?.count ?? 0;
-
-/**
- * What the domain figure leaves out, counted rather than waved at as "and more".
- *
- * The chart draws the same twelve domains the table draws. A reader who is not told what the other
- * domains amount to will read the twelve as the whole source network, and they are not: this
- * dataset is a long tail, which is the reason the caption carries these two numbers. Both come
- * from the same two counts the section already states (citation events and distinct domains), so
- * the sentence and the table cannot disagree.
- */
-const otherDomains = domainMap.size - domains.length;
-const otherEvents = citationEvents - domains.reduce((s, d) => s + d.count, 0);
-
-const citationsByGroup = groups.map((g) => ({
-  label: g.short,
-  count: answers.filter((r) => r.group === g.id).reduce((s, r) => s + (r.domains?.length ?? 0), 0),
-}));
 
 /* ------------------------------------------------------------------ */
 /* Copy                                                               */
 /* ------------------------------------------------------------------ */
 
 /**
- * Every human-readable string in this report, and the reason it lives here rather than in the
- * Python renderer: the Markdown and the DOCX are rendered by two different programs, and a heading
- * that exists in only one of them is how the two documents start disagreeing about what a section
- * is. The scan report does the same thing for the same reason.
+ * Every human-readable string in this report, and the reason it lives here rather than in the Python
+ * renderer: the Markdown and the DOCX are rendered by two different programs, and a heading that exists in
+ * only one of them is how the two documents start disagreeing about what a section is.
  *
- * NO STRING BELOW CONTAINS A "%" CHARACTER, and that is a rule rather than a coincidence - see
+ * NO STRING BELOW CONTAINS A "%" CHARACTER, which is a rule rather than a coincidence - see
  * assertNoPercent() at the end of this block. Numbers are written as "几次运行里几次".
+ *
+ * NOTHING BELOW NAMES A CLIENT, A BRAND, A QUESTION ID OR AN INDUSTRY WORD. Everything that varies per
+ * client arrives through {placeholders} filled from the run header, or through the data-derived blocks
+ * built above (quotes, claims, advice). That is the property this file lost once already.
  */
 const COPY: Record<string, string> = {
   reportName: "AI 可见度报告",
@@ -696,6 +888,7 @@ const COPY: Record<string, string> = {
 
   kSubject: "被测量的公司",
   kModel: "模型",
+  kRunMode: "采集模式",
   kMeasuredOn: "测量日期",
   kWebSearch: "联网搜索",
   kRunsPerQuestion: "每题运行次数",
@@ -710,14 +903,17 @@ const COPY: Record<string, string> = {
   yes: "是",
   no: "否",
   notMeasured: "未测量",
+  notRun: "未运行",
 
   thTotal: "合计",
-  thGroup: "问题组",
+  thGroup: "问法原型",
   thQuestions: "题数",
   thRuns: "完成的运行次数",
   thBrand: "品牌提及",
-  thCoatings: "涂料提及",
+  thCoatings: "品类词提及",
   thNo: "题号",
+  thId: "题库 id",
+  thText: "问题原文",
   thQuestion: "问题",
   thRun: "运行",
   thExcerpt: "该次回答的开头（原文摘录）",
@@ -740,119 +936,105 @@ const COPY: Record<string, string> = {
   runLabel: "第 {n} 次运行",
 
   /**
-   * The four figures of this report, in the order they appear in the document. Every caption says
-   * what n is and that its labels are counts, because a chart is the one place where a reader can
-   * divide two numbers and arrive at a percentage nobody measured. The captions are inside
-   * assertNoPercent() below, and render-report.py refuses to draw a "%" in any of these figures.
+   * Section 一. THE BANK PAGE, FIRST, BEFORE ANY CONCLUSION.
+   *
+   * WHY THIS SECTION LEADS. intake/README.md's step 2 says the client approves the bank, and the
+   * frozen-bank rule is what makes two measurements comparable; a reader who sees a reach count before
+   * seeing the questions has no way to know what was measured. The bank's own frozen sentence
+   * (bank.frozen_note, written by build-question-bank.mts) is printed verbatim rather than paraphrased
+   * here, because the wording the client signed is the wording that binds.
    */
-  figGroups:
-    "图 1｜分组触达：三组问题各自的品牌提及次数。标签为次数（如 4 / 12），n = 每组完成的运行次数（{groupRuns}）。三组的分母不同，所以分母写在每一个标签里。",
-  figGroupsAxis: "提及次数（每组运行次数不同）",
-  figMentions:
-    "图 2｜逐题提及：每一道题里品牌被提及的运行次数。标签为次数（如 2 / 3），n = 每题完成的运行次数（{runsPerQuestion}）；横轴是 0 到 {runsPerQuestion} 次。",
-  figMentionsAxis: "提及次数（每题 {runsPerQuestion} 次运行）",
-  figEntity:
-    "图 3｜实体识别结论的稳定性：第 6 题的 {entityTotalRuns} 次运行的结论分布。标签为次数，n = {entityTotalRuns}。分类规则是回答的结论文字里有没有出现「不是同一家公司」：出现的那 {notSameRuns} 次比较的是港股同名集团（回答里的说法，本报告未核验）。",
-  figEntitySame: "同一家公司 {entitySameConclusion} 次",
-  figEntityNotSame: "不是同一家公司 {notSameRuns} 次",
-  figEntityN: "n = {entityTotalRuns}（第 6 题的 {entityTotalRuns} 次运行）",
-  figSources:
-    "图 4｜信源分布：回答引用次数最多的 {domainLimit} 个域名。标签为次数（引用事件次数），n = {citationEvents} 次引用事件、{distinctDomains} 个域名；另有 {otherDomains} 个域名合计 {otherEvents} 次引用事件未逐一列出。排序是引用事件的计数顺序，不是影响力排名。",
-  figSourcesAxis: "引用事件次数",
+  sectionBank: "一、本次问的是什么：题库与批准记录",
+  bankLead:
+    "报告里的每一个数字都从下面这些问题来，所以先看问的是什么。本次运行使用的是 {bankLanguage} 题库，" +
+    "共 {bankQuestions} 题，按题库自己的问法原型分 {bankGroups} 组；题面清单的 sha256 指纹是 {bankFingerprint}。" +
+    "指纹相同 = 问的是同一批问题；指纹不同 = 两次测量的数字不能直接并列。",
+  bankFrozen: "{bankFrozenSentence}",
+  bankApprovalLine: "{bankApprovalSentence}",
+  bankIntakeDrift: "{bankDriftSentence}",
+  bankQuestionsTitle: "题库原文：{bankQuestions} 题，按问法原型分组",
 
-  sectionSummary: "一、执行摘要",
+  sectionSummary: "二、执行摘要",
   summaryCallout:
-    "结论一句话：模型认识这家公司，但在没有品牌名的行业问题里很少主动想到它——{nonBrandRuns} 次这样的运行里，提到它的只有 {nonBrandMentions} 次。",
+    "结论一句话：{nonBrandRuns} 次不含品牌名的问题运行里，{BRAND} 被提及 {nonBrandMentions} 次。",
   sectionSummaryConclusions: "三层结论",
-  summaryReach:
-    "触达层：{nonBrandQuestions} 道不含品牌名的行业问题、每题 {runsPerQuestion} 次运行，共 {nonBrandRuns} 次运行里品牌被提及 {nonBrandMentions} 次。分题看，Q3（道路标线漆和重防腐涂料的主要供应商有哪些?）{q3Brand} 次、Q4（采购高闪点环保工业涂料,推荐哪些厂家?）{q4Brand} 次，Q1、Q2 的各 3 次运行一次都没有提到它。0 次是测量结果，不是缺失：这些运行的答案完整，只是推荐了别的厂商。",
-  summaryEntity:
-    "实体层：模型知道这家公司。{runs} 次完成的回答里 {brandRuns} 次出现了公司名；只要问题里带着公司名，{promptedRuns} 次运行全部出现。真正的问题在名字上：『冠军股份』不是官方名称，所以每一份回答都要先做一次『把口语名对回法定主体』的推断。第 6 题的三次运行都把『冠军股份』解释为对{subjectShort}的不规范简称；其中 {notSameRuns} 次运行的结论文字里同时出现了『不是同一家公司』这个说法，它指的是另一家同名集团，第三节有原文。",
-  summaryFacts:
-    "事实层：同一批事实在三次运行之间并不完全一致。以 Q8（主要产品）为例，{q8AbbrevAsGufen} 次把证券简称写成『冠军股份』（其中一次并列『冠军股份/冠军科技』），{q8OnlyKeji} 次只写『冠军科技』。公司全称、代码 837745、曾用简称『冠军涂料』、成立年份这些字段在多次运行里反复出现且互相一致；专利数量、客户名称、资质荣誉一类断言本报告没有核验，只记录它们出现在哪一次回答里。",
+  summaryReach: "{summaryReachBody}",
+  summaryEntity: "{summaryEntityBody}",
+  summaryFacts: "{summaryFactsBody}",
 
   sectionCoverage: "本次测量覆盖了什么",
   coverageLead:
-    "一次测量，一个模型，10 道问题，每题 3 次运行，共 {runs} 次完成的回答。三组问题分别测三件不同的事，混在一起看会得出错误结论，所以下表按组分开列。",
-  coverageNote:
-    "『品牌提及』的判定是答案文本里是否出现 冠军股份 / 冠军科技 / 冠军漆 / 鲸海漆 中的任意一个；『涂料提及』是是否出现『涂料』。两个标记都由采集脚本写入，本报告直接读，不重新判定。",
+    "一次测量，一个模型，{questionCount} 道问题，每题 {runsPerQuestion} 次运行，共 {runs} 次完成的回答。" +
+    "分组不是修辞：不含品牌名的问题测触达，含品牌名的问题测实体理解与事实准确度，两者的分母不同，不能相加，所以下表按组分列。",
+  coverageNote: "{coverageNoteBody}",
 
   sectionNotMeasured: "本次没有测量什么",
-  sectionOverview: "二、AI 可见度总览",
-  overviewLead:
-    "下表是全部 10 道题。『涂料提及』一列说明回答确实在谈这个品类：{runs} 次运行里有 {coatingsRuns} 次出现了『涂料』，所以表里的 0 是『没有提到这家公司』，不是『没有回答这个问题』。",
+  sectionOverview: "三、AI 可见度总览",
+  overviewLead: "{overviewLeadBody}",
   overviewTotals:
-    "合计：{runs} 次完成的回答里品牌被提及 {brandRuns} 次。这个总数里有 {promptedRuns} 次是问题本身就带着公司名的（消歧题与事实题），那些运行里品牌出现几乎是必然的。",
+    "合计：{runs} 次完成的回答里品牌被提及 {brandRuns} 次。这个总数里有 {promptedRuns} 次是问题本身就带着品牌名的，那些运行里品牌出现几乎是必然的。",
   overviewPrompted:
-    "把点名的问题去掉之后只剩 {nonBrandRuns} 次运行，品牌被提及 {nonBrandMentions} 次，也就是 {nonBrandMentions} / {nonBrandRuns}。这个 {nonBrandMentions} / {nonBrandRuns} 才是这份报告的主数字：它更接近一个陌生客户在行业问题里遇到这家公司的机会。",
+    "把点名的问题去掉之后只剩 {nonBrandRuns} 次运行，品牌被提及 {nonBrandMentions} 次，也就是 {nonBrandMentions} / {nonBrandRuns}。" +
+    "这个 {nonBrandMentions} / {nonBrandRuns} 才是这份报告的主数字：它更接近一个陌生客户在行业问题里遇到这家公司的机会。",
 
   sectionHowToRead: "结果应该怎么读",
   readCounts:
-    "每个数字都写成『几次运行里几次』。本报告不出现百分比：3 次运行算出来的比例会把一次运行的偶然差异放大成一个结论。",
+    "每个数字都写成『几次运行里几次』。本报告不出现百分比：{runsPerQuestion} 次运行算出来的比例会把一次运行的偶然差异放大成一个结论。",
   readPrompted:
-    "『品牌提及』在消歧题和事实题里几乎是必然的，因为问题里就带着公司名。这两组只能说明模型能把名字对上公司，不能说明陌生客户会遇到它。",
+    "『品牌提及』在点名品牌的那几组里几乎是必然的，因为问题里就带着品牌名。那几组只能说明模型能把名字对上公司，不能说明陌生客户会遇到它。",
   readDenominator:
-    "分母永远是该题真正完成的运行次数。某题少一次运行，分母就是 2；一次都没完成，单元格写『未测量』而不是 0。本次 10 道题的分母都是 3。",
+    "分母永远是该题真正完成的运行次数。某题少一次运行，分母就少 1；一次都没完成，单元格写『未测量』而不是 0。本次 {questionCount} 道题的目标分母是每题 {runsPerQuestion} 次。",
   readSameDay:
-    "全部 {runs} 次回答是 {measuredOn} 同一天、同一个模型（{model}）、同一次测量里的观测。换一天、换一个模型版本或关掉联网搜索，数字都可能不同。",
+    "全部 {runs} 次回答是 {measuredOn} 同一天、同一次测量里的观测；本次的模型是 {model}。换一天、换一个模型版本或关掉联网搜索，数字都可能不同。",
 
-  sectionEntity: "三、实体识别：模型怎么称呼这家公司",
-  entityLead:
-    "这一节回答一个具体问题：模型认识这家公司吗？认识。{runs} 次运行里 {brandRuns} 次出现公司名，问题里点名公司的 {promptedRuns} 次运行全部出现。真正的风险不是『不认识』，而是名字：『冠军股份』不是官方简称，每一次回答都要先做一次把口语名对回法定主体的推断，而推断会出错。下面这一段是模型的原话。",
-  sectionEntityRuns: "同一道题、三次运行，各自的结论",
-  entityRunsLead:
-    "下面是 Q6『冠军股份和冠军科技是同一家公司吗?』三次运行的开头，逐字摘录（每次取回答的第一行与紧随其后的一行；只去掉 Markdown 的加粗与标题标记）。三次都把『冠军股份』解释为不规范简称；第 3 次运行的小标题写作『不是同一家公司』——它比较的是新三板挂牌的这家公司与回答中提到的港股『冠军科技集团』（Champion Technology Holdings Limited，回答里的说法，本报告未核验）。只看小标题会读成相反的意思，这是这份测量里最值得注意的一件事。",
-  entityFinding:
-    "第 6 题的 {entityTotalRuns} 次运行里有 {entitySameRuns} 次把『冠军股份』读作对{subjectShort}的非规范简称；其中 {notSameRuns} 次的结论文字里同时出现了『不是同一家公司』（指的是另一家同名集团）。结论：模型知道这家公司，但『冠军股份』这个称呼每次都需要一次推断，而第 5、6 题的答案里同时出现了冠农股份、冠盛股份、金冠股份、台湾冠军建材、港股冠军科技集团等主体——重名不是理论风险，它已经在答案里发生了。",
-  entityConclusionRule:
-    "分类规则：回答的结论文字里出现「不是同一家公司」的运行计为『不是同一家公司』，其余计为『同一家公司』。",
-  entityConclusionLine:
-    "同一家公司 {entitySameConclusion} 次、不是同一家公司 {notSameRuns} 次（n = {entityTotalRuns}）；分类规则是回答的结论文字里有没有出现「不是同一家公司」。",
+  sectionEntity: "四、实体识别：回答怎么称呼这家公司",
+  entityLead: "{entityLeadBody}",
+  sectionEntityRuns: "同一道题、各次运行的结论",
+  entityRunsLead: "{entityRunsLeadBody}",
+  entityFinding: "{entityFindingBody}",
+  entityConclusionRule: "{entityConclusionRuleBody}",
+  entityConclusionLine: "{entityConclusionLineBody}",
 
-  sectionGroups: "四、按问题组拆解",
+  sectionGroups: "五、按问法原型拆解",
   groupsLead:
-    "三组问题测的是三件事，任何一组单独拿出来都会被误读：只看行业题会低估模型对公司的了解，只看事实题会高估陌生客户的触达。",
+    "{groupCount} 组问题测的是不同的事，任何一组单独拿出来都会被误读：只看不含品牌名的组会低估模型对公司的了解，只看点名品牌的组会高估陌生客户的触达。",
 
-  sectionCompetitors: "五、竞品：本次没有测量",
+  sectionCompetitors: "六、竞品：本次没有测量",
   competitorsCallout:
     "这份数据里没有竞品。{runs} 次回答没有对任何一家其他公司做过提及计数，所以本报告没有竞品对比表、没有份额、没有排名。",
   competitorsBody:
-    "参照的那份外部交付物里有一节竞品压制分析。它需要『同一批问题里对手被提及多少次』这个输入，而本次采集没有打这个标记——采集脚本只标记了冠军一家的品牌名。要得到这个数字，必须在采集时对每个对比对象各自标记，或者用同一批回答重新抽取一遍实体，那是另一次采集，不是这份报告的推断。",
-  competitorsNone1:
-    "没有被测量的竞品，就没有可以写进表格的竞品数字。本报告不填占位符：空白和 0 都会被读成一个结论。",
-  competitorsNone2:
-    "回答里确实提到了很多其他厂商（例如 Q1 里的国际与本土涂料厂商名单）。那是回答的正文，不是本报告的测量对象：本报告没有对它们计数，也不据此对任何一家作判断。",
+    "参照的那份外部交付物里有一节竞品压制分析。它需要『同一批问题里对手被提及多少次』这个输入，而本次采集没有打这个标记——采集脚本只标记了 {BRAND} 一家的品牌名与客户的品类词。" +
+    "要得到这个数字，必须在采集时对每个对比对象各自标记，或者用同一批回答重新抽取一遍实体，那是另一次采集，不是这份报告的推断。",
+  competitorsNone1: "没有被测量的竞品，就没有可以写进表格的竞品数字。本报告不填占位符：空白和 0 都会被读成一个结论。",
+  competitorsNone2: "回答里确实提到了很多其他厂商。那是回答的正文，不是本报告的测量对象：本报告没有对它们计数，也不据此对任何一家作判断。",
   competitorsNone3:
-    "如果下一次要竞品对比，就在同一批问题上增加一列『对手名称列表』的标记，再跑同样的 3 次；只有那样得到的数字才能和本次的数字放在一起看。",
+    "如果下一次要竞品对比，就在同一批问题上增加一列『对手名称列表』的标记，再跑同样的 {runsPerQuestion} 次；只有那样得到的数字才能和本次的数字放在一起看。",
 
-  sectionSources: "六、信源网络：回答引用了哪些域名",
+  sectionSources: "七、信源网络：回答引用了哪些域名",
   sourcesLead:
-    "{runs} 次回答合计 {citationEvents} 次引用事件，分布在 {distinctDomains} 个域名上（一次回答里同一个域名只算 1 次，跨回答重复引用分别计数）。按组看：{citationsByGroup}。下表是按出现次数排序的前 {domainLimit} 个域名；出现最多的是 {topDomain}（{topDomainCount} 次）。",
+    "{runs} 次回答合计 {citationEvents} 次引用事件，分布在 {distinctDomains} 个域名上（一次回答里同一个域名只算 1 次，跨回答重复引用分别计数）。" +
+    "按组看：{citationsByGroup}。下表是按出现次数排序的前 {domainLimit} 个域名；出现最多的是 {topDomain}（{topDomainCount} 次）。",
   sourcesNote:
     "本报告不判定这些域名的权威性，也不判定它们与公司的关系（{topDomain} 与其他域名一样，归属关系未经核验）。这个表是『回答引用了哪些域名』的分布，不是影响力排名，也不是外链建设清单。",
   sectionSourcesCaveat: "三个必须说清的口径",
-  sourcesCaveat1:
-    "引用次数不等于影响力。某个域名出现得多，只说明回答里链接它的次数多，不说明它更权威，也不说明模型更看重它。",
-  sourcesCaveat2:
-    "一次回答里同一个域名只算 1 次，跨回答重复引用分别计数。所以这是『引用事件』的分布，不是『独立来源』的数量。",
-  sourcesCaveat3:
-    "本报告没有做『客户是否已经出现在这些域名上』的对照。那需要企业先提供它现有的公开存在清单，本次没有这个输入。",
+  sourcesCaveat1: "引用次数不等于影响力。某个域名出现得多，只说明回答里链接它的次数多，不说明它更权威，也不说明模型更看重它。",
+  sourcesCaveat2: "一次回答里同一个域名只算 1 次，跨回答重复引用分别计数。所以这是『引用事件』的分布，不是『独立来源』的数量。",
+  sourcesCaveat3: "本报告没有做『客户是否已经出现在这些域名上』的对照。那需要企业先提供它现有的公开存在清单，本次没有这个输入。",
 
-  sectionClaims: "七、回答里的事实断言：本报告没有核验",
+  sectionClaims: "八、回答里的事实断言：本报告没有核验",
   claimsCallout:
     "下表每一条都出现在模型的回答里，本报告没有核验任何一条。这不是『AI 说错了』的清单，而是『引用之前先核实』的清单。",
-  claimsNote:
-    "每一条都写了它出现在哪一次运行，可以直接在数据文件里找到原文核对。本报告不判断这些断言的真假，也不建议把它们直接写进宣传材料：回答里的数字没有出处，而这正是客户最容易被追问的地方。",
+  claimsNote: "{claimsNoteBody}",
 
-  sectionQuotes: "八、典型回答原文摘录",
+  sectionQuotes: "九、典型回答原文摘录",
   quotesLead:
-    "下面每一段都注明题号与运行次数，取自数据文件，逐字摘录；只去掉 Markdown 的加粗与标题标记，文字与标点未改动。",
+    "下面每一段都注明题库 id、运行次数与所属问法原型，取自数据文件，逐字摘录；只去掉 Markdown 的加粗与标题标记，文字与标点未改动。",
   quoteQuestion: "问题：",
   quoteAnswer: "回答摘录：",
 
-  sectionAdvice: "九、建议：先做两件事",
+  sectionAdvice: "十、建议",
   adviceLead:
-    "下面三条是从本次测量直接读出来的，不是通用建议。它们都不承诺效果：本报告没有测量任何竞品，也没有测量内容上线后会发生什么。",
+    "下面几条是从本次测量直接读出来的，不是通用建议。它们都不承诺效果：本报告没有测量任何竞品，也没有测量内容上线后会发生什么。",
   adviceProblem: "问题：",
   adviceAction: "建议的动作：",
   adviceDeliverable: "交付：",
@@ -860,58 +1042,74 @@ const COPY: Record<string, string> = {
 
   sectionPlan: "复测计划",
   planNote:
-    "这是建议的节奏，不是承诺。复测能回答的是『同一批问题、同一模型下，逐题计数有没有变化』；它不能回答『投入换来了提及』。两次复测之间不要比较『总体上升』，要看哪几道题从 0 变成 1。",
+    "这是建议的节奏，不是承诺。复测能回答的是『同一批问题、同一模型下，逐题计数有没有变化』；它不能回答『投入换来了提及』。" +
+    "两次复测之间不要比较『总体上升』，要看哪几道题从 0 变成 1。复测必须使用同一份题库（指纹 {bankFingerprint}），否则数字不可比。",
 
   sectionNoScore: "附录：为什么这份报告没有综合评分",
-  noScoreLead:
-    "参照的那份外部交付物用一个 100 分制的加权评分开头。本报告不给评分，也不给百分比。原因有四条。",
+  noScoreLead: "参照的那份外部交付物用一个百分制加权评分开头。本报告不给评分，也不给百分比。原因有四条。",
   noScore1:
-    "3 次运行不足以支撑一个比例。同一道题的答案长度从 {minAnswerChars} 字到 {maxAnswerChars} 字不等，一次运行的差异就会被读成一个分数。",
+    "{runsPerQuestion} 次运行不足以支撑一个比例。同一道题的答案长度从 {minAnswerChars} 字到 {maxAnswerChars} 字不等，一次运行的差异就会被读成一个分数。",
   noScore2:
-    "评分需要权重，而这份数据没有校准权重的依据。那份外部文件的输入是按预设规则合成的 400 条记录，可以按设计分配权重；本次是 30 条实测记录，没有第二组数据可以校准。",
-  noScore3:
-    "分数会被当成结论去比较，而这份报告没有测量任何对手。一个没有对照的分数只会被读成『好』或『差』，两种读法都没有依据。",
-  noScore4:
-    "本报告给的是计数和原文，任何人都可以自己复算：每一道题的 3 次运行、每次的引用域名和完整回答都在数据文件里。",
+    "评分需要权重，而这份数据没有校准权重的依据。那份外部文件的输入是按预设规则合成的 400 条记录，可以按设计分配权重；本次是 {runs} 条记录（采集模式 {runModeLabel}），没有第二组数据可以校准。",
+  noScore3: "分数会被当成结论去比较，而这份报告没有测量任何对手。一个没有对照的分数只会被读成『好』或『差』，两种读法都没有依据。",
+  noScore4: "本报告给的是计数和原文，任何人都可以自己复算：每一道题的每一次运行、每次的引用域名和完整回答都在数据文件里。",
 
   sectionMethodAppendix: "附录：采样设计、方法与限制",
   sectionSampleDesign: "样本设计",
   sampleDesignLead:
-    "10 道问题分三组，同一批问题对同一个模型各跑 3 次。分组不是修辞：不含品牌名的问题测触达，含品牌名的问题测实体理解与事实准确度，两者的分母不同，不能相加。",
+    "{questionCount} 道问题分 {groupCount} 组，同一批问题对同一个模型各跑 {runsPerQuestion} 次。题库指纹 {bankFingerprint}；分组是题库自己的问法原型，不是报告事后划的。",
 
   sectionGeneration: "这份报告的生成方法",
   sectionCoding: "标注字段口径",
   sectionReplication: "复测建议",
   replication1:
-    "同一批 10 道题、同一模型版本、每题 3 次、开启联网搜索，尽量在同一天内完成，每次新会话。",
-  replication2:
-    "记录模型版本、日期、是否开启搜索、原始回答与引用域名。失败的行单独记下来：它们不是 0 次提及，而是没有测量。",
-  replication3:
-    "对照两次复测时看逐题计数，不看『总体变化』。如果要把 3 次提高到 10 次，那是一次新的采集：分母变了，两次的数字不能直接并列。",
+    "同一批 {questionCount} 道题、同一模型版本、每题 {runsPerQuestion} 次、{webSearchSentence}，尽量在同一天内完成，每次新会话。",
+  replication2: "记录模型版本、日期、是否开启搜索、原始回答与引用域名。失败的行单独记下来：它们不是 0 次提及，而是没有测量。",
+  replication3: "对照两次复测时看逐题计数，不看『总体变化』。如果要把次数提高，那是一次新的采集：分母变了，两次的数字不能直接并列。",
 
-  sectionQuestions: "完整问题库与标注",
-  questionsLead:
-    "✓ 表示该次运行的回答里出现了品牌名（冠军股份 / 冠军科技 / 冠军漆 / 鲸海漆 任一），— 表示没有出现。判定由采集脚本在采集时写入，本报告不重新判定。",
+  sectionQuestions: "附录：完整题库与逐次标注",
+  questionsLead: "{questionsLeadBody}",
 
   sectionProvenance: "资料来源与核验记录",
 
   sheetOverview: "总览",
   sheetQuestions: "逐题计数",
   sheetGroups: "分组合计",
+  sheetBank: "题库与批准",
   sheetDomains: "引用域名",
   sheetClaims: "事实断言",
   sheetQuotes: "原文摘录",
   sheetMeta: "元数据",
   sheetAbout: "说明与边界",
+
+  /**
+   * The figures. Every caption says what n is and that its labels are counts, because a chart is the one
+   * place where a reader can divide two numbers and arrive at a percentage nobody measured. The captions
+   * are inside assertNoPercent() below, and render-report.py refuses to draw a "%" in any of these figures.
+   */
+  figGroups:
+    "图 1｜分组建模：{groupCount} 组问题各自的品牌提及次数。标签为次数，n = 每组完成的运行次数（{groupRuns}）。各组的分母不同，所以分母写在每一个标签里。",
+  figGroupsAxis: "提及次数（每组运行次数不同）",
+  figMentions:
+    "图 2｜逐题提及：每一道题里品牌被提及的运行次数。标签为次数，n = 每题完成的运行次数（{runsPerQuestion}）；横轴是 0 到 {runsPerQuestion} 次。",
+  figMentionsAxis: "提及次数（每题 {runsPerQuestion} 次运行）",
+  figEntity:
+    "图 3｜名字与主体：点名了简称/别名/曾用名的 {entityQuestions} 道题、共 {entityTotalRuns} 次运行里，回答有没有出现法定名称（{BRAND}）。标签为次数，n = {entityTotalRuns}。分类规则写在图下方与正文里，逐条都能在原文里核对。",
+  figEntitySame: "回答里出现法定名称 {entitySameConclusion} 次",
+  figEntityNotSame: "只出现简称/别名，没有出现法定名称 {notSameRuns} 次",
+  figEntityN: "n = {entityTotalRuns}（{entityQuestions} 道名字题的各次运行）",
+  figSources:
+    "图 4｜信源分布：回答引用次数最多的 {domainLimit} 个域名。标签为次数（引用事件次数），n = {citationEvents} 次引用事件、{distinctDomains} 个域名；另有 {otherDomains} 个域名合计 {otherEvents} 次引用事件未逐一列出。排序是引用事件的计数顺序，不是影响力排名。",
+  figSourcesAxis: "引用事件次数",
 };
 
 /**
  * The rule from the service definition, enforced instead of remembered.
  *
- * A percentage in this report would be a number no measurement supports: three runs per question.
- * The check is deliberately crude - a digit followed by "%" - because every honest sentence in this
- * document writes counts ("4 / 12", "12 次运行里 4 次"), so anything matching is a violation rather
- * than a false positive. It runs over the whole copy block before a single file is written.
+ * A percentage in this report would be a number no measurement supports. The check is deliberately crude -
+ * a digit followed by "%" - because every honest sentence in this document writes counts ("4 / 12",
+ * "12 次运行里 4 次"), so anything matching is a violation rather than a false positive. It runs over the
+ * whole copy block before a single file is written.
  */
 function assertNoPercent(copy: Record<string, string>): void {
   for (const [key, value] of Object.entries(copy)) {
@@ -923,35 +1121,391 @@ function assertNoPercent(copy: Record<string, string>): void {
 assertNoPercent(COPY);
 
 /* ------------------------------------------------------------------ */
+/* The entity section: was the name connected to the legal entity?    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * WHAT THIS SECTION MEASURES, GENERICALLY. The bank asks a few questions about the brand's short name, its
+ * aliases and its former names ("『X』是哪家公司？") whenever the intake listed them. Those are the
+ * questions where a model has to resolve a name to a legal entity, and the failure is visible in the
+ * answer text: does the answer connect the asked name to the LEGAL name at all?
+ *
+ * THE CLASSIFICATION IS ONE DETERMINISTIC RULE, printed wherever its counts are printed: a run counts as
+ * "connected to the legal entity" when its answer contains the intake's brand.name, and as "not connected"
+ * when it does not. It is checkable by eye in the quoted runs, and the slices are asserted to cover every
+ * completed run of those questions (a pie whose slices do not add up to n is a chart of a classification
+ * nobody made).
+ *
+ * WHY THIS REPLACED THE OLD VERSION. The old section was about one company's four spellings and one
+ * specific confusion with a Hong Kong listed company, with the patterns that decided the classification
+ * typed into this file. That is a finding, not a rule; it could only ever describe that company.
+ */
+function primaryMentionOf(r: RunLine): boolean | null {
+  if (typeof r.mentionsPrimary === "boolean") return r.mentionsPrimary;
+  // A file written before that field existed: derive it from the answer text with the same matcher.
+  return r.answer ? findMention(r.answer.toLowerCase(), BRAND) !== -1 : null;
+}
+
+const nameQuestionIds = new Set(nameQuestions.map((n) => n.id));
+const nameQuestionFacts = questions.filter((q) => nameQuestionIds.has(q.id));
+const entityRunsTotal = nameQuestionFacts.reduce((s, q) => s + q.okRuns, 0);
+const entityConnected = nameQuestionFacts.reduce((s, q) => s + q.primaryMentions, 0);
+const entityNotConnected = entityRunsTotal - entityConnected;
+
+if (entityRunsTotal > 0 && entityConnected + entityNotConnected !== entityRunsTotal) {
+  throw new Error(
+    `名字题的 ${entityRunsTotal} 次已完成运行里，${entityConnected} 次回答了法定名称、` +
+      `${entityNotConnected} 次没有，两个数加起来不是 ${entityRunsTotal}。` +
+      "实体识别图的两个扇区必须正好覆盖全部运行，否则这张图分类的不是这份数据。"
+  );
+}
+
+const entityConclusionRuleText =
+  `分类规则：名字题（题库里问简称/别名/曾用名的 ${nameQuestionFacts.length} 道题，id ` +
+  `${nameQuestionFacts.map((q) => q.id).join("、") || "（没有）"}）的每一次已完成运行，` +
+  `回答里出现法定名称「${BRAND}」计为『连回法定主体』，没有出现计为『没有连回』；判定由采集脚本写入 mentionsPrimary，本报告直接读。`;
+
+const entityFirstQuestion = nameQuestionFacts[0];
+const entityRuns = entityFirstQuestion
+  ? (byQuestion.get(entityFirstQuestion.q) ?? []).map((r) => ({ run: r.run, text: conclusionExcerpt(r.answer) }))
+  : [];
+
+const entityQuote = entityFirstQuestion
+  ? {
+      label: `${entityFirstQuestion.id} · 第 ${firstRun(entityFirstQuestion.q).run} 次运行 · 实体识别`,
+      question: firstRun(entityFirstQuestion.q).question,
+      run: firstRun(entityFirstQuestion.q).run,
+      text: trimTrailingLabel(headOf(plain(firstRun(entityFirstQuestion.q).answer), 280)),
+      note:
+        `原文摘录（${entityFirstQuestion.id} 第 1 次运行，取回答开头 280 个字符以内并按换行截断）。` +
+        "只去掉了 Markdown 的加粗与标题标记，文字与标点未改动。这一题问的是客户自己的简称/别名/曾用名，所以它测的是模型能不能把这个名字对回法定主体。",
+    }
+  : null;
+
+const entityLeadBody = entityFirstQuestion
+  ? `这一节回答一个具体问题：模型看得懂这家公司的名字吗？题库里有 {nameQuestions} 道题问的是简称、别名或曾用名` +
+    `（${nameQuestions.map((n) => `${n.id}「${n.value}」`).join("、")}），共 {nameRuns} 次完成的运行；其中 {nameConnected} 次的回答里出现了法定名称「{BRAND}」，` +
+    `{nameNotConnected} 次没有。模型知道这个名字背后的公司，与模型能把一个口语名稳定地对回法定主体，是两件事。下面这一段是模型的原话。`
+  : `题库里没有问简称、别名或曾用名的题：intake 的 brand.short_name / brand.aliases / brand.former_names 里没有可用的值，题库生成器因此没有出这一类题。` +
+    "所以本次没有测量『名字能不能对回法定主体』，这是一个缺口，不是一个结论——报告不会把『没问』写成『没问题』。";
+
+const summaryEntityBody = entityFirstQuestion
+  ? `实体层：{runs} 次完成的回答里 {brandRuns} 次出现了品牌名；问题里点名品牌的 {promptedRuns} 次运行里 {promptedMentions} 次出现。` +
+    `名字这一层：{nameQuestions} 道题问的是简称/别名/曾用名，共 {nameRuns} 次运行里 {nameConnected} 次把回答连回了法定名称（{BRAND}），{nameNotConnected} 次没有。`
+  : "实体层：题库里没有问简称、别名或曾用名的题（intake 没有填这些字段），所以本次没有测量名字与法定主体之间的对应关系；这是这次测量的一个缺口，不是结论。";
+
+/* ------------------------------------------------------------------ */
+/* Claims: assertions in the answers that this report does NOT verify  */
+/* ------------------------------------------------------------------ */
+
+type Claim = { claim: string; source: string; handling: string };
+
+/**
+ * EVERY CLAIM ROW NAMES THE RUN IT CAME FROM AND THE EXACT SUBSTRING IT WAS READ OFF, and the build fails
+ * if that substring is not in that answer.
+ *
+ * WHY THE ASSERTION IS THE POINT OF THIS TABLE. A "claims we could not verify" list is a list of
+ * quotations; the way it goes wrong is by drifting from the text it quotes. Checking the substring against
+ * the recorded answer makes the table a set of quotations with a citation that cannot silently stop
+ * matching. It is deliberately a substring and not a semantic check: this file has no way to know whether a
+ * patent count is true, and it says so in every row's handling.
+ *
+ * HOW THE ROWS ARE CHOSEN NOW. The old version had five hand-picked rows with hand-picked evidence
+ * substrings, which is a property of one dataset. The claim this section is about is "the answer asserted
+ * something checkable", so the rule is: the first sentence of an answer that contains a digit, one row per
+ * question, capped, with the counts printed so the cap is visible rather than silent.
+ */
+const NUMBER_SENTENCE = /\d/;
+const CLAIM_ROWS_LIMIT = 8;
+/** Long enough to carry the assertion, short enough for a table cell. */
+const CLAIM_CHARS = 160;
+
+type Candidate = { q: number; id: string; run: number; raw: string };
+const claimCandidates: Candidate[] = [];
+let claimSentencesFound = 0;
+
+for (const q of questions) {
+  const list = byQuestion.get(q.q) ?? [];
+  for (const r of list) {
+    /**
+     * THE SENTENCE IS TAKEN FROM THE RAW ANSWER, NOT FROM plain()'d TEXT, and that is load-bearing: the
+     * claims table asserts that its evidence is a substring of the run it cites, and plain() removes `**`
+     * and `#` - so a sentence extracted after that cleaning can fail its own assertion (a legacy run with
+     * Markdown headings did exactly that). Markdown table rows are skipped as claim material: a table row
+     * is a row of somebody else's data, not the answer's own assertion.
+     */
+    const rawSentences = r.answer
+      .split(/\r?\n/)
+      .filter((line) => !/^\s*\|/.test(line))
+      .join("\n")
+      .split(/(?<=[。！？!?；;])\s*|\n+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const hit = rawSentences.find((s) => NUMBER_SENTENCE.test(s) && s.length >= 8);
+    if (!hit) continue;
+    claimSentencesFound += 1;
+    if (claimCandidates.some((c) => c.q === q.q)) continue;
+    claimCandidates.push({ q: q.q, id: q.id, run: r.run, raw: hit.length > CLAIM_CHARS ? `${hit.slice(0, CLAIM_CHARS)}…` : hit });
+  }
+}
+
+function claimRow(candidate: Candidate): Claim {
+  const source = `${candidate.id} 第 ${candidate.run} 次运行`;
+  const answer = runOf(candidate.q, candidate.run).answer;
+  const evidence = candidate.raw.replace(/…$/, "");
+  if (!answer.includes(evidence)) {
+    throw new Error(
+      `Claim evidence is not in ${candidate.id} run ${candidate.run}: ${JSON.stringify(evidence.slice(0, 40))}. ` +
+        "The claims table quotes runs, so a claim whose text cannot be found in its run is a fabrication with a citation attached."
+    );
+  }
+  return {
+    claim: plain(candidate.raw),
+    source,
+    handling:
+      "本报告未核验。这一句是回答里带数字的断言；引用前需要企业提供对应证据（清单、编号、日期、出处）。" +
+      "回答里的数字没有出处，而这正是客户最容易被追问的地方。",
+  };
+}
+
+const claims: Claim[] = claimCandidates.slice(0, CLAIM_ROWS_LIMIT).map(claimRow);
+
+/* ------------------------------------------------------------------ */
+/* Quotes: one representative run per archetype                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * WHICH RUNS GET QUOTED, AND WHY IT IS A RULE RATHER THAN A LIST. The old version quoted the three runs of
+ * one question and one industry answer, all typed in. A quote section that only works for one dataset is a
+ * quote section that will describe the wrong company the next time. The rule now:
+ *
+ *   per archetype -> the question with the FEWEST brand mentions (ties: lowest q, so the output is
+ *   reproducible), run 1 of it -> the opening of that answer, verbatim.
+ *
+ * The question with the fewest mentions is the least favourable evidence in that group, which is the one
+ * worth quoting: a report that only shows its best run is marketing. The note under every excerpt carries
+ * that group's own counts, so the excerpt cannot be read out of context.
+ */
+const quotes = groups
+  .map((g) => {
+    const candidates = questions.filter((q) => q.group === g.id && q.okRuns > 0);
+    if (candidates.length === 0) return null;
+    const pick = [...candidates].sort((a, b) => a.brandMentions - b.brandMentions || a.q - b.q)[0];
+    const r = firstRun(pick.q);
+    return {
+      label: `${pick.id} · 第 ${r.run} 次运行 · ${g.label}`,
+      question: pick.question,
+      run: r.run,
+      text: trimTrailingLabel(headOf(plain(r.answer), 240)),
+      note:
+        `原文摘录（${pick.id} 第 ${r.run} 次运行，取回答开头 240 个字符以内并按换行截断）。只去掉了 Markdown 的加粗与标题标记。` +
+        `选它的规则是：这一组里品牌被提及次数最少的一道题${pick.brandMentions === 0 ? "（本题一次都没有提到它）" : ""}，` +
+        `同组各题的计数是 ${candidates.map((c) => `${c.id} ${c.brandMentions}/${c.okRuns}`).join("、")}。`,
+    };
+  })
+  .filter((q): q is NonNullable<typeof q> => q !== null);
+
+/* ------------------------------------------------------------------ */
+/* Sources: the domains the answers cited                             */
+/* ------------------------------------------------------------------ */
+
+const domainMap = new Map<string, { count: number; groups: Set<string> }>();
+for (const r of answers) {
+  for (const d of r.domains ?? []) {
+    const entry = domainMap.get(d) ?? { count: 0, groups: new Set<string>() };
+    entry.count += 1;
+    const short = questions.find((q) => q.q === r.q)?.groupShort ?? r.group;
+    entry.groups.add(short);
+    domainMap.set(d, entry);
+  }
+}
+
+/**
+ * The most-cited domains, and nothing that ranks them.
+ *
+ * ORDERED BY COUNT, WHICH IS A FACT ABOUT THE ANSWERS, NOT A JUDGEMENT ABOUT THE DOMAINS. The rendering
+ * keeps saying so: a domain cited often is a domain the answers linked often. Twelve is a table that fits a
+ * page; the counts of the rest are in the workbook and in the run file.
+ */
+const DOMAIN_TABLE_LIMIT = 12;
+const domains = [...domainMap.entries()]
+  .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]))
+  .slice(0, DOMAIN_TABLE_LIMIT)
+  .map(([domain, e]) => ({ domain, count: e.count, groups: [...e.groups] }));
+const topDomain = domains[0]?.domain ?? "（没有引用任何域名）";
+const topDomainCount = domains[0]?.count ?? 0;
+const otherDomains = domainMap.size - domains.length;
+const otherEvents = citationEvents - domains.reduce((s, d) => s + d.count, 0);
+
+const citationsByGroup = groups.map((g) => ({
+  label: g.short,
+  count: answers
+    .filter((r) => questions.find((q) => q.q === r.q)?.group === g.id)
+    .reduce((s, r) => s + (r.domains?.length ?? 0), 0),
+}));
+
+/* ------------------------------------------------------------------ */
+/* Rejected lines, described rather than dropped                      */
+/* ------------------------------------------------------------------ */
+
+const rejectedByStatus = new Map<string, number>();
+for (const r of rejected) {
+  const key = String(r.status ?? "throw");
+  rejectedByStatus.set(key, (rejectedByStatus.get(key) ?? 0) + 1);
+}
+/** "HTTP 429 × 30", without the surrounding sentence, so two places can use it without nesting. */
+const failureDigest = [...rejectedByStatus.entries()]
+  .map(([s, n]) => `${/^\d+$/.test(s) ? `HTTP ${s}` : s} × ${n}`)
+  .join("、");
+const failureSummary =
+  `${rejected.length} / ${parsedLines} 行` +
+  (rejected.length
+    ? `（${failureDigest}${
+        timeoutsTotal > 0 ? `，其中 ${timeoutsTotal} 次是超时（超时上限 ${header?.run?.timeout_ms ?? "?"}ms，记录在每一行的 status 里）` : ""
+      }，未计入任何计数）`
+    : "（没有失败行）");
+
+/* ------------------------------------------------------------------ */
 /* The model                                                          */
 /* ------------------------------------------------------------------ */
 
-const fill = (template: string, vars: Record<string, string | number>) =>
-  template.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? `{${k}}`));
+/**
+ * FILLING IS ITERATIVE, WHICH IS A CORRECTION RATHER THAN A CONVENIENCE.
+ *
+ * Several copy values are placeholders for a SENTENCE this file builds (summaryEntity ->
+ * {summaryEntityBody}), and that sentence carries placeholders of its own ({runs}, {BRAND}). A single-pass
+ * fill leaves those in place, and the leftover check below then stops the build with a message naming the
+ * copy key rather than the sentence - which is the right outcome, but the wrong cause. Looping resolves the
+ * chain; the loop is bounded and stops as soon as nothing changes, so an unknown placeholder (runLabel's
+ * {n}, substituted per row by the two renderers) survives untouched.
+ */
+function fill(template: string, vars: Record<string, string | number>): string {
+  let text = template;
+  for (let pass = 0; pass < 6; pass += 1) {
+    const next = text.replace(/\{(\w+)\}/g, (whole, k: string) => (k in vars ? String(vars[k]) : whole));
+    if (next === text) return text;
+    text = next;
+  }
+  return text;
+}
 
 const Q = (q: number) => questions.find((x) => x.q === q);
 
+/**
+ * The sentences that depend on which shape the data has, built once here rather than branched inside the
+ * copy block: a sentence that has to choose between two truths is easier to read as two sentences.
+ */
+const summaryReachBody =
+  `${totals.nonBrandQuestions} 道不含品牌名的问题、每题 ${runsPerQuestion} 次运行，共 ${totals.nonBrandRuns} 次运行里品牌被提及 ${totals.nonBrandBrandMentions} 次。` +
+  (zeroMentionNonBrand.length > 0
+    ? `其中 ${zeroMentionNonBrand.map((q) => q.id).join("、")}（共 ${zeroMentionNonBrand.length} 道）一次都没有提到它；` +
+      (mentionedNonBrand.length > 0
+        ? `${mentionedNonBrand.map((q) => `${q.id} ${q.brandMentions}/${q.okRuns}`).join("、")} 提到过。`
+        : "没有一道提到过。") +
+      "0 次是测量结果，不是缺失：这些运行的答案完整，只是推荐了别的厂商。"
+    : `每一道不含品牌名的问题都至少被提到过一次（${mentionedNonBrand
+        .map((q) => `${q.id} ${q.brandMentions}/${q.okRuns}`)
+        .join("、")}）。`) +
+  "逐题原文与计数见第三节，问题原文见第一节。";
+
+const summaryFactsBody =
+  `事实层：${promptedQuestions.length} 道点名品牌的问题、${totals.promptedRuns} 次运行里品牌被提及 ${totals.promptedBrandMentions} 次。` +
+  (claims.length > 0
+    ? `带数字的断言出现在 ${claimSentencesFound} 次回答里、涉及 ${claimCandidates.length} 道题，本报告按题各取一条列出（共 ${claims.length} 条，见第八节），没有核验任何一条。`
+    : "本次回答里没有找到带数字的断言，所以第八节没有可核对的清单。") +
+  "逐题计数在第三节，原文在各节摘录里，任何人都可以自己复算。";
+
+const coverageNoteBody =
+  `『品牌提及』的判定是答案文本里是否出现 ${brandTokens.map((t) => t.value).join(" / ")} 中的任意一个` +
+  `（${
+    header?.brand?.tokens_source === "intake" ? "来自 intake 的品牌名与别名" : "来自运行文件记录的品牌写法"
+  }；CJK 名字按子串匹配，拉丁名字按词边界匹配，规则在 lib/answer-check/rules.ts）；` +
+  (hasCategoryTokens
+    ? `『品类词提及』是是否出现客户自己的品类词 ${categoryTokensForReport.map((t) => t.value).join(" / ")}。`
+    : "『品类词提及』本次无法判定：intake 的 industry.category_terms 是空的，所以这一列没有数字。") +
+  "两个标记都由采集脚本写入，本报告直接读，不重新判定。";
+
+const claimsNoteBody =
+  claims.length > 0
+    ? `每一条都写了它出现在哪一次运行，可以直接在数据文件里找到原文核对。带数字的断言一共出现在 ${claimSentencesFound} 次回答里、涉及 ${claimCandidates.length} 道题，` +
+      `本节按题各取一条、共列 ${claims.length} 条（筛选规则：『该次回答里第一句带数字的话』${
+        claimCandidates.length > claims.length ? "；超过上限的题不再单列" : ""
+      }）。` +
+      "本报告不判断这些断言的真假，也不建议把它们直接写进宣传材料：回答里的数字没有出处。"
+    : `本次 ${totals.runs} 次回答里没有找到带数字的断言，所以这一节没有表。这不是『回答都对』，而是『没有可核对的数字』；` +
+      "核对清单为空与核对通过是两件事。";
+
+const questionsLeadBody =
+  `✓ 表示该次运行的回答里出现了品牌名（${brandTokens.map((t) => t.value).join(" / ")} 任一），— 表示没有出现，` +
+  `『${COPY_NOT_MEASURED}』表示这一次运行没有拿到完整回答` +
+  (runsPerQuestion < RUN_COLUMNS
+    ? `，『${COPY_NOT_RUN}』表示这次测量每题只跑 ${runsPerQuestion} 次（表里多出来的列没有这一次运行）。`
+    : "。") +
+  (runsPerQuestion > RUN_COLUMNS
+    ? `本表只画前 ${RUN_COLUMNS} 次运行的标记（表中放不下更多列），第 ${RUN_COLUMNS + 1} 到 ${runsPerQuestion} 次的逐题计数在右侧的『品牌提及』列里，逐行明细在数据文件里。`
+    : "判定由采集脚本在采集时写入，本报告不重新判定。");
+
+const entityRunsLeadBody = entityFirstQuestion
+  ? `下面是 ${entityFirstQuestion.id}「${entityFirstQuestion.question}」各次运行的开头，逐字摘录（每次取回答的第一行与紧随其后的一行；只去掉 Markdown 的加粗与标题标记）。` +
+    `这一题问的是${
+      nameQuestions.find((n) => n.id === entityFirstQuestion.id)?.value
+        ? `「${nameQuestions.find((n) => n.id === entityFirstQuestion.id)!.value}」`
+        : "客户自己的一个名字写法"
+    }，所以每一份回答都要先把它对回法定主体；各次运行的结论是否一致，读下面这几行就知道。`
+  : "";
+
+const entityFindingBody = entityFirstQuestion
+  ? `名字题的 ${entityRunsTotal} 次运行里 ${entityConnected} 次的回答出现了法定名称「${BRAND}」，${entityNotConnected} 次没有。` +
+    (entityNotConnected > 0
+      ? `没有出现的那 ${entityNotConnected} 次，回答围绕的是客户自己给的简称/别名——这是本次测量里最值得注意的一件事：名字被认出来了，但它与法定主体的连线不是每次都在。`
+      : "这一次每一次都连回了法定主体；这不表示名字没有问题，只表示在这批运行里模型没有走岔。")
+  : "";
+
+/**
+ * THE COVERAGE SENTENCE DEPENDS ON WHETHER THE COLUMN EXISTS AT ALL. With category terms from the intake,
+ * the 品类词 column shows how often an answer was demonstrably about this industry; with none, there is no
+ * such column and the report says NOT MEASURED rather than printing a row of zeros that a reader would take
+ * for "the answers were not about the industry".
+ */
+const overviewLeadBody =
+  `下表是全部 ${questions.length} 道题。` +
+  (hasCategoryTokens
+    ? `『品类词提及』一列说明回答确实在谈这个客户所在的品类：${totals.runs} 次运行里有 ${totals.coatingsMentions} 次出现了客户自己的品类词，` +
+      "所以表里的 0 是『没有提到这家公司』，不是『没有回答这个问题』。"
+    : "本次没有『品类词提及』数字：intake 的 industry.category_terms 是空的，采集脚本没有可判定的品类词，" +
+      "所以这一列写『未测量』而不是 0——0 会被读成『回答没谈这个品类』，而那是没有依据的。");
+
+/**
+ * HOW THE ANSWERS WERE PRODUCED, in one phrase, printed on the cover, in the limits and in the method. It
+ * exists because "web search: yes" is a configuration record for a dry run, and only the mode says whether
+ * any call happened at all.
+ */
+const runModeLabelText =
+  runMode === "api"
+    ? "api（真实调用）"
+    : runMode === "dry-run"
+      ? "dry-run（本地合成回答，没有发出任何调用）"
+      : runMode === "replay"
+        ? "replay（回放上一次运行的记录，没有发出任何调用）"
+        : `（运行文件记录的 mode 是 ${runMode}）`;
+
 const fills: Record<string, string | number> = {
+  BRAND,
+  questionCount: questions.length,
+  groupCount: groups.length,
   runs: totals.runs,
   brandRuns: totals.brandMentions,
-  coatingsRuns: totals.coatingsMentions,
+  coatingsRuns: totals.coatingsMentions === null ? COPY_NOT_MEASURED : totals.coatingsMentions,
   nonBrandQuestions: totals.nonBrandQuestions,
   nonBrandRuns: totals.nonBrandRuns,
   nonBrandMentions: totals.nonBrandBrandMentions,
   promptedRuns: totals.promptedRuns,
-  runsPerQuestion: RUNS_PER_QUESTION,
-  q3Brand: Q(3)?.brandMentions ?? 0,
-  q4Brand: Q(4)?.brandMentions ?? 0,
-  entitySameRuns,
-  entityTotalRuns: q6Runs.length,
-  notSameRuns,
-  entitySameConclusion: entityConclusionSameRuns,
+  promptedMentions: totals.promptedBrandMentions,
+  runsPerQuestion,
   groupRuns: groups.map((g) => g.runs).join(" / "),
-  q8AbbrevAsGufen,
-  q8OnlyKeji,
-  subjectShort: BRAND,
   measuredOn,
-  model: modelName,
+  model: modelDisplay,
+  webSearchSentence: webSearch ? "开启联网搜索" : "关闭联网搜索",
   citationEvents,
   distinctDomains: domainMap.size,
   domainLimit: domains.length,
@@ -962,34 +1516,67 @@ const fills: Record<string, string | number> = {
   citationsByGroup: citationsByGroup.map((c) => `${c.label} ${c.count} 次`).join("、"),
   minAnswerChars: Math.min(...answerLengths),
   maxAnswerChars: Math.max(...answerLengths),
+  bankLanguage: header?.run?.language ?? "（未记录）",
+  bankQuestions: bankQuestions.length,
+  bankGroups: groups.length,
+  bankFingerprint: bankFingerprint || "（题库没有记录指纹）",
+  bankFrozenSentence:
+    (frozenNote ? `${frozenNote}　` : "") +
+    (bankFingerprint
+      ? `本次测量使用的就是这份题库：题面清单的 sha256 指纹是 ${bankFingerprint}，` +
+        (header?.bank?.fingerprint_verified === true
+          ? "采集脚本在开跑前按 bank.fingerprint_rule 重算过一遍并核对通过，说明没人在批准之后改过题目。"
+          : "采集脚本无法核对这个指纹（题库记录的规则不是它实现的规则）。")
+      : "这份运行文件没有记录题库指纹，所以『用的是哪一版题库』没有依据。"),
+  bankApprovalSentence: bankApprovedBy
+    ? `批准：${bankApprovedBy}${bankApprovedOn ? `，${bankApprovedOn}` : "（未写日期）"}。` +
+      (intakeExpectedApprover && intakeExpectedApprover !== bankApprovedBy
+        ? `intake 里填写的确认人是 ${intakeExpectedApprover}，与批准人不一致，请确认以谁为准。`
+        : "")
+    : `题库的 approved_by 是空的：这份题库生成后没有人在批准页上签字${
+        intakeExpectedApprover ? `（intake 里填写的确认人是 ${intakeExpectedApprover}）` : ""
+      }。` +
+      "正式交付前必须补上签字并把批准日期写回题库文件；否则『客户批准过的题库』这句话没有依据，而这份报告的第一节就是它的位置。",
+  bankDriftSentence: intakeDrift,
+  overviewLeadBody,
+  runModeLabel: runModeLabelText,
+  summaryReachBody,
+  summaryEntityBody,
+  summaryFactsBody,
+  coverageNoteBody,
+  claimsNoteBody,
+  questionsLeadBody,
+  entityLeadBody,
+  entityRunsLeadBody,
+  entityFindingBody,
+  nameQuestions: nameQuestionFacts.length,
+  nameRuns: entityRunsTotal,
+  nameConnected: entityConnected,
+  nameNotConnected: entityNotConnected,
+  entityConclusionRuleBody: entityConclusionRuleText,
+  entityConclusionLineBody: entityFirstQuestion
+    ? `连回法定主体 ${entityConnected} 次、没有连回 ${entityNotConnected} 次（n = ${entityRunsTotal}）；规则是回答里有没有出现「${BRAND}」。`
+    : "本次没有名字题，因此没有这条测量。",
+  entityQuestions: nameQuestionFacts.length,
+  entityTotalRuns: entityRunsTotal,
+  entitySameConclusion: entityConnected,
+  notSameRuns: entityNotConnected,
 };
-
-/** Section prose that is filled from the numbers above, so no sentence holds a typed count. */
-const FILLED_COPY: Record<string, string> = Object.fromEntries(
-  Object.entries(COPY).map(([key, value]) => [key, fill(value, fills)])
-);
 
 /**
  * EVERY PLACEHOLDER MUST BE GONE BEFORE THE MODEL IS WRITTEN, and this is the check that says so.
  *
- * WHY IT EXISTS: the first end-to-end run rendered `{nonBrandRuns}` into a client's overview table.
- * The numbers were right and the sentence was unreadable, and nothing in the pipeline objected -
- * because `fill()` leaves an unknown placeholder exactly as it found it, and a renderer that prints
- * the model's strings verbatim (which is what render-report.py does, on purpose) has no way to know
- * that `{q3Brand}` was never substituted. The failure is silent, appears in the one document a human
- * reads, and is invisible to tsc, to the geometry check and to the Markdown diff. So the whole copy
- * block is scanned for anything left in braces and the build stops if it finds one.
- */
-/**
- * THE ONE STRING THAT KEEPS A PLACEHOLDER, and why it is not a hole in the check above: `runLabel`
- * varies per ROW, not per dataset ("第 3 次运行"), so it cannot be filled once at build time. Its
- * `{n}` is substituted by the two renderers, each in its own row loop - render-report.py does it
- * with `.replace("{n}", ...)` and the Markdown below does the same - so a leftover `{n}` in the DOCX
- * would be visible immediately in the run column of two tables. It is listed here rather than
- * excluded by a looser pattern, so that adding a second runtime placeholder is a decision somebody
- * makes rather than a check that quietly stops covering a key.
+ * WHY IT EXISTS: an earlier end-to-end run rendered `{nonBrandRuns}` into a client's overview table. The
+ * numbers were right and the sentence was unreadable, and nothing in the pipeline objected, because fill()
+ * leaves an unknown placeholder exactly as it found it and render-report.py prints these strings verbatim.
+ * The failure is silent and appears in the one document a human reads, so the whole copy block is scanned
+ * for anything left in braces and the build stops if it finds one.
  */
 const RUNTIME_PLACEHOLDERS = new Set(["runLabel"]);
+
+const FILLED_COPY: Record<string, string> = Object.fromEntries(
+  Object.entries(COPY).map(([key, value]) => [key, fill(value, fills)])
+);
 
 const leftovers = Object.entries(FILLED_COPY).filter(
   ([key, value]) => !RUNTIME_PLACEHOLDERS.has(key) && /\{[a-zA-Z_][a-zA-Z0-9_]*\}/.test(value)
@@ -1004,84 +1591,332 @@ if (leftovers.length > 0) {
 /** Copy as the document prints it: already filled, so the renderer never substitutes anything. */
 const T = (key: string) => FILLED_COPY[key] ?? COPY[key];
 
-/**
- * The excerpts, each with its own provenance note. Built here rather than in the renderer because
- * the renderer never sees the original answers - it must not be able to paraphrase one.
- */
-const entityQuote = {
-  label: "Q6 · 第 1 次运行 · 实体识别（“冠军股份”与“冠军科技”）",
-  question: firstRun(6).question,
-  run: 1,
-  text: trimTrailingLabel(headOf(plain(firstRun(6).answer), 280)),
-  note:
-    "原文摘录（Q6 第 1 次运行，取回答开头 280 个字符以内并按换行截断）。只去掉了 Markdown 的加粗与标题标记，文字与标点未改动。这段话说的是模型认识这家公司，而不是不认识它：模型把『冠军股份』当成一个需要解释的非规范简称。",
-};
+/* ------------------------------------------------------------------ */
+/* Advice and plan - read out of this measurement, not from a template */
+/* ------------------------------------------------------------------ */
 
-const quotes = [
-  entityQuote,
-  {
-    label: "Q3 · 第 2 次运行 · 一道行业问题里的一次提及",
-    question: run(3, 2).question,
-    run: 2,
-    text: sentenceWithBrand(run(3, 2).answer),
-    note:
-      "原文摘录（Q3 第 2 次运行）。只去掉了 Markdown 的加粗与标题标记。这是 {nonBrandRuns} 次行业问题运行里 {nonBrandMentions} 次提及中的一次：品牌作为国内核心供应商名单里的一条出现，同一条里写明了它参与过的工程类型。".replace(
-        "{nonBrandRuns}",
-        String(totals.nonBrandRuns)
-      ).replace("{nonBrandMentions}", String(totals.nonBrandBrandMentions)),
-  },
-  {
-    label: "Q1 · 第 1 次运行 · 一道行业问题里的一次未提及",
-    question: firstRun(1).question,
-    run: 1,
-    text: headOf(plain(firstRun(1).answer), 200),
-    note:
-      "原文摘录（Q1 第 1 次运行，取开头 200 个字符以内并按换行截断）。只去掉了 Markdown 的加粗与标题标记。这份回答按国际品牌与本土企业分档列出了多家厂商，其中没有江苏冠军科技集团。『未提及』只表示这家公司没有出现在这一次回答里，不表示回答对它作了负面评价——本报告没有做情感分析，也无法从一次未提及推出态度。",
-  },
+const zeroIds = zeroMentionNonBrand.map((q) => q.id).join("、");
+
+const advice: { title: string; problem: string; action: string; deliverable: string; acceptance: string }[] = [];
+
+if (entityFirstQuestion && entityNotConnected > 0) {
+  advice.push({
+    title: "P0-1 把实体口径写死，并在所有可查的地方用同一个版本",
+    problem:
+      `题库里 ${nameQuestionFacts.length} 道题问的是客户自己的名字写法（${nameQuestions
+        .map((n) => `${n.id}「${n.value}」`)
+        .join("、")}），` +
+      `其中 ${entityNotConnected} 次运行的回答里没有出现法定名称「${BRAND}」。每一次回答都要先做一次名称推断，而推断会出错——这就是名字层面的风险。`,
+    action:
+      "先确认一组标准口径：法定全称、官方简称、曾用名、成立年份、注册地、主营业务，以及每个口语名在什么场合使用。" +
+      "把这一组口径同时落到官网（一个可以单独引用的页面）、工商与备案信息、行业目录和百科词条上；每个字段注明更新日期与出处。",
+    deliverable: "1 份实体事实表（字段、内容、出处、更新日期）；1 个官网事实页；一批标准问答（每条都能指向出处）。",
+    acceptance: "同一批名字题复测时，回答里出现法定名称的运行次数不再下降；无法确认的字段写『待核实』而不是留空。",
+  });
+}
+
+if (claims.length > 0) {
+  advice.push({
+    title: "P0-2 先核验已经出现在回答里的断言，再决定要不要对外引用",
+    problem:
+      `第八节列出的 ${claims.length} 条带数字的断言（文件里共出现在 ${claimSentencesFound} 次回答里）都出现在回答里，但本报告没有核验。` +
+      "这些正是采购方与媒体最容易追问的地方，也是被追问时最贵的部分。",
+    action:
+      "逐条找证据：数字以清单形式给出并区分口径与截止日；资质与荣誉保留颁发机构、编号和日期；客户与工程保留项目名称、时间、范围，并取得对方同意公开。" +
+      "有证据的写成可引用的页面，没有证据的先从对外材料里拿掉——写不清楚的断言会被下一次回答原样重复。",
+    deliverable: "每条断言的证据文件或删除决定；客户与工程的公开授权记录；更新后的对外材料。",
+    acceptance: "第八节每一类断言都有一个结果：证据、改写后的表述，或删除。没有『口径待定』的条目。",
+  });
+}
+
+advice.push(
+  zeroMentionNonBrand.length > 0
+    ? {
+        title: "P1-1 针对 0 次提及的问题补可引用内容",
+        problem:
+          `不含品牌名的 ${totals.nonBrandQuestions} 道题、共 ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次；` +
+          `其中 ${zeroIds} 在 ${zeroMentionNonBrand[0]?.okRuns ?? runsPerQuestion} 次运行里一次都没有被提到。` +
+          (mentionedNonBrand.length > 0
+            ? `而 ${mentionedNonBrand.map((q) => q.id).join("、")} 提到过——差别说明现有可被引用的材料覆盖了一部分问法，没有覆盖另外一部分。`
+            : ""),
+        action:
+          `围绕 ${zeroIds} 的用词建立可引用页面：产品与适用场景、检测与认证、标准参与情况、真实案例。` +
+          "优先把内容放到回答已经引用过的域名类型上（行业门户、行业目录、标准与认证页面），而不是只发在自家官网。",
+        deliverable: `覆盖 ${zeroIds} 用词的内容页面；每条内容对应一个可核验的证据。`,
+        acceptance: `复测时 ${zeroIds} 的计数从 0 变成非 0 即为进展；没有变成非 0 时，结论是内容还没有被引用，而不是要再写一遍同样的东西。`,
+      }
+    : {
+        title: "P1-1 保持：不含品牌名的问题全部至少被提到过一次",
+        problem:
+          `不含品牌名的 ${totals.nonBrandQuestions} 道题、共 ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次，没有 0 次提及的题。` +
+          "这是一个基线，不是结论：它只说这几道题在这一次测量里被想到了。",
+        action:
+          "把本次被引用的域名与出现在回答里的表述整理成清单，明确哪些页面在支撑这个结果，下一次复测时逐题对照，并把这份题库的指纹与模型版本一起记录下来。",
+        deliverable: "本次测量里回答引用过的域名与表述清单；每条对应它支撑的题目。",
+        acceptance: `复测时逐题计数不低于本次（${questions
+          .map((q) => `${q.id} ${q.brandMentions}/${q.okRuns}`)
+          .join("、")}）；下降的题要能指出是哪一次变化的。`,
+      }
+);
+
+/**
+ * THE PLAN IS A SCHEDULE, NOT A FORECAST, and every row names the same bank fingerprint the whole document
+ * names: a re-test on a different bank is a different measurement.
+ */
+const plan: string[][] = [
+  [
+    "第 1—14 天",
+    entityFirstQuestion
+      ? `统一实体口径：确认法定全称、官方简称、曾用名与各口语名的使用场合，上线官网事实页（针对 ${nameQuestionFacts
+          .map((q) => q.id)
+          .join("、")} 这几道题）。`
+      : "补齐 intake 的别名与曾用名字段，让题库下一次能出名字题（本次没有测到这一层）。",
+    "1 份实体事实表（含出处与日期）；官网事实页链接；标准问答",
+  ],
+  [
+    "第 15—30 天",
+    claims.length > 0
+      ? `核验第八节的 ${claims.length} 类带数字断言，逐条找证据或删除。`
+      : "把回答里出现过的事实表述整理成清单，注明出处。",
+    "每条断言的证据或删除决定；客户与工程授权记录",
+  ],
+  [
+    "第 31—60 天",
+    zeroMentionNonBrand.length > 0
+      ? `针对 ${zeroIds} 补可引用内容，优先放到回答已经引用过的来源类型上。`
+      : "把本次被引用的来源类型整理出来，作为后续内容的投放位置参考。",
+    "内容页面清单与链接；每条对应的证据",
+  ],
+  [
+    "第 61—90 天",
+    `用同一份题库（指纹 ${bankFingerprint || "见第一节"}）、同一模型、同样 ${runsPerQuestion} 次运行复测，逐题对照计数，并记录模型版本与日期。`,
+    `同题复测的原始回答文件；逐题计数对照表（本次基线 ${totals.nonBrandBrandMentions} / ${totals.nonBrandRuns}）`,
+  ],
 ];
 
-const entityRuns = q6Runs.map((r) => ({ run: r.run, text: conclusionExcerpt(r.answer) }));
+const limits: string[] = [
+  "没有测量任何竞品。这份数据里没有第二家公司的提及计数，所以报告里没有竞品对比、没有份额、没有排名。",
+  "没有做情感分析。『提及』只表示答案里出现了品牌名或品牌名的一个写法，不表示评价是正面还是负面。",
+  `信源列表是回答引用过的域名，不是影响力排名。${citationEvents} 次引用事件分布在 ${domainMap.size} 个域名上，出现在前面只说明被链接得多。`,
+  `只有一个模型、一天的数据：${modelDisplay}，${measuredOn}，${webSearch ? "开启联网搜索" : "关闭联网搜索"}，每题 ${runsPerQuestion} 次运行。` +
+    "同一天、同一模型、同一批问题的观测，不是趋势，也不代表其他模型或其他日期。",
+  "回答里的事实断言（数量、客户名称、资质荣誉等）本报告没有核验，只记录它们出现在哪一次运行里。",
+  `失败的行按未测量处理。本文件 ${parsedLines} 行里有 ${rejected.length} 行是失败记录（${failureDigest || "无"}），它们没有被当作 0 次提及；` +
+    `如果某道题一次都没有完成，表格会写『未测量』而不是 0。本次 ${questions.length} 道题各有 ${runsPerQuestion} 次目标运行。`,
+  truncatedTotal > 0
+    ? `有 ${truncatedTotal} 次调用被截断（超时或流中断），截断的回答仍然计费，所以它们既不出现在计数里，也不被当成 0 次提及；每一行的 status 与 usage 都保留了。`
+    : "本次没有出现被截断（超时或流中断）的调用。",
+  runMode === "api"
+    ? "测的是 API 返回的回答，不是网页界面上用户看到的回答。两者可能不同，本报告没有做这个对照。"
+    : `本次的采集模式是 ${runModeLabelText}：文件里的回答不是模型输出，这份报告只能用来验证「题库 → 运行文件 → 报告」这条链路，不能作为任何对外结论。`,
+];
 
-// The per-group reading, filled from each group's own numbers.
-const groupReadings: Record<string, string> = {
-  category: `不含品牌名的行业问题，{questions} 道、{runs} 次运行，品牌被提及 {brand} 次。这是本报告唯一可以回答『陌生客户会不会遇到这家公司』的一组：问题里没有任何提示，回答推荐的是它自己想到的厂商。`,
-  ambig: `问题里带着口语名（『冠军股份』『冠军漆』等），{questions} 道、{runs} 次运行，品牌被提及 {brand} 次。这一组测的不是触达，而是模型能不能把这些名字对回同一个法定主体。`,
-  fact: `提问者已经点名公司，{questions} 道、{runs} 次运行，品牌被提及 {brand} 次。这一组测的是回答得对不对、三次之间一致不一致，而不是会不会被想到。`,
-};
+if (!header) {
+  limits.push(
+    "这份运行文件没有 provenance 头（run-header）：模型名、日期、联网搜索状态与题库指纹都是本报告从命令行或文件名里取的，不是采集时的记录。要拿到可核对的来源，请用 npm run measure 重新采集。"
+  );
+}
+if (header?.intake?.sha256_matches === false) {
+  limits.push(
+    "intake 在题库生成之后被改过：本次的品牌名与别名判定用的是文件当前内容，而题面仍是题库里的原题面，两者口径不同，数字不能直接与基线并列。"
+  );
+}
+
+const coding: string[][] = [
+  ["id", "题库里的题号（如 C1、F4），由 build-question-bank.mts 生成", "报告里逐题引用；复测时用它对齐同一道题"],
+  ["q", "本次运行里的序号（1 到题数），按题库顺序", "报告里写作 Q1…；与 id 一一对应"],
+  [
+    "group",
+    `题库自己的问法原型 id（本次：${groups.map((g) => g.id).join(" / ")}）`,
+    "分组统计与分组合计；各组的分母不同，不能相加",
+  ],
+  ["question", "问题原文", "逐题表格与复测时的问题版本"],
+  ["run", `第几次运行（1 到 ${runsPerQuestion}）`, "报告里写作『第 N 次运行』；同题的多次运行是多个独立会话"],
+  ["ok", "这次调用是否拿到完整回答", "只统计 ok=true 的行；ok=false 的行不进入任何计数"],
+  [
+    "status / errorBody",
+    "HTTP 状态与错误正文；超时记为 timeout，重放缺失记为 replay-missing",
+    `只用于说明被排除的行是什么（本次：${failureDigest || "无失败行"}）`,
+  ],
+  ["attempts", "这一次运行用掉了几次调用（失败会重试）", "成本口径：重试与被截断的调用都已经计费"],
+  ["truncated", "这次调用是否被截断（超时或流中断）", "截断的回答不计入计数，但它的 token 用量已经发生"],
+  [
+    "mentionsBrand",
+    `答案里是否出现品牌名或它的别名：${brandTokens.map((t) => t.value).join(" / ")}`,
+    "品牌提及次数——本报告的核心数字",
+  ],
+  ["mentionsPrimary", `答案里是否出现法定名称：${BRAND}`, "实体识别一节的判定字段"],
+  [
+    "mentionsCoatings",
+    hasCategoryTokens
+      ? `答案里是否出现客户自己的品类词：${categoryTokensForReport.map((t) => t.value).join(" / ")}`
+      : "本次无法判定（intake 没有填 industry.category_terms）",
+    "『品类词提及』一列，用来说明回答确实在谈这个品类",
+  ],
+  ["domains", "这次回答引用的域名列表", "信源网络一节；一次回答里同一域名只计 1 次"],
+  ["usage.total_tokens", "这次调用的 token 用量", `总用量口径（本次 ${totalTokens}，见元数据）`],
+  ["usage.tool_usage.web_search", "这次调用里联网搜索的次数", "证明这次是按 header 记录的搜索设置跑出来的"],
+  ["answer", "模型返回的完整回答文本", "原文摘录与断言定位的来源"],
+];
+
+/**
+ * THE METHOD SENTENCES. The four facts verification cares about - model, date, runs per question and whether
+ * web search was on - are read from the run header and printed here as the collector's own record. What the
+ * answers actually ARE is a fifth fact, and it is the one a reader must not have to infer: a dry run and a
+ * replay call no model, so "web search on" is a configuration record rather than something that happened,
+ * and the sentence says so.
+ */
+const searchSentence =
+  runMode === "api"
+    ? webSearch
+      ? "开启联网搜索（tools: [web_search]）"
+      : "没有开启联网搜索"
+    : runMode === "dry-run"
+      ? `采集配置记录的是${webSearch ? "开启" : "关闭"}联网搜索，但本次是 dry-run，没有发出任何调用`
+      : runMode === "replay"
+        ? `搜索设置取自被回放的那次运行（${webSearch ? "开启" : "关闭"}），本次没有发出任何调用`
+        : `${webSearch ? "开启" : "关闭"}联网搜索`;
+
+const method: string[] = [
+  `本报告的每一次计数都来自 ${answersPath} 里 ok=true 的 ${answers.length} 条记录：${questions.length} 道问题（题库指纹 ${bankFingerprint || "未记录"}），` +
+    `每题 ${runsPerQuestion} 次运行，合计 ${totals.runs} 次完成的回答。模型是 ${modelDisplay}，测量日期 ${measuredOn}，` +
+    `${searchSentence}，采集模式 ${runMode}` +
+    `${header?.run?.endpoint ? `（${header.run.endpoint}）` : ""}` +
+    `${header?.run?.gap_ms !== undefined ? `，每次调用之间至少间隔 ${header.run.gap_ms}ms` : ""}` +
+    `${header?.run?.timeout_ms !== undefined ? `，每次调用上限 ${header.run.timeout_ms}ms（超时会记在该行的 status 里）` : ""}。` +
+    "这四项（模型、日期、每题次数、是否联网）都取自运行文件第一行的 provenance 头，不是本报告的命令行参数。",
+  rejected.length > 0
+    ? `这个文件一共 ${parsedLines} 条回答记录，其中 ${rejected.length} 条是失败记录（${failureDigest}），它们在计数之前就被排除：` +
+      `本报告所有数字只用另外 ${answers.length} 条。被排除的行没有被当成 0 次提及——把限流或超时读成『品牌没有被提到』，正是这份报告要避免的错误。`
+    : `这个文件一共 ${parsedLines} 条回答记录，没有失败记录：${questions.length} 道题各有 ${runsPerQuestion} 次完整回答。` +
+      "如果有调用被拒绝或超时，它们会被单独记下来并在计数之前排除——把限流读成『品牌没有被提到』，正是这份报告要避免的错误。",
+  runMode === "api"
+    ? `调用次数：这次采集一共发起了 ${attemptsTotal} 次调用（含重试）${truncatedTotal > 0 ? `，其中 ${truncatedTotal} 次被截断` : ""}` +
+      `${timeoutsTotal > 0 ? `，${timeoutsTotal} 次触发超时` : ""}。截断与超时的调用同样计费，所以每一行都记了 attempts 和 questionAttempts（累计到该题）；` +
+      "把重试次数藏起来会让成本口径对不上，这是上一次采集留下的教训。"
+    : `调用次数：0。本次是 ${runMode}，没有向任何模型发起调用，所以 token 用量是 0、attempts 是 0；` +
+      "这两处的 0 是事实，不是缺失。真实采集时每一行都会记 attempts（含重试），因为被截断的调用同样计费。",
+  `模型名与测量日期来自运行文件的 provenance 头（${modelSource}；日期来源：${dateSource}）。` +
+    (header
+      ? "采集脚本 scripts/report/run-bank.mts 在开跑前把这些字段写进第一行，所以它们与回答是同一个文件、同一时刻的记录。"
+      : "这份文件没有 provenance 头，两项都是本报告的输入参数。"),
+  "mentionsBrand 与 mentionsCoatings 是采集脚本在写入每一行时判定的，判定规则见『标注字段口径』。本报告直接读这两个字段，不重新判定，所以报告里的数字和采集时的判定完全一致——包括判定可能存在的偏差。",
+  `本报告不出现百分比：每个数字都写成『几次运行里几次』。${runsPerQuestion} 次运行不足以支撑一个比例，这是服务定义里写死的口径，也是这份数据唯一诚实的报法。`,
+];
+
+function isBlank(text: string): boolean {
+  return !text || text.trim().length === 0;
+}
+
+const provenance: string[] = [
+  `题库：${header?.bank?.path ?? "（运行文件没有记录题库路径）"}`,
+  `题库指纹：${bankFingerprint || "（未记录）"}${
+    header?.bank?.fingerprint_verified === true ? "（采集脚本重算核对通过）" : ""
+  }；来源 intake：${header?.intake?.resolved_path ?? "（未记录）"}`,
+  `批准：${bankApprovedBy ? `${bankApprovedBy}　${bankApprovedOn || "（未写日期）"}` : "（空：题库还没有批准人签字）"}`,
+  `数据文件：${answersPath}（${parsedLines} 条回答记录，其中 ok=true ${answers.length} 条、失败 ${rejected.length} 条）。`,
+  `采集脚本：${header?.collector?.script ?? "（运行文件没有记录采集脚本）"}` +
+    (header?.collector?.version !== undefined ? ` v${header.collector.version}` : "") +
+    (header?.collector?.script_sha256 ? `，script sha256 ${String(header.collector.script_sha256).slice(0, 16)}…` : "") +
+    `；模式 ${runMode}${header?.run?.answers_source ? `（${header.run.answers_source}）` : ""}。`,
+  `模型名：${modelDisplay}（${modelSource}）。`,
+  `测量日期：${measuredOn}（${dateSource}）。`,
+  `联网搜索：${webSearch ? "开启" : "关闭"}（记录在运行文件的 provenance 头里）。`,
+  `品牌提及判定使用的写法：${brandTokens.map((t) => `${t.value}（${t.field}）`).join("、")}` +
+    `；来源：${
+      header?.brand?.tokens_source === "intake"
+        ? "intake"
+        : header
+          ? "题库题面记录的槽位（intake 不可用，是子集）"
+          : "命令行 --brand / --alias"
+    }。`,
+  `品类词：${
+    hasCategoryTokens
+      ? categoryTokensForReport.map((t) => t.value).join("、")
+      : "（intake 未填 industry.category_terms，本次没有品类词提及数字）"
+  }`,
+  isBlank(intakeDrift) ? "intake 与题库记录一致。" : intakeDrift,
+  "报告结构：章节顺序参照一份外部交付物的目录与表格形态，仅取结构。文字、表格内容、结论全部重写：那是别人做的交付物，逐字照搬既有授权问题，也会让这份报告把合成数据当成实测结果——该文件的数字是按预设规则与固定随机种子合成的，本报告的每一个数字都来自真实记录。",
+  "本报告由 scripts/report/build-visibility.mts 生成，DOCX/XLSX 由 scripts/report/render-report.py 渲染；同一份模型文件也可以单独重渲染。",
+];
 
 const model = {
   reportType: "ai-visibility",
   generatedBy: "geo-scanner scripts/report/build-visibility.mts",
   lang: "zh",
   /**
-   * THE FILLED COPY, not the templates. render-report.py prints these strings verbatim and never
-   * substitutes into them - that is what keeps the DOCX and the Markdown saying the same thing - so
-   * a placeholder that reached this point would be printed as one. See the leftover check above.
+   * THE FILLED COPY, not the templates. render-report.py prints these strings verbatim and never substitutes
+   * into them - that is what keeps the DOCX and the Markdown saying the same thing - so a placeholder that
+   * reached this point would be printed as one. See the leftover check above.
    */
   copy: FILLED_COPY,
+  bank: {
+    headerPresent: Boolean(header),
+    path: header?.bank?.path ?? null,
+    sha256: header?.bank?.sha256 ?? null,
+    fingerprint: bankFingerprint || null,
+    fingerprintRule: header?.bank?.fingerprint_rule ?? null,
+    fingerprintVerified: header?.bank?.fingerprint_verified ?? null,
+    generator: bankGenerator || null,
+    generatedOn: header?.bank?.generated_on ?? null,
+    approvedBy: bankApprovedBy,
+    approvedOn: bankApprovedOn,
+    frozenNote,
+    language: header?.run?.language ?? null,
+    rows: bankPageRows.map(([label, value]) => ({ label, value })),
+    archetypes: groups.map((g) => {
+      const meta = groupMeta.find((m) => m.id === g.id);
+      return {
+        id: g.id,
+        label: g.label,
+        short: g.short,
+        /**
+         * The per-archetype heading is composed HERE rather than in either renderer, for the reason the whole
+         * copy block lives in this file: the DOCX and the Markdown must not be able to print two different
+         * descriptions of the same group. One string, one author.
+         */
+        heading:
+          `${g.label} · ${g.questions} 题` +
+          (meta?.target ? `（目标 ${meta.target}${meta.status ? `，状态 ${meta.status}` : ""}）` : ""),
+        measures: g.purpose,
+        target: meta?.target ?? 0,
+        generated: meta?.generated ?? g.questions,
+        status: meta?.status ?? "",
+        questions: g.questions,
+      };
+    }),
+    questions: bankQuestions
+      .slice()
+      .sort((a, b) => a.q - b.q)
+      .map((q) => ({ q: q.q, id: q.id, group: q.group, text: q.text })),
+    nameQuestions: nameQuestions.map((n) => ({
+      q: n.q,
+      id: n.id,
+      group: n.group,
+      text: n.text,
+      slot: n.slot,
+      value: n.value,
+    })),
+    totalQuestions: bankQuestions.length,
+  },
   meta: {
     subject: BRAND,
     subjectShort: BRAND,
     slug,
     measuredOn,
     measuredOnDisplay: measuredOn,
-    model: modelName,
+    model: modelDisplay,
     /**
-     * WHERE THE MODEL NAME AND THE DATE CAME FROM, as two explicit fields rather than a footnote.
-     *
-     * Neither is in the JSONL: its rows have no `model` key and no timestamp. The model name comes
-     * from the run's own configuration file (.keys/volcengine.txt's MODEL_ID, read by
-     * phase1-champion.mjs) and the date from the answers filename. Both are therefore INPUTS to this
-     * report rather than facts read out of it, and both are printed in the document - a reader has
-     * to be able to tell which claims are measured and which are supplied.
+     * WHERE THE MODEL NAME AND THE DATE CAME FROM, as two explicit fields rather than a footnote. They come
+     * from the run file's own header now, which is the collector's record of what was called and when - not
+     * from a flag somebody passed to this script after the fact.
      */
-    modelSource:
-      "运行配置 .keys/volcengine.txt 的 MODEL_ID（由采集脚本 phase1-champion.mjs 读取）；数据文件本身不含模型字段",
-    dateSource: `数据文件名 ${answersPath.split(/[\\/]/).pop()}；数据文件本身不含时间戳字段`,
-    webSearch: true,
-    runsPerQuestion: RUNS_PER_QUESTION,
+    modelSource,
+    dateSource,
+    webSearch,
+    runsPerQuestion,
     answersFile: answersPath,
-    answersFileLines: parsed.length,
+    answersFileLines: parsedLines,
     answersOk: answers.length,
     answersFailed: rejected.length,
     failureSummary,
@@ -1089,136 +1924,61 @@ const model = {
     webSearchCalls,
     citationEvents,
     distinctDomains: domainMap.size,
+    runMode,
+    runModeLabel: runModeLabelText,
+    runSchema: header?.schema ?? null,
+    attemptsTotal,
+    timeoutsTotal,
+    truncatedTotal,
+    bankPath: header?.bank?.path ?? "",
+    bankFingerprint,
+    bankApprovedBy,
+    bankApprovedOn,
+    bankLanguage: header?.run?.language ?? "",
+    brandTokens: brandTokens.map((t) => t.value),
     generatedAt,
     generatedAtDisplay: stamp,
   },
   headline: {
     value: `${totals.nonBrandBrandMentions} / ${totals.nonBrandRuns}`,
-    caption: `不含品牌名的行业问题 · ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次`,
+    caption: `不含品牌名的问题 · ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次`,
     callout: T("summaryCallout"),
   },
   groups: groups.map((g) => ({
-    ...g,
-    reading: fill(groupReadings[g.id] ?? "", {
-      questions: g.questions,
-      runs: g.runs,
-      brand: g.brandMentions,
-    }),
+    id: g.id,
+    label: g.label,
+    short: g.short,
+    purpose: g.purpose,
+    reading: g.namesBrand
+      ? `点名品牌的问题：${g.questions} 道、${g.runs} 次运行，品牌被提及 ${g.brandMentions} 次（${g.brandMentions} / ${g.runs}）。` +
+        "问题里带着品牌名，所以这一组测的不是触达，而是回答得对不对、多次运行之间一致不一致。"
+      : `不含品牌名的问题：${g.questions} 道、${g.runs} 次运行，品牌被提及 ${g.brandMentions} 次（${g.brandMentions} / ${g.runs}）。` +
+        "问题里没有任何提示，回答里出现的是它自己想到的厂商——这是本报告里唯一能回答『陌生客户会不会遇到这家公司』的问法之一" +
+        `（本次这样的组共 ${groups.filter((x) => !x.namesBrand).length} 个）。`,
+    questions: g.questions,
+    runs: g.runs,
+    brandMentions: g.brandMentions,
+    coatingsMentions: g.coatingsMentions,
   })),
   totals,
   questions,
   domains,
   claims,
   quotes,
+  entityQuote,
   entityRuns,
-  /**
-   * The two slices of the entity figure, as numbers the renderer prints rather than recomputes.
-   *
-   * WHY THE MODEL CARRIES THEM AND NOT THE RENDERER: render-report.py never sees the answers - it
-   * sees excerpts and counts - so a classification made there would be a classification of a
-   * paraphrase, and the DOCX, the XLSX and the Markdown could each end up disagreeing about the
-   * report's headline finding. `rule` travels with the counts into the workbook, so wherever the
-   * numbers are printed the rule that produced them is printed too.
-   */
   entityConclusion: {
-    same: entityConclusionSameRuns,
-    notSame: notSameRuns,
-    total: q6Runs.length,
+    same: entityConnected,
+    notSame: entityNotConnected,
+    total: entityRunsTotal,
     rule: T("entityConclusionRule"),
   },
-  limits: [
-    "没有测量任何竞品。这份数据里没有第二家公司的提及计数，所以报告里没有竞品对比、没有份额、没有排名。",
-    "没有做情感分析。『提及』只表示答案里出现了公司名或品牌名，不表示评价是正面还是负面。",
-    `信源列表是回答引用过的域名，不是影响力排名。${citationEvents} 次引用事件分布在 ${domainMap.size} 个域名上，出现在前面只说明被链接得多。`,
-    `只有一个模型、一天的数据：${modelName}，${measuredOn}，开启联网搜索，每题 3 次运行。同一天、同一模型、同一批问题的观测，不是趋势，也不代表其他模型或其他日期。`,
-    "回答里的事实断言（专利数量、客户名称、资质荣誉等）本报告没有核验，只记录它们出现在哪一次运行里。",
-    `失败的行按未测量处理。本文件 ${parsed.length} 行里有 ${rejected.length} 行是失败记录（${failureDigest}，同题同次的另一次尝试），它们没有被当作 0 次提及；如果某道题一次都没有完成，表格会写『未测量』而不是 0。本次 10 道题各有 3 次完成的回答。`,
-    "测的是 API 返回的回答，不是网页界面上用户看到的回答。两者可能不同，本报告没有做这个对照。",
-  ],
-  advice: [
-    {
-      title: "P0-1 把实体口径写死，并在所有可查的地方用同一个版本",
-      problem:
-        "『冠军股份』不是官方简称，而回答里已经出现了『冠军股份』『冠军科技』『冠军漆』『鲸海漆』以及冠农股份、冠盛股份、金冠股份等同名或谐音主体。每一次回答都要先做一次名称推断，第 3 次运行的小标题『不是同一家公司』就是推断出岔子的样子。",
-      action:
-        "先确认一组标准口径：法定全称、官方证券简称、曾用简称、股票代码、成立年份、注册地、主营业务，以及『冠军股份』这个词到底还用不用、在什么场合用。把这一组口径同时落到官网（一个可以单独引用的页面）、工商与挂牌信息、行业目录和百科词条上；每个字段注明更新日期与出处。",
-      deliverable:
-        "1 份实体事实表（字段、内容、出处、更新日期）；1 个官网事实页；20 条标准问答（每条都能指向出处）。",
-      acceptance:
-        "20 条标准问答里每一条的字段都能在公开来源上查到同一版本；仍然无法确认的字段，明确写『待核实』和核实路径，而不是留空。",
-    },
-    {
-      title: "P0-2 先核验已经出现在回答里的断言，再决定要不要对外引用",
-      problem:
-        "第七节列出的断言（专利 60 余件、33 件发明专利、国内首家低 VOCs 认证、具体客户与中标项目）都出现在回答里，但本报告没有核验。这些正是采购方与媒体最容易追问的地方，也是被追问时最贵的部分。",
-      action:
-        "逐条找证据：专利以清单形式区分申请、授权、软著与截止日；资质与荣誉保留颁发机构、编号和日期；客户与工程保留项目名称、时间、范围，并取得对方同意公开。有证据的写成可引用的页面，没有证据的先从对外材料里拿掉——写不清楚的断言会被下一次回答原样重复。",
-      deliverable: "每条断言的证据文件或删除决定；客户与工程的公开授权记录；更新后的对外材料。",
-      acceptance:
-        "第七节每一行都有一个结果：证据、改写后的表述，或删除。没有『口径待定』的条目。",
-    },
-    {
-      title: "P1-1 针对 0 次提及的两道行业问题补内容",
-      problem:
-        "Q1（国内工业涂料领域有哪些主要厂商?）与 Q2（防火涂料有哪些知名品牌?）在三次运行里都没有提到这家公司，而 Q3、Q4 各提到了 2 次。差别说明现有可被引用的材料覆盖了『道路标线漆 / 重防腐 / 高闪点』这类细分词，没有覆盖最宽的两个品类词。",
-      action:
-        "围绕 Q1、Q2 的品类词建立可引用页面：产品线与应用场景、检测与认证、标准参与情况、真实案例。优先把内容放到回答已经引用过的域名类型上（行业门户、行业目录、标准与认证页面），而不是只发在自家官网。",
-      deliverable: "覆盖 Q1、Q2 品类词的内容页面；每条内容对应一个可核验的证据。",
-      acceptance: "复测时 Q1、Q2 的计数从 0 变成非 0 即为进展；没有变成非 0 时，结论是内容还没有被引用，而不是要再写一遍同样的东西。",
-    },
-  ],
-  plan: [
-    [
-      "第 1—14 天",
-      "统一实体口径：确认法定全称、官方简称、曾用简称、代码、成立年份、注册地，明确『冠军股份』的使用场合；上线官网事实页。",
-      "1 份实体事实表（含出处与日期）；20 条标准问答；官网事实页链接",
-    ],
-    [
-      "第 15—30 天",
-      "核验第七节的断言：专利、资质、客户与工程，逐条找证据或删除。",
-      "每条断言的证据或删除决定；客户授权记录",
-    ],
-    [
-      "第 31—60 天",
-      "针对 Q1、Q2 两个品类词补可引用内容，优先放到回答已经引用过的来源类型上。",
-      "内容页面清单与链接；每条对应的证据",
-    ],
-    [
-      "第 61—90 天",
-      "用同一批 10 道题、同一模型、同样 3 次运行复测，逐题对照计数，并记录模型版本与日期。",
-      "同题复测的原始回答文件；逐题计数对照表（本次为 4 / 12 的基线）",
-    ],
-  ],
-  coding: [
-    ["q", "问题在题库里的序号（1—10）", "报告里写作 Q1—Q10"],
-    ["group", "category=行业问题（不含品牌名）、ambig=消歧问题、fact=事实问题（点名公司）", "分组统计与分组合计；三组的分母不同，不能相加"],
-    ["question", "问题的自然语言原文", "逐题表格与复测时的问题版本"],
-    ["run", "第几次运行（1—3）", "报告里写作『第 N 次运行』；同一题的三次运行是三个独立会话"],
-    ["ok", "这次调用是否拿到完整回答", "只统计 ok=true 的行；ok=false 的行不进入任何计数"],
-    ["status / errorBody", "HTTP 状态与错误正文", "只用于说明被排除的行是什么（本次全部是 429 限流）"],
-    ["mentionsBrand", "答案里是否出现 冠军股份 / 冠军科技 / 冠军漆 / 鲸海漆", "品牌提及次数——本报告的核心数字"],
-    ["mentionsCoatings", "答案里是否出现『涂料』", "涂料提及次数，用来说明回答确实在谈这个品类"],
-    ["domains", "这次回答引用的域名列表", "信源网络一节；一次回答里同一域名只计 1 次"],
-    ["usage.total_tokens", "这次调用的 token 用量", `总用量口径（本次 ${totalTokens}，见元数据）`],
-    ["usage.tool_usage.web_search", "这次调用里联网搜索的次数", "证明这次是按开启搜索跑出来的"],
-    ["answer", "模型返回的完整回答文本", "原文摘录与断言定位的来源"],
-  ],
-  method: [
-    `本报告的每一次计数都来自 ${answersPath} 里 ok=true 的 ${answers.length} 条记录：${questions.length} 道问题，每题 ${RUNS_PER_QUESTION} 次运行，合计 ${totals.runs} 次完成的回答。模型是 ${modelName}（火山方舟 /api/v3/responses），测量日期 ${measuredOn}，开启联网搜索（tools: [web_search]），每题 3 次、每次调用之间至少间隔 3 秒（采集脚本的间隔常量）。同一天、同一个模型、同一批问题。`,
-    `这个文件一共有 ${parsed.length} 行，其中 ${rejected.length} 行是更早一次运行被限流后写入的失败记录（${[...rejectedByStatus.entries()].map(([s, n]) => `HTTP ${s} × ${n}`).join("、")}，answer 为空）。它们在计数之前就被排除：本报告所有数字只用另外 ${answers.length} 行。被排除的行没有被当成 0 次提及——把限流读成『品牌没有被提到』，正是这份报告要避免的错误。`,
-    `模型名与测量日期不在数据里：文件的每一行只有 q、group、question、run、ok、status、errorBody、ms、mentionsBrand、mentionsCoatings、domains、usage、answer 这些字段，没有 model，也没有时间戳。模型名来自这次运行使用的配置（.keys/volcengine.txt 里的 MODEL_ID，由采集脚本 phase1-champion.mjs 读取），日期取自数据文件名。这两项是本报告的输入参数，不是从数据里读出来的；换一次运行就必须重新提供。`,
-    `mentionsBrand 与 mentionsCoatings 是采集脚本在写入每一行时判定的，判定规则见『标注字段口径』。本报告直接读这两个字段，不重新判定，所以报告里的数字和采集时的判定完全一致——包括判定可能存在的偏差。`,
-    `本报告不出现百分比：每个数字都写成『几次运行里几次』。3 次运行不足以支撑一个比例，这是服务定义里写死的口径，也是这份数据唯一诚实的报法。`,
-  ],
-  provenance: [
-    `数据文件：${answersPath}（${parsed.length} 行，其中 ok=true ${answers.length} 行、失败 ${rejected.length} 行）。`,
-    "采集脚本：phase1-champion.mjs（本次运行没有入仓）。它调用火山方舟 /api/v3/responses，开启 web_search 工具，每题 3 次，调用之间至少间隔 3 秒（GAP_MS=3000），失败最多重试 3 次。数据文件里没有时间戳，所以间隔只能按脚本的配置说明，不能从数据里复算。",
-    "模型名：来自 .keys/volcengine.txt 的 MODEL_ID（由采集脚本读取）。数据文件本身不含模型字段。",
-    `测量日期：取自数据文件名 ${answersPath.split(/[\\/]/).pop()} 里的日期；数据文件不含时间戳字段。`,
-    "mentionsBrand / mentionsCoatings：采集脚本写入，判定规则见本附录『标注字段口径』；本报告不重新判定。",
-    "报告结构：章节顺序参照一份外部交付物（冠军股份_GEO监测诊断报告.docx）的目录与表格形态，仅取结构。文字、表格内容、结论全部重写：那是别人做的交付物，逐字照搬既有授权问题，也会让这份报告把合成数据当成实测结果——该文件的数字是按预设规则与固定随机种子合成的，本报告的每一个数字都来自真实的 30 次回答。",
-    "本报告由 scripts/report/build-visibility.mts 生成，DOCX/XLSX 由 scripts/report/render-report.py 渲染；同一份模型文件也可以单独重渲染。",
-  ],
+  limits,
+  advice,
+  plan,
+  coding,
+  method,
+  provenance,
 };
 
 const modelPath = join(outDir, "visibility-model.json");
@@ -1226,7 +1986,7 @@ writeFileSync(modelPath, JSON.stringify(model, null, 2), "utf8");
 console.log(`wrote ${modelPath}`);
 
 /* ------------------------------------------------------------------ */
-/* Markdown - rendered here, from the same model, so no Python needed   */
+/* Markdown - rendered here, from the same model, so no Python needed  */
 /* ------------------------------------------------------------------ */
 
 const esc = (s: string) => String(s).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
@@ -1242,16 +2002,10 @@ const bullet = (s: string) => md.push(`- ${esc(s)}`);
 /**
  * A figure in Markdown: the image, then its caption.
  *
- * WHY THE ALT TEXT IS THE CAPTION AND NOT A SHORT LABEL: the DOCX this run also writes prints the
- * caption under the picture, and the Markdown is a separate deliverable of the same run. A short
- * alt text here ("mentions chart") would mean the two documents describe the same figure
- * differently - and the caption is the part that says the labels are counts, so dropping it from
- * the alt text is how a reader of the Markdown ends up reading a bar chart as a rate.
- *
- * WHY T() AND NOT COPY: this helper is handed a KEY, not a string, because the first version took
- * the raw block and printed "n = 每组完成的运行次数（{groupRuns}）" into the Markdown while the same
- * caption in the DOCX - rendered from the filled block - was correct. The placeholder check at the
- * end of this file now fails the build if that happens again.
+ * WHY THE ALT TEXT IS THE CAPTION AND NOT A SHORT LABEL: the DOCX prints the caption under the picture, and
+ * the Markdown is a separate deliverable of the same run. A short alt text here would mean the two documents
+ * describe the same figure differently - and the caption is the part that says the labels are counts, so
+ * dropping it is how a reader of the Markdown ends up reading a bar chart as a rate.
  */
 const figure = (key: string, file: string) => {
   md.push(`![${T(key)}](charts/${file})`);
@@ -1269,17 +2023,47 @@ md.push("");
 
 table([COPY.tableItem, COPY.tableValue], [
   [COPY.kSubject, BRAND],
-  [COPY.kModel, modelName],
+  [COPY.kModel, modelDisplay],
+  [COPY.kRunMode, runModeLabelText],
   [COPY.kMeasuredOn, measuredOn],
-  [COPY.kWebSearch, COPY.yes],
-  [COPY.kRunsPerQuestion, String(RUNS_PER_QUESTION)],
+  [COPY.kWebSearch, webSearch ? COPY.yes : COPY.no],
+  [COPY.kRunsPerQuestion, String(runsPerQuestion)],
   [COPY.kAnswersFile, answersPath],
-  [COPY.kCompleted, `${answers.length} / ${parsed.length}`],
+  [COPY.kCompleted, `${answers.length} / ${parsedLines}`],
   [COPY.kExcluded, failureSummary],
   [COPY.kTokens, String(totalTokens)],
+  [COPY.kSearchCalls, String(webSearchCalls)],
   [COPY.kCitations, `${citationEvents} / ${domainMap.size}`],
   [COPY.kGeneratedAt, stamp],
 ]);
+
+/* --- 一、题库 ------------------------------------------------------- */
+
+md.push(`## ${COPY.sectionBank}`);
+md.push("");
+md.push(T("bankLead"), "");
+table(
+  [COPY.tableItem, COPY.tableValue],
+  model.bank.rows.map((r) => [r.label, r.value])
+);
+if (T("bankFrozen")) {
+  md.push(`> ${T("bankFrozen")}`);
+  md.push("");
+}
+md.push(T("bankApprovalLine"), "");
+if (T("bankIntakeDrift")) md.push(T("bankIntakeDrift"), "");
+md.push(`### ${T("bankQuestionsTitle")}`);
+md.push("");
+for (const a of model.bank.archetypes) {
+  const inGroup = model.bank.questions.filter((q) => q.group === a.id);
+  if (inGroup.length === 0) continue;
+  md.push(`#### ${a.heading}`);
+  md.push("");
+  if (a.measures) md.push(a.measures, "");
+  table([COPY.thId, COPY.thText], inGroup.map((q) => [q.id, q.text]));
+}
+
+/* --- 二、执行摘要 --------------------------------------------------- */
 
 md.push(`## ${COPY.sectionSummary}`);
 md.push("");
@@ -1299,14 +2083,14 @@ table(
       String(g.questions),
       String(g.runs),
       `${g.brandMentions} / ${g.runs}`,
-      `${g.coatingsMentions} / ${g.runs}`,
+      coatingsCell(g.coatingsMentions, g.runs),
     ]),
     [
       COPY.thTotal,
       String(questions.length),
       String(totals.runs),
       `${totals.brandMentions} / ${totals.runs}`,
-      `${totals.coatingsMentions} / ${totals.runs}`,
+      coatingsCell(totals.coatingsMentions, totals.runs),
     ],
   ]
 );
@@ -1314,20 +2098,23 @@ md.push(T("coverageNote"), "");
 figure("figGroups", "groups.png");
 md.push(`### ${COPY.sectionNotMeasured}`);
 md.push("");
-for (const item of model.limits) bullet(item);
+for (const item of limits) bullet(item);
 md.push("");
+
+/* --- 三、总览 ------------------------------------------------------- */
 
 md.push(`## ${COPY.sectionOverview}`);
 md.push("");
 md.push(T("overviewLead"), "");
 table(
-  [COPY.thNo, COPY.thQuestion, COPY.thGroup, COPY.thBrand, COPY.thCoatings],
+  [COPY.thNo, COPY.thId, COPY.thQuestion, COPY.thGroup, COPY.thBrand, COPY.thCoatings],
   questions.map((q) => [
     `Q${q.q}`,
+    q.id,
     q.question,
     q.groupShort,
     `${q.brandMentions} / ${q.okRuns}`,
-    `${q.coatingsMentions} / ${q.okRuns}`,
+    coatingsCell(q.coatingsMentions, q.okRuns),
   ])
 );
 md.push(T("overviewTotals"), "");
@@ -1338,22 +2125,30 @@ md.push("");
 for (const key of ["readCounts", "readPrompted", "readDenominator", "readSameDay"]) bullet(T(key));
 md.push("");
 
+/* --- 四、实体识别 --------------------------------------------------- */
+
 md.push(`## ${COPY.sectionEntity}`);
 md.push("");
 md.push(T("entityLead"), "");
-md.push(`> ${entityQuote.text.replace(/\n/g, " ")}`);
-md.push("");
-md.push(`*${entityQuote.note}*`);
-md.push("");
-md.push(`### ${COPY.sectionEntityRuns}`);
-md.push("");
-md.push(T("entityRunsLead"), "");
-table(
-  [COPY.thRun, COPY.thExcerpt],
-  entityRuns.map((r) => [COPY.runLabel.replace("{n}", String(r.run)), r.text])
-);
-md.push(T("entityFinding"), "");
-figure("figEntity", "entity-conclusion.png");
+if (entityQuote) {
+  md.push(`> ${entityQuote.text.replace(/\n/g, " ")}`);
+  md.push("");
+  md.push(`*${entityQuote.note}*`);
+  md.push("");
+  md.push(`### ${COPY.sectionEntityRuns}`);
+  md.push("");
+  md.push(T("entityRunsLead"), "");
+  table(
+    [COPY.thRun, COPY.thExcerpt],
+    entityRuns.map((r) => [COPY.runLabel.replace("{n}", String(r.run)), r.text])
+  );
+  md.push(T("entityFinding"), "");
+  figure("figEntity", "entity-conclusion.png");
+  md.push(`*${T("entityConclusionLine")}*`);
+  md.push("");
+}
+
+/* --- 五、按问法原型拆解 --------------------------------------------- */
 
 md.push(`## ${COPY.sectionGroups}`);
 md.push("");
@@ -1363,17 +2158,14 @@ for (const g of model.groups) {
   md.push("");
   md.push(g.reading, "");
   table(
-    [COPY.thNo, COPY.thQuestion, COPY.thBrand, COPY.thCoatings],
+    [COPY.thId, COPY.thQuestion, COPY.thBrand, COPY.thCoatings],
     questions
       .filter((q) => q.group === g.id)
-      .map((q) => [
-        `Q${q.q}`,
-        q.question,
-        `${q.brandMentions} / ${q.okRuns}`,
-        `${q.coatingsMentions} / ${q.okRuns}`,
-      ])
+      .map((q) => [q.id, q.question, `${q.brandMentions} / ${q.okRuns}`, coatingsCell(q.coatingsMentions, q.okRuns)])
   );
 }
+
+/* --- 六、竞品 ------------------------------------------------------- */
 
 md.push(`## ${COPY.sectionCompetitors}`);
 md.push("");
@@ -1382,6 +2174,8 @@ md.push("");
 md.push(T("competitorsBody"), "");
 for (const key of ["competitorsNone1", "competitorsNone2", "competitorsNone3"]) bullet(T(key));
 md.push("");
+
+/* --- 七、信源 ------------------------------------------------------- */
 
 md.push(`## ${COPY.sectionSources}`);
 md.push("");
@@ -1397,15 +2191,21 @@ md.push("");
 for (const key of ["sourcesCaveat1", "sourcesCaveat2", "sourcesCaveat3"]) bullet(T(key));
 md.push("");
 
+/* --- 八、断言 ------------------------------------------------------- */
+
 md.push(`## ${COPY.sectionClaims}`);
 md.push("");
 md.push(`> ${T("claimsCallout")}`);
 md.push("");
-table(
-  [COPY.thClaim, COPY.thSource, COPY.thHandling],
-  claims.map((c) => [c.claim, c.source, c.handling])
-);
+if (claims.length > 0) {
+  table(
+    [COPY.thClaim, COPY.thSource, COPY.thHandling],
+    claims.map((c) => [c.claim, c.source, c.handling])
+  );
+}
 md.push(T("claimsNote"), "");
+
+/* --- 九、摘录 ------------------------------------------------------- */
 
 md.push(`## ${COPY.sectionQuotes}`);
 md.push("");
@@ -1421,10 +2221,12 @@ for (const q of quotes) {
   md.push("");
 }
 
+/* --- 十、建议 ------------------------------------------------------- */
+
 md.push(`## ${COPY.sectionAdvice}`);
 md.push("");
 md.push(T("adviceLead"), "");
-for (const item of model.advice) {
+for (const item of advice) {
   md.push(`### ${item.title}`);
   md.push("");
   md.push(`**${COPY.adviceProblem}** ${item.problem}`);
@@ -1439,7 +2241,7 @@ for (const item of model.advice) {
 
 md.push(`## ${COPY.sectionPlan}`);
 md.push("");
-table([COPY.thStage, COPY.thWork, COPY.thOutput], model.plan);
+table([COPY.thStage, COPY.thWork, COPY.thOutput], plan);
 md.push(T("planNote"), "");
 
 md.push(`## ${COPY.sectionNoScore}`);
@@ -1459,10 +2261,10 @@ table(
 );
 md.push(`### ${COPY.sectionGeneration}`);
 md.push("");
-for (const text of model.method) md.push(text, "");
+for (const text of method) md.push(text, "");
 md.push(`### ${COPY.sectionCoding}`);
 md.push("");
-table([COPY.thField, COPY.thMeaning, COPY.thUsage], model.coding);
+table([COPY.thField, COPY.thMeaning, COPY.thUsage], coding);
 md.push(`### ${COPY.sectionReplication}`);
 md.push("");
 for (const key of ["replication1", "replication2", "replication3"]) bullet(T(key));
@@ -1470,22 +2272,23 @@ md.push("");
 
 md.push(`## ${COPY.sectionQuestions}`);
 md.push("");
-md.push(`*${COPY.questionsLead}*`);
+md.push(`*${T("questionsLead")}*`);
 md.push("");
 table(
-  [COPY.thNo, COPY.thQuestion, COPY.thRun1, COPY.thRun2, COPY.thRun3, COPY.thBrand, COPY.thCoatings],
+  [COPY.thNo, COPY.thId, COPY.thQuestion, COPY.thRun1, COPY.thRun2, COPY.thRun3, COPY.thBrand, COPY.thCoatings],
   questions.map((q) => [
     `Q${q.q}`,
+    q.id,
     q.question,
     ...q.runMarks,
     `${q.brandMentions} / ${q.okRuns}`,
-    `${q.coatingsMentions} / ${q.okRuns}`,
+    coatingsCell(q.coatingsMentions, q.okRuns),
   ])
 );
 
 md.push(`## ${COPY.sectionProvenance}`);
 md.push("");
-for (const item of model.provenance) bullet(item);
+for (const item of provenance) bullet(item);
 md.push("");
 
 const mdPath = join(outDir, "report.md");
@@ -1493,13 +2296,11 @@ const mdPath = join(outDir, "report.md");
 /**
  * NO PLACEHOLDER MAY REACH THE MARKDOWN, and this is the check that says so after the fact.
  *
- * The DOCX is rendered from FILLED_COPY, which the leftover check above already covers. The
- * Markdown is assembled here and can reach for either block: `COPY` is the template and `T()` is
- * the filled one, and taking the wrong one is silent - the sentence reads correctly right up to the
- * point where "{groupRuns}" is printed at a client. That is exactly what happened to the second
- * figure caption in this file: the DOCX was right, the Markdown was not, and nothing objected. One
- * scan of the finished text is what turns that class of mistake into a failed build instead of a
- * document.
+ * The DOCX is rendered from FILLED_COPY, which the leftover check above already covers. The Markdown is
+ * assembled here and can reach for either block: `COPY` is the template and `T()` is the filled one, and
+ * taking the wrong one is silent - the sentence reads correctly right up to the point where "{groupRuns}" is
+ * printed at a client. One scan of the finished text is what turns that class of mistake into a failed build
+ * instead of a document.
  */
 const mdText = md.join("\n");
 const mdPlaceholders = [...new Set(mdText.match(/\{[a-zA-Z_][a-zA-Z0-9_]*\}/g) ?? [])];
@@ -1519,15 +2320,13 @@ console.log(
 /* ------------------------------------------------------------------ */
 
 /**
- * The same interpreter probe build-report.mts uses, and the same rule about stdio: the probe is
- * spawnSync with stdio "ignore" and no shell, because with `shell: true` on Windows the nested
- * quotes reach cmd.exe rewritten and the import test reports "no Python" even when REPORT_PYTHON
- * points straight at one.
+ * The same interpreter probe build-report.mts uses, and the same rule about stdio: the probe is spawnSync
+ * with stdio "ignore" and no shell, because with `shell: true` on Windows the nested quotes reach cmd.exe
+ * rewritten and the import test reports "no Python" even when REPORT_PYTHON points straight at one.
  *
- * THE MODEL AND THE MARKDOWN ARE ALREADY WRITTEN when this probe fails, and they are complete
- * documents on their own - the Markdown is the whole report. But the DOCX is a deliverable of this
- * product (the service definition notes that an editable DOCX is the form agencies buy), so a
- * missing interpreter is reported loudly rather than passed over.
+ * THE MODEL AND THE MARKDOWN ARE ALREADY WRITTEN when this probe fails, and they are complete documents on
+ * their own - the Markdown is the whole report. But the DOCX is a deliverable of this product, so a missing
+ * interpreter is reported loudly rather than passed over.
  */
 const candidates = [...(process.env.REPORT_PYTHON ? [process.env.REPORT_PYTHON] : []), "python3", "python"];
 const usable = candidates.find(
