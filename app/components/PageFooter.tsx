@@ -61,6 +61,36 @@ export default function PageFooter({
       <p>
         © {new Date().getFullYear()} {brand}. Brand Generative Engine Optimization Intelligence.
       </p>
+      {/*
+        The AI Agents Directory badge. It is here because their free listing tier requires it:
+        the paid tiers ($19-$499) skip it, and paying for a listing to avoid an outbound link
+        would be paying to buy a link, which is the thing search engines discount. The trade is
+        explicit and small - one badge in the footer, one followed link back - and it is placed
+        here rather than anywhere prominent because it is a condition of a free listing, not
+        something this site wants to say about itself.
+
+        A plain <img>, not next/image: the asset is an external SVG, next/image does not optimise
+        SVG, and pointing it at a third-party host would additionally require that host in
+        next.config.ts remotePatterns. Their snippet is used as given, including rel="noopener"
+        and a followed link, because an unfollowed one does not satisfy the requirement.
+      */}
+      <a
+        href="https://aiagentsdirectory.com/agent/llmention"
+        target="_blank"
+        rel="noopener"
+        title="Discover LLMention on AI Agents Directory"
+        className="inline-block mt-3"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://aiagentsdirectory.com/featured-badge.svg?v=2024"
+          alt="LLMention - Featured on AI Agents Directory"
+          width={200}
+          height={50}
+          loading="lazy"
+          decoding="async"
+        />
+      </a>
     </footer>
   );
 }
