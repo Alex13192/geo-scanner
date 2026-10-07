@@ -6,8 +6,20 @@ import { CHECK_CATALOG, DIMENSION_CATALOG } from '@/lib/geo/catalog';
  * Bump this date whenever you meaningfully change page content.
  * Do NOT use `new Date()` here - that makes every page look
  * "freshly modified" on every deploy, which search engines learn to ignore.
+ *
+ * THIS CONSTANT WENT STALE AND THE DESIGN WAS NOT THE PROBLEM. It sat at 2026-10-02
+ * through a week of real content changes - the tools index, the clause skeleton on
+ * every rule page, the homepage facts band, the citation corrections - and by the time
+ * anyone looked, Search Console was reporting 27 rule pages as "Discovered - currently
+ * not indexed" while the sitemap told Google nothing on the site had changed since the
+ * 2nd. A uniform, never-moving lastmod is worse than no lastmod: an engine that learns
+ * the field is fiction stops reading it, and the field then costs the site the one
+ * signal it was added to send. The rule for a date nobody can forget to bump is a test
+ * that fails when content has moved and this has not - until that exists, the discipline
+ * is manual, so: any commit that changes `app/` or `lib/` content is a commit that
+ * changes this line.
  */
-const LAST_MODIFIED = new Date('2026-10-02');
+const LAST_MODIFIED = new Date('2026-10-07');
 
 /**
  * NOTE ON TRAILING SLASHES
