@@ -1,0 +1,131 @@
+# 合成示例（不是真实客户）：川味火锅连锁。
+# 存在的理由有两个：让 scripts/report/build-question-bank.mts 可以被测试，
+# 以及用一份填好的表说明 intake 应该填到什么程度。这里的公司、竞品、人名、域名全部是编的。
+#
+# 与 finance.yaml 成对使用：两份表的行业词不重叠，所以生成出来的题库必须明显不同。
+# 这里的 never_mention（老灶门）故意是一个「没出现在任何别处」的名字：规则是
+# 「never_mention 里的名字不得出现在任何一条问题里」，如果它同时又是竞品名或品类词，
+# 生成器会直接报错停下来，由填表的人决定去掉哪一边，而不是替客户默默删掉一个竞品。
+
+meta:
+  client: 灶香里餐饮管理有限公司
+  filled_by: 示例 · 餐饮线
+  filled_on: 2026-10-07
+  bank_approved_by:
+
+brand:
+  name: 灶香里餐饮管理有限公司
+  short_name: 灶香里
+  former_names:
+    - 灶香里火锅店
+  english_name: Zaoxiangli
+  aliases:
+    - 灶香里火锅
+    - 灶香里川味
+  website: https://www.zaoxiangli.example
+  domain: zaoxiangli.example
+  official_profiles:
+    - https://www.zaoxiangli.example/stores
+    - https://www.zaoxiangli.example/franchise
+  founded_year: 2013
+  products:
+    - 灶香里牛油锅底
+    - 灶香里招牌毛肚
+    - 灶香里预制小面
+
+industry:
+  sector: 餐饮
+  subcategory: 川味火锅连锁门店
+  category_terms:
+    - 川味火锅
+    - 直营火锅连锁
+    - 成都火锅门店
+    - 火锅加盟品牌
+  jargon:
+    - 翻台率
+    - 锅底成本率
+    - 中央厨房
+    - 堂食占比
+  term_candidates:
+    from_website:
+      - 牛油锅底
+      - 直营门店
+      - 加盟支持
+    # 提议里的这两个词客户没有勾选：它们不应该出现在题库里。
+    llm_proposed:
+      - 中式餐饮生态
+      - 供应链数智化
+      - 城市美食名片
+    confirmed_by: 示例 · 餐饮线
+
+audience:
+  type: 两者都有
+  description: 商场招商负责人、想加盟火锅品牌的个体投资人，以及城市里 25-40 岁的聚餐客群
+  situations:
+    - 商场餐饮层有空铺，要找一个客流稳定的火锅品牌填进去
+    - 手里有铺面但不知道选哪个火锅品牌
+    - 门店同商圈突然开了三家同类火锅
+    - 想给现有门店加一条外卖和预制菜线
+  most_asked:
+    - 加盟费和回本周期大概是多少？
+    - 你们在哪些城市有直营店？
+    - 中央厨房配送覆盖到哪里？
+  answered_badly:
+    - 商场里火锅店的翻台率一般是多少？
+    - 加盟商的盈亏比例是多少？
+    - 锅底是自产还是代工？
+  concerns:
+    - 加盟之后总部管不管运营
+    - 食安事故怎么追责
+    - 同商圈保护范围有多大
+    - 前期投入能不能分期
+
+competitors:
+  names:
+    - 蜀山红火锅
+    - 巷子口老火锅
+    - 鼎沸里
+    - 巴渝码头火锅
+  desired_peers:
+    - 云顶捞火锅
+    - 山城往事火锅
+  # 老灶门：客户不想在任何问题里被提到的名字，它不在 names 里，也不在任何别的字段里。
+  never_mention:
+    - 老灶门
+
+compliance:
+  sensitive: 是
+  restrictions:
+    - 功效宣称
+    - 未公布的食安投诉
+    - 加盟商的具体盈亏数据
+  claim_rules: 不得使用"最正宗""第一"这类绝对化用语；食安相关表述必须以公示文件为准。
+
+markets:
+  countries:
+    - 中国
+  cities:
+    - 成都
+    - 重庆
+  languages:
+    - 中文
+  cross_border: 否
+
+goals:
+  primary: 触达
+  detail: 先看陌生客群在问品类和场景时会不会想到我们。
+  forbidden_topics:
+    - 与其他品牌的口味优劣对比结论
+    - 未公开的门店数量
+  retest_frequency: 每月
+
+assets:
+  key_pages:
+    - https://www.zaoxiangli.example/menu
+    - https://www.zaoxiangli.example/franchise
+  existing_media:
+    - https://www.example-food-news.example/zaoxiangli-2013
+  directories:
+    - https://www.example-restaurant-directory.example/zaoxiangli
+  wiki_entries:
+    - https://www.example-wiki.example/zaoxiangli

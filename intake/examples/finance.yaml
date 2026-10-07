@@ -1,0 +1,127 @@
+# 合成示例（不是真实客户）：跨境支付 / 收款。
+# 存在的理由有两个：让 scripts/report/build-question-bank.mts 可以被测试，
+# 以及用一份填好的表说明 intake 应该填到什么程度。这里的公司、竞品、人名、域名全部是编的。
+#
+# 填这份表的人叫「示例 · 财务线」；没有真实数据，也不含任何真实公司名。
+
+meta:
+  client: 澜川跨境支付服务有限公司
+  filled_by: 示例 · 财务线
+  filled_on: 2026-10-07
+  bank_approved_by:
+
+brand:
+  name: 澜川跨境支付服务有限公司
+  short_name: 澜川跨境
+  former_names:
+    - 澜川网络科技有限公司
+  english_name: Lanchuan Pay
+  aliases:
+    - 澜川
+    - 澜川支付
+  website: https://www.lanchuan-pay.example
+  domain: lanchuan-pay.example
+  official_profiles:
+    - https://www.lanchuan-pay.example/about
+    - https://www.lanchuan-pay.example/registry
+  founded_year: 2016
+  products:
+    - 澜川全球收款账户
+    - 澜川汇路优选
+    - 澜川关税预付
+
+industry:
+  sector: 金融
+  subcategory: 跨境电商收款与结汇
+  category_terms:
+    - 跨境收款
+    - 多币种收款账户
+    - 跨境电商结汇
+    - 跨境支付通道
+    - 境外买家付款
+  jargon:
+    - 收单通道
+    - 汇损
+    - 结汇额度
+    - 拒付申诉
+  term_candidates:
+    from_website:
+      - 全球收款账户
+      - 多币种结算
+      - 跨境资金管理
+    # 提议里的这两个词客户没有勾选：它们不应该出现在题库里。
+    llm_proposed:
+      - 金融科技解决方案
+      - 数字贸易基础设施
+      - 跨境资金池
+    confirmed_by: 示例 · 财务线
+
+audience:
+  type: B2B
+  description: 年 GMV 500 万到 5 亿人民币的跨境电商卖家和出海品牌方
+  situations:
+    - 海外平台的货款压在境外账户里结不回来
+    - 几个平台的货款分散在多个币种账户里对不上账
+    - 买家拒付之后申诉一直没有结果
+    - 要进新市场但当地收款牌照短期办不下来
+  most_asked:
+    - 你们支持哪些平台的收款？
+    - 结汇到账一般要几天？
+    - 汇损和手续费怎么算？
+  answered_badly:
+    - 资金合规来源怎么证明？
+    - 拒付率高会不会影响我的店铺？
+    - 能不能同时收信用卡和本地钱包？
+  concerns:
+    - 资金安全和牌照合规
+    - 迁移期间会不会断了收款
+    - 汇率和手续费不透明
+    - 客户数据放在服务商那里安不安全
+
+competitors:
+  names:
+    - 汇通全球支付
+    - 星链跨境结算
+    - 环宇收款
+    - 联付国际
+  desired_peers:
+    - 泛洋支付集团
+    - 中洲清算
+  never_mention:
+    - 恒付宝
+
+compliance:
+  sensitive: 是
+  restrictions:
+    - 未结案的行政处罚
+    - 客户资金规模的具体数字
+    - 反洗钱内控细节
+  claim_rules: 不得出现"保证到账""零汇损"这类绝对化表述；持牌信息必须与公示一致。
+
+markets:
+  countries:
+    - 新加坡
+    - 马来西亚
+  cities:
+    - 深圳
+  languages:
+    - 中文
+  cross_border: 是
+
+goals:
+  primary: 全部
+  detail: 先看品类问题里能不能被想到，再看事实问题的准确度。
+  forbidden_topics:
+    - 与监管处罚相关的任何讨论
+    - 具体费率报价
+  retest_frequency: 每季
+
+assets:
+  key_pages:
+    - https://www.lanchuan-pay.example/products
+    - https://www.lanchuan-pay.example/pricing
+  existing_media:
+    - https://www.example-news.example/lanchuan-pay-2016
+  directories:
+    - https://www.example-directory.example/lanchuan-pay
+  wiki_entries: []
