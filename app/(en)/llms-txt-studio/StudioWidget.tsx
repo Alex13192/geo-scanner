@@ -40,6 +40,17 @@ export default function StudioWidget() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [linkCount, setLinkCount] = useState<number | null>(null);
+  /*
+   * How many of those links the generator actually read.
+   *
+   * Kept next to the link count because the two numbers answer different questions, and the
+   * page's argument depends on the difference being visible rather than implied: "24 links"
+   * and "24 links, of which 12 were read and 2 carry no description" are not the same claim,
+   * and only the second one can be checked.
+   */
+  const [pagesRead, setPagesRead] = useState<number | null>(null);
+  const [sectionCount, setSectionCount] = useState<number | null>(null);
+  const [withoutDescription, setWithoutDescription] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
   const generate = useCallback(async (target: string) => {
@@ -52,6 +63,9 @@ export default function StudioWidget() {
     setError("");
     setContent("");
     setLinkCount(null);
+    setPagesRead(null);
+    setSectionCount(null);
+    setWithoutDescription(null);
 
     try {
       const res = await fetch(
@@ -63,6 +77,11 @@ export default function StudioWidget() {
       } else {
         setContent(data.content || "");
         setLinkCount(typeof data.linkCount === "number" ? data.linkCount : null);
+        setPagesRead(typeof data.pagesRead === "number" ? data.pagesRead : null);
+        setSectionCount(typeof data.sectionCount === "number" ? data.sectionCount : null);
+        setWithoutDescription(
+          typeof data.pagesWithoutDescription === "number" ? data.pagesWithoutDescription : null
+        );
       }
     } catch {
       setError("The generator could not be reached. Please try again.");
@@ -75,6 +94,16 @@ export default function StudioWidget() {
     setDomain(rootDomain);
     if (rootDomain) void generate(rootDomain);
   }, [rootDomain, generate]);
+
+  /*
+   * Regenerating is the same request as generating, and it is a button rather than a
+   * footnote because the file rots: a description is true of the page on the day it was read.
+   * The date in the output is the thing a reader checks, and this is the thing that makes a
+   * new date cheap to get.
+   */
+  const handleRegenerate = () => {
+    void generate(cleanDomain(domain));
+  };
 
   const handleCopy = () => {
     if (!content) return;
@@ -130,15 +159,27 @@ export default function StudioWidget() {
 
       <div className="bg-[var(--surface-1)] border border-[var(--line)] rounded-2xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-[var(--line)] pb-4">
-          <div className="flex items-baseline gap-3">
+          <div className="flex items-baseline gap-3 flex-wrap">
             <span className="text-xs font-mono text-[var(--ink-2)]">Preview: /llms.txt</span>
             {linkCount !== null && (
               <span className="text-[11px] text-[var(--ink-3)] font-mono">
-                {linkCount} link{linkCount === 1 ? "" : "s"} found on the homepage
+                {linkCount} link{linkCount === 1 ? "" : "s"} in{" "}
+                {sectionCount ?? 0} section{(sectionCount ?? 0) === 1 ? "" : "s"}
+                {pagesRead !== null ? `, ${pagesRead} page${pagesRead === 1 ? "" : "s"} read` : ""}
+                {withoutDescription
+                  ? `, ${withoutDescription} with no description`
+                  : ""}
               </span>
             )}
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleRegenerate}
+              disabled={loading}
+              className="text-xs bg-[var(--surface-2)] hover:bg-[var(--surface-1)] disabled:opacity-50 border border-[var(--line)] text-[var(--ink-1)] px-3 py-1.5 rounded-lg font-medium transition-all"
+            >
+              {loading ? "Reading…" : "Regenerate"}
+            </button>
             <button
               onClick={handleCopy}
               disabled={!content}
@@ -161,17 +202,20 @@ export default function StudioWidget() {
         </label>
         <textarea
           id="studio-output"
-          value={loading ? "Reading your homepage…" : content}
+          value={loading ? "Reading your site…" : content}
           onChange={(e) => setContent(e.target.value)}
           spellCheck={false}
           className="w-full h-96 bg-[var(--surface-0)] border border-[var(--line)] rounded-xl p-4 text-xs font-mono text-[var(--ink-2)] focus:outline-none focus:border-blue-500 transition-all resize-none leading-relaxed"
         />
 
         <p className="text-[11px] text-[var(--ink-3)] leading-relaxed pt-4">
-          Edit before publishing. This draft is built from one page, so it only lists what the
-          homepage links to, and the descriptions are the link texts as written. Sites that
-          redirect visitors by location may return a regional version, so check the links
-          before you ship this.
+          Edit before publishing. The sections come from the first segment of each path, and each
+          description is quoted from the page it sits beside — its meta description, or its H1
+          where there is none. Links written by the tool with no description are ones it did not
+          read; the file says how many, and it never fills that gap with a sentence of its own. A
+          description is true of the page on the generation date at the top, so regenerate rather
+          than publish a file you have edited and forgotten. Sites that redirect visitors by
+          location may return a regional version, so check the links before you ship this.
         </p>
       </div>
     </section>

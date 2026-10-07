@@ -366,6 +366,129 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+ * THE FACTS MARQUEE
+ *
+ * The homepage's answer to the scrolling logo wall every competitor in this category runs. What
+ * moves here is not somebody else's brand: each chip is a number THIS PRODUCT MEASURED, rendered
+ * from the same modules the scorer and the study publish from, and linked to the page that shows
+ * the working. A logo wall is a claim about customers nobody can check; this is a claim about a
+ * measurement anybody can.
+ *
+ * WHY THERE IS NO AI PLATFORM NAME IN THE ROTATION, AND WHY THAT MUST NOT BE "FIXED".
+ * The house style in this category is a marquee of ChatGPT / Perplexity / Gemini / Claude / Doubao
+ * logos, presented as the engines the product tracks. This product queries none of them - the
+ * /report/ page says so in its own words ("It does not ask any AI engine about you"), and that
+ * refusal is the differentiator rather than a gap. A platform marquee would imply a capability
+ * this scanner does not have and cannot measure, which is the one claim the whole product rests on
+ * not making. The four crawler names on the band below are different in kind and stay: they are
+ * read out of robots.txt, which is a thing the scanner genuinely does.
+ *
+ * WHY CSS AND NOT JAVASCRIPT. Same reason as the scan console above: this deploys to Workers and
+ * the page is scored by the same `payload` and `no-js-dependency` checks as everybody else's. A
+ * keyframe costs nothing on either axis, and a JS marquee would ship an IntersectionObserver, a
+ * rAF loop and a duplicate of the content as state.
+ *
+ * HOW THE SEAMLESS LOOP WORKS, because the arithmetic is the whole trick. The track holds the
+ * chips TWICE and translates by exactly -50% of its own width, so at the end of the cycle copy two
+ * sits precisely where copy one started and the reset is invisible. Three things have to be true
+ * for that and each of them was measured rather than assumed:
+ *
+ *   1. the track is `width: max-content`, because a 100%-width flex row would make 50% of it one
+ *      viewport rather than one copy, and `gap` on the track is what spaces the two copies;
+ *   2. each copy is `flex-shrink: 0` so neither is compressed into the other;
+ *   3. THE CHIP GAP BELONGS TO THE COPY, NOT THE TRACK. A gap on the track would sit between every
+ *      chip as well, and then one copy would be 8 chips plus 15 gaps while the translate moved it
+ *      by 8 chips plus 15 gaps - which is right until somebody changes the track's gap and the seam
+ *      opens by exactly one gap. This started as `gap` on the track with the copies padded, which
+ *      measured a 32px seam against 16px between chips: two pixels of the last chip of copy one
+ *      were visible again in the middle of the strip, quietly, behind the mask.
+ *
+ * THE REDUCED-MOTION RULE IS NOT A COURTESY, IT IS THE VISIBLE STATE. The chips are NOT hidden by
+ * default and revealed by the animation - unlike .scan-row above, which had to be handled for
+ * exactly that reason. A reader at the end of the strip, a printout and a crawler that runs no CSS
+ * all still read the facts; the animation only decides whether they travel.
+ *
+ * PRINT: the strip is clipped to one viewport, so on paper most of the rotation would be missing
+ * if the track were left translated. `position: static` on the track puts every chip back into
+ * flow, which turns the marquee into an ordinary wrapped row of facts on the printed page.
+ * --------------------------------------------------------------------------- */
+.facts-marquee {
+  /* THE ONE NUMBER THE LOOP'S ARITHMETIC DEPENDS ON, declared here rather than written twice.
+     The chip spacing and the gap between the two copies must be the same value, or the seam is
+     visible - see the note above. A custom property costs nothing and cannot drift. */
+  --facts-chip-gap: 1rem;
+
+  /* The mask is what stops a chip being sliced in half at the viewport edge. It costs one
+     compositor layer and no JavaScript. */
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6%,
+    black 94%,
+    transparent
+  );
+}
+
+.facts-track {
+  display: flex;
+  /* The gap BETWEEN THE TWO COPIES, and it is the only gap here. Each copy carries its own chip
+     spacing internally, so one copy's width is 8 chips plus 7 gaps and the translate below moves
+     exactly that far. */
+  gap: var(--facts-chip-gap);
+  width: max-content;
+  /* No easing and no fill mode: linear so the travel is constant, and the default fill so the
+     track sits at 0 whenever the animation is not running. */
+  animation: llm-facts-scroll 72s linear infinite;
+}
+
+.facts-track > * {
+  display: flex;
+  gap: var(--facts-chip-gap);
+  flex-shrink: 0;
+}
+
+/* A moving target is hard to click. Pausing under the pointer is the affordance, and it is CSS
+   only - no state, no listener. */
+.facts-marquee:hover .facts-track,
+.facts-marquee:focus-within .facts-track {
+  animation-play-state: paused;
+}
+
+@keyframes llm-facts-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    /* 50% of the track, which is exactly one copy. See the arithmetic above. */
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .facts-track {
+    animation: none;
+  }
+}
+
+@media print {
+  .facts-marquee {
+    mask-image: none;
+    overflow: visible;
+  }
+  .facts-track {
+    animation: none;
+    position: static;
+    transform: none;
+    flex-wrap: wrap;
+    width: auto;
+  }
+  /* The second copy exists only to make the loop seamless, so it must not be printed twice. */
+  .facts-track > [aria-hidden="true"] {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * SCROLL-DRIVEN REVEALS
  *
  * WHY THIS IS PURE CSS AND WRAPPED IN TWO GUARDS.

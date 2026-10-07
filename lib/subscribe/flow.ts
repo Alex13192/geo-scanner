@@ -8,7 +8,14 @@
  * after the fact - the message is already in somebody's inbox.
  */
 
-import { SITE_URL } from "@/lib/site";
+/*
+ * A RELATIVE IMPORT RATHER THAN `@/lib/site`, and it is not a style preference: this module is
+ * imported by lib/subscribe/landing.ts, which scripts/test-report-link.mts loads through plain
+ * `node`. Node resolves a `@/...` specifier as a package name and fails, so a path alias here
+ * would put the confirmation flow beyond the reach of the test suite - which is the one thing the
+ * suite was extended to cover. lib/email/messages.ts uses a relative import for the same reason.
+ */
+import { SITE_URL } from "../site.ts";
 
 /** Same shape the scanner accepts, so the two never disagree about what a domain is. */
 const DOMAIN_RE = /^[a-z0-9.-]+\.[a-z]{2,}$/i;
@@ -81,10 +88,26 @@ export function reportUrl(token: string): string {
  * with the site unreachable from wherever the reader is. A self-contained response has one
  * fewer thing that can fail between the click and the answer.
  *
+ * `action` IS THE NEXT STEP, and it is the reason the confirmation page is not a dead end. The
+ * reader has just proved they control the address they subscribed with, and what they asked for
+ * is a report - so that page carries the link to it rather than stopping at "thank you". It is
+ * optional because the other callers of this function (an incomplete link, a token that is not
+ * recognised, a rate limit) have no next step to offer, and inventing one would be worse than
+ * having none.
+ *
  * `noindex` on both, because a confirmation URL is a URL with a secret in it and has no
  * business in an index.
  */
-export function linkPage(input: { title: string; heading: string; body: string }): Response {
+export function linkPage(input: {
+  title: string;
+  heading: string;
+  body: string;
+  action?: { label: string; url: string };
+}): Response {
+  const action = input.action
+    ? `<p style="margin:24px 0 0"><a href="${input.action.url}" style="background:#0071e3;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;display:inline-block">${input.action.label}</a></p>`
+    : "";
+
   const html = `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
@@ -103,7 +126,8 @@ export function linkPage(input: { title: string; heading: string; body: string }
 <p class="brand">LLMention</p>
 <h1>${input.heading}</h1>
 <p>${input.body}</p>
-<p><a href="${SITE_URL}/">Back to the scanner</a></p>
+${action}
+<p style="margin:24px 0 0"><a href="${SITE_URL}/" style="color:#6e6e73;font-size:14px">Back to the scanner</a></p>
 </main></body></html>`;
 
   return new Response(html, {

@@ -50,6 +50,16 @@
     "**/*.mts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    // Gitignored scratch is NOT automatically safe from the type checker, and this was learned the
+    // hard way: the exclusion of `scripts/` was removed so that "Type check" would actually check the
+    // scripts, and the same edit silently removed the protection that scratch directories had been
+    // getting by accident. Anything ending in .ts/.tsx anywhere under the repository is part of the
+    // program, so a throwaway copy of a page source placed in `reports/` failed `next build` while
+    // being invisible to `git status`. These entries restore that protection without narrowing the
+    // scripts coverage that was the point of the original change.
+    "reports",
+    ".dsh-tmp",
+    ".open-next"
   ]
 }

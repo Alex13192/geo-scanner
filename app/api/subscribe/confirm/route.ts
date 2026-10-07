@@ -1,14 +1,24 @@
 // app/api/subscribe/confirm/route.ts
 //
-// GET ?t=<confirm_token> -> the subscription becomes confirmed.
+// GET ?t=<confirm_token> -> the subscription becomes confirmed, and the reader lands on their
+// own report page.
 //
 // Safe to fetch more than once, and it has to be: mail clients, security scanners and link
 // previewers all fetch the URLs in a message before a person ever sees them. A one-shot
 // endpoint that consumed the token on first sight would confirm subscriptions nobody
 // clicked, and an endpoint that errored on the second visit would show a failure page to
 // the one person who did.
+//
+// WHY THIS ROUTE IS NOW SIX BRANCHES SHORTER. Every decision about what the reader is shown - which
+// sentence, which next step, whether the report link can be built at all - moved into
+// lib/subscribe/landing.ts, where scripts/test-report-link.mts can drive it against a fake
+// database. The reason is not tidiness: the redirect to the token report is the entire point of the
+// confirmation email, and while it lived inline here the only way to check it was to deploy and
+// click. A redirect nobody tests is a redirect that silently breaks. This file now does three
+// things - read the query, rate limit, delegate - and the second one lives here because it is
+// about the request rather than about the subscription.
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { confirmByToken } from "@/lib/db/subscribers";
+import { confirmSubscription } from "@/lib/subscribe/landing";
 import { linkPage } from "@/lib/subscribe/flow";
 import { clientKey, takeToken } from "@/lib/net/rate-limit";
 
@@ -41,17 +51,11 @@ export async function GET(request: Request) {
   }
 
   const { env } = getCloudflareContext();
-  const subscriber = await confirmByToken(env.DB, token, Date.now());
+  const outcome = await confirmSubscription(env.DB, token, Date.now());
 
-  if (!subscriber) {
-    return linkPage({
-      title: "Link not recognised",
-      heading: "That link is not recognised",
-      body: "It may have been replaced by a newer signup for the same address - each confirmation replaces the last. Sign up again and use the most recent email.",
-    });
-  }
+  if (outcome.ok) return outcome.response;
 
-  if (subscriber.status === "unsubscribed") {
+  if (outcome.reason === "unsubscribed") {
     return linkPage({
       title: "Subscription ended",
       heading: "This subscription has ended",
@@ -59,18 +63,22 @@ export async function GET(request: Request) {
     });
   }
 
-  return linkPage({
-    title: "Subscription confirmed",
-    heading: "You are subscribed",
-    body: `The weekly report for <strong>${escapeHtml(subscriber.domain)}</strong> starts on the next run. Every report carries a one-click unsubscribe link.`,
-  });
-}
+  if (outcome.reason === "database") {
+    /*
+     * A failure that is ours, said as ours. The link is valid and the row is still pending, so the
+     * honest instruction is to try the same link again rather than to sign up again - which would
+     * write a second pending row and replace the token in the message they are holding.
+     */
+    return linkPage({
+      title: "Please try again",
+      heading: "That did not go through",
+      body: "The confirmation could not be recorded, which is a fault on our side rather than a problem with the link. The link is still valid - open it again in a moment, or reply to the email and it will be confirmed by hand.",
+    });
+  }
 
-/** The domain comes from a database row a visitor wrote, so it is escaped before it is markup. */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  return linkPage({
+    title: "Link not recognised",
+    heading: "That link is not recognised",
+    body: "It may have been replaced by a newer signup for the same address - each confirmation replaces the last. Sign up again and use the most recent email.",
+  });
 }

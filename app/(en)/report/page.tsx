@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import PageFooter from "@/app/components/PageFooter";
+import ReportMailForm from "./ReportMailForm";
 import ReportWidget from "./ReportWidget";
 
 /**
@@ -25,8 +26,30 @@ import ReportWidget from "./ReportWidget";
  * Two things are here anyway because they are true and useful rather than
  * decorative: the quotation about what the published research found, which is
  * where the weightings come from, and a link to the rule set.
+ *
+ * WHY IT TAKES searchParams AND HANDS THEM TO A CHILD. The offer of a weekly report at the bottom
+ * of this page has to post the domain that was scanned, and that domain is in the query string.
+ * Reading it here would be the obvious thing and would make the whole route dynamic; the whole
+ * route is exactly what has to stay prerenderable, because for a scanner or a reader without
+ * JavaScript the prerendered HTML is the only content there is - that was the bug that split this
+ * page into a server half and a client half in the first place. So the page stays a server
+ * component, the query string is read once, and only the small form below is dynamic.
  */
-export default function ReportPage() {
+export default async function ReportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ domain?: string | string[] }>;
+}) {
+  /*
+   * Normalised here rather than inside the form, so the value posted onward is the same shape the
+   * scanner was given. Empty input means no domain was asked about at all, and then there is
+   * nothing to offer a report for - see the `!rootDomain` branch in ReportWidget, which says so
+   * rather than inventing one.
+   */
+  const params = await searchParams;
+  const rawDomain = typeof params.domain === "string" ? params.domain : "";
+  const domain = rawDomain.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0];
+
   return (
     <div className="min-h-screen bg-[var(--surface-0)] text-[var(--ink-1)] font-sans pb-20">
       <header className="border-b border-[var(--line)] bg-[var(--surface-0)]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
@@ -150,6 +173,40 @@ export default function ReportPage() {
         >
           <ReportWidget />
         </Suspense>
+
+        {/*
+          THE OFFER COMES AFTER THE RESULT, AND THE ORDER IS THE POINT.
+
+          Everything above this line - the score, the twelve dimension bars, every failing check,
+          the research the weights come from - is delivered without asking for anything, and the
+          scan is complete before this form is ever seen. That is deliberate and it is the one thing
+          about this page that must not be "optimised": the pattern being borrowed locks a
+          zero-cost computation behind an identity and depends on an automatically fired sign-in
+          picker to make that tolerable. Gating the score, or asking before it is shown, would trade
+          this site's strongest asset - that anybody can check the numbers without becoming a user -
+          for a worse version of somebody else's funnel.
+
+          WHAT IT OFFERS IS THE WEEKLY REPORT, NOT THIS SCAN. The scan is live and nothing about it
+          is stored, so there is no "this report" to mail; a button implying otherwise would be the
+          small dishonesty this site spends its copy arguing against. The form says what arrives.
+
+          NO PROMPT, NO MODAL, NO POPUP, and nothing is collected anywhere on this page beyond the
+          one field the visitor chooses to fill in - below the result they already have.
+        */}
+        {domain ? (
+          <section className="mt-16 max-w-3xl rounded-2xl border border-[var(--line)] bg-[var(--surface-1)] p-6 sm:p-7">
+            <h2 className="text-xl font-bold mb-2 text-[var(--ink-1)]">
+              Get this checked every week
+            </h2>
+            <p className="mb-5 text-sm leading-relaxed text-[var(--ink-2)]">
+              The audit above is finished, and nothing about it was withheld. If you want the same
+              checks run on a schedule, leave an address and the weekly report arrives with what
+              changed: a score, the grade, and the checks that newly fail. One message a week, and
+              one click stops it.
+            </p>
+            <ReportMailForm domain={domain} />
+          </section>
+        ) : null}
 
         <section className="mt-16 max-w-3xl space-y-8 text-sm leading-relaxed text-[var(--ink-2)]">
           <div>

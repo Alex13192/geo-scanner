@@ -3,7 +3,8 @@ import ScanForm from "./ScanForm";
 import ScoreRing from "@/app/components/ScoreRing";
 import SiteNav from "@/app/components/SiteNav";
 import { CHECK_COPY } from "@/lib/geo/check-copy";
-import { DIMENSION_CATALOG } from "@/lib/geo/catalog";
+import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
+import { BLOCKED, NEWS, NEWS_BLOCKED, STUDY_ROWS } from "@/lib/study-data";
 import { CONTACT_EMAIL, SITE_HOST } from "@/lib/site";
 
 /**
@@ -184,6 +185,88 @@ const TOOLS = [
 
 const ONE_RING_CIRCUMFERENCE = 452;
 
+/**
+ * The facts the marquee rotates through, and the reason it is built this way.
+ *
+ * WHY THIS EXISTS AT ALL. The products this one is measured against open with a scrolling wall of
+ * customer logos. That wall is the pattern the owner liked, and the wall itself is exactly what
+ * must not be copied: those logos are unverified, and a marquee of names nobody can check is a
+ * claim this site does not make about anybody - least of all about a third party's customers.
+ *
+ * So the pattern is kept and the content is inverted: every chip is a number THIS PRODUCT
+ * MEASURED, and each one links to the page that shows the working.
+ *
+ * WHY NOTHING IS TYPED IN TWICE. Each value is computed from the module that publishes it - the
+ * check and dimension catalogues the scorer itself reads, and the study rows behind /study/ - so
+ * adding a rule, a dimension or a study row cannot leave the marquee claiming an old count. This
+ * is the mechanism lib/llms-txt.ts argues for at length: a number written into prose is a second
+ * copy of that number, and the two drift the first time somebody raises the limit.
+ *
+ * WHY THERE IS NO AI PLATFORM LOGO OR NAME IN IT. This product does not query ChatGPT, Perplexity,
+ * Gemini, Claude, Doubao or anything else, and says so on /report/ in its own words. A rotation of
+ * those logos is the single most recognisable element of the pattern being borrowed, and it would
+ * imply a capability this scanner does not have and cannot measure. What it does read is stated
+ * instead: a crawler's own robots.txt policy, which the band below this one names honestly.
+ */
+const CHECKS_PUBLISHED = CHECK_CATALOG.filter((check) => !check.alias).length;
+const WEIGHT_TOP = Math.max(...DIMENSION_CATALOG.map((dimension) => dimension.weight));
+const WEIGHT_TOTAL = DIMENSION_CATALOG.reduce((sum, dimension) => sum + dimension.weight, 0);
+const SITES_MEASURED = STUDY_ROWS.length;
+const SITES_BLOCKING = BLOCKED.length;
+const SITES_WITHOUT_ENTITY = STUDY_ROWS.filter((row) => !row.entity).length;
+const SITES_WITH_SAMEAS = STUDY_ROWS.filter((row) => row.sameAs).length;
+
+const FACTS = [
+  {
+    value: String(CHECKS_PUBLISHED),
+    unit: "checks",
+    label: "published, and the ones this site scores itself on",
+    href: "/checks/",
+  },
+  {
+    value: String(DIMENSION_CATALOG.length),
+    unit: "dimensions",
+    label: "weighted, in the order they are published",
+    href: "/methodology/",
+  },
+  {
+    value: String(WEIGHT_TOTAL),
+    unit: "points",
+    label: `added up. The heaviest is ${WEIGHT_TOP}, for whether a crawler can read the page at all`,
+    href: "/methodology/",
+  },
+  {
+    value: String(SITES_MEASURED),
+    unit: "sites",
+    label: "scanned for the published study, and every row is downloadable",
+    href: "/study/",
+  },
+  {
+    value: `${SITES_BLOCKING} of ${SITES_MEASURED}`,
+    unit: "blocked",
+    label: "of those sites disallow the AI crawlers this scanner tracks",
+    href: "/study/",
+  },
+  {
+    value: `${NEWS_BLOCKED.length} of ${NEWS.length}`,
+    unit: "news publishers",
+    label: "of the ones measured turn every tracked AI crawler away",
+    href: "/study/",
+  },
+  {
+    value: `${SITES_WITHOUT_ENTITY} of ${SITES_MEASURED}`,
+    unit: "unbound",
+    label: "declare no Organization or WebSite entity for a model to attach a name to",
+    href: "/study/",
+  },
+  {
+    value: String(SITES_WITH_SAMEAS),
+    unit: "use sameAs",
+    label: `of the ${SITES_MEASURED}, which is the cheapest way to bind a brand to one entity`,
+    href: "/methodology/",
+  },
+];
+
 export default function HomePage() {
   const failing = new Set(SELF_AUDIT.failures);
 
@@ -213,7 +296,7 @@ export default function HomePage() {
               <ScanForm />
             </div>
             <p className="mt-4 text-sm text-[var(--ink-3)]">
-              Free · no account · the same 40 checks this site runs on itself
+              Free. No account. No email. The same {CHECKS_PUBLISHED} checks this site runs on itself.
             </p>
           </div>
 
@@ -333,6 +416,87 @@ export default function HomePage() {
                     {SELF_AUDIT.passed} of {SELF_AUDIT.run} checks passing · grade{" "}
                     {SELF_AUDIT.grade}
                   </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ======================= THE FACTS MARQUEE ======================= */}
+        {/*
+          The moving band.
+
+          WHAT IT IS: a scrolling strip of numbers this product measured, each linking to the page
+          that publishes the working - the check catalogue, the methodology and the 30-site study.
+          See the FACTS constant for why it is computed from those modules rather than typed into
+          prose, and for why no AI platform logo appears anywhere in it.
+
+          WHY IT IS A BAND OF ITS OWN rather than a row inside the hero: the hero is a .band-dark
+          and these chips are surface cards, so putting them in the first screenful would have been
+          eight white boxes on black. Below the console it keeps the hero intact and still reads as
+          the hero's evidence.
+
+          WHY NOTHING HERE IS A CLIENT COMPONENT. The motion is one CSS keyframe - see
+          .facts-track in app/globals.css - so a `use client` boundary would ship this list to the
+          browser as JavaScript to do what the compositor already does, and the `no-js-dependency`
+          check this site applies to everybody else reads exactly that decision. Without
+          JavaScript, without CSS and in a printed page the facts are all still there.
+        */}
+        <section className="band band--alt border-b border-[var(--line)]">
+          <div className="wrap py-9">
+            <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-1)] py-5">
+              <p className="px-6 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-3)]">
+                Measured here, and linked to where it was measured
+              </p>
+              {/*
+                The strip is clipped by the rounded card, and the fade at either edge is the
+                .facts-marquee mask. Both copies of the list are rendered because the keyframe
+                translates the track by exactly one copy's width; see the arithmetic in
+                globals.css, which is also where the chip spacing is declared - the two gaps have
+                to be the same number or the seam shows.
+
+                NO gap OR padding CLASS ON THE <ul>. The spacing is a custom property on
+                .facts-track's children so that the chip gap and the seam gap cannot be two
+                different values, which is the version that shipped a visible seam when this was
+                first measured.
+
+                THE SECOND COPY IS aria-hidden AND OUT OF THE TAB ORDER. It exists for the loop
+                rather than for a reader: announced, it would be eight facts read out as sixteen,
+                and the eight duplicates would also sit in the tab order, so a keyboard user would
+                walk the same card strip twice - once with the second half of it off-screen behind
+                the clip.
+              */}
+              <div className="facts-marquee mt-5">
+                <div className="facts-track">
+                  {[0, 1].map((copy) => (
+                    <ul
+                      key={copy}
+                      aria-hidden={copy === 1 ? true : undefined}
+                      className="flex shrink-0 items-stretch"
+                    >
+                      {FACTS.map((fact) => (
+                        <li key={fact.unit} className="flex">
+                          <a
+                            href={fact.href}
+                            tabIndex={copy === 1 ? -1 : undefined}
+                            className="flex w-64 flex-col justify-center gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-5 py-4 transition-colors hover:border-[var(--accent)]"
+                          >
+                            <span className="flex items-baseline gap-2">
+                              <span className="text-2xl font-semibold leading-none tracking-tight text-[var(--ink-1)]">
+                                {fact.value}
+                              </span>
+                              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
+                                {fact.unit}
+                              </span>
+                            </span>
+                            <span className="text-xs leading-relaxed text-[var(--ink-2)]">
+                              {fact.label}
+                            </span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ))}
                 </div>
               </div>
             </div>

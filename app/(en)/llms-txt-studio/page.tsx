@@ -1,7 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import LegalLinks from "@/app/components/LegalLinks";
-import { MAX_LINKS } from "@/lib/llms-txt";
+import {
+  MAX_FETCH_PAGES,
+  MAX_LINKS_PER_SECTION,
+  SECTION_ORDER,
+  SUBPAGE_BUDGET,
+} from "@/lib/llms-txt";
 import StudioWidget from "./StudioWidget";
 
 /**
@@ -24,8 +29,23 @@ import StudioWidget from "./StudioWidget";
  * So the copy below is deliberately in the server component. The interactive
  * widget is the only client-rendered part, and it lives in StudioWidget.tsx.
  * If you add wording to this page, add it here.
+ *
+ * THE NUMBERS IN THE COPY COME FROM lib/llms-txt.ts, NOT FROM THIS FILE. They are the caps
+ * the generator actually applies, and a hand-written copy of one of them is how this page
+ * would end up describing a tool that no longer exists. When the generator gained per-section
+ * caps, page reads and a time budget, every claim below had to change with it; the import is
+ * what keeps that honest the next time.
  */
+function formatList(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
 export default function StudioPage() {
+  const sectionNames = formatList(SECTION_ORDER);
+  const budgetSeconds = Math.round(SUBPAGE_BUDGET.phaseMs / 1000);
+  const concurrency = SUBPAGE_BUDGET.concurrency;
+
   return (
     <div className="min-h-screen bg-[var(--surface-0)] text-[var(--ink-1)] font-sans pb-20">
       <header className="border-b border-[var(--line)] bg-[var(--surface-0)]/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
@@ -79,8 +99,10 @@ export default function StudioPage() {
             Free /llms.txt Generator
           </h1>
           <p className="text-sm text-[var(--ink-2)] mt-2 max-w-2xl">
-            Enter a domain and this tool reads its homepage, then drafts an llms.txt file from the
-            real title, description and internal links it finds. No account, no limit.
+            Enter a domain and this tool reads its homepage, then reads up to{" "}
+            {MAX_FETCH_PAGES} pages that homepage links to, and drafts an llms.txt file from what
+            those pages actually say about themselves. Every description is quoted from the page
+            it describes. No account, no limit.
           </p>
         </div>
 
@@ -113,19 +135,44 @@ export default function StudioPage() {
             <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">
               What does the generated file contain?
             </h2>
-            <p>Everything below is taken from your homepage. Nothing is invented.</p>
+            <p>
+              Everything below is read from your own pages at the moment you press Generate.
+              Nothing is written for you.
+            </p>
             <ul className="list-disc pl-5 mt-3 space-y-1.5">
               <li>The site title, used as the H1, exactly as your own title tag writes it.</li>
-              <li>Your meta description, used as the blockquote summary.</li>
+              <li>Your homepage meta description, used as the blockquote summary.</li>
               <li>
-                Internal links found in the homepage markup, with the anchor text as the
-                description of each page.
+                The generation date, as a line of its own directly under that summary, so
+                anyone reading the file can see how old it is before they read anything else.
               </li>
-              <li>A note on how the file was produced, so a reader can tell what it is.</li>
+              <li>
+                Internal links found in the homepage markup, grouped into sections named after
+                the first segment of each path ({sectionNames}), with at most{" "}
+                {MAX_LINKS_PER_SECTION} links per section. A section holding more than that
+                states how many of its pages were left out, so the file never reads as
+                though it were complete when it is not.
+              </li>
+              <li>
+                For up to {MAX_FETCH_PAGES} of those links, a description taken from{" "}
+                <strong>that page&apos;s own markup</strong>: its meta description, or its H1
+                where it has none. Nothing is generated, and a subpage never inherits the
+                homepage&apos;s description. A link whose page was not read, or whose page
+                carries neither, is listed with no description at all, and the file says how
+                many of those there are.
+              </li>
+              <li>
+                A note on how the file was produced and where the descriptions came from, so a
+                reader can tell what it is.
+              </li>
             </ul>
             <p className="mt-3 text-[var(--ink-2)]">
-              It does not crawl your whole site. It reads one page, because that is what can be
-              done honestly in a few seconds without a job queue.
+              It does not crawl your site. It reads your homepage and then at most{" "}
+              {MAX_FETCH_PAGES} pages your homepage links to, {concurrency} at a time, with a{" "}
+              {budgetSeconds}-second budget for that whole second phase - so a request cannot
+              take minutes, and a page that is slow or missing is left out rather than guessed
+              at. A page behind a login, or one your homepage does not link to, is not in the
+              file and the file does not pretend otherwise.
             </p>
           </div>
 
@@ -201,35 +248,56 @@ export default function StudioPage() {
             <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">The shape of the file</h2>
             <p>
               Every file this tool produces has the same shape, so you can see what you will get
-              before you run it. The example below is the actual output of a run, not an idealised
-              one.
+              before you run it. The example below is the actual output of a run against this
+              site, with the date it was taken; the links are abridged.
             </p>
             <pre className="mt-3 bg-[var(--surface-0)] border border-[var(--line)] rounded-xl p-4 text-xs font-mono text-[var(--ink-2)] overflow-x-auto leading-relaxed">{`# Your Site Name
 
-> One sentence from your meta description, describing what the site is.
+> One sentence from your homepage meta description, describing what the site is.
+
+Generated on YYYY-MM-DD. Every link below was read on that date, and a link is only as current as the page it points at: regenerate this file rather than publishing a copy that has aged.
 
 Your Site Name is published at https://your-domain.com. This file lists the pages an AI system should read first.
 
-## Key pages
-- [Page title](https://your-domain.com/page)
+## Documentation (2 of 4)
+
+- [Guides](https://your-domain.com/docs/): Setup instructions for robots.txt, llms.txt, schema and headings.
+- [Methodology](https://your-domain.com/methodology/): The complete scoring method, with every rule.
+
+- 2 of this section's 4 pages are not listed here.
+
+## Company (2)
+
+- [About](https://your-domain.com/about/): What this site is, who maintains it, and what it does not do.
+- [Contact](https://your-domain.com/contact/): One address for corrections and data requests.
+
+- 2 listed pages carried neither a meta description nor an H1, so they are linked without a description.
 
 ## Notes
-- Generated by LLMention on the date shown from the links found on https://your-domain.com/.
-- Review and edit before publishing: these are only the pages reachable from the homepage, and the descriptions are the link texts as written.
+
+- Generated by LLMention from the pages it read on https://your-domain.com. Each description is that page's own meta description, or its own H1 where there is none; no description is written by this tool.
+- Review and edit before publishing: the pages are the ones the homepage links to, the descriptions are the pages' own metadata as it stood on the generation date above, and external links are not followed.
 - Convention reference: https://llmstxt.org/`}</pre>
             <p className="mt-3 text-[var(--ink-2)]">
-              <strong>One link section, not several.</strong> The tool does not invent groupings such
-              as Documentation or Pricing, because it has read one page and does not know which pages
-              belong together. It lists at most <strong>{MAX_LINKS}</strong> internal links, so a
-              homepage with fifty links produces a draft with {MAX_LINKS} — and the descriptions are
-              those links&apos; own text, which is why a link labelled &quot;Read more&quot; arrives
-              labelled that way.
+              <strong>Several sections, from a stated rule.</strong> A page goes into the
+              section named after the first segment of its own path, and the section order is
+              fixed rather than sorted by size: {sectionNames}, then anything else in the order
+              your homepage links to it. Any first segment the tool does not recognise still
+              gets its own section and shows its own name, so what it failed to classify is
+              visible in the file rather than absorbed into a heading nobody can question.
             </p>
             <p className="mt-3 text-[var(--ink-2)]">
-              So the draft is a starting point with the format and the real links already in place.
-              Grouping them, dropping the navigation, and rewriting the descriptions into sentences
-              that mean something is your judgement rather than the tool&apos;s — and it is the part
-              that decides whether the file is worth serving at all.
+              Each section is capped at {MAX_LINKS_PER_SECTION} links and each cap has its own
+              count of what was left out, so a homepage with fifty links produces a short file
+              that is honest about being short. Only {MAX_FETCH_PAGES} pages are read per run,
+              spread one per section per round rather than taken from the top of the page, and
+              a link the tool did not read carries no description rather than an invented one.
+            </p>
+            <p className="mt-3 text-[var(--ink-2)]">
+              The draft is still a starting point. Which pages deserve to be in it, and whether
+              a description your own markup happens to carry is the one you would choose, are
+              your judgement rather than the tool&apos;s — and they are the part that decides
+              whether the file is worth serving at all.
             </p>
           </div>
 
@@ -316,7 +384,7 @@ Your Site Name is published at https://your-domain.com. This file lists the page
                       name: "What if my homepage is rendered entirely in JavaScript?",
                       acceptedAnswer: {
                         "@type": "Answer",
-                        text: "The generator reads the server response and does not execute JavaScript, so a client-rendered homepage gives it little to work with and the draft will be thin. That is worth knowing on its own, because it is the same response an AI crawler receives.",
+                        text: "The generator reads server responses and does not execute JavaScript, so a client-rendered homepage gives it little to work with and the draft will be thin. That is worth knowing on its own, because it is the same response an AI crawler receives. The pages it then reads for their descriptions are read the same way, so a client-rendered subpage contributes its title tag and nothing else.",
                       },
                     },
                   ],
@@ -353,7 +421,7 @@ Your Site Name is published at https://your-domain.com. This file lists the page
               What if my homepage is rendered entirely in JavaScript?
             </h3>
             <p>
-              The generator reads the server response and does not execute JavaScript, so a
+              The generator reads server responses and does not execute JavaScript, so a
               client-rendered homepage gives it little to work with. That is worth knowing on its
               own, because it is the same response an AI crawler receives.
             </p>
@@ -373,7 +441,15 @@ Your Site Name is published at https://your-domain.com. This file lists the page
                 inherits that.
               </li>
               <li>
-                It cannot see pages your homepage does not link to, which is usually most of them.
+                It cannot see pages your homepage does not link to, which is usually most of
+                them. That is why every section count is stated in the file: the numbers are
+                what it saw, not what your site holds.
+              </li>
+              <li>
+                It cannot promise that a description it read is still true tomorrow. The
+                generation date is printed at the top for exactly that reason — a file that
+                describes pages as they were on a date is honest, and the same file with no
+                date on it is a claim about the present.
               </li>
               <li>
                 It cannot guarantee a citation. Serving a file changes what a model can read, not

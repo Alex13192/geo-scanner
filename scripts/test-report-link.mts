@@ -13,6 +13,10 @@
 import assert from "node:assert/strict";
 
 import { buildReportPayload, historySince, HISTORY_DAYS, type ScanRow } from "../lib/monitor/report.ts";
+import { confirmSubscription } from "../lib/subscribe/landing.ts";
+import { reportUrl } from "../lib/subscribe/flow.ts";
+import { confirmationEmail, reportEmail } from "../lib/email/messages.ts";
+import { CONTACT_EMAIL, SITE_URL } from "../lib/site.ts";
 
 const DAY = 86_400_000;
 const NOW = Date.UTC(2026, 9, 5, 12, 0, 0); // 5 October 2026
@@ -36,9 +40,15 @@ const copy = new Map([
 ]);
 
 const results: string[] = [];
-function check(name: string, fn: () => void) {
+/*
+ * `fn` may be async, and it has to be: the confirmation flow is a database read followed by a
+ * database write, so a synchronous check would pass before its assertions ran and report a green
+ * suite for a redirect that never happened. That is not a hypothetical - the first version of this
+ * section asserted the redirect outside the harness entirely and printed nothing at all.
+ */
+async function check(name: string, fn: () => void | Promise<void>) {
   try {
-    fn();
+    await fn();
     results.push(`  PASS  ${name}`);
   } catch (err) {
     results.push(`  FAIL  ${name}\n        ${(err as Error).message.split("\n")[0]}`);
@@ -241,6 +251,310 @@ check("the payload carries no email address and no token", () => {
   const json = JSON.stringify(p);
   assert.ok(!json.includes("@"), "the payload contains something that looks like an address");
   assert.ok(!/token/i.test(json), "the payload mentions a token");
+});
+
+/*
+ * ============================================================================
+ * THE CONFIRMATION FLOW
+ *
+ * Everything below exists because of one claim the product now makes in an email: confirming a
+ * subscription hands the reader their own report. That is a link in a message that nobody can
+ * click in a test, so the decision behind it lives in lib/subscribe/landing.ts as a function of a
+ * token and a database, and this suite drives it against a fake database shaped like D1.
+ *
+ * The fake is deliberately narrow: it answers exactly the three statements confirmByToken issues
+ * (the SELECT by token, the UPDATE that flips the status, and the SELECT that reads a row back by
+ * report token) and it THROWS on anything else. A fake that answered everything would let a
+ * rewritten query pass silently, which is the failure this suite exists to catch; the shape of
+ * these three statements is asserted separately by scripts/test-analyze-style string checks in the
+ * real route, and lib/db/subscribers.ts is the only module that writes them.
+ * ============================================================================
+ */
+
+type Row = {
+  id: string;
+  domain: string;
+  email: string;
+  status: string;
+  confirm_token: string;
+  unsub_token: string;
+  report_token: string | null;
+  created_at: number;
+  confirmed_at: number | null;
+};
+
+/**
+ * A D1-shaped double over one row.
+ *
+ * `failOnUpdate` exists because the failure mode that matters here is not a missing row - it is a
+ * row that was read and then could not be written, which leaves the reader holding a confirmation
+ * link that confirmed nothing. The route has to say so rather than claim the link is unknown.
+ */
+function fakeDb(seed: Partial<Row>, options: { failOnUpdate?: boolean } = {}) {
+  const state: { row: Row | null } = {
+    row: {
+      id: "sub_1",
+      domain: "example.test",
+      email: "reader@example.test",
+      status: "pending",
+      confirm_token: "confirm-abc",
+      unsub_token: "unsub-abc",
+      report_token: "report-xyz",
+      created_at: NOW - DAY,
+      confirmed_at: null,
+      ...seed,
+    },
+  };
+
+  const db = {
+    prepare(sql: string) {
+      const statement = {
+        _args: [] as unknown[],
+        bind(...args: unknown[]) {
+          statement._args = args;
+          return statement;
+        },
+        async first<T>() {
+          if (/FROM subscribers\s+WHERE confirm_token/.test(sql)) {
+            const token = statement._args[0];
+            return (state.row && state.row.confirm_token === token ? state.row : null) as T | null;
+          }
+          if (/FROM subscribers\s+WHERE report_token/.test(sql)) {
+            const token = statement._args[0];
+            return (state.row && state.row.report_token === token && state.row.status === "confirmed"
+              ? state.row
+              : null) as T | null;
+          }
+          throw new Error(`unexpected read: ${sql}`);
+        },
+        async run() {
+          if (/UPDATE subscribers SET status = 'confirmed'/.test(sql)) {
+            if (options.failOnUpdate) throw new Error("D1 write refused");
+            state.row = { ...state.row!, status: "confirmed", confirmed_at: statement._args[0] as number };
+            return { success: true, meta: { changes: 1 } };
+          }
+          throw new Error(`unexpected write: ${sql}`);
+        },
+      };
+      return statement;
+    },
+  };
+
+  return { db: db as unknown as D1DatabaseLike, state };
+}
+
+/** The row as the report endpoint reads it, which is the only reader that matters for the claim. */
+async function reportRow(db: D1DatabaseLike, token: string) {
+  return db
+    .prepare(`SELECT * FROM subscribers WHERE report_token = ?1 AND status = 'confirmed' LIMIT 1`)
+    .bind(token)
+    .first<Row>();
+}
+
+const DB_TYPE_ONLY: D1DatabaseLike | null = null;
+void DB_TYPE_ONLY;
+
+/*
+ * NOT `console.log("...")` AND A BARE BLOCK. Every case below goes through `check`, so a failure
+ * lands in `results`, prints with the others and sets the exit code. The first version of this
+ * section ran its assertions in bare blocks and produced a suite that printed "All 14 tests passed"
+ * while six of them were not tests at all.
+ */
+await check("confirming links to that subscription's report page, and not to anything else", async () => {
+  const { db } = fakeDb({});
+  const outcome = await confirmSubscription(db, "confirm-abc", NOW);
+  assert.equal(outcome.ok, true, "a pending row with a valid token must confirm");
+  if (!outcome.ok) return;
+
+  const html = await outcome.response.text();
+  /*
+   * THE ASSERTION THIS WHOLE SECTION EXISTS FOR. The confirmation page must carry the report URL,
+   * built from the REPORT token rather than the confirmation token - mixing those two up is one
+   * line and it either publishes the token that confirms subscriptions or produces a link the
+   * report endpoint refuses.
+   */
+  assert.ok(
+    html.includes(reportUrl("report-xyz")),
+    "the confirmation page does not link to the token report"
+  );
+  assert.ok(
+    !html.includes("confirm-abc"),
+    "the confirmation page leaked the confirmation token into a linkable page"
+  );
+  assert.equal(outcome.response.status, 200);
+  // A page carrying a secret has no business in an index.
+  assert.match(outcome.response.headers.get("x-robots-tag") ?? "", /noindex/);
+  assert.equal(outcome.response.headers.get("cache-control"), "no-store");
+});
+
+await check("the row is confirmed by the time the report endpoint reads it", async () => {
+  /*
+   * THE ORDER OF OPERATIONS, ASSERTED RATHER THAN ASSUMED. The link is only useful if the row is
+   * CONFIRMED when the report endpoint reads it - that endpoint filters on status = 'confirmed', so
+   * a page built before the flip would hand the reader a URL that 404s. This drives the real
+   * confirmByToken and then the real read the endpoint performs.
+   */
+  const { db } = fakeDb({});
+  await confirmSubscription(db, "confirm-abc", NOW);
+  const row = await reportRow(db, "report-xyz");
+  assert.ok(row, "the report token does not resolve after confirmation; the redirect target is dead");
+  assert.equal(row.status, "confirmed");
+  assert.equal(row.confirmed_at, NOW);
+});
+
+await check("confirming twice shows the same page rather than an error", async () => {
+  // The ordinary case, not an edge case: mail clients and link scanners fetch these URLs before a
+  // person ever sees them.
+  const { db } = fakeDb({});
+  const first = await confirmSubscription(db, "confirm-abc", NOW);
+  const second = await confirmSubscription(db, "confirm-abc", NOW + 1000);
+  assert.equal(first.ok && second.ok, true, "the second visit to a confirmation link must not fail");
+  if (second.ok) {
+    assert.ok((await second.response.text()).includes(reportUrl("report-xyz")));
+  }
+});
+
+await check("an unsubscribed address is never handed a working report link", async () => {
+  const { db } = fakeDb({ status: "unsubscribed" });
+  const outcome = await confirmSubscription(db, "confirm-abc", NOW);
+  assert.equal(outcome.ok, false);
+  assert.equal(outcome.ok === false && outcome.reason, "unsubscribed");
+});
+
+await check("a token nobody issued is reported as unknown, not as a broken link", async () => {
+  const { db } = fakeDb({});
+  const outcome = await confirmSubscription(db, "a-token-nobody-issued", NOW);
+  assert.equal(outcome.ok, false);
+  assert.equal(outcome.ok === false && outcome.reason, "not_found");
+});
+
+await check("a row with no report token still confirms, and builds no dead link", async () => {
+  // Schema drift rather than an expected state. It must fall back to a page, never to a link the
+  // report endpoint would refuse.
+  const { db } = fakeDb({ report_token: null });
+  const outcome = await confirmSubscription(db, "confirm-abc", NOW);
+  assert.equal(outcome.ok, true, "a missing report token must not fail the confirmation itself");
+  if (outcome.ok) {
+    const html = await outcome.response.text();
+    assert.ok(!html.includes("/monitor/report/"), "a report link was built without a token");
+    assert.match(html, /You are subscribed/);
+  }
+});
+
+await check("a refused write is reported as ours and recoverable, not as an unknown link", async () => {
+  /*
+   * Telling somebody their valid link is not recognised sends them to sign up again, which writes a
+   * second pending row and replaces the token in the message they are still holding. The link is
+   * valid and the row is still pending, so the instruction has to be to try again.
+   */
+  const { db } = fakeDb({}, { failOnUpdate: true });
+  const outcome = await confirmSubscription(db, "confirm-abc", NOW);
+  assert.equal(outcome.ok, false);
+  assert.equal(outcome.ok === false && outcome.reason, "database");
+});
+
+await check("both emails carry the report link in their footer, not only in the body", async () => {
+  /*
+   * The footer is where "this page was built to be forwarded" pays off: the body of the weekly email
+   * explains the link, and the footer carries it in the same place in every message the product
+   * sends. Both messages are checked, because the confirmation is the one a reader receives at the
+   * moment they have just given something and are most likely to want what they asked for.
+   */
+  const weekly = reportEmail({
+    domain: "example.test",
+    score: 97,
+    grade: "A",
+    checksPassed: 38,
+    checksRun: 40,
+    fixed: [],
+    newFailures: [],
+    unchangedFailures: 2,
+    firstRun: false,
+    homepageUrl: "https://example.test/",
+    historyUrl: reportUrl("report-xyz"),
+    unsubUrl: `${SITE_URL}/api/subscribe/unsubscribe/?t=unsub-abc`,
+  });
+
+  const confirm = confirmationEmail(
+    "example.test",
+    `${SITE_URL}/api/subscribe/confirm/?t=confirm-abc`,
+    `${SITE_URL}/api/subscribe/unsubscribe/?t=unsub-abc`,
+    reportUrl("report-xyz")
+  );
+
+  for (const [name, message] of [
+    ["the weekly report", weekly],
+    ["the confirmation", confirm],
+  ] as const) {
+    const link = reportUrl("report-xyz");
+    /*
+     * `html` IS OPTIONAL ON EmailMessage, and that is correct rather than inconvenient: a message
+     * that is only its plain-text half is a message the sender can still deliver. Both templates
+     * build one, which is what the assertion below establishes before anything reads it - a test
+     * that assumed the field existed would not be testing the template at all.
+     */
+    const html = message.html;
+    assert.ok(html, `${name} email has no HTML part at all`);
+    assert.ok(html.includes(link), `${name} email does not carry the report link in HTML`);
+    assert.ok(message.text.includes(link), `${name} email does not carry the report link in plain text`);
+
+    /*
+     * THE FOOTER SPECIFICALLY, NOT MERELY SOMEWHERE IN THE MESSAGE.
+     *
+     * The shared footer line is the address paragraph that ends the document, and it contains the
+     * contact address exactly once. So the last occurrence of the report link has to come after the
+     * last occurrence of the contact address. Written this way rather than as `includes`, a template
+     * change that moves the link back up into the body fails here instead of passing on "it is in
+     * the HTML somewhere" - which is exactly the requirement this case exists to hold.
+     */
+    const footerStart = html.lastIndexOf(CONTACT_EMAIL);
+    const linkAt = html.lastIndexOf(link);
+    assert.notEqual(footerStart, -1, `${name} email has no footer address to anchor on`);
+    assert.ok(
+      linkAt > footerStart,
+      `${name} email carries the report link in the body but not in the footer`
+    );
+    assert.ok(
+      html.indexOf("</p>", linkAt) > linkAt,
+      `${name} email footer link is not inside the closing footer paragraph`
+    );
+  }
+
+  // The plain-text half has to name the link rather than trailing a bare URL after the signature,
+  // which is where a footer written by hand drifts to.
+  assert.match(confirm.text, /Your report page: /);
+  assert.match(weekly.text, /forward - it needs no domain typed:/);
+});
+
+await check("a message with no report token has no report link at all", async () => {
+  /*
+   * The optional parameter exists so that a send never depends on an extra link being buildable. A
+   * weekly report for a row whose token is missing has to go out without the link rather than not go
+   * out - and a template that printed the URL anyway would print "undefined" into somebody's inbox.
+   */
+  const withoutToken = reportEmail({
+    domain: "example.test",
+    score: 97,
+    grade: "A",
+    checksPassed: 38,
+    checksRun: 40,
+    fixed: [],
+    newFailures: [],
+    unchangedFailures: 2,
+    firstRun: false,
+    homepageUrl: "https://example.test/",
+    unsubUrl: `${SITE_URL}/api/subscribe/unsubscribe/?t=unsub-abc`,
+  });
+  assert.ok(!withoutToken.html?.includes("/monitor/report/"));
+  assert.ok(!withoutToken.text.includes("/monitor/report/"));
+
+  const plainConfirm = confirmationEmail(
+    "example.test",
+    `${SITE_URL}/api/subscribe/confirm/?t=confirm-abc`,
+    `${SITE_URL}/api/subscribe/unsubscribe/?t=unsub-abc`
+  );
+  assert.ok(!plainConfirm.html?.includes("/monitor/report/"), "a report link appeared without a token");
+  assert.ok(!/undefined/.test(plainConfirm.html ?? ""), "a missing optional link printed as undefined");
 });
 
 console.log("Report-link payload tests\n");

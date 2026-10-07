@@ -18,6 +18,7 @@ import {
   isValidEmail,
   normaliseDomain,
   normaliseEmail,
+  reportUrl,
   unsubscribeUrl,
 } from "@/lib/subscribe/flow";
 import { newId, newToken } from "@/lib/subscribe/tokens";
@@ -81,6 +82,18 @@ export async function POST(request: Request) {
    * end the subscription it was meant to be showing. See migrations/0002_report_token.sql.
    */
   const reportToken = newToken();
+  /*
+   * The report URL is built HERE, before the row is written, and carried into the confirmation
+   * email as well as the weekly one. That is the deferred-intent half of the design: the person
+   * has just given an address, and the next step they take - clicking confirm - lands them on the
+   * report rather than on a success page that thanks them and stops.
+   *
+   * ORDER MATTERS. The token exists in the same INSERT as the row, so the link is valid the
+   * moment the row is, and confirmByToken returns it from the same SELECT that flips the status.
+   * Nothing has to be backfilled and no extra query is needed; see migrations/0002_report_token.sql
+   * for why a token that has to be created later than the row would have been the wrong design.
+   */
+  const reportPageUrl = reportUrl(reportToken);
 
   const outcome = await createPending(env.DB, {
     domain,
@@ -93,7 +106,12 @@ export async function POST(request: Request) {
   });
 
   if (outcome.ok) {
-    const message = confirmationEmail(domain, confirmUrl(confirmToken), unsubscribeUrl(unsubToken));
+    const message = confirmationEmail(
+      domain,
+      confirmUrl(confirmToken),
+      unsubscribeUrl(unsubToken),
+      reportPageUrl
+    );
     const sent = await sendEmail(env, { ...message, to: email });
 
     /*
