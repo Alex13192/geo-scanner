@@ -23,6 +23,7 @@ curl -s "https://llmention-geo.com/api/scan?brief=1&domain=example.com"
 ```
 
 No key, no account, no email. The scan is not stored.
+
 ## What we measured
 
 | Finding | Value |
@@ -37,8 +38,6 @@ No key, no account, no email. The scan is not stored.
 The rows are downloadable and the run is reproducible: [`/study/`](https://llmention-geo.com/study/)
 and [`/study/data/`](https://llmention-geo.com/study/data/). Rows were collected on 3 October 2026
 under the 38 checks that existed then; the scanner ships 40 today, and the study page says so.
-
-No key, no account, no email. The scan is not stored.
 
 ## Running it
 
