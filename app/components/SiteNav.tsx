@@ -6,6 +6,7 @@ import {
   BookOpen,
   ChevronDown,
   FileText,
+  LayoutGrid,
   Library,
   ListChecks,
   Mail,
@@ -58,6 +59,12 @@ const GROUPS: Group[] = [
     key: "tools",
     label: "Tools",
     items: [
+      {
+        href: "/tools/",
+        label: "All tools and references",
+        description: "Every free tool, every rule page and the method, grouped by what you need.",
+        icon: LayoutGrid,
+      },
       {
         href: "/monitor/",
         label: "Weekly report",

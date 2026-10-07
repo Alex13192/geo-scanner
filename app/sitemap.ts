@@ -49,6 +49,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      /* The index of everything else: the four tools, the rule reference, the dimensions, the
+         method and the guides, grouped by the question a reader arrives with. High priority
+         because it is an entry point to the other fifty-odd URLs rather than a destination in
+         its own right - and because a site with this many indexable pages needs one hub that
+         lists them. */
+      url: `${SITE_URL}/tools/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${SITE_URL}/docs/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',

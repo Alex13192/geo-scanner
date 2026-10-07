@@ -5,8 +5,40 @@ import ProsePage from "@/app/components/ProsePage";
 import Faq from "@/app/components/Faq";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
+import { CHECK_COPY } from "@/lib/geo/check-copy";
 
 import { og } from "@/lib/og";
+
+/**
+ * A dimension's weighting sentence with the comparison to other dimensions removed.
+ *
+ * DIMENSION_CATALOG writes each weighting as a ranking argument, because /methodology/
+ * shows all twelve side by side and that is where the ranking means something: "Highest
+ * weight of the twelve", "Second highest", "Lowest". Repeated verbatim on the page for one
+ * dimension it reads as a fragment, so the comparative opening sentence is dropped and the
+ * reasoning behind the number is kept word for word. Nothing is rewritten - the sentence
+ * that does not survive the move is the only thing that goes.
+ */
+function weightingAlone(weighting: string): string {
+  const sentences = weighting.split(/(?<=\.)\s+/);
+  const comparative =
+    /^(highest|second highest|lowest|low to moderate|moderate|substantial|sub-)/i.test(sentences[0]);
+  return (comparative ? sentences.slice(1) : sentences).join(" ").trim();
+}
+
+/**
+ * One sentence, for a list of them.
+ *
+ * Used for the per-rule answers below: a rule's text is written to be exact rather than
+ * short, and several of them run to three or four sentences. The first sentence is the part
+ * that states what the check tests, and the full wording is one link away on the rule page.
+ * A string with no full stop before a space (an abbreviation, or a rule written as one
+ * clause) is returned whole rather than cut at the wrong place.
+ */
+function firstSentence(text: string): string {
+  const match = text.match(/^[\s\S]*?\.(?=\s|$)/);
+  return (match ? match[0] : text).trim();
+}
 
 /**
  * One page per scoring dimension.
@@ -79,30 +111,83 @@ export default async function DimensionPage({ params }: Params) {
   /*
    * QUESTIONS BUILT FROM THIS DIMENSION, NOT COPIED ACROSS TWELVE PAGES.
    *
-   * The same four questions on every dimension page would be the definition of thin content -
+   * The same questions on every dimension page would be the definition of thin content -
    * which is the rule these pages are scored against in the first place. The shape of this project
-   * makes the honest version cheap: the rationale, the weighting and the failure notes are already
-   * written per dimension, so the answers are what those fields say rather than new prose that
-   * would drift away from them.
+   * makes the honest version cheap: the rationale, the weighting, the rule text and the point
+   * values are already written per dimension and per rule, so the answers are what those fields
+   * say rather than new prose that would drift away from them.
+   *
+   * WHERE EACH ANSWER COMES FROM, one field per question:
+   *   what a rule tests         check.rule, first sentence only (lib/geo/catalog.ts)
+   *   what the dimension is     dimension.rationale, verbatim
+   *   why this weight           dimension.weighting, comparison removed (weightingAlone)
+   *   what a failure costs      the points printed beside each rule on this page, stated as
+   *                             arithmetic on two catalogue numbers
+   *
+   * THE LAST ANSWER IS THE ONE OTHER TOOLS CANNOT GIVE. Every rule carries a point value that
+   * comes from the same catalogue the analyser reads, so the cost of failing it can be printed
+   * next to the rule instead of asserted. Nothing in these answers is a measurement of the
+   * reader's site - that is what the scan is for, and the answer says so.
+   *
+   * A rule's text is written to be exact rather than short, so only its first sentence is used
+   * and the full wording is one link away. An answer that would still run past the 80-word
+   * opener this site's own answer-first rule reads is left out rather than truncated: the
+   * question goes with it, because a question whose answer is missing is worse than no question.
    */
-  const failNotes = checks.map((check) => check.onFail).filter((note): note is string => Boolean(note));
+  const withinAnswerLength = (text: string) => text.split(/\s+/).length <= 80;
+  const heaviest = checks.slice().sort((a, b) => b.points - a.points)[0];
+
   const faqItems = [
+    ...checks.slice(0, 6).map((check) => ({
+      q: `${CHECK_COPY[check.id]?.title ?? check.id} — what does it test?`,
+      a: firstSentence(check.rule),
+    })),
     { q: `What does the ${dimension.label} dimension measure?`, a: dimension.rationale },
-    { q: `Why is ${dimension.label} worth ${dimension.weight}% of the score?`, a: dimension.weighting },
     {
-      q: `What does failing ${dimension.label} look like?`,
-      a:
-        failNotes.length > 0
-          ? failNotes.join(" ")
-          : "The rules above describe it precisely. Each states the condition it tests, and a scan reports which of them a page does not meet.",
+      q: `Why is ${dimension.label} worth ${dimension.weight}% of the score?`,
+      a: weightingAlone(dimension.weighting),
     },
     {
-      q: `How do I improve ${dimension.label}?`,
-      a: "Start with the rules worth the most, because that is where the points are. Every rule links to a page explaining what it checks and what evidence satisfies it, and a scan reports which ones a specific page currently fails.",
+      q: `What does failing ${dimension.label} cost?`,
+      a: `Each rule carries a share of the ${dimension.weight}% this dimension is worth, and the share is printed beside every rule above. The most one failure can cost is ${shareOfTotal(
+        heaviest.points
+      )}% of the total score, for ${CHECK_COPY[heaviest.id]?.title ?? heaviest.id}. A scan of your own page reports which of these rules it currently fails.`,
     },
-  ];
+  ].filter((item) => withinAnswerLength(item.a));
+
   const index = DIMENSION_CATALOG.findIndex((d) => d.id === dimension.id);
   const next = DIMENSION_CATALOG[(index + 1) % DIMENSION_CATALOG.length];
+
+  /*
+   * THE "HOW TO IMPROVE IT" SEQUENCE, BUILT THE SAME WAY THE RULE PAGES BUILD THEIRS.
+   *
+   * One step per rule, in points order, and the step's name IS the rule text from
+   * lib/geo/catalog.ts: the catalogue already states each condition in the imperative -
+   * "Parsing robots.txt into user-agent groups, none of gptbot ... is disallowed from /" -
+   * so a second, shorter wording would be a paraphrase of a published rule on the page
+   * whose job is to publish it exactly. The two fields the step carries are both from the
+   * catalogue and neither is reworded: `name` is the rule, and `text` adds what a non-pass
+   * means where the catalogue states one.
+   *
+   * The HowTo is serialised into the JSON-LD and rendered as the <ol> beneath it from the
+   * same array, so the structured data and the visible prose cannot say different things.
+   * The order is by points rather than by the catalogue's grouping order, because on a page
+   * about one dimension the useful order is the one that puts the expensive rules first.
+   */
+  const orderedChecks = checks.slice().sort((a, b) => b.points - a.points);
+  const howTo = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: `How to improve ${dimension.label}`,
+    /* The dimension's own rationale, verbatim from DIMENSION_CATALOG. */
+    description: dimension.rationale,
+    step: orderedChecks.map((check, position) => ({
+      "@type": "HowToStep",
+      position: position + 1,
+      name: check.rule,
+      text: check.onFail ? `${check.onFail} Worth ${shareOfTotal(check.points)}% of the total score.` : `Worth ${shareOfTotal(check.points)}% of the total score.`,
+    })),
+  };
 
   return (
     <ProsePage
@@ -122,7 +207,34 @@ export default async function DimensionPage({ params }: Params) {
         <p>{dimension.rationale}</p>
 
         <h2>Why it carries {dimension.weight}%</h2>
-        <p>{dimension.weighting}</p>
+        {/*
+          The comparison to the other eleven is removed here and only here: the sentence that
+          carries it belongs on /methodology/, where all twelve are visible. The reasoning
+          behind the number is kept word for word - see weightingAlone above.
+        */}
+        <p>{weightingAlone(dimension.weighting)}</p>
+
+        <h2>How to improve it</h2>
+        {/*
+          The HowTo, in the same order as the JSON-LD above it. Each step is the rule's own
+          text, so a reader can compare the numbered advice against the rule list directly
+          below and see that they are the same sentences.
+        */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(howTo) }}
+        />
+        <ol>
+          {orderedChecks.map((check) => (
+            <li key={check.id}>
+              {check.rule}
+              {check.onFail ? <em> {check.onFail}</em> : null}{" "}
+              <span className="font-mono text-xs text-[var(--ink-3)]">
+                {shareOfTotal(check.points)}% of the total score
+              </span>
+            </li>
+          ))}
+        </ol>
 
         <h2>The rules it is scored by</h2>
         <p>

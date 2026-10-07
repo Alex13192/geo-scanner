@@ -36,6 +36,11 @@ type Route = { route: string; file: string; indexable: boolean; min?: number };
 
 const ROUTES: Route[] = [
   { route: "/", file: "index.html", indexable: true },
+  /* The index of everything else. Scored like any other page rather than exempted: it is a
+     hub that links fifty-odd URLs, and a hub is exactly the page whose own headings, links
+     and prose are worth gating - a link list that has lost its explanations is the failure
+     this page is most likely to suffer. */
+  { route: "/tools/", file: "tools.html", indexable: true },
   { route: "/llms-txt-studio/", file: "llms-txt-studio.html", indexable: true },
   { route: "/readiness-badge/", file: "readiness-badge.html", indexable: true },
   /* One per scoring dimension. Listed individually because this script reads the built tree by

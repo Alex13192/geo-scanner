@@ -4,8 +4,46 @@ import Link from "next/link";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
 import { CHECK_COPY } from "@/lib/geo/check-copy";
 import { checkPageDescription, checkPageTitle } from "@/lib/geo/check-meta";
+import { guidePathForCheck } from "@/lib/geo/check-links";
 import ProsePage from "@/app/components/ProsePage";
+import Faq from "@/app/components/Faq";
+import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import { og } from "@/lib/og";
+
+/**
+ * The readable name of a fix branch, used as the step's name in the HowTo below.
+ *
+ * Every string it builds on comes from lib/geo/check-copy.ts, which is generated from the
+ * analyser by scripts/generate-check-copy.mts: `fail` is the branch's own value, and the
+ * rest of the sentence is the branch's own fix text. Nothing about the fix is restated
+ * here, so the steps and the rules they lead to cannot describe different things.
+ */
+function stepName(when: string, text: string): string {
+  if (when === "fail") return text;
+  return `If the check is ${when === "partial" ? "partially passed" : when}: ${text}`;
+}
+
+/**
+ * A dimension's weighting sentence as it reads on a page that shows one dimension.
+ *
+ * The catalogue writes each weighting as if the reader can see all twelve at once - "Second
+ * highest.", "Lowest weight of the twelve." - and /methodology/ does show all twelve, so the
+ * phrasing is right there. On a single rule page it is not: a reader told that something is
+ * "second highest" has nothing to rank it against. The comparative sentence is therefore
+ * dropped and the reasoning that follows it is kept verbatim, which is the part that answers
+ * the question. Nothing is reworded; only a sentence that does not survive the move is left
+ * behind. Eleven of the twelve weightings survive it.
+ *
+ * The second return value is false when what remains is not an answer on its own, so the
+ * caller can leave the question out instead of publishing a fragment.
+ */
+function weightingAlone(weighting: string): { text: string; usable: boolean } {
+  const sentences = weighting.split(/(?<=\.)\s+/);
+  const comparative =
+    /^(highest|second highest|lowest|low to moderate|moderate|substantial|sub-)/i.test(sentences[0]);
+  const kept = (comparative ? sentences.slice(1) : sentences).join(" ").trim();
+  return { text: kept, usable: kept.length > 0 };
+}
 
 /**
  * /checks/<id>/ - one page per published rule.
@@ -27,6 +65,17 @@ import { og } from "@/lib/og";
  * Static by construction: generateStaticParams below enumerates every non-alias
  * catalogue entry, so all of these are prerendered at build time and the CI gate
  * scores them along with everything else.
+ *
+ * THE ONE SCANNER RULE THESE PAGES STILL DO NOT FULLY PASS is word-count, and the number
+ * is recorded here so the next person does not read it as an oversight. A rule page renders
+ * the rule, what a failure means, the note if the catalogue carries one, the fix sequence,
+ * the weighting arithmetic, the sibling rules, the dimension it belongs to, its FAQ and the
+ * evidence block - between about 600 and 1,100 words of visible text depending on how much
+ * the catalogue has to say about the rule. The shortest ones are the three-point metadata
+ * rules, whose entire published content is one sentence. Getting them past 800 words means
+ * padding a reference page with prose that no source supports, which is the one thing this
+ * project does not do; check-built-pages.mts already sets their floor below an A and says
+ * why. They score in the mid-90s regardless.
  */
 export function generateStaticParams() {
   return CHECK_CATALOG.filter((check) => !check.alias).map((check) => ({ id: check.id }));
@@ -93,6 +142,103 @@ export default async function CheckPage({ params }: { params: Promise<{ id: stri
       ? ((check.points / dimensionPoints) * dimension.weight).toFixed(1)
       : null;
 
+  /*
+   * THE "HOW TO FIX THIS" SEQUENCE, AND WHY IT IS BUILT RATHER THAN WRITTEN.
+   *
+   * The steps are lib/geo/check-copy.ts's fix branches, in the order the analyser emits
+   * them - one step per branch, so a rule that can fail in two different ways has two
+   * steps and a rule that can only fail has one. The same array is rendered as the
+   * visible <ol> below and serialised into the HowTo in the JSON-LD, so the structured
+   * data and the prose cannot say different things.
+   *
+   * A branch whose `when` is not "fail" is a partial pass rather than a failure, and the
+   * conditional is kept in the step name instead of being dropped: without it, "Publish
+   * robots.txt" would be shown to a reader whose robots.txt is present but thin.
+   */
+  const steps = copy.fixes.map((fix) => ({
+    name: stepName(fix.when, fix.text),
+    text: fix.text,
+    when: fix.when,
+  }));
+
+  const howTo = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: `How to fix: ${copy.title}`,
+    /*
+     * The rule itself, from lib/geo/catalog.ts. Nothing here is a new description of the
+     * check: `rule` is the exact condition the analyser tests, and `onFail` is what a
+     * non-pass means, both as published on /methodology/.
+     */
+    description: check.onFail ? `${check.rule} ${check.onFail}` : check.rule,
+    step: steps.map((step, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+    })),
+  };
+
+  /*
+   * QUESTIONS WHOSE ANSWERS ARE THE CATALOGUE'S OWN SENTENCES.
+   *
+   * A question is only asked when a field in lib/geo/catalog.ts already answers it, and
+   * the answer is that field verbatim rather than a paraphrase of it:
+   *
+   *   - what it measures / what a failure means   check.rule, check.onFail
+   *   - what else to look at first                the onFail text of the sibling rules in
+   *                                               this dimension, asked in points order
+   *   - why this dimension is weighted as it is  dimension.weighting, with the comparative
+   *                                               sentence removed (see weightingAlone above)
+   *
+   * A rule with no onFail, no siblings that carry one, or no weighting sentence that
+   * survives the move gets a shorter FAQ rather than an invented question. The Faq
+   * component renders whatever is in the array, so a page with one question is a page with
+   * one question and not a page with two empty ones.
+   */
+  const failNotes = siblings
+    .slice()
+    .sort((a, b) => b.points - a.points)
+    .map((sibling) =>
+      sibling.onFail ? `${CHECK_COPY[sibling.id]?.title ?? sibling.id}: ${sibling.onFail}` : null
+    )
+    .filter((line): line is string => Boolean(line));
+
+  /*
+   * Faq renders each answer as a plain <p> immediately after its heading, and the
+   * answer-first rule on this site asks an opening paragraph to stay within 80 words.
+   * /dimensions/ accepts any length because it renders the same block at h3; here the
+   * answers are the catalogue's own sentences, and an answer that is too long to be one
+   * is dropped rather than truncated mid-sentence.
+   */
+  const withinAnswerLength = (text: string) => text.split(/\s+/).length <= 80;
+  const weighting = dimension ? weightingAlone(dimension.weighting) : null;
+
+  const faqItems = [
+    { q: `What does this check look at?`, a: check.rule },
+    ...(check.onFail && withinAnswerLength(check.onFail)
+      ? [{ q: `What does failing it mean?`, a: check.onFail }]
+      : []),
+    ...(failNotes.length > 0 && siblings.length > 0 && withinAnswerLength(failNotes.join(" "))
+      ? [
+          {
+            q: `What else in this dimension should I check first?`,
+            a: failNotes.join(" "),
+          },
+        ]
+      : []),
+    ...(dimension && weighting && weighting.usable && withinAnswerLength(weighting.text)
+      ? [
+          {
+            q: `Why does this dimension carry ${dimension.weight}% of the score?`,
+            a: weighting.text,
+          },
+        ]
+      : []),
+  ];
+
+  const guidePath = guidePathForCheck(check.id);
+
   return (
     <ProsePage
       eyebrow={dimension?.label ?? check.dimension}
@@ -130,18 +276,28 @@ export default async function CheckPage({ params }: { params: Promise<{ id: stri
 
           <div>
             <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">How do I fix it?</h2>
-            <ul className="list-disc pl-5 space-y-1.5">
-              {copy.fixes.map((fix) => (
-                <li key={fix.text}>
-                  {fix.when !== "fail" ? (
+            {/*
+              The HowTo, emitted as structured data and rendered as the <ol> beneath it from
+              the same `steps` array. It is a JSON-LD block rather than a component because
+              the only other structured-data component on this site, Faq, carries a FAQPage
+              and a page must not declare two of those.
+            */}
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(howTo) }}
+            />
+            <ol className="list-decimal pl-5 space-y-1.5">
+              {steps.map((step) => (
+                <li key={step.name}>
+                  {step.when !== "fail" ? (
                     <span className="text-[var(--ink-3)]">
-                      {fix.when === "partial" ? "Partial pass: " : `${fix.when}: `}
+                      {step.when === "partial" ? "Partial pass: " : `If the check is ${step.when}: `}
                     </span>
                   ) : null}
-                  {fix.text}
+                  {step.text}
                 </li>
               ))}
-            </ul>
+            </ol>
           </div>
 
           <div>
@@ -178,6 +334,49 @@ export default async function CheckPage({ params }: { params: Promise<{ id: stri
             </table>
             {dimension ? <p className="mt-4 text-[var(--ink-2)]">{dimension.weighting}</p> : null}
           </div>
+
+          {dimension ? (
+            <div>
+              <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">
+                Which dimension does this belong to?
+              </h2>
+              <p>
+                <Link
+                  href={`/dimensions/${dimension.id}/`}
+                  className="text-[var(--accent)] hover:opacity-75 underline"
+                >
+                  {dimension.label}
+                </Link>{" "}
+                — {dimension.weight}% of the total score, decided by{" "}
+                {CHECK_CATALOG.filter((c) => c.dimension === dimension.id && !c.alias).length}{" "}
+                published rules.
+              </p>
+              <p className="mt-2">{dimension.rationale}</p>
+              <p className="mt-2 text-[var(--ink-2)]">
+                {guidePath ? (
+                  <>
+                    The fix for this rule is walked through step by step in the{" "}
+                    <Link
+                      href={guidePath}
+                      className="text-[var(--accent)] hover:opacity-75 underline"
+                    >
+                      {guidePath.replace("/docs/", "").replace(/\/$/, "").replace(/-/g, " ")} guide
+                    </Link>
+                    .
+                  </>
+                ) : (
+                  <>
+                    None of the five{" "}
+                    <Link href="/docs/" className="text-[var(--accent)] hover:opacity-75 underline">
+                      guides
+                    </Link>{" "}
+                    covers this rule, which is why this page shows the fix in full rather than
+                    pointing at one.
+                  </>
+                )}
+              </p>
+            </div>
+          ) : null}
 
           {siblings.length > 0 ? (
             <div>
@@ -216,13 +415,36 @@ export default async function CheckPage({ params }: { params: Promise<{ id: stri
             </p>
             <p className="mt-3 text-[var(--ink-2)]">
               The full method, including the dimensions that are deliberately weighted low and the
-              parts of the picture a single-URL scan cannot see, is on the{" "}
+              parts of a picture a single-URL scan cannot see, is on the{" "}
               <Link href="/methodology/" className="text-[var(--accent)] hover:opacity-75 underline">
                 methodology page
               </Link>
               .
             </p>
           </div>
+
+          {/*
+            Faq renders the FAQPage JSON-LD for this page and the visible questions beneath
+            it. It is rendered once, here, because two FAQPage nodes on one page would be
+            two claims about the same thing.
+          */}
+          <Faq title="Questions about this rule" items={faqItems} level="h3" />
+
+          {/*
+            The same Evidence block the twelve dimension pages and the guides carry, from the
+            same component constants rather than retyped here. It is on this page for the
+            reason the page exists at all: the citability dimension's weight follows the
+            research quoted in it, and a site that tells other people to cite their sources
+            cannot make an exception of its own reference pages. The note is the only
+            check-specific sentence, and it states what is already true of the page.
+          */}
+          <Evidence
+            quote={GEO_PRIMARY_QUOTE}
+            attribution="Generative Engine Optimization, KDD 2024"
+            attributionUrl="https://arxiv.org/abs/2311.09735"
+            sources={GEO_PRIMARY_SOURCES}
+            note="This rule is applied by the scanner and published in the rule set it is read from, so the condition on this page is the condition the scan tests rather than a summary of it."
+          />
         </div>
     </ProsePage>
   );
