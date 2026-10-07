@@ -102,7 +102,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Do I need an llms.txt file?",
-    a: "Not necessarily. llms.txt is an emerging convention rather than a standard: Google does not use it in Search, and AI crawlers request it inconsistently. It is cheap to add and does help documentation sites and coding agents, but treat it as one small signal, not a ranking factor.",
+    a: "Not necessarily. llms.txt is an emerging convention rather than a standard: no crawler documentation we could open commits to reading it — OpenAI's help centre and Anthropic's crawler article both specify robots.txt instead. It is cheap to add and it does help documentation sites and coding agents, but treat it as one small signal, not a ranking factor.",
   },
   {
     q: "Which AI crawlers should I allow in robots.txt?",
@@ -870,15 +870,15 @@ export default function HomePage() {
                 What the published research found
               </p>
               <h2 className="mx-auto max-w-3xl text-3xl font-semibold tracking-[-0.028em] md:text-5xl">
-                Citations are the single largest measured gain.
+                The measured gains come from what a page says and cites.
               </h2>
             </div>
 
             <div className="mt-12 grid gap-5 sm:grid-cols-3">
               {[
-                { figure: "+115%", note: "Visibility gain for low-ranking sites from adding source citations." },
-                { figure: "+41%", note: "Gain from adding expert quotations to the same passages." },
-                { figure: "+30–40%", note: "Gain from adding statistics and hard numbers." },
+                { figure: "up to 40%", note: "The paper's own headline for visibility gains in generative engine responses." },
+                { figure: "41%", note: "Best tested method over the no-optimization baseline, position-adjusted word count (Table 1)." },
+                { figure: "28%", note: "The same comparison on subjective impression (Table 1)." },
               ].map((stat) => (
                 <div
                   key={stat.figure}
@@ -894,12 +894,12 @@ export default function HomePage() {
 
             <blockquote className="mt-12 border-l-2 border-[var(--accent)] pl-7">
               <p className="text-xl leading-snug tracking-[-0.018em] md:text-2xl">
-                Adding source citations produced the largest measured visibility gain for
-                low-ranking sites (+115%), ahead of the addition of expert quotations (+41%) and
-                statistics (+30-40%), across the strategies tested on generative engines.
+                GEO can boost visibility by up to 40% overall in generative engine responses, and
+                in the paper&rsquo;s Table 1 the best of the tested methods improve on the
+                no-optimization baseline by 41% and 28%.
               </p>
               <footer className="mt-4 text-sm text-[var(--ink-2)]">
-                — Summary of findings,{" "}
+                — Abstract and Table 1,{" "}
                 <a
                   href="https://arxiv.org/abs/2311.09735"
                   target="_blank"

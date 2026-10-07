@@ -133,9 +133,9 @@ export const DIMENSION_CATALOG: CatalogDimension[] = [
     label: "AI Context Files",
     weight: 5,
     rationale:
-      "A cheap and optional signal. Google has stated it does not use llms.txt in Search, and crawler support is inconsistent.",
+      "A cheap and optional signal: one URL that lets a site state its own context for machines. Publishing it is easy; whether any engine reads it is not something this method measures.",
     weighting:
-      "Deliberately low. Most tools in this category weight llms.txt heavily and imply it is a ranking factor; the evidence does not support that, so neither does this score.",
+      "Deliberately low. The check is worth 4 of this dimension's 6 points and the dimension carries 5% of the total, so the file is capped at 3.3 of the 100. It is scored because the convention is cheap to follow, not because it moves a ranking.",
   },
   {
     id: "freshness",
@@ -225,7 +225,7 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     points: 1,
     rule: "robots.txt contains a Content-Signal directive with a value on the same line, for example `Content-Signal: search=yes, ai-input=yes, ai-train=no`. The directive is matched case-insensitively at the start of any line.",
     onFail: "No Content-Signal directive in robots.txt.",
-    note: "Weighted 1 of the 16 points in this dimension because adoption is early: the directive was proposed in 2025 and no major engine has committed to honouring it. It is scored because the convention is cheap to follow and a tool that recommends it should be able to show its own line, not because it moves a ranking.",
+    note: "Weighted 1 of the 16 points in this dimension because adoption is early: the directive was proposed in 2025, and this scanner reads it as a stated position rather than as a signal any engine has committed to. It is scored because the convention is cheap to follow and a tool that recommends it should be able to show its own line, not because it moves a ranking.",
   },
 
   /* ---- Machine Readability ---- */
@@ -496,19 +496,19 @@ export const GRADE_BANDS = [
 /** Primary literature the weighting decisions lean on. */
 export const REFERENCES = [
   {
-    title: "Generative Engine Optimization: How to Dominate AI Search",
+    title: "GEO: Generative Engine Optimization (KDD 2024)",
     url: "https://arxiv.org/abs/2311.09735",
-    note: "The Princeton and Georgia Tech study behind the visibility figures most often quoted in this category, including the gains attributed to quotations, statistics and source citations.",
+    note: "The paper this site's citability weighting follows. Its abstract reports visibility gains of up to 40%, and its Table 1 measures the best of the tested methods against the no-optimization baseline: 41% on position-adjusted word count and 28% on subjective impression, with quotation, statistics and citation additions among the strongest.",
   },
   {
-    title: "What Generative Search Engines Like",
+    title: "What Generative Search Engines Like and How to Optimize Web Content Cooperatively",
     url: "https://arxiv.org/abs/2510.11438",
-    note: "Examines which page characteristics generative engines actually surface.",
+    note: "Introduces AutoGEO, which extracts generative-engine preference rules and rewrites content for more traction.",
   },
   {
-    title: "What Gets Cited: Competitive GEO",
+    title: "What Gets Cited: Competitive GEO in AI Answer Engines",
     url: "https://arxiv.org/abs/2605.25517",
-    note: "Finds that earned media is favoured over brand-owned content, which is why third-party citations are scored here.",
+    note: "A controlled two-document testbed, 252,000 trials across six models: topical relevance and list position were the biggest drivers of being cited first, with explicit price information and a recent timestamp helping consistently.",
   },
   {
     title: "llms.txt standard",

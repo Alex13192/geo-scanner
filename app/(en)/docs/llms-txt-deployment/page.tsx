@@ -32,7 +32,7 @@ export default function Page() {
         title: "Questions about deploying llms.txt",
         items: [
           { q: "Where exactly does the file go?", a: "At the domain root, so that https://your-domain.com/llms.txt returns it directly with HTTP 200 and a body. A redirect to a login page, or an HTML error page, counts as not served." },
-          { q: "Does publishing llms.txt improve rankings?", a: "No. Google has said it does not use the file in Search, and support across the other engines is inconsistent. It is cheap and worth doing, and it is not a ranking factor." },
+          { q: "Does publishing llms.txt improve rankings?", a: "We have not found a crawler document that commits to reading it; the two we could open, OpenAI's help centre and Anthropic's crawler article, specify robots.txt instead. It is cheap and worth doing for the readers that do fetch it, and we do not treat it as a ranking factor." },
           { q: "How do I confirm it is being served correctly?", a: "Request the URL and read what comes back: markdown with a 200, rather than a 404 or a page of HTML. A status code alone is not enough, because an empty file returns 200 too." },
         ],
       }}
@@ -100,9 +100,10 @@ export default function Page() {
 
       <h2>Does llms.txt actually improve AI visibility?</h2>
       <p>
-        <strong>Partly, and less than most vendors claim.</strong> Google has stated it does
-        not use llms.txt in Search. Crawler support is inconsistent, and no major AI provider
-        has committed to reading it as a ranking signal.
+        <strong>We can show what it costs; we cannot show that it improves visibility.</strong>{" "}
+        Neither of the crawler documents we could open &mdash; OpenAI&rsquo;s help centre and
+        Anthropic&rsquo;s crawler article, dated 7 April 2026 &mdash; names the file; both specify{" "}
+        <code>robots.txt</code> as the mechanism they honour.
       </p>
       <p>
         What it genuinely helps with today: documentation sites and coding agents that fetch

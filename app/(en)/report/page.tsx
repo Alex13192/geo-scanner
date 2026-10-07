@@ -216,9 +216,9 @@ export default async function ReportPage({
               claim than it sounds, and a deliberate one.
             </p>
             <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-[var(--ink-2)]">
-              Adding source citations produced the largest measured visibility gain for
-              low-ranking sites, at +115%, ahead of the addition of expert quotations at +41% and
-              statistics at +30-40%, across the strategies tested on generative engines. —{" "}
+              GEO can boost visibility by up to 40% overall in generative engine responses, and in
+              the paper&rsquo;s Table 1 the best of the tested methods improve on the
+              no-optimization baseline by 41% and 28%. &mdash;{" "}
               <a
                 href="https://arxiv.org/abs/2311.09735"
                 className="text-[var(--accent)] hover:opacity-75 underline"

@@ -257,7 +257,7 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
             title="Questions about the method"
             items={[
             { q: "Is the total an average of the twelve dimensions?", a: "No. Each dimension is scored as the fraction of its own points that were earned, and the twelve are then combined by weight. A dimension worth 16% moves the total three times as much as one worth 5%." },
-            { q: "Why is a context file weighted so low?", a: "Because the published evidence for it is weak. Google has said it does not use llms.txt in Search, so it is worth 5 of the 100 points rather than being advertised as a ranking factor." },
+            { q: "Why is a context file weighted so low?", a: "Because nothing we can measure shows it moving a ranking, and the arithmetic is small: the check is worth 4 of that dimension's 6 points, and the dimension carries 5%, so the file is capped at 3.3 of the 100. It is scored because the convention is cheap to follow." },
             { q: "Can I reproduce a score?", a: "Yes. A scan is a single GET against the public API, and the same inputs produce the same score. The study over 30 homepages names the exact endpoint it used." },
             ]}
           />

@@ -209,19 +209,19 @@ export default function StudioPage() {
           <div>
             <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">Is llms.txt a ranking factor?</h2>
             <p>
-              No. Google has said it does not use llms.txt in Search, and crawler support across the
-              other engines is inconsistent. It is worth about 5% of the total score on this site.
+              No. No crawler document we could open commits to reading it &mdash; OpenAI&rsquo;s help
+              centre and Anthropic&rsquo;s crawler article both specify robots.txt instead. It is worth
+              about 5% of the total score on this site.
             </p>
             <p className="mt-3">
               The reason it is still worth generating is that it costs almost nothing and the
-              evidence for what does move visibility points somewhere else entirely. The largest
-              measured gains in the published research came from citing sources and adding expert
-              quotations, not from adding files:
+              measured gains in the published research come from what a page says and cites, not
+              from adding files:
             </p>
             <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-[var(--ink-2)]">
-              Adding source citations produced the largest measured visibility gain for
-              low-ranking sites, at +115%, ahead of the addition of expert quotations at +41% and
-              statistics at +30-40%, across the strategies tested on generative engines. —{" "}
+              GEO can boost visibility by up to 40% overall in generative engine responses, and in
+              the paper&rsquo;s Table 1 the best of the tested methods improve on the
+              no-optimization baseline by 41% and 28%. &mdash;{" "}
               <a
                 href="https://arxiv.org/abs/2311.09735"
                 className="text-[var(--accent)] hover:opacity-75 underline"

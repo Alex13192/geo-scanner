@@ -46,17 +46,17 @@ export const GEO_PRIMARY_SOURCES: EvidenceSource[] = [
   {
     label: "Generative Engine Optimization (KDD 2024)",
     url: "https://arxiv.org/abs/2311.09735",
-    note: "the citation and quotation figures the citability weight follows",
+    note: "the measured gains the citability weight follows",
   },
   {
     label: "What Generative Search Engines Like",
     url: "https://arxiv.org/abs/2510.11438",
-    note: "which page characteristics are surfaced in generated answers",
+    note: "what generative engines prefer in retrieved content",
   },
   {
     label: "What Gets Cited: Competitive GEO",
     url: "https://arxiv.org/abs/2605.25517",
-    note: "earned media is favoured over brand-owned content",
+    note: "which of two competing sources is cited first",
   },
   {
     label: "The rule set and its weights",
@@ -65,9 +65,21 @@ export const GEO_PRIMARY_SOURCES: EvidenceSource[] = [
   },
 ];
 
-/** The finding the weightings follow, quoted the same way everywhere. */
+/**
+ * The finding the weightings follow, quoted the same way everywhere.
+ *
+ * WHERE EACH FIGURE COMES FROM, recorded because a number that cannot be traced
+ * is the one thing this site does not publish: "up to 40%" is the abstract's own
+ * headline, and the 41% / 28% pair is the caption of Table 1, which measures the
+ * best of the tested methods against the no-optimization baseline on
+ * position-adjusted word count and subjective impression respectively (baseline
+ * 19.5 and 19.3). An earlier version of this constant carried per-method figures
+ * with a low-ranking-sites qualifier; those live in a per-position table in the
+ * paper that we could not open, so they were replaced with the numbers above,
+ * which any reader can find in the abstract and in Table 1.
+ */
 export const GEO_PRIMARY_QUOTE =
-  "Adding source citations produced the largest measured visibility gain for low-ranking sites, at +115%, ahead of the addition of expert quotations at +41% and statistics at +30-40%, across the strategies tested on generative engines.";
+  "GEO can boost visibility by up to 40% overall in generative engine responses, and in the paper's Table 1 the best of the tested methods improve on the no-optimization baseline by 41% and 28%.";
 
 type EvidenceProps = {
   title?: string;

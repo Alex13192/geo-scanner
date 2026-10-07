@@ -64,9 +64,9 @@ export default function AboutPage() {
             </li>
             <li>
               <strong>Low-value signals are weighted low.</strong> <code>llms.txt</code> is one
-              of the three least-weighted dimensions here, because Google has said it does not
-              use it in Search and crawler support is inconsistent. Several tools in this
-              category imply otherwise.
+              of the three least-weighted dimensions here: the check is worth 4 of that
+              dimension&rsquo;s 6 points and the dimension carries 5% of the total, so the file is
+              capped at 3.3 of the 100.
             </li>
             <li>
               <strong>Limits are stated up front.</strong> The scanner does not query ChatGPT
