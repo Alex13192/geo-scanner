@@ -18,6 +18,11 @@ and the executed method cannot drift apart.
 - 
 ## Run a scan without installing anything
 
+```bash
+curl -s "https://llmention-geo.com/api/scan?brief=1&domain=example.com"
+```
+
+No key, no account, no email. The scan is not stored.
 ## What we measured
 
 | Finding | Value |
