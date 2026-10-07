@@ -2,6 +2,10 @@
 
 A GEO scanner for AI search visibility, at https://llmention-geo.com.
 
+**What it does not do:** it never queries an AI engine. It measures whether a page *can* be read,
+extracted and cited — not whether any engine currently mentions you. That limit is stated in the
+method rather than left for you to discover.
+
 It fetches a homepage the way a crawler would, scores it against 40 published checks across
 12 weighted dimensions, and reports every failure with the evidence that produced it. The
 ruling principle is that the method must be inspectable: every rule, its point value and the
@@ -11,6 +15,14 @@ and the executed method cannot drift apart.
 - Every rule: `/checks/`, one page per check, generated from `lib/geo/catalog.ts`
 - The full method, the weights and the limits: `/methodology/`
 - The study over 30 homepages: `/study/`, collected by `npm run study:run`
+- 
+## Run a scan without installing anything
+
+```bash
+curl -s "https://llmention-geo.com/api/scan?brief=1&domain=example.com"
+```
+
+No key, no account, no email. The scan is not stored.
 
 ## Running it
 
@@ -96,3 +108,7 @@ wrangler.jsonc       the Worker: entry, compatibility flags, bindings, routes
 They are long, and they explain why rather than what. Several of them record a mistake that
 was made and what it cost, because the reasoning is the part that does not survive a rewrite
 of the code. `lib/geo/analyze.ts`, `middleware.ts` and `next.config.ts` are the densest.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
