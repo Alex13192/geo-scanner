@@ -18,9 +18,20 @@ and the executed method cannot drift apart.
 - 
 ## Run a scan without installing anything
 
-```bash
-curl -s "https://llmention-geo.com/api/scan?brief=1&domain=example.com"
-```
+## What we measured
+
+| Finding | Value |
+|---|---|
+| Homepages scanned in the published study | 30 |
+| Sites scoring an A (90+) | **0** |
+| Highest score | 83 (B) |
+| Sites blocking at least one AI crawler | 9 of 30 |
+| Sites declaring an entity type (Organization / Person / WebSite) | 8 of 30 |
+| News publishers blocking AI crawlers | 6 of 6 |
+
+The rows are downloadable and the run is reproducible: [`/study/`](https://llmention-geo.com/study/)
+and [`/study/data/`](https://llmention-geo.com/study/data/). Rows were collected on 3 October 2026
+under the 38 checks that existed then; the scanner ships 40 today, and the study page says so.
 
 No key, no account, no email. The scan is not stored.
 
