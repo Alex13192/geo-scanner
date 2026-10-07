@@ -89,9 +89,12 @@ const ROUTES: Route[] = [
  * Their floor is set below an A and the reason is recorded rather than implied:
  * a single-rule reference page is short by nature, and padding it with an invented
  * statistic or a questionnaire would raise the number while making the page worse.
- * The scan's own content-depth checks are doing their job by scoring these in the
- * mid-80s. What is not acceptable is one of them dropping into the 70s, which would
- * mean the page had lost its content rather than never having had much.
+ * Measured on this build they score 96 or 98, and the two checks that hold them off
+ * 100 are both deliberate: hreflang, because this site serves one language and
+ * publishes that it does, and word-count, on the rules whose entire published
+ * content is one sentence. What is not acceptable is one of them dropping into the
+ * 70s, which would mean the page had lost its content rather than never having had
+ * much.
  */
 const CHECKS_FLOOR = 80;
 

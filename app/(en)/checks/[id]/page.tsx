@@ -70,12 +70,23 @@ function weightingAlone(weighting: string): { text: string; usable: boolean } {
  * is recorded here so the next person does not read it as an oversight. A rule page renders
  * the rule, what a failure means, the note if the catalogue carries one, the fix sequence,
  * the weighting arithmetic, the sibling rules, the dimension it belongs to, its FAQ and the
- * evidence block - between about 600 and 1,100 words of visible text depending on how much
- * the catalogue has to say about the rule. The shortest ones are the three-point metadata
- * rules, whose entire published content is one sentence. Getting them past 800 words means
- * padding a reference page with prose that no source supports, which is the one thing this
- * project does not do; check-built-pages.mts already sets their floor below an A and says
- * why. They score in the mid-90s regardless.
+ * evidence block - between 599 and 1,121 words of visible text, measured on the built site,
+ * depending on how much the catalogue has to say about the rule. Thirty-five of the forty
+ * land in the 300-799 band, which the published rule scores as a partial pass worth 3 of the
+ * 5 points, so they score 96 rather than 98.
+ *
+ * WHAT WAS DONE ABOUT IT, AND WHAT WAS REFUSED. The proposal was to tier the word-count
+ * threshold by rule type, so that a rule whose published content is one sentence is not held
+ * to a content page's length. It was refused, because every basis the tier could be derived
+ * from is either the catalogue prose the page is generated from - in which case the threshold
+ * is a function of the quantity it measures and no page in the family can fail it - or a
+ * property unrelated to how much there is to say, in which case it inverts the two ends of the
+ * catalogue. Both are the same thing: the measuring stick chosen by measuring the thing it has
+ * to pass. What was done instead is that every check now publishes the reading and the scoring
+ * band it was missing, in lib/geo/catalog.ts, and the pages that are still short are short
+ * because their rule genuinely contains one sentence. See the notes on `note` in that file.
+ *
+ * check-built-pages.mts sets their floor below an A and says why.
  */
 export function generateStaticParams() {
   return CHECK_CATALOG.filter((check) => !check.alias).map((check) => ({ id: check.id }));
@@ -239,6 +250,22 @@ export default async function CheckPage({ params }: { params: Promise<{ id: stri
 
   const guidePath = guidePathForCheck(check.id);
 
+  /*
+   * THE CATALOGUE'S READING OF THE RULE, RENDERED WHEREVER IT BELONGS.
+   *
+   * `note` is the field lib/geo/catalog.ts uses for the two things `rule` cannot carry: the
+   * scoring band an intermediate outcome is worth, and what the check actually reads where a
+   * reader would reasonably assume more. It used to be rendered inside the failure section
+   * only, so a check with no failure branch - landmarks and payload today, whose outcomes are
+   * pass and partial by construction - had its note on /methodology/ and not on its own page.
+   * The two pages are supposed to be the same source read twice; this is where they differed.
+   */
+  const noteBlock = check.note ? (
+    <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-[var(--ink-2)]">
+      {check.note}
+    </blockquote>
+  ) : null;
+
   return (
     <ProsePage
       eyebrow={dimension?.label ?? check.dimension}
@@ -260,17 +287,14 @@ export default async function CheckPage({ params }: { params: Promise<{ id: stri
           <div>
             <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">What does this check look at?</h2>
             <p>{check.rule}</p>
+            {check.onFail ? null : noteBlock}
           </div>
 
           {check.onFail ? (
             <div>
               <h2 className="text-xl font-bold text-[var(--ink-1)] mb-3">What does a failure mean?</h2>
               <p>{check.onFail}</p>
-              {check.note ? (
-                <blockquote className="border-l-2 border-blue-500 pl-4 mt-4 text-[var(--ink-2)]">
-                  {check.note}
-                </blockquote>
-              ) : null}
+              {noteBlock}
             </div>
           ) : null}
 
