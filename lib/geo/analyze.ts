@@ -935,7 +935,11 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
   {
     const c: Check[] = [];
     const questionHeadings = headings.filter((h) => h.level >= 2 && h.level <= 3 && isQuestionHeading(h.text));
-    const ratio = h2s.length ? questionHeadings.length / h2s.length : 0;
+    // A `ratio` of question headings to H2s was computed here and never read. It was
+    // removed rather than left in place: every branch below decides on
+    // questionHeadings.length, so the division had no effect on any status, point or
+    // evidence string, and removing it left all 71 routes `check:built` scores on
+    // exactly the score they had before.
     if (questionHeadings.length >= 3) {
       c.push(pass("qa-headings", 4, "Headings are phrased as real questions", `${questionHeadings.length} question-shaped H2/H3 headings, e.g. "${questionHeadings[0].text.slice(0, 70)}".`));
     } else if (questionHeadings.length >= 1) {
@@ -1101,11 +1105,30 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
       );
     }
 
-    const hasRobots = input.robotsText !== null;
+    /*
+     * The normalised value, not input.robotsText.
+     *
+     * This is the same file robots-present reads, and the two checks were giving
+     * different answers about it: a 200 with an EMPTY body failed robots-present
+     * and passed this one, so a site serving an empty file scored 18 while a site
+     * serving no file at all scored 17 - an empty file worth a point more than no
+     * file. The published reading of robots-present settles which answer is wrong:
+     * "A 200 with an empty or whitespace-only body counts as not served, because it
+     * publishes no policy at all." An empty file publishes no crawler policy, which
+     * is the one thing this check asks about, and the reading is already printed to
+     * readers on /llms-txt-studio/, so nothing new is being claimed here - the
+     * check now reads the value the published rule describes instead of the raw one.
+     */
     c.push(
-      hasRobots
+      robotsText !== null
         ? pass("ai-context-robots", 1, "A crawler policy is published", "robots.txt is readable.")
-        : fail("ai-context-robots", 1, "No crawler policy published", "robots.txt could not be read.", "Publish robots.txt stating which crawlers are welcome.")
+        : fail(
+            "ai-context-robots",
+            1,
+            "No crawler policy published",
+            "robots.txt could not be read, or returned an empty body.",
+            "Publish robots.txt stating which crawlers are welcome."
+          )
     );
     /*
      * A markdown alternate is the llms.txt idea applied per page: hand the machine a

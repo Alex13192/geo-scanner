@@ -423,8 +423,8 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "ai-context-robots",
     dimension: "llms-txt",
     points: 1,
-    rule: "robots.txt is readable, so a crawler policy is published.",
-    note: "This is the same file the robots-present check reads, scored a second time in a different dimension: once because crawler access is what the policy governs, and once because a machine-readable context file is published. Adding robots.txt therefore moves two checks in two dimensions.",
+    rule: "robots.txt is readable, so a crawler policy is published. Readable means a body with non-whitespace content: an HTTP 200 with an empty or whitespace-only body publishes no policy and fails this check, exactly as it fails robots-present.",
+    note: "This is the same file the robots-present check reads, scored a second time in a different dimension: once because crawler access is what the policy governs, and once because a machine-readable context file is published. Adding robots.txt therefore moves two checks in two dimensions, and because that makes this the second score for one file, a site that serves an empty one can no longer collect this point for it.",
   },
   {
     id: "markdown-alternate",

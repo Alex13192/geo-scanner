@@ -329,10 +329,11 @@ Your Site Name is published at https://your-domain.com. This file lists the page
                     </td>
                   </tr>
                   <tr>
-                    <td className="py-2 pr-4 font-mono">robots-present</td>
+                    <td className="py-2 pr-4 font-mono">ai-context-robots</td>
                     <td className="py-2 pr-4">1</td>
                     <td className="py-2">
-                      robots.txt is readable, so some crawler policy is published.
+                      robots.txt is readable, so some crawler policy is published. An empty body
+                      is not a policy.
                     </td>
                   </tr>
                 </tbody>

@@ -621,6 +621,134 @@ for (const [label, html, id, expected, extra] of guards) {
   if (!ok) process.exitCode = 1;
 }
 
+/* 6b. robots.txt: the two checks that read the SAME file must agree about it.
+      THE DEFECT THIS EXISTS TO CATCH, and why the guard above did not. The rule
+      published for robots-present says an HTTP 200 with an empty or whitespace-only
+      body counts as not served, "because it publishes no policy at all", and
+      robots-ai-allowed publishes the matching reading that absence is a policy gap
+      rather than a block. The ai-context-robots check read input.robotsText directly
+      instead of the normalised value, so a 200 with an EMPTY body failed
+      robots-present, passed ai-context-robots and scored this fixture 18, while a
+      site with NO robots.txt at all scored 17 - an empty file worth one point more
+      than no file.
+
+      The guard in section 6 asserted robots-present alone on an empty body, and a
+      guard over one of two checks that read the same input cannot see them disagree.
+      This one examines both, over the three possible states of the file, and it
+      compares the totals as well: a per-check assertion is exactly what missed this.
+
+      The reading enforced here is the one already published for the sibling check -
+      an empty 200 body is not a served file - because the alternative would move the
+      documented rule of robots-present too and would contradict the sentence
+      /llms-txt-studio/ already prints to readers. */
+console.log("\n=== robots.txt: both checks agree about the same file ===");
+{
+  const fixtureHtml = `<html lang="en"><body><h1>x</h1></body></html>`;
+  const fixtureInput = (robotsText: string | null) => ({
+    ...base,
+    html: fixtureHtml,
+    robotsText,
+  });
+
+  const fixtures = [
+    {
+      fixture: "empty body (200, whitespace only)",
+      robotsText: "   \n  ",
+      expected: { "robots-present": "fail", "ai-context-robots": "fail" } as Record<string, string>,
+    },
+    {
+      fixture: "absent file (no robots.txt)",
+      robotsText: null,
+      expected: { "robots-present": "fail", "ai-context-robots": "fail" } as Record<string, string>,
+    },
+    {
+      fixture: "normal non-empty file",
+      robotsText: "User-agent: GPTBot\nAllow: /\nSitemap: https://example.com/sitemap.xml\n",
+      expected: { "robots-present": "pass", "ai-context-robots": "pass" } as Record<string, string>,
+    },
+  ];
+
+  let previousScore: number | null = null;
+  let monotonic = true;
+  for (const { fixture, robotsText, expected } of fixtures) {
+    const result = analyze(fixtureInput(robotsText));
+    const got = (id: string) => result.checks.find((c) => c.id === id)?.status ?? "not-run";
+    const agreed = Object.entries(expected).every(([id, want]) => got(id) === want);
+    // A served file can never score worse than the same scan with no file at all,
+    // and none of these three fixtures differs in anything but robots.txt.
+    if (previousScore !== null && result.score < previousScore) monotonic = false;
+    previousScore = result.score;
+    // One line per fixture, printed whether or not it agrees, so the three
+    // verdicts are visible in the output rather than only the failures.
+    console.log(
+      `  ${agreed ? "PASS" : "FAIL"}  ${fixture}: robots-present=${got("robots-present")} ` +
+        `(want ${expected["robots-present"]}), ai-context-robots=${got("ai-context-robots")} ` +
+        `(want ${expected["ai-context-robots"]}), score ${result.score}`
+    );
+    if (!agreed) process.exitCode = 1;
+  }
+
+  if (!monotonic) {
+    console.log(
+      "  FAIL  a fixture scores below one whose robots.txt is weaker; the three differ only in robots.txt"
+    );
+    process.exitCode = 1;
+  }
+
+  // The guard itself has to be capable of failing, or it is the reason the defect
+  // survived: a hypothetical engine with ai-context-robots alone reading the raw
+  // input and ignoring the normalised value differs from a correct one on exactly
+  // one of these three fixtures, so an empty body is the only state that can tell
+  // the two readings apart - which is why the guard above needs all three.
+  const disagreeing = fixtures.filter(({ robotsText, expected }) => {
+    const rawWouldPass = robotsText !== null;
+    return (expected["ai-context-robots"] === "pass") !== rawWouldPass;
+  });
+  if (disagreeing.length === 1) {
+    console.log(
+      `  PASS  a raw-input read would disagree with the published rule on exactly 1 of the ` +
+        `3 fixtures (${disagreeing[0].fixture}), so the fixtures can tell the readings apart`
+    );
+  } else {
+    console.log(
+      `  FAIL  the fixtures cannot tell the two readings apart (${disagreeing.length} of 3 would differ)`
+    );
+    process.exitCode = 1;
+  }
+
+  /*
+   * And the published text has to keep saying it. The fixtures above pin the engine;
+   * nothing pinned the sentence a reader is scored against, and an edit that reverted
+   * the engine while leaving lib/geo/catalog.ts describing the old reading would pass
+   * every assertion in this file. Both entries are required to name the empty body, and
+   * the ai-context-robots entry also has to point at the sibling check it now follows,
+   * because that cross-reference is what makes the agreement visible to a reader.
+   */
+  const normalised = (text: string) => text.replace(/\s+/g, " ");
+  const rules = new Map(CHECK_CATALOG.map((c) => [c.id, normalised(c.rule)]));
+  const textProblems: string[] = [];
+  if (!/empty/.test(rules.get("robots-present") ?? "")) {
+    textProblems.push("catalog robots-present no longer names the empty-body case");
+  }
+  const aiContextRule = rules.get("ai-context-robots") ?? "";
+  if (!/empty/.test(aiContextRule)) {
+    textProblems.push("catalog ai-context-robots does not say an empty body is not readable");
+  }
+  if (!/robots-present/.test(aiContextRule)) {
+    textProblems.push(
+      "catalog ai-context-robots no longer names robots-present, so the shared reading is not stated"
+    );
+  }
+  if (textProblems.length === 0) {
+    console.log(
+      "  PASS  both published rules name the empty-body case and ai-context-robots names robots-present"
+    );
+  } else {
+    for (const p of textProblems) console.log(`  FAIL  ${p}`);
+    process.exitCode = 1;
+  }
+}
+
 /* 7. Fetch guard. Both endpoints take a hostname straight from the query string
       and fetch it, which makes them an open fetch proxy. These are the targets
       that must never reach fetch, and the ordinary domains that still must. */
