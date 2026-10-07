@@ -505,7 +505,42 @@ const totals = {
  */
 const q6Runs = byQuestion.get(6) ?? [];
 const entitySameRuns = q6Runs.filter((r) => /不规范简称|非规范简称/.test(r.answer)).length;
-const notSameRuns = q6Runs.filter((r) => r.answer.includes("不是同一家公司")).length;
+
+/**
+ * The two conclusions the entity figure counts, as patterns rather than as a sentence somebody
+ * typed into the caption.
+ *
+ * WHY A SECOND PAIR OF COUNTS BESIDE entitySameRuns. `entitySameRuns` counts the runs that READ
+ * '冠军股份' as an irregular abbreviation of this company, and all three do; the prose in 三 uses
+ * that number and it means what it says. The pie is about the CONCLUSION the run ended on, which
+ * is a different question on the same three answers, and in this data it has a different answer:
+ * two runs concluded the two names are the same company (Q6 runs 1 and 2 - "指的是同一家公司",
+ * "属于同一家主体的非规范简称"), and one concluded they are not (Q6 run 3, whose subtitle is
+ * "不是同一家公司" because it compared the NEEQ-listed company with the Hong Kong Champion
+ * Technology Holdings Limited). Deriving both slices from the answers keeps the figure and the
+ * quoted text checkable against each other.
+ *
+ * THE RULES MUST BE MUTUALLY EXCLUSIVE AND EXHAUSTIVE, and the assertion below is what says so. A
+ * future run that matches neither rule, or both, would produce a pie whose slices do not add up to
+ * n - a chart of a classification nobody made - so it stops the build instead.
+ */
+const ENTITY_SAME_PATTERNS = ["指的是同一家公司", "属于同一家主体的非规范简称"];
+const ENTITY_NOT_SAME_PATTERNS = ["不是同一家公司"];
+
+const notSameRuns = q6Runs.filter((r) =>
+  ENTITY_NOT_SAME_PATTERNS.some((p) => r.answer.includes(p))
+).length;
+const entityConclusionSameRuns = q6Runs.filter((r) =>
+  ENTITY_SAME_PATTERNS.some((p) => r.answer.includes(p))
+).length;
+
+if (entityConclusionSameRuns + notSameRuns !== q6Runs.length) {
+  throw new Error(
+    `Q6 的 ${q6Runs.length} 次运行里，${entityConclusionSameRuns} 次匹配『同一家公司』的写法、` +
+      `${notSameRuns} 次匹配『不是同一家公司』，两个数加起来不是 ${q6Runs.length}。` +
+      "实体识别结论图的两个扇区必须正好覆盖全部运行，否则这张图分类的不是这份数据。"
+  );
+}
 
 const q8Runs = byQuestion.get(8) ?? [];
 const q8AbbrevAsGufen = q8Runs.filter((r) => abbreviationWindows(r.answer).some((w) => w.includes("冠军股份"))).length;
@@ -623,6 +658,18 @@ const domains = [...domainMap.entries()]
 const topDomain = domains[0]?.domain ?? "";
 const topDomainCount = domains[0]?.count ?? 0;
 
+/**
+ * What the domain figure leaves out, counted rather than waved at as "and more".
+ *
+ * The chart draws the same twelve domains the table draws. A reader who is not told what the other
+ * domains amount to will read the twelve as the whole source network, and they are not: this
+ * dataset is a long tail, which is the reason the caption carries these two numbers. Both come
+ * from the same two counts the section already states (citation events and distinct domains), so
+ * the sentence and the table cannot disagree.
+ */
+const otherDomains = domainMap.size - domains.length;
+const otherEvents = citationEvents - domains.reduce((s, d) => s + d.count, 0);
+
 const citationsByGroup = groups.map((g) => ({
   label: g.short,
   count: answers.filter((r) => r.group === g.id).reduce((s, r) => s + (r.domains?.length ?? 0), 0),
@@ -692,9 +739,26 @@ const COPY: Record<string, string> = {
   thPurpose: "这一组在测什么",
   runLabel: "第 {n} 次运行",
 
+  /**
+   * The four figures of this report, in the order they appear in the document. Every caption says
+   * what n is and that its labels are counts, because a chart is the one place where a reader can
+   * divide two numbers and arrive at a percentage nobody measured. The captions are inside
+   * assertNoPercent() below, and render-report.py refuses to draw a "%" in any of these figures.
+   */
+  figGroups:
+    "图 1｜分组触达：三组问题各自的品牌提及次数。标签为次数（如 4 / 12），n = 每组完成的运行次数（{groupRuns}）。三组的分母不同，所以分母写在每一个标签里。",
+  figGroupsAxis: "提及次数（每组运行次数不同）",
   figMentions:
-    "图 1｜每一道题里品牌被提及的运行次数。每题 3 次运行，横轴是 0 到 3 次——这是计数，不是比例。",
-  figMentionsAxis: "运行次数",
+    "图 2｜逐题提及：每一道题里品牌被提及的运行次数。标签为次数（如 2 / 3），n = 每题完成的运行次数（{runsPerQuestion}）；横轴是 0 到 {runsPerQuestion} 次。",
+  figMentionsAxis: "提及次数（每题 {runsPerQuestion} 次运行）",
+  figEntity:
+    "图 3｜实体识别结论的稳定性：第 6 题的 {entityTotalRuns} 次运行的结论分布。标签为次数，n = {entityTotalRuns}。分类规则是回答的结论文字里有没有出现「不是同一家公司」：出现的那 {notSameRuns} 次比较的是港股同名集团（回答里的说法，本报告未核验）。",
+  figEntitySame: "同一家公司 {entitySameConclusion} 次",
+  figEntityNotSame: "不是同一家公司 {notSameRuns} 次",
+  figEntityN: "n = {entityTotalRuns}（第 6 题的 {entityTotalRuns} 次运行）",
+  figSources:
+    "图 4｜信源分布：回答引用次数最多的 {domainLimit} 个域名。标签为次数（引用事件次数），n = {citationEvents} 次引用事件、{distinctDomains} 个域名；另有 {otherDomains} 个域名合计 {otherEvents} 次引用事件未逐一列出。排序是引用事件的计数顺序，不是影响力排名。",
+  figSourcesAxis: "引用事件次数",
 
   sectionSummary: "一、执行摘要",
   summaryCallout:
@@ -740,6 +804,10 @@ const COPY: Record<string, string> = {
     "下面是 Q6『冠军股份和冠军科技是同一家公司吗?』三次运行的开头，逐字摘录（每次取回答的第一行与紧随其后的一行；只去掉 Markdown 的加粗与标题标记）。三次都把『冠军股份』解释为不规范简称；第 3 次运行的小标题写作『不是同一家公司』——它比较的是新三板挂牌的这家公司与回答中提到的港股『冠军科技集团』（Champion Technology Holdings Limited，回答里的说法，本报告未核验）。只看小标题会读成相反的意思，这是这份测量里最值得注意的一件事。",
   entityFinding:
     "第 6 题的 {entityTotalRuns} 次运行里有 {entitySameRuns} 次把『冠军股份』读作对{subjectShort}的非规范简称；其中 {notSameRuns} 次的结论文字里同时出现了『不是同一家公司』（指的是另一家同名集团）。结论：模型知道这家公司，但『冠军股份』这个称呼每次都需要一次推断，而第 5、6 题的答案里同时出现了冠农股份、冠盛股份、金冠股份、台湾冠军建材、港股冠军科技集团等主体——重名不是理论风险，它已经在答案里发生了。",
+  entityConclusionRule:
+    "分类规则：回答的结论文字里出现「不是同一家公司」的运行计为『不是同一家公司』，其余计为『同一家公司』。",
+  entityConclusionLine:
+    "同一家公司 {entitySameConclusion} 次、不是同一家公司 {notSameRuns} 次（n = {entityTotalRuns}）；分类规则是回答的结论文字里有没有出现「不是同一家公司」。",
 
   sectionGroups: "四、按问题组拆解",
   groupsLead:
@@ -877,6 +945,8 @@ const fills: Record<string, string | number> = {
   entitySameRuns,
   entityTotalRuns: q6Runs.length,
   notSameRuns,
+  entitySameConclusion: entityConclusionSameRuns,
+  groupRuns: groups.map((g) => g.runs).join(" / "),
   q8AbbrevAsGufen,
   q8OnlyKeji,
   subjectShort: BRAND,
@@ -887,6 +957,8 @@ const fills: Record<string, string | number> = {
   domainLimit: domains.length,
   topDomain,
   topDomainCount,
+  otherDomains,
+  otherEvents,
   citationsByGroup: citationsByGroup.map((c) => `${c.label} ${c.count} 次`).join("、"),
   minAnswerChars: Math.min(...answerLengths),
   maxAnswerChars: Math.max(...answerLengths),
@@ -1039,6 +1111,21 @@ const model = {
   claims,
   quotes,
   entityRuns,
+  /**
+   * The two slices of the entity figure, as numbers the renderer prints rather than recomputes.
+   *
+   * WHY THE MODEL CARRIES THEM AND NOT THE RENDERER: render-report.py never sees the answers - it
+   * sees excerpts and counts - so a classification made there would be a classification of a
+   * paraphrase, and the DOCX, the XLSX and the Markdown could each end up disagreeing about the
+   * report's headline finding. `rule` travels with the counts into the workbook, so wherever the
+   * numbers are printed the rule that produced them is printed too.
+   */
+  entityConclusion: {
+    same: entityConclusionSameRuns,
+    notSame: notSameRuns,
+    total: q6Runs.length,
+    rule: T("entityConclusionRule"),
+  },
   limits: [
     "没有测量任何竞品。这份数据里没有第二家公司的提及计数，所以报告里没有竞品对比、没有份额、没有排名。",
     "没有做情感分析。『提及』只表示答案里出现了公司名或品牌名，不表示评价是正面还是负面。",
@@ -1152,6 +1239,27 @@ const table = (headers: string[], rows: string[][]) => {
 };
 const bullet = (s: string) => md.push(`- ${esc(s)}`);
 
+/**
+ * A figure in Markdown: the image, then its caption.
+ *
+ * WHY THE ALT TEXT IS THE CAPTION AND NOT A SHORT LABEL: the DOCX this run also writes prints the
+ * caption under the picture, and the Markdown is a separate deliverable of the same run. A short
+ * alt text here ("mentions chart") would mean the two documents describe the same figure
+ * differently - and the caption is the part that says the labels are counts, so dropping it from
+ * the alt text is how a reader of the Markdown ends up reading a bar chart as a rate.
+ *
+ * WHY T() AND NOT COPY: this helper is handed a KEY, not a string, because the first version took
+ * the raw block and printed "n = 每组完成的运行次数（{groupRuns}）" into the Markdown while the same
+ * caption in the DOCX - rendered from the filled block - was correct. The placeholder check at the
+ * end of this file now fails the build if that happens again.
+ */
+const figure = (key: string, file: string) => {
+  md.push(`![${T(key)}](charts/${file})`);
+  md.push("");
+  md.push(`*${T(key)}*`);
+  md.push("");
+};
+
 md.push(`# ${BRAND} ${COPY.reportName}`);
 md.push("");
 md.push(`**${model.headline.value}** — ${model.headline.caption}`);
@@ -1172,11 +1280,6 @@ table([COPY.tableItem, COPY.tableValue], [
   [COPY.kCitations, `${citationEvents} / ${domainMap.size}`],
   [COPY.kGeneratedAt, stamp],
 ]);
-
-md.push(`![${COPY.figMentions}](charts/mentions.png)`);
-md.push("");
-md.push(`*${COPY.figMentions}*`);
-md.push("");
 
 md.push(`## ${COPY.sectionSummary}`);
 md.push("");
@@ -1208,6 +1311,7 @@ table(
   ]
 );
 md.push(T("coverageNote"), "");
+figure("figGroups", "groups.png");
 md.push(`### ${COPY.sectionNotMeasured}`);
 md.push("");
 for (const item of model.limits) bullet(item);
@@ -1228,6 +1332,7 @@ table(
 );
 md.push(T("overviewTotals"), "");
 md.push(T("overviewPrompted"), "");
+figure("figMentions", "mentions.png");
 md.push(`### ${COPY.sectionHowToRead}`);
 md.push("");
 for (const key of ["readCounts", "readPrompted", "readDenominator", "readSameDay"]) bullet(T(key));
@@ -1248,6 +1353,7 @@ table(
   entityRuns.map((r) => [COPY.runLabel.replace("{n}", String(r.run)), r.text])
 );
 md.push(T("entityFinding"), "");
+figure("figEntity", "entity-conclusion.png");
 
 md.push(`## ${COPY.sectionGroups}`);
 md.push("");
@@ -1285,6 +1391,7 @@ table(
   domains.map((d) => [d.domain, String(d.count), d.groups.join("、")])
 );
 md.push(T("sourcesNote"), "");
+figure("figSources", "sources.png");
 md.push(`### ${COPY.sectionSourcesCaveat}`);
 md.push("");
 for (const key of ["sourcesCaveat1", "sourcesCaveat2", "sourcesCaveat3"]) bullet(T(key));
@@ -1382,7 +1489,27 @@ for (const item of model.provenance) bullet(item);
 md.push("");
 
 const mdPath = join(outDir, "report.md");
-writeFileSync(mdPath, md.join("\n"), "utf8");
+
+/**
+ * NO PLACEHOLDER MAY REACH THE MARKDOWN, and this is the check that says so after the fact.
+ *
+ * The DOCX is rendered from FILLED_COPY, which the leftover check above already covers. The
+ * Markdown is assembled here and can reach for either block: `COPY` is the template and `T()` is
+ * the filled one, and taking the wrong one is silent - the sentence reads correctly right up to the
+ * point where "{groupRuns}" is printed at a client. That is exactly what happened to the second
+ * figure caption in this file: the DOCX was right, the Markdown was not, and nothing objected. One
+ * scan of the finished text is what turns that class of mistake into a failed build instead of a
+ * document.
+ */
+const mdText = md.join("\n");
+const mdPlaceholders = [...new Set(mdText.match(/\{[a-zA-Z_][a-zA-Z0-9_]*\}/g) ?? [])];
+if (mdPlaceholders.length > 0) {
+  throw new Error(
+    `Markdown placeholders survived into ${mdPath}: ${mdPlaceholders.join(", ")}. ` +
+      "Copy strings must be read through T(), which returns the filled block."
+  );
+}
+writeFileSync(mdPath, mdText, "utf8");
 console.log(
   `wrote ${mdPath}  (${model.headline.value}, ${totals.brandMentions} brand mentions in ${totals.runs} runs)`
 );

@@ -25,9 +25,10 @@ document this pipeline produces.
 
 WHY THE CHARTS ARE DRAWN WITH PILLOW RATHER THAN MATPLOTLIB. matplotlib is not in the runtime this
 repository is developed against, and installing one for a report generator is not worth a
-dependency. Pillow is present, and the figures here - labelled bars, a radar, and a count axis - are
-shapes rather than plots. Chinese labels need a CJK font, so the font is chosen from the system's
-own files with an explicit East Asian fallback rather than left to the renderer's default.
+dependency. Pillow is present, and the figures here - labelled bars, a radar, a count axis, and the
+two-slice pie the entity finding is drawn as - are shapes rather than plots. Chinese labels need a
+CJK font, so the font is chosen from the system's own files with an explicit East Asian fallback
+rather than left to the renderer's default.
 
 Usage:
     <python> scripts/report/render-report.py --model=<dir>/report-model.json --out=<dir>
@@ -1067,6 +1068,49 @@ def truncate(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit] + "…"
 
 
+# --------------------------------------------------------------------------------------
+# Figure machinery shared by the four AI-visibility charts
+# --------------------------------------------------------------------------------------
+"""
+THE WIDTH EVERY VISIBILITY FIGURE IS PLACED AT, in cm: the same 16.4 the report's tables sum to
+inside the 16.6cm text area. It is declared here because a chart's own DPI has to describe the size
+a reader sees. At the scan report's 192 DPI the ten-row per-question figure is 28cm wide as stored
+- not the width it is printed at - so "does this image fit the page?" cannot be answered from the
+file itself, which is exactly the question verify_geometry() and a reader both ask. save_figure()
+writes the DPI that makes the stored size equal the placed size.
+
+THE SCAN REPORT'S CHARTS KEEP THEIR OWN DPI. They are placed at two different widths (16.4cm and
+11.5cm), so a single constant would be wrong for one of them, and rewriting the metadata of a
+figure nobody complained about is a change with no reader-visible benefit. The rule lives with the
+charts that need it.
+"""
+FIGURE_WIDTH_CM = 16.4
+
+
+def save_figure(img: Image.Image, out: Path, width_cm: float = FIGURE_WIDTH_CM) -> int:
+    """Save a chart with the DPI of the width it is placed at, and return that DPI."""
+    dpi = max(1, round(img.width / (width_cm / 2.54)))
+    img.save(out, dpi=(dpi, dpi))
+    return dpi
+
+
+def count_label(text: str) -> str:
+    """
+    Every string an AI-visibility chart draws goes through here.
+
+    WHY A GUARD AT THE DRAWING SITE AND NOT ONLY assertNoPercent() IN THE BUILD SCRIPT. That check
+    covers the model's copy block - the captions, the axis labels, the legend entries. It cannot see
+    a label this file composes out of the model's numbers ("2 / 3", "14"), and it cannot see a
+    number either. The rule this whole report is built on is that no percentage is printed anywhere,
+    and a figure is the one place a percentage appears without anybody deciding to write one: an
+    axis, a slice, a share. So the drawing helpers refuse a "%" at the moment it would be drawn,
+    which is the last point at which one could enter a figure.
+    """
+    text = str(text)
+    assert "%" not in text, f"a chart label may not contain a percentage: {text!r}"
+    return text
+
+
 def chart_mentions(model: dict, out: Path) -> None:
     """
     One bar per question: how many of that question's runs mentioned the brand.
@@ -1082,8 +1126,15 @@ def chart_mentions(model: dict, out: Path) -> None:
     width fits one language's questions and clips another's. The question text is truncated rather
     than wrapped - a wrapped row would need a variable row height and a legend explaining where the
     column went; the tables below carry every question in full.
+
+    WHAT CHANGED WHEN THE OTHER THREE FIGURES ARRIVED, reported here because this figure already
+    was 逐题提及 and the task was to improve it rather than draw a second one: the axis label now
+    names what is counted and over how many runs, a rule separates the three question blocks inside
+    a ten-row chart, and the file carries the DPI of its placed width (see save_figure) instead of
+    the scan report's 192.
     """
     questions = model["questions"]
+    t = count_label
     scale = 2
     pad = 28 * scale
     tag_w = 44 * scale
@@ -1091,7 +1142,14 @@ def chart_mentions(model: dict, out: Path) -> None:
     value_w = 150 * scale
     row_h = 46 * scale
     track_w = 420 * scale
-    axis_h = 34 * scale
+    """
+    TWO AXIS LINES, NOT ONE. The unit label used to share the tick row and be right-aligned past
+    the end of the track - which was fine for the four-character "运行次数" and collided with the
+    last tick the moment the label became a sentence ("提及次数（每题 3 次运行）"): the "3" of a
+    0-3 axis was drawn underneath it. The ticks keep the first line and the unit gets the second,
+    centred under the track where an axis title belongs.
+    """
+    axis_h = 62 * scale
 
     f_label = font(20 * scale, bold=True)
     f_small = font(16 * scale)
@@ -1126,8 +1184,8 @@ def chart_mentions(model: dict, out: Path) -> None:
         runs = max(1, int(q.get("okRuns") or 0))
         count = int(q["brandMentions"])
 
-        d.text((pad, cy), q.get("groupShort", ""), font=f_small, fill=INK_3, anchor="lm")
-        d.text((pad + tag_w, cy), labels[i], font=f_label, fill=INK_1, anchor="lm")
+        d.text((pad, cy), t(q.get("groupShort", "")), font=f_small, fill=INK_3, anchor="lm")
+        d.text((pad + tag_w, cy), t(labels[i]), font=f_label, fill=INK_1, anchor="lm")
 
         d.rectangle([x0, cy - 12 * scale, x0 + track_w, cy + 12 * scale], fill=SURFACE_1)
         filled = int(track_w * min(count, runs) / runs)
@@ -1139,16 +1197,276 @@ def chart_mentions(model: dict, out: Path) -> None:
                         fill=OK if count >= runs else ACCENT)
         if count == 0:
             d.rectangle([x0, cy - 12 * scale, x0 + 2 * scale, cy + 12 * scale], fill=LINE)
-        d.text((x0 + track_w + 16 * scale, cy), f"{count} / {runs}", font=f_label, fill=INK_1, anchor="lm")
+        d.text((x0 + track_w + 16 * scale, cy), t(f"{count} / {runs}"), font=f_label, fill=INK_1, anchor="lm")
+
+    """
+    A rule between the question blocks. Ten identical rows do not say that Q1-Q4, Q5-Q7 and Q8-Q10
+    are three different measurements with three different questions behind them, and that is the
+    one thing the section this figure sits in keeps saying. The rule is drawn last so it crosses no
+    bar, and the group tag in the left column still names every row.
+    """
+    for i in range(1, len(questions)):
+        if questions[i].get("group") != questions[i - 1].get("group"):
+            y = pad + i * row_h
+            d.line([pad, y, width - pad, y], fill=LINE)
 
     # The axis says what it counts. The unit is written out because "3/3" alone could be read as a score.
     for tick in range(4):
         x = x0 + int(track_w * tick / 3)
-        d.text((x, base + 6 * scale), str(tick), font=f_tick, fill=INK_3, anchor="mm")
-    d.text((x0 + track_w + value_w - 4 * scale, base + 6 * scale),
-           model["copy"].get("figMentionsAxis", ""), font=f_tick, fill=INK_3, anchor="rm")
+        d.text((x, base + 6 * scale), t(str(tick)), font=f_tick, fill=INK_3, anchor="mm")
+    d.text((x0 + track_w // 2, base + 38 * scale),
+           t(model["copy"].get("figMentionsAxis", "")), font=f_tick, fill=INK_3, anchor="mm")
 
-    img.save(out, dpi=(2 * 96, 2 * 96))
+    save_figure(img, out)
+
+
+# --------------------------------------------------------------------------------------
+# Figure: brand mentions per question group, counted in runs
+# --------------------------------------------------------------------------------------
+def chart_groups(model: dict, out: Path) -> None:
+    """
+    One bar per question group: how many of that group's runs mentioned the brand.
+
+    WHY THE BAR IS THE COUNT AND THE DENOMINATOR IS IN THE LABEL. The three groups do not share a
+    denominator - 12, 9 and 9 completed runs - so a bar drawn as a fraction of its own group would
+    put a complete "9 / 9" and a partial "4 / 12" on two different scales and make the complete one
+    look shorter. The axis is therefore a count axis up to the largest group's run count, the bar is
+    the mention count, the label carries "4 / 12" in the same form every table in this report uses,
+    and a tick marks where that group's own runs run out. Nothing here is a rate; the number of runs
+    is printed beside every bar precisely so nobody has to divide.
+    """
+    groups = model["groups"]
+    C = model["copy"]
+    t = count_label
+    scale = 2
+    pad = 28 * scale
+    gap = 26 * scale
+    value_w = 150 * scale
+    row_h = 54 * scale
+    track_w = 420 * scale
+    axis_h = 62 * scale
+
+    f_label = font(21 * scale, bold=True)
+    f_small = font(16 * scale)
+    f_tick = font(15 * scale)
+    probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+
+    sub = [f"{g['questions']} 题 · {g['runs']} 次运行" for g in groups]
+    widest = max(
+        [probe.textlength(g["short"], font=f_label) for g in groups]
+        + [probe.textlength(s, font=f_small) for s in sub],
+        default=0,
+    )
+    label_w = int(widest) + gap
+
+    width = pad * 2 + label_w + track_w + value_w
+    height = pad * 2 + row_h * len(groups) + axis_h
+    img = Image.new("RGB", (width, height), SURFACE_2)
+    d = ImageDraw.Draw(img)
+
+    x0 = pad + label_w
+    base = pad + row_h * len(groups) + 4 * scale
+    max_runs = max((int(g["runs"]) for g in groups), default=1) or 1
+
+    step = max(1, math.ceil(max_runs / 4))
+    ticks = list(range(0, max_runs + 1, step))
+    if ticks[-1] != max_runs:
+        ticks.append(max_runs)
+
+    for tick in ticks:
+        x = x0 + int(track_w * tick / max_runs)
+        d.line([x, pad, x, base], fill=SURFACE_1)
+
+    for i, g in enumerate(groups):
+        y = pad + i * row_h
+        cy = y + row_h // 2
+        runs = max(1, int(g.get("runs") or 0))
+        count = int(g["brandMentions"])
+
+        d.text((pad, cy - 10 * scale), t(g["short"]), font=f_label, fill=INK_1, anchor="lm")
+        d.text((pad, cy + 15 * scale), t(sub[i]), font=f_small, fill=INK_3, anchor="lm")
+
+        d.rectangle([x0, cy - 13 * scale, x0 + track_w, cy + 13 * scale], fill=SURFACE_1)
+        filled = int(track_w * min(count, max_runs) / max_runs)
+        if count > 0:
+            # The same two tokens chart_mentions uses: a group whose every run mentioned the brand
+            # gets the "ok" green, any other non-zero count the accent, and a zero stays a measured
+            # zero rather than being drawn as a failure.
+            d.rectangle([x0, cy - 13 * scale, x0 + max(filled, 2 * scale), cy + 13 * scale],
+                        fill=OK if count >= runs else ACCENT)
+        else:
+            d.rectangle([x0, cy - 13 * scale, x0 + 2 * scale, cy + 13 * scale], fill=LINE)
+
+        # Where this group's runs run out: "9 / 9" is a complete group and the tick says so without
+        # the bar having to be read against another group's denominator.
+        xr = x0 + int(track_w * min(runs, max_runs) / max_runs)
+        d.line([xr, cy - 19 * scale, xr, cy + 19 * scale], fill=INK_3)
+
+        d.text((x0 + track_w + 16 * scale, cy), t(f"{count} / {runs}"), font=f_label, fill=INK_1, anchor="lm")
+
+    for tick in ticks:
+        x = x0 + int(track_w * tick / max_runs)
+        d.text((x, base + 6 * scale), t(str(tick)), font=f_tick, fill=INK_3, anchor="mm")
+    d.text((x0 + track_w // 2, base + 38 * scale),
+           t(C.get("figGroupsAxis", "")), font=f_tick, fill=INK_3, anchor="mm")
+
+    save_figure(img, out)
+
+
+# --------------------------------------------------------------------------------------
+# Figure: the entity conclusion, 2 runs against 1, as a pie
+# --------------------------------------------------------------------------------------
+def chart_entity_conclusion(model: dict, out: Path) -> None:
+    """
+    The report's headline finding as a pie: how the three Q6 runs concluded.
+
+    A PIE ENCODES A PROPORTION, AND THIS ONE IS STILL LABELLED AS COUNTS. The angle is the only
+    place in this report where a share is drawn at all, and it is drawn because this is the one
+    finding that IS a composition - two runs concluded the two names are the same company, one
+    concluded they are not - and because the owner asked for a pie. What the figure may not do is
+    turn that composition into a rate: every slice is labelled with its count of runs, the legend
+    repeats the count in words, the note states n = 3, and count_label() refuses to draw a "%" at
+    all. The caption under the figure states the classification rule and points at the verbatim
+    excerpts later in the same section, so a reader checks the two slices against the answers rather
+    than estimating an angle.
+    """
+    conc = model["entityConclusion"]
+    C = model["copy"]
+    t = count_label
+    scale = 2
+    pad = 28 * scale
+    gap = 44 * scale
+    radius = 250 * scale
+    swatch = 26 * scale
+
+    f_legend = font(21 * scale, bold=True)
+    f_note = font(15 * scale)
+    f_slice = font(20 * scale, bold=True)
+    probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+
+    same, not_same = int(conc["same"]), int(conc["notSame"])
+    total = int(conc["total"]) or 1
+
+    legend = [
+        (ACCENT, t(C["figEntitySame"]), f_legend),
+        (WARN, t(C["figEntityNotSame"]), f_legend),
+    ]
+    note = t(C["figEntityN"])
+    legend_w = max(
+        [probe.textlength(text, font=f) for _, text, f in legend]
+        + [probe.textlength(note, font=f_note)]
+    )
+
+    width = pad * 2 + 2 * radius + gap + swatch + 16 * scale + int(legend_w)
+    height = pad * 2 + 2 * radius
+    img = Image.new("RGB", (width, height), SURFACE_2)
+    d = ImageDraw.Draw(img)
+
+    box = [pad, pad, pad + 2 * radius, pad + 2 * radius]
+    cx = cy = pad + radius
+    # Pillow measures from 3 o'clock; -90 puts the first slice's edge at 12 o'clock.
+    start = -90.0
+    for value, colour in ((same, ACCENT), (not_same, WARN)):
+        if value <= 0:
+            continue
+        extent = 360.0 * value / total
+        d.pieslice(box, start, start + extent, fill=colour, outline=SURFACE_2, width=2 * scale)
+        mid = math.radians(start + extent / 2.0)
+        d.text(
+            (cx + 0.62 * radius * math.cos(mid), cy + 0.62 * radius * math.sin(mid)),
+            t(f"{value} 次"),
+            font=f_slice,
+            fill=SURFACE_2,
+            anchor="mm",
+        )
+        start += extent
+
+    lx = pad + 2 * radius + gap
+    ly = cy - 46 * scale
+    for colour, text, f in legend:
+        d.rectangle([lx, ly - 8 * scale, lx + swatch, ly + 8 * scale], fill=colour)
+        d.text((lx + swatch + 16 * scale, ly), text, font=f, fill=INK_1, anchor="lm")
+        ly += 40 * scale
+    d.text((lx, ly + 6 * scale), note, font=f_note, fill=INK_2, anchor="lm")
+
+    save_figure(img, out)
+
+
+# --------------------------------------------------------------------------------------
+# Figure: the cited domains, as bars
+# --------------------------------------------------------------------------------------
+def chart_sources(model: dict, out: Path) -> None:
+    """
+    A horizontal bar per cited domain: how many citation events named it.
+
+    WHY A BAR CHART AND NOT A PIE, which is a choice this figure has to make and the entity figure
+    does not. The source distribution is a long tail: the twelve domains drawn here carry 80 of the
+    176 citation events and the other 71 domains carry 96. A pie would therefore spend more than
+    half its circle on an "其他" slice - a slice that is not a source, that no reader can act on,
+    and that would still compress the twelve real domains into hairlines nothing can be read off.
+    Bars keep every count comparable and legible, which is the only thing this figure is for; the
+    table above it carries the same numbers, so the figure adds shape rather than information.
+
+    THE BARS ARE COUNTS, NOT RATINGS. The label is the raw citation-event count, the axis is that
+    same count, there is no percentage and no ranking language: a domain cited often is a domain the
+    answers linked often. The paragraph above the table says what that does and does not mean, and
+    the caption repeats the "not a ranking" caveat because a reader may look at the figure first.
+    """
+    domains = model["domains"]
+    C = model["copy"]
+    t = count_label
+    scale = 2
+    pad = 28 * scale
+    gap = 24 * scale
+    value_w = 90 * scale
+    row_h = 46 * scale
+    track_w = 420 * scale
+    axis_h = 62 * scale
+
+    f_label = font(19 * scale, bold=True)
+    f_tick = font(15 * scale)
+    probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+    widest = max((probe.textlength(entry["domain"], font=f_label) for entry in domains), default=0)
+    label_w = int(widest) + gap
+
+    width = pad * 2 + label_w + track_w + value_w
+    height = pad * 2 + row_h * len(domains) + axis_h
+    img = Image.new("RGB", (width, height), SURFACE_2)
+    d = ImageDraw.Draw(img)
+
+    x0 = pad + label_w
+    base = pad + row_h * len(domains) + 4 * scale
+    max_count = max((int(entry["count"]) for entry in domains), default=1) or 1
+
+    step = max(1, math.ceil(max_count / 4))
+    ticks = list(range(0, max_count + 1, step))
+    if ticks[-1] != max_count:
+        ticks.append(max_count)
+
+    for tick in ticks:
+        x = x0 + int(track_w * tick / max_count)
+        d.line([x, pad, x, base], fill=SURFACE_1)
+
+    for i, entry in enumerate(domains):
+        y = pad + i * row_h
+        cy = y + row_h // 2
+        count = int(entry["count"])
+
+        d.text((pad, cy), t(entry["domain"]), font=f_label, fill=INK_1, anchor="lm")
+        d.rectangle([x0, cy - 12 * scale, x0 + track_w, cy + 12 * scale], fill=SURFACE_1)
+        filled = int(track_w * count / max_count)
+        # One colour for every bar. A "top domain" in a different colour would be this file making
+        # the ranking judgement the caption says the figure is not making.
+        d.rectangle([x0, cy - 12 * scale, x0 + max(filled, 2 * scale), cy + 12 * scale], fill=ACCENT)
+        d.text((x0 + track_w + 16 * scale, cy), t(str(count)), font=f_label, fill=INK_1, anchor="lm")
+
+    for tick in ticks:
+        x = x0 + int(track_w * tick / max_count)
+        d.text((x, base + 6 * scale), t(str(tick)), font=f_tick, fill=INK_3, anchor="mm")
+    d.text((x0 + track_w // 2, base + 38 * scale),
+           t(C.get("figSourcesAxis", "")), font=f_tick, fill=INK_3, anchor="mm")
+
+    save_figure(img, out)
 
 
 # --------------------------------------------------------------------------------------
@@ -1213,8 +1531,13 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
         [5.0, 11.4],
     )
 
-    if charts.get("mentions"):
-        figure(charts["mentions"], 16.4, C["figMentions"])
+    """
+    WHERE EACH FIGURE SITS, and why none of them is a decorative opening image: 图 1 in 本次测量覆盖
+    了什么 beside the group table it summarizes, 图 2 in AI 可见度总览 beside the per-question table, 图
+    3 in 实体识别 immediately under the finding it is the headline of, 图 4 in 信源网络 beside the
+    domain table. A chart on the cover and the same numbers three pages later is how a reader ends up
+    treating the chart as the finding and the table as the appendix.
+    """
 
     # --- 一、执行摘要 ---------------------------------------------------------------
     heading(C["sectionSummary"])
@@ -1249,6 +1572,8 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
         align=[None, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER],
     )
     para(C["coverageNote"])
+    if charts.get("groups"):
+        figure(charts["groups"], 16.4, C["figGroups"])
 
     heading(C["sectionNotMeasured"], 2)
     bullets(model["limits"])
@@ -1271,6 +1596,8 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
         [1.4, 7.8, 2.1, 2.6, 2.5],
         align=[WD_ALIGN_PARAGRAPH.CENTER, None, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER, WD_ALIGN_PARAGRAPH.CENTER],
     )
+    if charts.get("mentions"):
+        figure(charts["mentions"], 16.4, C["figMentions"])
     for key in ("overviewTotals", "overviewPrompted"):
         para(C[key])
 
@@ -1292,6 +1619,8 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
         [2.0, 14.4],
     )
     para(C["entityFinding"])
+    if charts.get("entity"):
+        figure(charts["entity"], 16.4, C["figEntity"])
 
     # --- 四、按问题组拆解 ------------------------------------------------------------
     heading(C["sectionGroups"])
@@ -1331,6 +1660,8 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
         align=[None, WD_ALIGN_PARAGRAPH.CENTER, None],
     )
     para(C["sourcesNote"])
+    if charts.get("sources"):
+        figure(charts["sources"], 16.4, C["figSources"])
     heading(C["sectionSourcesCaveat"], 2)
     bullets([C[key] for key in ("sourcesCaveat1", "sourcesCaveat2", "sourcesCaveat3")])
 
@@ -1580,6 +1911,14 @@ def build_visibility_xlsx(model: dict, out: Path) -> None:
             ["brand_mentions_all_runs", model["totals"]["brandMentions"]],
             ["brand_mentions_non_brand_questions", model["totals"]["nonBrandBrandMentions"]],
             ["non_brand_runs", model["totals"]["nonBrandRuns"]],
+            # The headline finding of the entity section, in the machine-readable sheet as well as
+            # in the figure: the two counts, their n, and the rule that produced them. A PNG is not
+            # a data store, and this is the number a reader is most likely to quote.
+            ["entity_conclusion", C["entityConclusionLine"]],
+            ["entity_conclusion_same_runs", model["entityConclusion"]["same"]],
+            ["entity_conclusion_not_same_runs", model["entityConclusion"]["notSame"]],
+            ["entity_conclusion_runs_total", model["entityConclusion"]["total"]],
+            ["entity_conclusion_rule", model["entityConclusion"]["rule"]],
             ["engine", model["generatedBy"]],
             ["lang", model["lang"]],
         ],
@@ -1703,13 +2042,28 @@ def main() -> int:
     trusted.
     """
     if model.get("reportType") == "ai-visibility":
-        chart = charts_dir / "mentions.png"
-        chart_mentions(model, chart)
-        build_visibility_docx(model, docx_path, {"mentions": chart})
+        """
+        FOUR FIGURES, ONE DICT. The names are the keys build_visibility_docx looks up, and the files
+        are written before the document that embeds them - the alternative (drawing inside the
+        document builder) is how a figure ends up referenced by a document that was saved before the
+        image existed.
+        """
+        charts = {
+            "groups": charts_dir / "groups.png",
+            "mentions": charts_dir / "mentions.png",
+            "entity": charts_dir / "entity-conclusion.png",
+            "sources": charts_dir / "sources.png",
+        }
+        chart_groups(model, charts["groups"])
+        chart_mentions(model, charts["mentions"])
+        chart_entity_conclusion(model, charts["entity"])
+        chart_sources(model, charts["sources"])
+        build_visibility_docx(model, docx_path, charts)
         build_visibility_xlsx(model, xlsx_path)
         print(f"wrote {docx_path}")
         print(f"wrote {xlsx_path}")
-        print(f"wrote {chart}")
+        for path in charts.values():
+            print(f"wrote {path}")
         return 0 if verify_geometry(docx_path, 16.6) else 1
 
     charts = {}
