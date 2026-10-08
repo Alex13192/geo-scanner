@@ -2145,7 +2145,7 @@ const coding: string[][] = lang === "en" ? codingEn : codingZh;
  * replay call no model, so "web search on" is a configuration record rather than something that happened,
  * and the sentence says so.
  */
-const searchSentence =
+const searchSentenceZh =
   runMode === "api"
     ? webSearch
       ? "开启联网搜索（tools: [web_search]）"
@@ -2156,7 +2156,20 @@ const searchSentence =
         ? `搜索设置取自被回放的那次运行（${webSearch ? "开启" : "关闭"}），本次没有发出任何调用`
         : `${webSearch ? "开启" : "关闭"}联网搜索`;
 
-const method: string[] = [
+const searchSentenceEn =
+  runMode === "api"
+    ? webSearch
+      ? "web search on (tools: [web_search])"
+      : "web search off"
+    : runMode === "dry-run"
+      ? `the collection config records web search ${webSearch ? "on" : "off"}, but this run was a dry run and made no call at all`
+      : runMode === "replay"
+        ? `the search setting is taken from the run that was replayed (${webSearch ? "on" : "off"}), and this run made no call at all`
+        : `web search ${webSearch ? "on" : "off"}`;
+
+const searchSentence = lang === "en" ? searchSentenceEn : searchSentenceZh;
+
+const methodZh: string[] = [
   `本报告的每一次计数都来自 ${displayPath(answersPath)} 里 ok=true 的 ${answers.length} 条记录：${questions.length} 道问题（题库指纹 ${bankFingerprint || "未记录"}），` +
     `每题 ${runsPerQuestion} 次运行，合计 ${totals.runs} 次完成的回答。模型是 ${modelDisplay}，测量日期 ${measuredOn}，` +
     `${searchSentence}，采集模式 ${runMode}` +
@@ -2183,11 +2196,40 @@ const method: string[] = [
   `本报告不出现百分比：每个数字都写成『几次运行里几次』。${runsPerQuestion} 次运行不足以支撑一个比例，这是服务定义里写死的口径，也是这份数据唯一诚实的报法。`,
 ];
 
+const methodEn: string[] = [
+  `Every count in this report comes from the ${answers.length} ok=true records in ${displayPath(answersPath)}: ${questions.length} questions (bank fingerprint ${bankFingerprint || "not recorded"}), ` +
+    `${runsPerQuestion} runs each, ${totals.runs} completed answers in total. The model was ${modelDisplay}, measured on ${measuredOn}, ` +
+    `${searchSentence}, collection mode ${runMode}` +
+    `${header?.run?.endpoint ? ` (${header.run.endpoint})` : ""}` +
+    `${header?.run?.gap_ms !== undefined ? `, at least ${header.run.gap_ms}ms between calls` : ""}` +
+    `${header?.run?.timeout_ms !== undefined ? `, ${header.run.timeout_ms}ms per call (a timeout is recorded in that line's status)` : ""}. ` +
+    "All four - model, date, runs per question and web search - come from the provenance header on the first line of the run file, not from this report's command-line arguments.",
+  rejected.length > 0
+    ? `The file holds ${parsedLines} answer records, of which ${rejected.length} are failure records (${failureDigest}); they are excluded before anything is counted, and every figure in this report uses the other ${answers.length}. ` +
+      `The excluded lines are not treated as zero mentions - reading a rate limit or a timeout as "the brand was not mentioned" is the exact error this report exists to avoid.`
+    : `The file holds ${parsedLines} answer records and no failure records: each of the ${questions.length} questions has ${runsPerQuestion} complete answers. ` +
+      "A refused or timed-out call would be recorded separately and excluded before counting - reading a rate limit as \"the brand was not mentioned\" is the exact error this report exists to avoid.",
+  runMode === "api"
+    ? `Calls: this collection made ${attemptsTotal} calls in total (retries included)${truncatedTotal > 0 ? `, ${truncatedTotal} of them truncated` : ""}` +
+      `${timeoutsTotal > 0 ? `, ${timeoutsTotal} of them hitting a timeout` : ""}. Truncated and timed-out calls are billed the same, so every line records attempts and questionAttempts (cumulative for its question); ` +
+      "hiding the retries would leave the cost figures unreconcilable, which is the lesson the previous collection left behind."
+    : `Calls: 0. This run is a ${runMode}, so no call was made to any model and both token usage and attempts are 0; ` +
+      "those two zeros are facts, not gaps. In a real collection every line records attempts (retries included), because a truncated call is billed the same.",
+  `The model name and the measurement date come from the run file's provenance header (${modelSource}; date source: ${dateSource}). ` +
+    (header
+      ? "The collector scripts/report/run-bank.mts writes those fields into the first line before the run starts, so they sit in the same file, recorded at the same moment as the answers."
+      : "This file has no provenance header, so both are inputs this report was given."),
+  "mentionsBrand and mentionsCoatings are decided by the collector as it writes each line, and the rules are printed under 'how each marked field is decided'. This report reads those two fields instead of deciding again, so its numbers match the collection exactly - including whatever bias the decision carried.",
+  `There are no percentages in this report: every number is written as a count. ${runsPerQuestion} runs cannot support a ratio - that is fixed in the service definition, and it is the only honest way to report this data.`,
+];
+
+const method: string[] = lang === "en" ? methodEn : methodZh;
+
 function isBlank(text: string): boolean {
   return !text || text.trim().length === 0;
 }
 
-const provenance: string[] = [
+const provenanceZh: string[] = [
   `题库：${displayPath(header?.bank?.path) || "（运行文件没有记录题库路径）"}`,
   `题库指纹：${bankFingerprint || "（未记录）"}${
     header?.bank?.fingerprint_verified === true ? "（采集脚本重算核对通过）" : ""
@@ -2218,6 +2260,40 @@ const provenance: string[] = [
   "报告结构：章节顺序参照一份外部交付物的目录与表格形态，仅取结构。文字、表格内容、结论全部重写：那是别人做的交付物，逐字照搬既有授权问题，也会让这份报告把合成数据当成实测结果——该文件的数字是按预设规则与固定随机种子合成的，本报告的每一个数字都来自真实记录。",
   "本报告由 scripts/report/build-visibility.mts 生成，DOCX/XLSX 由 scripts/report/render-report.py 渲染；同一份模型文件也可以单独重渲染。",
 ];
+
+const provenanceEn: string[] = [
+  `Bank: ${displayPath(header?.bank?.path) || "(the run file records no bank path)"}`,
+  `Bank fingerprint: ${bankFingerprint || "(not recorded)"}${
+    header?.bank?.fingerprint_verified === true ? " (recomputed and verified by the collector)" : ""
+  }; intake source: ${displayPath(header?.intake?.resolved_path) || "(not recorded)"}`,
+  `Approval: ${bankApprovedBy ? `${bankApprovedBy} ${bankApprovedOn || "(no date written)"}` : "(empty: the bank carries no signed approval)"}`,
+  `Data file: ${displayPath(answersPath)} (${parsedLines} answer records: ${answers.length} ok=true, ${rejected.length} failed).`,
+  `Collector: ${header?.collector?.script ?? "(the run file records no collector)"}` +
+    (header?.collector?.version !== undefined ? ` v${header.collector.version}` : "") +
+    (header?.collector?.script_sha256 ? `, script sha256 ${String(header.collector.script_sha256).slice(0, 16)}...` : "") +
+    `; mode ${runMode}${header?.run?.answers_source ? ` (${header.run.answers_source})` : ""}.`,
+  `Model name: ${modelDisplay} (${modelSource}).`,
+  `Date measured: ${measuredOn} (${dateSource}).`,
+  `Web search: ${webSearch ? "on" : "off"} (recorded in the run file's provenance header).`,
+  `Spellings used to decide a brand mention: ${brandTokens.map((t) => `${t.value} (${t.field})`).join(", ")}` +
+    `; source: ${
+      header?.brand?.tokens_source === "intake"
+        ? "the intake"
+        : header
+          ? "the slots recorded in the bank (the intake was unavailable, so this is a subset)"
+          : "the --brand / --alias command-line arguments"
+    }.`,
+  `Category terms: ${
+    hasCategoryTokens
+      ? categoryTokensForReport.map((t) => t.value).join(", ")
+      : "(the intake left industry.category_terms empty, so this run has no category-mention figures)"
+  }`,
+  isBlank(intakeDrift) ? "The intake agrees with the bank's record." : intakeDrift,
+  "Structure: the order of sections follows the contents and table shapes of an external deliverable, and follows nothing else. The wording, the tables and the conclusions were all written again: that document belongs to someone else, copying it verbatim would raise a licensing question, and it would also let this report pass synthesised data off as a measurement - its figures were generated from a preset rule and a fixed random seed, while every number here comes from a real record.",
+  "This report is generated by scripts/report/build-visibility.mts and the DOCX/XLSX are rendered by scripts/report/render-report.py; the same model file can also be re-rendered on its own.",
+];
+
+const provenance: string[] = lang === "en" ? provenanceEn : provenanceZh;
 
 /**
  * THE CHECK THAT REFUSES A HALF-TRANSLATED REPORT.
