@@ -1331,7 +1331,7 @@ const entityConclusionRuleText =
   lang === "en"
     ? `How the runs are classified: for every completed run of a name question (${nameQuestionFacts.length} questions ask about a short form, an alias or a former name; ids ` +
       `${nameQuestionFacts.map((q) => q.id).join(", ") || "(none)"}), a cited domain containing the client's own domain stem "${brandStem || "(the brand name has no usable ASCII stem, so this rule does not apply)"}" counts as citing the client's own domain, and anything else counts as not citing it; ` +
-      `among those that do not cite it, an answer whose text contains any of these phrases is counted separately as saying outright that it cannot find the company: ${NOT_FOUND_SIGNALS.join(", ")}. ` +
+      `among those that do not cite it, an answer whose text contains one of a fixed list of phrases is counted separately as saying outright that it cannot find the company; that list is printed in full on the workbook's metadata sheet (entity_conclusion_rule). ` +
       "This rule reads only the cited domains the collector recorded and the answer text, and makes no semantic judgement; the verbatim extract of every run is in this section, so each one can be checked."
     : `分类规则：名字题（题库里问简称/别名/曾用名的 ${nameQuestionFacts.length} 道题，id ` +
   `${nameQuestionFacts.map((q) => q.id).join("、") || "（没有）"}）的每一次已完成运行，` +
@@ -1880,7 +1880,7 @@ const fills: Record<string, string | number> = {
   bankFingerprint: bankFingerprint || "（题库没有记录指纹）",
   bankFrozenSentence:
     lang === "en"
-      ? (frozenNote ? `${frozenNote}　` : "") +
+      ? 
         (bankFingerprint
           ? `This measurement used exactly this bank: the sha256 fingerprint of the question list is ${bankFingerprint}, ` +
             (header?.bank?.fingerprint_verified === true
@@ -1895,7 +1895,18 @@ const fills: Record<string, string | number> = {
           ? "采集脚本在开跑前按 bank.fingerprint_rule 重算过一遍并核对通过，说明没人在批准之后改过题目。"
           : "采集脚本无法核对这个指纹（题库记录的规则不是它实现的规则）。")
       : "这份运行文件没有记录题库指纹，所以『用的是哪一版题库』没有依据。"),
-  bankApprovalSentence: bankApprovedBy
+  bankApprovalSentence:
+    lang === "en"
+      ? bankApprovedBy
+        ? `Approved by: ${bankApprovedBy}${bankApprovedOn ? `, ${bankApprovedOn}` : " (no date written)"}.` +
+          (intakeExpectedApprover && intakeExpectedApprover !== bankApprovedBy
+            ? ` The intake names ${intakeExpectedApprover} as the approver, which does not match; please confirm which one governs.`
+            : "")
+        : `The bank's approved_by is empty: nobody signed the approval page after this bank was generated${
+            intakeExpectedApprover ? ` (the intake names ${intakeExpectedApprover} as the approver)` : ""
+          }. ` +
+          "A signature and an approval date have to be added to the bank file before delivery; without them the sentence 'the client approved this bank' has nothing behind it, and section 1 of this report is where it belongs."
+      : bankApprovedBy
     ? `批准：${bankApprovedBy}${bankApprovedOn ? `，${bankApprovedOn}` : "（未写日期）"}。` +
       (intakeExpectedApprover && intakeExpectedApprover !== bankApprovedBy
         ? `intake 里填写的确认人是 ${intakeExpectedApprover}，与批准人不一致，请确认以谁为准。`
@@ -2677,11 +2688,18 @@ const model = {
     short: g.short,
     purpose: g.purpose,
     reading: g.namesBrand
-      ? `点名品牌的问题：${g.questions} 道、${g.runs} 次运行，品牌被提及 ${g.brandMentions} 次（${g.brandMentions} / ${g.runs}）。` +
-        "问题里带着品牌名，所以这一组测的不是触达，而是回答得对不对、多次运行之间一致不一致。"
-      : `不含品牌名的问题：${g.questions} 道、${g.runs} 次运行，品牌被提及 ${g.brandMentions} 次（${g.brandMentions} / ${g.runs}）。` +
-        "问题里没有任何提示，回答里出现的是它自己想到的厂商——这是本报告里唯一能回答『陌生客户会不会遇到这家公司』的问法之一" +
-        `（本次这样的组共 ${groups.filter((x) => !x.namesBrand).length} 个）。`,
+      ? lang === "en"
+        ? `Questions that name the brand: ${g.questions} questions, ${g.runs} runs, the brand mentioned ${g.brandMentions} times (${g.brandMentions} / ${g.runs}). ` +
+          "The question carries the brand name, so this group measures not reach but whether the answers are right and whether they agree from one run to the next."
+        : `点名品牌的问题：${g.questions} 道、${g.runs} 次运行，品牌被提及 ${g.brandMentions} 次（${g.brandMentions} / ${g.runs}）。` +
+          "问题里带着品牌名，所以这一组测的不是触达，而是回答得对不对、多次运行之间一致不一致。"
+      : lang === "en"
+        ? `Questions without the brand name: ${g.questions} questions, ${g.runs} runs, the brand mentioned ${g.brandMentions} times (${g.brandMentions} / ${g.runs}). ` +
+          "Nothing in the question prompts an answer, so the vendors that appear are the ones the model thought of itself - this is one of the few ways this report can ask whether a stranger would meet this company" +
+          ` (${groups.filter((x) => !x.namesBrand).length} groups in this run work this way).`
+        : `不含品牌名的问题：${g.questions} 道、${g.runs} 次运行，品牌被提及 ${g.brandMentions} 次（${g.brandMentions} / ${g.runs}）。` +
+          "问题里没有任何提示，回答里出现的是它自己想到的厂商——这是本报告里唯一能回答『陌生客户会不会遇到这家公司』的问法之一" +
+          `（本次这样的组共 ${groups.filter((x) => !x.namesBrand).length} 个）。`,
     questions: g.questions,
     runs: g.runs,
     brandMentions: g.brandMentions,
