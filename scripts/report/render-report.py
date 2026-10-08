@@ -1380,7 +1380,9 @@ def chart_entity_conclusion(model: dict, out: Path) -> None:
         mid = math.radians(start + extent / 2.0)
         d.text(
             (cx + 0.62 * radius * math.cos(mid), cy + 0.62 * radius * math.sin(mid)),
-            t(f"{value} 次"),
+            # The unit follows the document language, read through globals() so a chart rendered
+            # outside main still cannot raise: an English figure must not print 次 on its slices.
+            t(f"{value} 次" if globals().get("_LANG") != "en" else f"{value}"),
             font=f_slice,
             fill=SURFACE_2,
             anchor="mm",
@@ -2157,6 +2159,10 @@ def main() -> int:
     args = ap.parse_args()
 
     model = json.loads(Path(args.model).read_text(encoding="utf-8"))
+    # One module-level record of the document language, for the pieces that are drawn rather than
+    # written - a chart label cannot be checked by scanning the file it ends up in.
+    global _LANG
+    _LANG = "en" if (model.get("lang") or "zh") == "en" else "zh"
     select_fonts(model.get("lang", "en"))
     out = Path(args.out)
     charts_dir = out / "charts"
