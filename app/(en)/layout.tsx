@@ -215,10 +215,12 @@ export default function RootLayout({
           pages it fetches, and a smaller footprint weakens the thing the site is
           waiting on. Where an ad may not sit is a placement question, and it is
           answered in the AdSense dashboard rather than here - Auto ads page
-          exclusions are what would keep advertising off /pricing/, /refund/ and
-          /withdrawal/ if those pages existed, and they no longer do. If a page is
-          ever added that an ad would cheapen, exclude it there rather than
-          splitting this loader.
+          exclusions are what keep advertising off a page an ad would cheapen.
+          /pricing/ and /refund/ are such pages, and they exist again as of
+          2026-10-08: add both to that exclusion list, because nothing in this
+          repository can turn an ad off for a single route. If another page is
+          added that an ad would cheapen, exclude it there rather than splitting
+          this loader.
 
           See lib/ads.ts for why this is a plain async element rather than
           `next/script`, and for the consent platform that must be enabled before

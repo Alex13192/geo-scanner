@@ -44,12 +44,13 @@ const GONE: Record<string, string> = {
   "/de/widerrufsrecht": "/",
 
   /*
-   * The paid audit and the two policies that went with it. See OPERATIONS.md:
-   * nothing on this site is sold, so there is no price, no refund commitment and
-   * no consumer right of withdrawal to describe.
+   * The withdrawal notice: the one page of the three that is still gone. /pricing/ and /refund/ came
+   * back on 2026-10-08 with the measurement report (see OPERATIONS.md) - the site sells something
+   * again, so a price and a refund policy are things a page can honestly describe. The separate
+   * /withdrawal/ URL did not come back: the consumer withdrawal notice is folded into /refund/,
+   * where a buyer deciding whether to pay will actually read it. It was published and may be
+   * indexed, so it redirects rather than 404ing.
    */
-  "/pricing": "/",
-  "/refund": "/",
   "/withdrawal": "/",
 };
 

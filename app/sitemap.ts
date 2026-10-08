@@ -19,7 +19,7 @@ import { CHECK_CATALOG, DIMENSION_CATALOG } from '@/lib/geo/catalog';
  * is manual, so: any commit that changes `app/` or `lib/` content is a commit that
  * changes this line.
  */
-const LAST_MODIFIED = new Date('2026-10-07');
+const LAST_MODIFIED = new Date('2026-10-08');
 
 /**
  * NOTE ON TRAILING SLASHES
@@ -153,10 +153,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     /* Legal and contact.
        These pages are thin by nature, which is why they carry a low priority,
-       but they are the ones an AdSense reviewer looks for first.
-       /pricing/, /refund/ and /withdrawal/ were listed here until the paid audit
-       was withdrawn. They are deleted rather than listed, and they 301 to "/" from
-       middleware.ts, because they were published and may be indexed. */
+       but they are the ones an AdSense reviewer looks for first - and /pricing/ and
+       /refund/ are the two a payment reviewer opens.
+       THEY CAME BACK ON 2026-10-08 with the measurement report: the site sells
+       something again, so a price and a refund policy now describe work that is
+       actually run. Both were 301s to "/" from middleware.ts while nothing was for
+       sale, and they are listed here again rather than left as redirects - an
+       indexed redirect to the homepage is not an answer to "how much does this
+       cost". /withdrawal/ stayed deleted: the consumer withdrawal notice is folded
+       into /refund/, and its URL still redirects. */
+    {
+      url: `${SITE_URL}/pricing/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+    {
+      url: `${SITE_URL}/refund/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
     {
       url: `${SITE_URL}/privacy/`,
       lastModified: LAST_MODIFIED,

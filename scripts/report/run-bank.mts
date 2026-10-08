@@ -596,6 +596,12 @@ type IntakeRead = {
 let brandTokens: Token[] = [];
 let brandTokensSource = "";
 let categoryTokens: Token[] = [];
+/**
+ * The client's named competitors, from the intake. Marked per answer so the report can say which
+ * names were recommended in the runs where nobody named the client — the share-of-voice column the
+ * first measurement could not produce, and the one a client asks for before anything else.
+ */
+let competitorTokens: Token[] = [];
 let intakeClient = "";
 let intakeRead: IntakeRead = {
   requested_path: intakePath,
@@ -627,6 +633,7 @@ if (intakePath && existsSync(intakePath)) {
   brandTokens = dedupe(BRAND_SLOT_PATHS.flatMap((p) => (p === "brand.aliases" || p === "brand.former_names" ? listAt(intakeDoc, p) : scalarAt(intakeDoc, p))));
   brandTokensSource = "intake";
   categoryTokens = dedupe([...listAt(intakeDoc, "industry.category_terms"), ...scalarAt(intakeDoc, "industry.subcategory")]);
+  competitorTokens = dedupe(listAt(intakeDoc, "competitors.names"));
   intakeClient = scalarAt(intakeDoc, "meta.client")[0]?.value ?? "";
   const matches = intakeRead.sha256_expected === null ? null : intakeRead.sha256_expected === actual;
   intakeRead = {
@@ -990,7 +997,7 @@ type RecordedLine = {
   truncated?: boolean;
 };
 
-let replayIndex = new Map<string, RecordedLine>();
+const replayIndex = new Map<string, RecordedLine>();
 if (mode === "replay" && replayPath) {
   const lines = readFileSync(replayPath, "utf8")
     .split(/\r?\n/)
@@ -1188,11 +1195,14 @@ const header = {
     bank_tokens_not_in_intake: bankTokensNotInIntake,
   },
   category_tokens: categoryTokens,
+  competitors: competitorTokens,
   mentions: {
     brand_rule:
       "the answer contains the brand name or one of its aliases: CJK names as substrings (no word boundaries exist), Latin names on word boundaries with hyphens inside the word (lib/answer-check/rules.ts findMention)",
     category_rule:
       "the answer contains any of category_tokens (the intake's industry.category_terms plus subcategory); null when the intake has none",
+    competitor_rule:
+      "per line, mentionsCompetitors lists the names from the intake's competitors.names that this answer contains, matched with the same rule as the brand name; null when the intake named none. It is a list, not a boolean, because which competitor was recommended is the finding",
   },
 };
 
@@ -1259,6 +1269,14 @@ for (const question of questions) {
       /** Whether the answer names the LEGAL name, or only a short form / alias. See the entity section. */
       mentionsPrimary: ok ? (brandName ? findMention(answerLowerOf(answer), brandName) !== -1 : null) : null,
       mentionsCoatings: ok ? mentionsAny(answerLowerOf(answer), categoryTokens) : null,
+      /**
+       * WHICH competitors this answer recommends, not merely whether it recommends any of them. A
+       * boolean would answer "some competitor was named"; the client needs the names, because that
+       * is what a share-of-voice table is. Matched with findMention, the same rule the brand uses.
+       */
+      mentionsCompetitors: ok
+        ? competitorTokens.filter((t) => findMention(answerLowerOf(answer), t.value) !== -1).map((t) => t.value)
+        : null,
       domains: domains ?? [],
       usage: usage ?? null,
       answer,
@@ -1271,7 +1289,7 @@ for (const question of questions) {
       `${question.id.padEnd(6)} r${run} ${ok ? "ok    " : "FAIL  "} ${String(ms).padStart(7)}ms ` +
         `attempts=${attempts} brand=${line.mentionsBrand === null ? "?" : line.mentionsBrand ? "YES" : "no "} ` +
         `cat=${line.mentionsCoatings === null ? "?" : line.mentionsCoatings ? "yes" : "no "} ` +
-        `src=${String((domains ?? []).length).padStart(2)} tok=${tokens}` +
+        `src=${String((domains ?? []).length).padStart(2)} comp=${line.mentionsCompetitors === null ? "?" : line.mentionsCompetitors.length} tok=${tokens}` +
         `${truncated ? " TRUNCATED" : ""}${ok ? "" : ` status=${String(status)}`}\n`
     );
     if (!ok && errorBody) process.stdout.write(`         body: ${errorBody.slice(0, 200)}\n`);

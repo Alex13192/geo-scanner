@@ -223,7 +223,13 @@ console.log("\n=== withdrawn pages ===");
    * The target is checked as well as the status, because a 301 to the wrong place is worse
    * than a 404 - it is followed, and whatever it lands on is credited with the link.
    */
-  for (const path of ["/pricing/", "/refund/", "/withdrawal/"]) {
+  /*
+   * ONE REDIRECT AND TWO PAGES, WHICH IS WHAT THE SITE NOW HAS. /withdrawal/ stayed gone - the
+   * consumer notice is folded into /refund/ - so it must still 301 to the homepage. /pricing/ and
+   * /refund/ came back on 2026-10-08 with the measurement report, so asserting a redirect on them
+   * would now be asserting that a page a visitor can buy from is unreachable.
+   */
+  for (const path of ["/withdrawal/"]) {
     const { res, error } = await get(path);
     if (error) bad(`could not fetch ${path}`, error);
     else if (res.status !== 301) bad(`${path} does not redirect permanently`, `HTTP ${res.status}`);
@@ -232,6 +238,13 @@ console.log("\n=== withdrawn pages ===");
       if (target === "/") ok(`${path} redirects to /`, "HTTP 301");
       else bad(`${path} redirects somewhere unexpected`, `301 -> ${target || "(no location)"}`);
     }
+  }
+
+  for (const path of ["/pricing/", "/refund/"]) {
+    const { res, error } = await get(path);
+    if (error) bad(`could not fetch ${path}`, error);
+    else if (res.status !== 200) bad(`${path} is not served`, `HTTP ${res.status}`);
+    else ok(`${path} is served`, "HTTP 200");
   }
 
   /*

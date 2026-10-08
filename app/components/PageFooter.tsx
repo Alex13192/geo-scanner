@@ -10,8 +10,9 @@ import LegalLinks from "@/app/components/LegalLinks";
  * via ArticleShell, and /pricing/ - so the scanner's own copyright-year check
  * failed on exactly those four routes and passed on the rest. The rule looks for
  * the current calendar year in the visible text, which is a rule this site
- * publishes and scores other people against. /pricing/ went with the paid audit
- * (see OPERATIONS.md), so three of the four remain.
+ * publishes and scores other people against. /pricing/ left that list for a while
+ * when the paid audit was withdrawn and the page was deleted; it is back on
+ * 2026-10-08 and uses this footer, so all four routes are covered again.
  *
  * Second, the ten that did carry a year had `2026` typed in as a literal. That is
  * not a bug today and it becomes ten bugs on 1 January 2027, silently, on pages

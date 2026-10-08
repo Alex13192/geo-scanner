@@ -56,3 +56,15 @@ export const BRAND = "LLMention";
  * working channel and is not.
  */
 export const CONTACT_EMAIL = "services@llmention-geo.com";
+
+/**
+ * The seller's name and postal address, for the pages a buyer and a payment reviewer both read.
+ *
+ * WHY THIS IS READ FROM THE ENVIRONMENT RATHER THAN WRITTEN HERE: OPERATIONS.md records the
+ * constraint - an Impressum, or a withdrawal notice that is actually addressable, needs a postal
+ * address, and anything committed to this repository is published whether or not a page renders it.
+ * The value is set as a deployment variable named OPERATOR_IDENTITY, so the repository keeps no
+ * address and the published page still prints one. It is empty when unconfigured, and /refund/ then
+ * says where the identity is given rather than printing a blank line.
+ */
+export const OPERATOR_IDENTITY = (process.env.OPERATOR_IDENTITY ?? "").trim();

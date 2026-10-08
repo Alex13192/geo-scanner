@@ -10,11 +10,18 @@ import { CONTACT_EMAIL } from "@/lib/site";
  *
  * It used to open by explaining that "the paid product is sold through this
  * site, and both AdSense review and the payment providers check that a site
- * asking for money states its terms". No money is asked for any more. The
- * sections about the audit, about refunds and about the consumer right of
- * withdrawal went with it in the same change that deleted /pricing/, /refund/
- * and /withdrawal/, because terms that govern a purchase nobody can make are the
- * same failure as a process page for a process nobody runs (see OPERATIONS.md).
+ * asking for money states its terms". The money went away for a while, and those
+ * sections went with it in the same change that deleted /pricing/, /refund/ and
+ * /withdrawal/ - terms that govern a purchase nobody can make are the same failure
+ * as a process page for a process nobody runs (see OPERATIONS.md).
+ *
+ * ⚠️ THE PURCHASE CAME BACK ON 2026-10-08 AND THIS PAGE HAS NOT BEEN REWRITTEN FOR
+ * IT. Recorded here rather than left implied: the measurement report is sold by
+ * quote and invoice, /pricing/ and /refund/ state what is bought and when it is
+ * refundable, and this page still describes a site with nothing for sale. It needs
+ * the three sections back - what is being sold, refunds, and the consumer right of
+ * withdrawal - before an overseas invoice is issued. That is a task in
+ * OPERATIONS.md, not something to rediscover from a complaint.
  *
  * Two deliberate omissions, because inventing either would be worse than
  * leaving it out:

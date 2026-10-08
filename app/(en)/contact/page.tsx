@@ -16,9 +16,12 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * a server that otherwise holds nothing about visitors, which would contradict
  * the privacy policy for no benefit.
  *
- * A fourth route - "request an audit" - was here while the paid audit was sold.
- * It went with /pricing/ and /refund/, in the same change that stopped the site
- * offering anything to buy. See OPERATIONS.md.
+ * A fourth route - "request an audit" - was here while the paid audit was sold, and
+ * left with it. The site sells something again as of 2026-10-08 - a measurement
+ * report, ordered by email - which is exactly what this page's address is for. The
+ * route itself has not come back, and an order that starts as an ordinary message is
+ * the shape the service actually has; /pricing/ and /refund/ describe what is bought
+ * and when it is refundable. See OPERATIONS.md.
  */
 import { og } from "@/lib/og";
 

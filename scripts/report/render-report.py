@@ -1701,10 +1701,34 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
         )
 
     # --- 五、竞品 --------------------------------------------------------------------
+    """
+    TWO SHAPES, ONE SECTION. When the collector marked the client's named competitors, the section is
+    a share-of-voice table - the column a client asks for first ("then who was named instead?"). When
+    it did not (an older run file, or an intake with no competitors.names), the section says so in
+    words: a table of zeros would be read as "no competitor was recommended", which is a different
+    claim from "nobody counted".
+    """
     heading(C["sectionCompetitors"])
     callout(C["competitorsCallout"])
-    para(C["competitorsBody"])
-    bullets([C[key] for key in ("competitorsNone1", "competitorsNone2", "competitorsNone3")])
+    competitors = model.get("competitors") or []
+    if model.get("competitorsMeasured") and competitors:
+        para(C["competitorsLead"])
+        make_table(
+            [C["thCompName"], C["thCompNonBrand"], C["thCompAll"], C["thCompGroups"]],
+            [[r["name"], str(r["nonBrand"]), str(r["all"]), r["byGroup"]] for r in competitors],
+            [4.0, 3.2, 2.6, 6.6],
+            align=[
+                None,
+                WD_ALIGN_PARAGRAPH.CENTER,
+                WD_ALIGN_PARAGRAPH.CENTER,
+                None,
+            ],
+        )
+        para(C["competitorsBody"])
+        para(C["competitorsNote"])
+    else:
+        para(C["competitorsBody"])
+        bullets([C[key] for key in ("competitorsNone1", "competitorsNone2", "competitorsNone3")])
 
     # --- 六、信源网络 ----------------------------------------------------------------
     heading(C["sectionSources"])
@@ -1948,6 +1972,16 @@ def build_visibility_xlsx(model: dict, out: Path) -> None:
         [34, 12, 40],
         wrap_cols=(3,),
     )
+
+    # Only when the collector marked them: an empty sheet would read as "no competitor was named".
+    if model.get("competitorsMeasured") and model.get("competitors"):
+        sheet(
+            C["sheetCompetitors"],
+            [C["thCompName"], C["thCompNonBrand"], C["thCompAll"], C["thCompGroups"]],
+            [[r["name"], r["nonBrand"], r["all"], r["byGroup"]] for r in model["competitors"]],
+            [30, 22, 14, 34],
+            wrap_cols=(4,),
+        )
 
     sheet(
         C["sheetClaims"],

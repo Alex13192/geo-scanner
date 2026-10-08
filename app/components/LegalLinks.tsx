@@ -2,10 +2,18 @@
  * The links that every review process looks for: a reachable privacy policy, the
  * terms, and a way to make contact.
  *
- * A fourth belonged here until the paid audit was withdrawn - the withdrawal
- * notice a site owes consumers in the EU and the UK before they are bound. The
- * link and the page it pointed at were removed in the same change, because a
- * footer link to a deleted page is a worse outcome than either.
+ * A fourth belonged here and went away with the paid audit: the withdrawal notice
+ * a site owes consumers in the EU and the UK before they are bound. It came back
+ * on 2026-10-08 with the measurement report, which put something on sale again -
+ * as /refund/, where the notice is one section rather than a separate document,
+ * because the person deciding whether to pay should not have to find a second page
+ * reading the same contract. /withdrawal/ itself stays deleted and still redirects
+ * from middleware.ts.
+ *
+ * PRICING IS IN THIS LIST FOR A REASON THAT IS NOT LEGAL EITHER: a price a visitor
+ * cannot reach is not a price, and this array is the only footer that every page
+ * renders. The page was an orphan for exactly one build after it was restored -
+ * reachable from the sitemap and from /refund/, and from nowhere a person clicks.
  *
  * Kept as one component on purpose. This site renders more than ten separate
  * footers by hand, which is exactly how /privacy/ and /terms/ once went missing
@@ -26,8 +34,10 @@
  */
 const LINKS = [
   { href: "/about/", label: "About" },
+  { href: "/pricing/", label: "Pricing" },
   { href: "/privacy/", label: "Privacy policy" },
   { href: "/terms/", label: "Terms" },
+  { href: "/refund/", label: "Refunds" },
   { href: "/contact/", label: "Contact" },
 ] as const;
 

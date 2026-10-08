@@ -227,6 +227,9 @@ type RunLine = {
   mentionsBrand: boolean | null;
   mentionsPrimary?: boolean | null;
   mentionsCoatings: boolean | null;
+  /** Which of the intake's named competitors this answer recommends. Absent on files written before
+   *  the collector marked them; null when the answer was not usable. */
+  mentionsCompetitors?: string[] | null;
   domains: string[];
   usage: Record<string, any> | null;
   answer: string;
@@ -236,6 +239,12 @@ type RunHeader = {
   kind: "run-header";
   schema?: number;
   collector?: { script?: string; version?: number; script_sha256?: string; started_at?: string };
+  /**
+   * The intake's named competitors, as the collector recorded them. Declared here rather than read
+   * through a cast so the shape is in one place: the collector writes either bare strings or
+   * {value} objects depending on where it read them from, and the report accepts both.
+   */
+  competitors?: (string | { value?: string })[] | null;
   run?: {
     mode?: string;
     model?: string | null;
@@ -602,9 +611,22 @@ const intakeDrift =
       "两次测量的判定口径不同时，数字不能直接并列。"
     : "";
 
+/**
+ * The tail of a path, for anything a client reads.
+ *
+ * A paid report must not print the operator's home directory. `C:\Users\<name>\...` leaks the
+ * machine, the OS account and the directory layout, and none of it helps the reader: the last two
+ * segments are enough to find the file, and the sha256 next to it is what proves identity.
+ */
+function displayPath(p: string | null | undefined): string {
+  if (!p) return "";
+  const parts = String(p).split(/[\\/]/).filter(Boolean);
+  return parts.slice(-2).join("/");
+}
+
 const bankPageRows: [string, string][] = header
   ? [
-      ["题库文件", header.bank?.path ?? ""],
+      ["题库文件", displayPath(header.bank?.path)],
       [
         "题库指纹（sha256，题面清单）",
         `${bankFingerprint || "（题库没有记录指纹）"}` +
@@ -619,7 +641,7 @@ const bankPageRows: [string, string][] = header
       ["题库生成日期", String(header.bank?.generated_on ?? header.bank?.generated_at ?? "（未记录）")],
       [
         "来源 intake",
-        `${header.intake?.resolved_path ?? "（未记录）"}` +
+        `${displayPath(header.intake?.resolved_path) || "（未记录）"}` +
           (header.intake?.sha256_actual ? `　sha256 ${header.intake.sha256_actual}` : "") +
           (header.intake?.sha256_matches === true
             ? "　✓ 与题库记录一致"
@@ -632,7 +654,7 @@ const bankPageRows: [string, string][] = header
       ["本次运行的语言 / 题数", `${header.run?.language ?? "?"}　${bankQuestions.length} 题`],
       [
         "本次运行的文件",
-        `${answersPath}　（第 1 行是采集脚本写入的 provenance 头，共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`,
+        `${displayPath(answersPath)}　（第 1 行是采集脚本写入的 provenance 头，共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`,
       ],
     ]
   : [
@@ -641,7 +663,7 @@ const bankPageRows: [string, string][] = header
       ["批准人 / 批准日期", "（未记录）"],
       ["来源 intake", "（未记录）"],
       ["题目来源", `按每行 answer 的 group 字段分组；共 ${bankQuestions.length} 题`],
-      ["本次运行的文件", `${answersPath}　（共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`],
+      ["本次运行的文件", `${displayPath(answersPath)}　（共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`],
     ];
 
 /* ------------------------------------------------------------------ */
@@ -999,16 +1021,24 @@ const COPY: Record<string, string> = {
   groupsLead:
     "{groupCount} 组问题测的是不同的事，任何一组单独拿出来都会被误读：只看不含品牌名的组会低估模型对公司的了解，只看点名品牌的组会高估陌生客户的触达。",
 
-  sectionCompetitors: "六、竞品：本次没有测量",
+  sectionCompetitors: "六、竞品：谁在被推荐",
   competitorsCallout:
-    "这份数据里没有竞品。{runs} 次回答没有对任何一家其他公司做过提及计数，所以本报告没有竞品对比表、没有份额、没有排名。",
+    "在 {nonBrandRuns} 次不含品牌名的运行里，{BRAND} 被提及 {nonBrandMentions} 次；被推荐最多的是 {compTopName}（{compTopCount} 次）。",
+  competitorsLead:
+    "下表按客户在 intake 里点名的竞品逐家计数，写法同样是『几次运行里几次』。第一列是不含品牌名的问题里的次数——那一列才是份额，因为那些问题里没有任何提示；第二列是全部问题里的次数。",
   competitorsBody:
-    "参照的那份外部交付物里有一节竞品压制分析。它需要『同一批问题里对手被提及多少次』这个输入，而本次采集没有打这个标记——采集脚本只标记了 {BRAND} 一家的品牌名与客户的品类词。" +
-    "要得到这个数字，必须在采集时对每个对比对象各自标记，或者用同一批回答重新抽取一遍实体，那是另一次采集，不是这份报告的推断。",
+    "判定规则：答案文本里出现该竞品名字即计 1 次，匹配方式与品牌名相同（拉丁名字按词边界、CJK 名字按子串，规则在 lib/answer-check/rules.ts）。名字用的是客户在 intake 里自己写的写法——写成一个没人这么叫的官方全称，就会记成 0 次，那 0 是写法的效果，不是这家竞品没有被推荐。",
+  competitorsNote:
+    "本表只统计客户点名的 {compCount} 家。回答里还会提到别的厂商，本报告没有对它们计数，也不据此对任何一家作判断。",
   competitorsNone1: "没有被测量的竞品，就没有可以写进表格的竞品数字。本报告不填占位符：空白和 0 都会被读成一个结论。",
   competitorsNone2: "回答里确实提到了很多其他厂商。那是回答的正文，不是本报告的测量对象：本报告没有对它们计数，也不据此对任何一家作判断。",
   competitorsNone3:
-    "如果下一次要竞品对比，就在同一批问题上增加一列『对手名称列表』的标记，再跑同样的 {runsPerQuestion} 次；只有那样得到的数字才能和本次的数字放在一起看。",
+    "如果下一次要竞品对比，就在 intake 的 competitors.names 里写出 3–5 个对手名，再用同一份题库跑同样的 {runsPerQuestion} 次；只有那样得到的数字才能和本次的数字放在一起看。",
+  thCompName: "竞品",
+  thCompNonBrand: "不含品牌名的问题里",
+  thCompAll: "全部问题里",
+  thCompGroups: "分组分布",
+  sheetCompetitors: "竞品提及",
 
   sectionSources: "七、信源网络：回答引用了哪些域名",
   sourcesLead:
@@ -1094,9 +1124,9 @@ const COPY: Record<string, string> = {
     "图 2｜逐题提及：每一道题里品牌被提及的运行次数。标签为次数，n = 每题完成的运行次数（{runsPerQuestion}）；横轴是 0 到 {runsPerQuestion} 次。",
   figMentionsAxis: "提及次数（每题 {runsPerQuestion} 次运行）",
   figEntity:
-    "图 3｜名字与主体：点名了简称/别名/曾用名的 {entityQuestions} 道题、共 {entityTotalRuns} 次运行里，回答有没有出现法定名称（{BRAND}）。标签为次数，n = {entityTotalRuns}。分类规则写在图下方与正文里，逐条都能在原文里核对。",
-  figEntitySame: "回答里出现法定名称 {entitySameConclusion} 次",
-  figEntityNotSame: "只出现简称/别名，没有出现法定名称 {notSameRuns} 次",
+    "图 3｜名字与主体：点名了简称/别名/曾用名的 {entityQuestions} 道题、共 {entityTotalRuns} 次运行里，回答有没有引用到客户自己的域名（{BRAND}）。标签为次数，n = {entityTotalRuns}。分类规则写在图下方与正文里，逐条都能在原文里核对。",
+  figEntitySame: "引用到客户自己的域名 {entitySameConclusion} 次",
+  figEntityNotSame: "没有引用到客户自己的域名 {notSameRuns} 次",
   figEntityN: "n = {entityTotalRuns}（{entityQuestions} 道名字题的各次运行）",
   figSources:
     "图 4｜信源分布：回答引用次数最多的 {domainLimit} 个域名。标签为次数（引用事件次数），n = {citationEvents} 次引用事件、{distinctDomains} 个域名；另有 {otherDomains} 个域名合计 {otherEvents} 次引用事件未逐一列出。排序是引用事件的计数顺序，不是影响力排名。",
@@ -1149,7 +1179,90 @@ function primaryMentionOf(r: RunLine): boolean | null {
 const nameQuestionIds = new Set(nameQuestions.map((n) => n.id));
 const nameQuestionFacts = questions.filter((q) => nameQuestionIds.has(q.id));
 const entityRunsTotal = nameQuestionFacts.reduce((s, q) => s + q.okRuns, 0);
-const entityConnected = nameQuestionFacts.reduce((s, q) => s + q.primaryMentions, 0);
+
+/**
+ * WHAT "CONNECTED TO THE ENTITY" MEANS, AND WHY IT IS NOT "THE LEGAL NAME APPEARED".
+ *
+ * The first version of this section counted a run as connected when the answer CONTAINED the legal
+ * name. On the first real measurement that produced 6 of 6 — while four of those six answers said in
+ * their own words that they could not find the company at all, and one attributed the name to a
+ * different company entirely. A count that reads as "the model knows you" while the model is saying
+ * "no such company" is worse than no count: it is the one number in this report a client would quote.
+ *
+ * So the test is EVIDENCE OF FINDING THE ENTITY, not evidence of the string:
+ *
+ *   connected = the answer CITES a domain belonging to the client.
+ *
+ * Nothing here reads tone or meaning. It reads the citation domains the collector recorded, and the
+ * rule is printed in the report so a reader can check it against the excerpts printed beside it.
+ *
+ * WHY A STEM AND NOT THE DOMAIN FROM THE INTAKE: the run header carries the brand's spellings but not
+ * its domain, and a report that needed the intake file to still exist could not be re-rendered from
+ * the run file alone. When the brand has no ASCII letters (a Chinese-only name) there is no stem to
+ * look for, so the rule is reported as NOT APPLICABLE rather than guessed, and every run falls into
+ * the "no evidence of finding it" bucket.
+ */
+const brandStem = (() => {
+  /**
+   * THE FIRST WORD OF A SPELLING, never the whole spelling. Stripping the spaces out of
+   * "LLMention scanner" produces "llmentionscanner", which is a string that can never appear in a
+   * domain — the first attempt did exactly that and silently classified every run as "no evidence".
+   * The first word is the part a domain is built from.
+   */
+  const stemFrom = (value: string): string =>
+    String(value)
+      .toLowerCase()
+      .split(/[\s,，、/]+/)
+      .map((w) => w.replace(/[^a-z0-9]/g, ""))
+      .find((w) => w.length >= 4) ?? "";
+  const fromName = brandTokens.find((t) => t.field === "brand.name")?.value ?? BRAND;
+  return stemFrom(fromName) || brandTokens.map((t) => stemFrom(t.value)).find(Boolean) || "";
+})();
+
+function citesOwnDomain(r: RunLine): boolean {
+  if (!brandStem) return false;
+  return (r.domains ?? []).some((d) =>
+    String(d).toLowerCase().replace(/[^a-z0-9]/g, "").includes(brandStem)
+  );
+}
+
+/**
+ * Phrases a model uses when it could not identify the entity. PUBLISHED in the rule text, because a
+ * reader has to be able to check the classification, and because the count of these is printed next
+ * to the count of runs that cited the client's own domain. Containment is the whole test.
+ */
+const NOT_FOUND_SIGNALS = [
+  "no exact match",
+  "didn't surface",
+  "did not surface",
+  "no direct results",
+  "didn't return direct",
+  "did not return direct",
+  "does not appear to refer",
+  "doesn't appear to refer",
+  "not appear to refer to a well-defined",
+  "unable to find",
+  "could not find",
+  "couldn't find",
+  "no specific company",
+  "not a well-defined",
+  "未找到",
+  "没有找到",
+  "没有检索到",
+  "没有一家",
+  "无法确认",
+  "无法确定",
+  "查无",
+];
+
+function saysNotFound(r: RunLine): boolean {
+  const text = String(r.answer ?? "").toLowerCase().replace(/\s+/g, " ");
+  return NOT_FOUND_SIGNALS.some((s) => text.includes(s));
+}
+
+const entityScoredRuns = nameQuestionFacts.flatMap((q) => (byQuestion.get(q.q) ?? []).filter((r) => r.ok));
+const entityConnected = entityScoredRuns.filter(citesOwnDomain).length;
+const entityNotFound = entityScoredRuns.filter((r) => !citesOwnDomain(r) && saysNotFound(r)).length;
 const entityNotConnected = entityRunsTotal - entityConnected;
 
 if (entityRunsTotal > 0 && entityConnected + entityNotConnected !== entityRunsTotal) {
@@ -1163,7 +1276,9 @@ if (entityRunsTotal > 0 && entityConnected + entityNotConnected !== entityRunsTo
 const entityConclusionRuleText =
   `分类规则：名字题（题库里问简称/别名/曾用名的 ${nameQuestionFacts.length} 道题，id ` +
   `${nameQuestionFacts.map((q) => q.id).join("、") || "（没有）"}）的每一次已完成运行，` +
-  `回答里出现法定名称「${BRAND}」计为『连回法定主体』，没有出现计为『没有连回』；判定由采集脚本写入 mentionsPrimary，本报告直接读。`;
+  `回答引用的域名里出现客户自己域名的主干「${brandStem || "（品牌名里没有可用的 ASCII 主干，本规则不适用）"}」计为『引用到客户自己的域名』，其余计为『没有引用到』；` +
+  `『没有引用到』的那些里，回答文本含有下列任一表述的另计一类『明确说找不到』：${NOT_FOUND_SIGNALS.join("、")}。` +
+  "这条规则只读采集脚本记录的引用域名与回答文本，不做语义判断；本节附有各次运行的原文，可以逐条核对。";
 
 const entityFirstQuestion = nameQuestionFacts[0];
 const entityRuns = entityFirstQuestion
@@ -1184,19 +1299,55 @@ const entityQuote = entityFirstQuestion
 
 const entityLeadBody = entityFirstQuestion
   ? `这一节回答一个具体问题：模型看得懂这家公司的名字吗？题库里有 {nameQuestions} 道题问的是简称、别名或曾用名` +
-    `（${nameQuestions.map((n) => `${n.id}「${n.value}」`).join("、")}），共 {nameRuns} 次完成的运行；其中 {nameConnected} 次的回答里出现了法定名称「{BRAND}」，` +
-    `{nameNotConnected} 次没有。模型知道这个名字背后的公司，与模型能把一个口语名稳定地对回法定主体，是两件事。下面这一段是模型的原话。`
+    `（${nameQuestions.map((n) => `${n.id}「${n.value}」`).join("、")}），共 {nameRuns} 次完成的运行。判定不看语气、不看结论句，只看证据：回答有没有引用到客户自己的域名。` +
+    `本次 {nameConnected} 次引用到了，{nameNotConnected} 次没有；没有引用到的那些里，{notFoundRuns} 次的原文明确说找不到这家公司。模型知道这个名字背后的公司，与模型能把一个口语名稳定地对回法定主体，是两件事。下面这一段是模型的原话。`
   : `题库里没有问简称、别名或曾用名的题：intake 的 brand.short_name / brand.aliases / brand.former_names 里没有可用的值，题库生成器因此没有出这一类题。` +
     "所以本次没有测量『名字能不能对回法定主体』，这是一个缺口，不是一个结论——报告不会把『没问』写成『没问题』。";
 
 const summaryEntityBody = entityFirstQuestion
   ? `实体层：{runs} 次完成的回答里 {brandRuns} 次出现了品牌名；问题里点名品牌的 {promptedRuns} 次运行里 {promptedMentions} 次出现。` +
-    `名字这一层：{nameQuestions} 道题问的是简称/别名/曾用名，共 {nameRuns} 次运行里 {nameConnected} 次把回答连回了法定名称（{BRAND}），{nameNotConnected} 次没有。`
+    `名字这一层：{nameQuestions} 道题问的是简称/别名/曾用名，共 {nameRuns} 次运行里 {nameConnected} 次引用了客户自己的域名（{BRAND}），{nameNotConnected} 次没有引用到，其中 {notFoundRuns} 次明确说找不到这家公司。`
   : "实体层：题库里没有问简称、别名或曾用名的题（intake 没有填这些字段），所以本次没有测量名字与法定主体之间的对应关系；这是这次测量的一个缺口，不是结论。";
 
 /* ------------------------------------------------------------------ */
 /* Claims: assertions in the answers that this report does NOT verify  */
 /* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/* Competitors: who gets recommended when nobody names the client      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * THE COLUMN THE FIRST VERSION OF THIS REPORT COULD NOT PRODUCE. A reader meets "0 of 45" and asks
+ * the only question that follows: then who was named instead? That needs a per-competitor mark on
+ * every answer, which the collector writes (mentionsCompetitors) from the names in the intake.
+ *
+ * The test is containment in the answer text with the same matcher the brand name uses, on the
+ * client's own spellings. That has one consequence worth printing rather than hiding: a competitor
+ * written as a marketing name nobody says out loud scores 0, and that 0 is a property of the
+ * spelling, not of the competitor's visibility.
+ */
+type CompetitorRow = { name: string; nonBrand: number; all: number; byGroup: string };
+const competitorNames: string[] = (header?.competitors ?? [])
+  .map((c) => (typeof c === "string" ? c : String(c?.value ?? "")))
+  .filter((name) => name.length > 0);
+const competitorsMeasured =
+  competitorNames.length > 0 && answers.some((r) => Array.isArray(r.mentionsCompetitors));
+const nonBrandIds = new Set(nonBrandQuestions.map((q) => q.id));
+const competitorRows: CompetitorRow[] = competitorsMeasured
+  ? competitorNames
+      .map((name) => {
+        const hits = answers.filter((r) => (r.mentionsCompetitors ?? []).includes(name));
+        return {
+          name,
+          nonBrand: hits.filter((r) => r.id !== undefined && nonBrandIds.has(r.id)).length,
+          all: hits.length,
+          byGroup: groups.map((g) => `${g.short}:${hits.filter((r) => r.group === g.id).length}`).join("、"),
+        };
+      })
+      .sort((a, b) => b.nonBrand - a.nonBrand || b.all - a.all)
+  : [];
+const competitorTop = competitorRows[0] ?? null;
 
 type Claim = { claim: string; source: string; handling: string };
 
@@ -1455,10 +1606,12 @@ const entityRunsLeadBody = entityFirstQuestion
   : "";
 
 const entityFindingBody = entityFirstQuestion
-  ? `名字题的 ${entityRunsTotal} 次运行里 ${entityConnected} 次的回答出现了法定名称「${BRAND}」，${entityNotConnected} 次没有。` +
-    (entityNotConnected > 0
-      ? `没有出现的那 ${entityNotConnected} 次，回答围绕的是客户自己给的简称/别名——这是本次测量里最值得注意的一件事：名字被认出来了，但它与法定主体的连线不是每次都在。`
-      : "这一次每一次都连回了法定主体；这不表示名字没有问题，只表示在这批运行里模型没有走岔。")
+  ? `名字题的 ${entityRunsTotal} 次运行里，${entityConnected} 次的回答引用了客户自己的域名，${entityNotConnected} 次没有引用到；没有引用到的那些里，${entityNotFound} 次明确说找不到这家公司。` +
+    (entityNotFound > 0
+      ? `这是本次测量里最值得注意的一件事：名字被反复提到，却没有一次把回答指向这家公司自己的页面——『提到名字』和『认得这家公司』是两件事，本节的计数只算后者。`
+      : entityConnected > 0
+        ? "本次有运行把回答指向了客户自己的域名；这不表示名字没有问题，只表示在这批运行里模型找到了这家公司。"
+        : "本次没有任何一次把回答指向客户自己的域名；本节附有各次运行的原文，可以逐条核对。")
   : "";
 
 /**
@@ -1498,6 +1651,9 @@ const fills: Record<string, string | number> = {
   coatingsRuns: totals.coatingsMentions === null ? COPY_NOT_MEASURED : totals.coatingsMentions,
   nonBrandQuestions: totals.nonBrandQuestions,
   nonBrandRuns: totals.nonBrandRuns,
+  compTopName: competitorTop?.name ?? "（没有竞品被点名）",
+  compTopCount: competitorTop?.nonBrand ?? 0,
+  compCount: competitorRows.length,
   nonBrandMentions: totals.nonBrandBrandMentions,
   promptedRuns: totals.promptedRuns,
   promptedMentions: totals.promptedBrandMentions,
@@ -1553,9 +1709,10 @@ const fills: Record<string, string | number> = {
   nameRuns: entityRunsTotal,
   nameConnected: entityConnected,
   nameNotConnected: entityNotConnected,
+  notFoundRuns: entityNotFound,
   entityConclusionRuleBody: entityConclusionRuleText,
   entityConclusionLineBody: entityFirstQuestion
-    ? `连回法定主体 ${entityConnected} 次、没有连回 ${entityNotConnected} 次（n = ${entityRunsTotal}）；规则是回答里有没有出现「${BRAND}」。`
+    ? `引用到客户自己的域名 ${entityConnected} 次、没有引用到 ${entityNotConnected} 次（n = ${entityRunsTotal}），其中 ${entityNotFound} 次明确说找不到这家公司。判定规则：回答引用的域名里出现客户自己域名的主干「${brandStem || "（品牌名没有可用的 ASCII 主干，本规则不适用）"}」计为『引用到』；『明确说找不到』按一张固定的表述清单判定，清单全文在工作簿的元数据页（entity_conclusion_rule）。`
     : "本次没有名字题，因此没有这条测量。",
   entityQuestions: nameQuestionFacts.length,
   entityTotalRuns: entityRunsTotal,
@@ -1586,6 +1743,29 @@ if (leftovers.length > 0) {
     "Unfilled placeholders in the copy block: " +
       leftovers.map(([key, value]) => `${key} -> ${(value.match(/\{[a-zA-Z_][a-zA-Z0-9_]*\}/g) || []).join(",")}`).join("; ")
   );
+}
+
+/**
+ * WHEN NOTHING WAS MARKED, THE SECTION SAYS SO INSTEAD OF PRINTING A TABLE OF ZEROS. Run files written
+ * before the collector marked competitors (and any intake with no competitors.names) carry no
+ * per-answer marks at all, and a table of zeros would be read as "no competitor was recommended" -
+ * a different claim from "nobody counted".
+ */
+if (!competitorsMeasured) {
+  const unmeasured: Record<string, string> = {
+    sectionCompetitors: "六、竞品：本次没有测量",
+    competitorsCallout:
+      `这份数据里没有竞品。${totals.nonBrandRuns + totals.promptedRuns} 次回答没有对任何一家其他公司做过提及计数，所以本报告没有竞品对比表、没有份额、没有排名。`,
+    competitorsLead: "",
+    competitorsBody:
+      "参照的那份外部交付物里有一节竞品压制分析。它需要『同一批问题里对手被提及多少次』这个输入，而这份运行文件没有记录竞品的标记。" +
+      "要得到这个数字，必须在 intake 的 competitors.names 里写出对手名，并在采集时对每个对手各自标记。",
+    competitorsNote: "",
+  };
+  for (const [key, value] of Object.entries(unmeasured)) FILLED_COPY[key] = value;
+} else {
+  /** The advice lead promises "no competitor was measured" - true until it was. */
+  FILLED_COPY.adviceLead = "下面几条是从本次测量直接读出来的，不是通用建议。它们都不承诺效果：本报告没有测量内容上线后会发生什么。";
 }
 
 /** Copy as the document prints it: already filled, so the renderer never substitutes anything. */
@@ -1695,7 +1875,9 @@ const plan: string[][] = [
 ];
 
 const limits: string[] = [
-  "没有测量任何竞品。这份数据里没有第二家公司的提及计数，所以报告里没有竞品对比、没有份额、没有排名。",
+  competitorsMeasured
+    ? `竞品只统计客户在 intake 里点名的 ${competitorRows.length} 家。回答里提到的其他厂商没有被计数，本报告也不据此对任何一家作判断。`
+    : "没有测量任何竞品。这份数据里没有第二家公司的提及计数，所以报告里没有竞品对比、没有份额、没有排名。",
   "没有做情感分析。『提及』只表示答案里出现了品牌名或品牌名的一个写法，不表示评价是正面还是负面。",
   `信源列表是回答引用过的域名，不是影响力排名。${citationEvents} 次引用事件分布在 ${domainMap.size} 个域名上，出现在前面只说明被链接得多。`,
   `只有一个模型、一天的数据：${modelDisplay}，${measuredOn}，${webSearch ? "开启联网搜索" : "关闭联网搜索"}，每题 ${runsPerQuestion} 次运行。` +
@@ -1708,7 +1890,9 @@ const limits: string[] = [
     : "本次没有出现被截断（超时或流中断）的调用。",
   runMode === "api"
     ? "测的是 API 返回的回答，不是网页界面上用户看到的回答。两者可能不同，本报告没有做这个对照。"
-    : `本次的采集模式是 ${runModeLabelText}：文件里的回答不是模型输出，这份报告只能用来验证「题库 → 运行文件 → 报告」这条链路，不能作为任何对外结论。`,
+    : runMode === "replay"
+      ? "本次的采集模式是 replay：答案来自一次真实 API 调用的记录，本次只按当前规则重新计算了提及标注（例如新加的竞品标注），没有发出任何新的调用；token 用量与失败行都沿用那次记录。"
+      : `本次的采集模式是 ${runModeLabelText}：文件里的回答不是模型输出，这份报告只能用来验证「题库 → 运行文件 → 报告」这条链路，不能作为任何对外结论。`,
 ];
 
 if (!header) {
@@ -1778,7 +1962,7 @@ const searchSentence =
         : `${webSearch ? "开启" : "关闭"}联网搜索`;
 
 const method: string[] = [
-  `本报告的每一次计数都来自 ${answersPath} 里 ok=true 的 ${answers.length} 条记录：${questions.length} 道问题（题库指纹 ${bankFingerprint || "未记录"}），` +
+  `本报告的每一次计数都来自 ${displayPath(answersPath)} 里 ok=true 的 ${answers.length} 条记录：${questions.length} 道问题（题库指纹 ${bankFingerprint || "未记录"}），` +
     `每题 ${runsPerQuestion} 次运行，合计 ${totals.runs} 次完成的回答。模型是 ${modelDisplay}，测量日期 ${measuredOn}，` +
     `${searchSentence}，采集模式 ${runMode}` +
     `${header?.run?.endpoint ? `（${header.run.endpoint}）` : ""}` +
@@ -1809,12 +1993,12 @@ function isBlank(text: string): boolean {
 }
 
 const provenance: string[] = [
-  `题库：${header?.bank?.path ?? "（运行文件没有记录题库路径）"}`,
+  `题库：${displayPath(header?.bank?.path) || "（运行文件没有记录题库路径）"}`,
   `题库指纹：${bankFingerprint || "（未记录）"}${
     header?.bank?.fingerprint_verified === true ? "（采集脚本重算核对通过）" : ""
-  }；来源 intake：${header?.intake?.resolved_path ?? "（未记录）"}`,
+  }；来源 intake：${displayPath(header?.intake?.resolved_path) || "（未记录）"}`,
   `批准：${bankApprovedBy ? `${bankApprovedBy}　${bankApprovedOn || "（未写日期）"}` : "（空：题库还没有批准人签字）"}`,
-  `数据文件：${answersPath}（${parsedLines} 条回答记录，其中 ok=true ${answers.length} 条、失败 ${rejected.length} 条）。`,
+  `数据文件：${displayPath(answersPath)}（${parsedLines} 条回答记录，其中 ok=true ${answers.length} 条、失败 ${rejected.length} 条）。`,
   `采集脚本：${header?.collector?.script ?? "（运行文件没有记录采集脚本）"}` +
     (header?.collector?.version !== undefined ? ` v${header.collector.version}` : "") +
     (header?.collector?.script_sha256 ? `，script sha256 ${String(header.collector.script_sha256).slice(0, 16)}…` : "") +
@@ -1850,6 +2034,9 @@ const model = {
    * reached this point would be printed as one. See the leftover check above.
    */
   copy: FILLED_COPY,
+  /** Whether this run file carried per-answer competitor marks at all. The renderer branches on it. */
+  competitorsMeasured,
+  competitors: competitorRows,
   bank: {
     headerPresent: Boolean(header),
     path: header?.bank?.path ?? null,
@@ -1915,7 +2102,7 @@ const model = {
     dateSource,
     webSearch,
     runsPerQuestion,
-    answersFile: answersPath,
+    answersFile: displayPath(answersPath),
     answersFileLines: parsedLines,
     answersOk: answers.length,
     answersFailed: rejected.length,
@@ -1930,7 +2117,7 @@ const model = {
     attemptsTotal,
     timeoutsTotal,
     truncatedTotal,
-    bankPath: header?.bank?.path ?? "",
+    bankPath: displayPath(header?.bank?.path),
     bankFingerprint,
     bankApprovedBy,
     bankApprovedOn,
@@ -2028,7 +2215,7 @@ table([COPY.tableItem, COPY.tableValue], [
   [COPY.kMeasuredOn, measuredOn],
   [COPY.kWebSearch, webSearch ? COPY.yes : COPY.no],
   [COPY.kRunsPerQuestion, String(runsPerQuestion)],
-  [COPY.kAnswersFile, answersPath],
+  [COPY.kAnswersFile, displayPath(answersPath)],
   [COPY.kCompleted, `${answers.length} / ${parsedLines}`],
   [COPY.kExcluded, failureSummary],
   [COPY.kTokens, String(totalTokens)],
@@ -2167,12 +2354,21 @@ for (const g of model.groups) {
 
 /* --- 六、竞品 ------------------------------------------------------- */
 
-md.push(`## ${COPY.sectionCompetitors}`);
+md.push(`## ${T("sectionCompetitors")}`);
 md.push("");
 md.push(`> ${T("competitorsCallout")}`);
 md.push("");
-md.push(T("competitorsBody"), "");
-for (const key of ["competitorsNone1", "competitorsNone2", "competitorsNone3"]) bullet(T(key));
+if (competitorsMeasured) {
+  md.push(T("competitorsLead"), "");
+  md.push(`| ${T("thCompName")} | ${T("thCompNonBrand")} | ${T("thCompAll")} | ${T("thCompGroups")} |`);
+  md.push("| --- | --- | --- | --- |");
+  for (const row of competitorRows) md.push(`| ${row.name} | ${row.nonBrand} | ${row.all} | ${row.byGroup} |`);
+  md.push("");
+  md.push(T("competitorsNote"), "");
+} else {
+  md.push(T("competitorsBody"), "");
+  for (const key of ["competitorsNone1", "competitorsNone2", "competitorsNone3"]) bullet(T(key));
+}
 md.push("");
 
 /* --- 七、信源 ------------------------------------------------------- */
