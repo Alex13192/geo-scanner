@@ -766,6 +766,43 @@ const questions: QuestionFact[] = questionIds.map((q) => {
 const nonBrandQuestions = questions.filter((q) => !q.namesBrand);
 const promptedQuestions = questions.filter((q) => q.namesBrand);
 
+/**
+ * WHICH LANGUAGE THE REPORT IS WRITTEN IN. It has to be resolved before EVERYTHING that chooses by
+ * language, and that includes the group metadata below - not just the copy dictionary. An earlier
+ * version of this switch sat next to the copy and a later line read it, which TypeScript accepted and
+ * node refused at run time: "Cannot access 'lang' before initialization". The report never rendered,
+ * and a comparison against a missing file reported zero differences, so the failure looked like a
+ * pass. Both halves of that are fixed: the switch is first, and the check now fails when the file it
+ * compares against is absent.
+ *
+ * Default comes from the run header, so an English bank produces an English report with no flag.
+ */
+type ReportLang = "zh" | "en";
+const langFlag = (arg("lang") || "").trim().toLowerCase();
+const headerLang = (header?.run?.language ?? "").trim().toLowerCase();
+const lang: ReportLang =
+  langFlag === "zh" || langFlag === "en"
+    ? langFlag
+    : headerLang === "en" || headerLang === "zh"
+      ? headerLang
+      : "zh";
+
+/*
+ * THE GROUP SHORT LABELS ARE CHINESE IN BOTH BANKS, AND THAT IS NOT A TRANSLATION PROBLEM.
+ * run-bank.mts writes `short` from a hardcoded table (ARCHETYPE_SHORT), so an English bank still
+ * records "品类" and the report prints it in the group rows, the source breakdown and the by-group
+ * counts - which is why several translated paragraphs kept failing the language check. The four
+ * archetype ids are fixed and known, so the English label is looked up here rather than re-collected:
+ * every run file already on disk carries the Chinese one, and re-running the measurement to fix a
+ * label would be the wrong price for it.
+ */
+const ARCHETYPE_SHORT_EN: Record<string, string> = {
+  category: "Category",
+  scenario: "Scenario",
+  comparison: "Comparison",
+  fact: "Fact",
+};
+
 const groups = groupOrder
   .map((id) => {
     const inGroup = questions.filter((q) => q.group === id);
@@ -773,7 +810,7 @@ const groups = groupOrder
     return {
       id,
       label: meta.label,
-      short: meta.short,
+      short: lang === "en" ? (ARCHETYPE_SHORT_EN[meta.id] ?? meta.short) : meta.short,
       purpose: meta.measures,
       questions: inGroup.length,
       runs: inGroup.reduce((s, q) => s + q.okRuns, 0),
@@ -903,23 +940,6 @@ function runOf(q: number, n: number): RunLine {
  * client arrives through {placeholders} filled from the run header, or through the data-derived blocks
  * built above (quotes, claims, advice). That is the property this file lost once already.
  */
-/**
- * WHICH LANGUAGE THE REPORT IS WRITTEN IN. Resolved here, before the copy it selects, rather than
- * where the model is assembled: the copy block is what the language chooses between, and a switch
- * that runs after its own input has already been built is not a switch.
- *
- * Default comes from the run header, so an English bank produces an English report with no flag.
- */
-type ReportLang = "zh" | "en";
-const langFlag = (arg("lang") || "").trim().toLowerCase();
-const headerLang = (header?.run?.language ?? "").trim().toLowerCase();
-const lang: ReportLang =
-  langFlag === "zh" || langFlag === "en"
-    ? langFlag
-    : headerLang === "en" || headerLang === "zh"
-      ? headerLang
-      : "zh";
-
 const COPY_ZH: Record<string, string> = {
   reportName: "AI 可见度报告",
   footer: "AI 可见度报告",
