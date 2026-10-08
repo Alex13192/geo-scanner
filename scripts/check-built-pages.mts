@@ -74,6 +74,15 @@ const ROUTES: Route[] = [
   { route: "/answer-check/", file: "answer-check.html", indexable: true },
   { route: "/privacy/", file: "privacy.html", indexable: true },
   { route: "/terms/", file: "terms.html", indexable: true },
+  /*
+   * THE TWO PAGES THE MONEY DEPENDS ON WERE MISSING FROM THIS LIST, which is exactly the gap the
+   * script's own comment warns about one level up: a page that is new must not be allowed to skip the
+   * gate by being new. Both were added in the change that restored the paid measurement and neither
+   * was added here, so they were the only content pages on the site that no check scored - while
+   * being the two a payment reviewer opens.
+   */
+  { route: "/pricing/", file: "pricing.html", indexable: true },
+  { route: "/refund/", file: "refund.html", indexable: true },
   // Tool output, generated per request and disallowed in robots.txt.
   { route: "/report/", file: "report.html", indexable: false },
   // Where Creem sends a buyer after payment. It is noindex and absent from the sitemap, so it is
