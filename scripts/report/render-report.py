@@ -1251,7 +1251,13 @@ def chart_groups(model: dict, out: Path) -> None:
     f_tick = font(15 * scale)
     probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
 
-    sub = [f"{g['questions']} 题 · {g['runs']} 次运行" for g in groups]
+    # The chart's own labels follow the language of the group names, which is what decides whether
+    # the document is English: a Chinese label next to English axis text is the failure this avoids.
+    _en = all(str(g.get("label", "")).isascii() for g in groups)
+    sub = [
+        (f"{g['questions']} questions · {g['runs']} runs" if _en else f"{g['questions']} 题 · {g['runs']} 次运行")
+        for g in groups
+    ]
     widest = max(
         [probe.textlength(g["short"], font=f_label) for g in groups]
         + [probe.textlength(s, font=f_small) for s in sub],
@@ -1735,7 +1741,7 @@ def build_visibility_docx(model: dict, out: Path, charts: dict) -> None:
     para(C["sourcesLead"])
     make_table(
         [C["thDomain"], C["thCount"], C["thWhere"]],
-        [[d["domain"], str(d["count"]), "、".join(d["groups"])] for d in model["domains"]],
+        [[d["domain"], str(d["count"]), (", " if all(str(g).isascii() for g in d["groups"]) else "、").join(d["groups"])] for d in model["domains"]],
         [4.8, 2.0, 9.6],
         align=[None, WD_ALIGN_PARAGRAPH.CENTER, None],
     )
@@ -1968,7 +1974,7 @@ def build_visibility_xlsx(model: dict, out: Path) -> None:
     sheet(
         C["sheetDomains"],
         [C["thDomain"], C["thCount"], C["thWhere"]],
-        [[d["domain"], d["count"], "、".join(d["groups"])] for d in model["domains"]],
+        [[d["domain"], d["count"], (", " if all(str(g).isascii() for g in d["groups"]) else "、").join(d["groups"])] for d in model["domains"]],
         [34, 12, 40],
         wrap_cols=(3,),
     )
@@ -2024,7 +2030,12 @@ def build_visibility_xlsx(model: dict, out: Path) -> None:
             ["bank_approved_by", meta.get("bankApprovedBy")],
             ["bank_approved_on", meta.get("bankApprovedOn")],
             ["bank_language", meta.get("bankLanguage")],
-            ["brand_tokens", "、".join(meta.get("brandTokens") or [])],
+            [
+                "brand_tokens",
+                (", " if all(str(t).isascii() for t in (meta.get("brandTokens") or [])) else "、").join(
+                    meta.get("brandTokens") or []
+                ),
+            ],
             ["answers_file", meta["answersFile"]],
             ["answers_file_lines", meta["answersFileLines"]],
             ["answers_ok", meta["answersOk"]],
