@@ -15,30 +15,32 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * /withdrawal/ - terms that govern a purchase nobody can make are the same failure
  * as a process page for a process nobody runs (see OPERATIONS.md).
  *
- * ⚠️ THE PURCHASE CAME BACK ON 2026-10-08 AND THIS PAGE HAS NOT BEEN REWRITTEN FOR
- * IT. Recorded here rather than left implied: the measurement report is sold by
- * quote and invoice, /pricing/ and /refund/ state what is bought and when it is
- * refundable, and this page still describes a site with nothing for sale. It needs
- * the three sections back - what is being sold, refunds, and the consumer right of
- * withdrawal - before an overseas invoice is issued. That is a task in
- * OPERATIONS.md, not something to rediscover from a complaint.
+ * THE PURCHASE CAME BACK ON 2026-10-08 AND THESE SECTIONS CAME BACK WITH IT. The site sells a
+ * measurement report and a quarterly retest, so this page now states what is sold, how an order and
+ * a refund work, and the consumer right of withdrawal. /pricing/ and /refund/ carry the detail; this
+ * is where the contract lives, and the two must not drift apart - if a price or a refund boundary
+ * changes there, it changes here in the same commit.
  *
- * Two deliberate omissions, because inventing either would be worse than
- * leaving it out:
- *  - No governing-law clause naming a country. The operator's jurisdiction is
- *    not recorded anywhere on this site, and a guessed choice of law is a claim
- *    that can be wrong.
- *  - No "we may use your content however we like" licence over submitted
- *    material. Nothing in the product needs it.
+ * WHY A GOVERNING-LAW CLAUSE IS HERE NOW AND WAS DELIBERATELY ABSENT BEFORE: the earlier version
+ * refused to name a country, because the operator's jurisdiction was recorded nowhere on the site
+ * and a guessed choice of law is a claim that can be wrong. The postal address was published on
+ * /refund/ in the same change, so the place of business is a fact rather than a guess. The clause
+ * therefore also says what /refund/ says about consumer protection: choosing Chinese law does not
+ * remove the mandatory rules of the consumer's own country.
  *
- * Not legal advice. Review it again before this site takes money from anyone.
+ * One deliberate omission remains, because inventing it would be worse than leaving it out:
+ *  - No "we may use your content however we like" licence over submitted material. Nothing in the
+ *    product needs it, and the intake contains a client's own vocabulary and competitors.
+ *
+ * NOT LEGAL ADVICE, AND THIS IS THE FIRST VERSION THAT GOVERNS A PAID CONTRACT. Have it reviewed
+ * before the first overseas invoice is issued - that is the one deadline this file cannot miss.
  */
 import { og } from "@/lib/og";
 
 const TITLE = "Terms of service";
 const DESCRIPTION =
-  "The rules for using the free LLMention scanner: what is promised, what is not, and what you may and may not scan.";
-const UPDATED = "4 October 2026";
+  "The rules for the free LLMention scanner and for the measurement reports sold through it: what is promised, what is not, what you may scan, and how an order, a refund and the right of withdrawal work.";
+const UPDATED = "8 October 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -78,6 +80,69 @@ export default function TermsPage() {
             published rules to what a page returns. The complete method — every check, its weight
             and its rule — is published at <a href="/methodology/">methodology</a>, so the basis of
             any score can be inspected and disputed rather than taken on trust.
+          </p>
+
+          <h2>What is sold</h2>
+          <p>
+            Two services, and they are services rather than licences. A{" "}
+            <strong>measurement report</strong> at $299: we take an intake from you, generate a
+            25–30 question bank out of your own vocabulary, send it back for you to correct and
+            approve, freeze it, put each question to the engine you selected three times with web
+            search on, and deliver a report and a data workbook within 5–10 working days of the bank
+            being frozen. A <strong>quarterly retest</strong> at $499: the same frozen bank, run
+            again, with the comparison between the two runs. Multi-brand and agency work is quoted in
+            writing.
+          </p>
+          <p>
+            Prices, what each includes and what neither includes are stated on the{" "}
+            <a href="/pricing/">pricing page</a>, and that page is part of these terms. Every count in
+            a report is written as a count — “3 of 12”, never a percentage — and the raw answers ship
+            with it, so anyone reading a number can check it against the answer it came from.
+          </p>
+
+          <h2>Orders, payment and delivery</h2>
+          <p>
+            An order starts as an email to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. We
+            confirm scope, price and dates in writing before anything is charged. There is no checkout
+            on this site, and no card details are taken anywhere on it; payment instructions follow
+            that confirmation.
+          </p>
+          <p>
+            What we need from you is the intake form and an approval of the question bank. Nothing is
+            measured until you approve it, and the bank is frozen at that point so that a retest
+            measures the same questions. If we cannot deliver within the window stated in the
+            confirmation, you choose between waiting and a full refund.
+          </p>
+
+          <h2>Refunds and the right of withdrawal</h2>
+          <p>
+            Before you approve and freeze the question bank you can cancel, for a full refund and
+            without giving a reason. Once the bank is frozen the measurement has begun: every question
+            is put to a paid engine API three times, those calls cannot be unspent, and the fee is
+            therefore non-refundable from that moment. The email that asks you to approve the bank
+            says so, and payment is taken after you have seen it.
+          </p>
+          <p>
+            If you are a consumer in the EU or the UK you normally have 14 days to withdraw from a
+            distance contract. This contract begins when you ask us to begin, so we ask you to confirm
+            in writing that you want the bank frozen now and that you understand the right of
+            withdrawal ends when the runs start. Without that confirmation we do not start, and you
+            keep the full 14 days. Nothing in this section removes a right you have that cannot be
+            excluded by agreement — including your rights if what we deliver does not match what was
+            agreed.
+          </p>
+          <p>
+            The <a href="/refund/">refunds page</a> states the same commitment in more detail, and it
+            is the page to read before paying rather than after.
+          </p>
+
+          <h2>Who you are buying from, and which law applies</h2>
+          <p>
+            LLMention is an independent project operated from Shanghai, China. The seller&apos;s name
+            and postal address are published on the <a href="/refund/">refunds page</a>. These terms
+            are governed by the laws of the People&apos;s Republic of China, and disputes fall to the
+            courts of the place of business. If you are a consumer, that choice of law does not deprive
+            you of the protection of the mandatory rules of the country in which you live.
           </p>
 
           <h2>Scanning other people&apos;s sites</h2>
@@ -145,10 +210,11 @@ export default function TermsPage() {
 
           <h2>Limits of liability</h2>
           <p>
-            To the extent the law allows, we are not liable for indirect or consequential losses,
-            lost profits, lost rankings or lost traffic. Nothing on this site is sold, so no
-            monetary liability arises from using it. Nothing in these terms excludes liability for
-            fraud, or for anything else that cannot lawfully be excluded.
+            To the extent the law allows, we are not liable for indirect or consequential losses, lost
+            profits, lost rankings or lost traffic. For a paid measurement, total liability is limited
+            to the fee you paid for it. The free tools carry no monetary liability, because nothing is
+            charged for them. Nothing in these terms excludes liability for fraud, or for anything else
+            that cannot lawfully be excluded — including the consumer rights described above.
           </p>
 
           <h2>If these terms change</h2>
@@ -174,7 +240,7 @@ export default function TermsPage() {
         </div>
         <div className="mt-16 space-y-6 text-sm leading-relaxed text-[var(--ink-2)]">
           <h2 className="text-xl font-bold text-[var(--ink-1)]">What these terms commit us to</h2>
-          <p>Three promises and one limit, stated here so they are easy to find.</p>
+          <p>The free tools, and the one thing you can buy, stated here so they are easy to find.</p>
           <div className="overflow-x-auto">
           <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
             <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
@@ -199,6 +265,18 @@ export default function TermsPage() {
             <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">What you may not scan</td>
               <td className="px-4 py-2.5 align-top">Targets designed to overload the service or probe private networks</td>
+            </tr>
+            <tr className="border-t border-[var(--line)]">
+              <td className="px-4 py-2.5 align-top">What is sold</td>
+              <td className="px-4 py-2.5 align-top">A measurement report at $299 and a quarterly retest at $499, ordered by email</td>
+            </tr>
+            <tr className="border-t border-[var(--line)]">
+              <td className="px-4 py-2.5 align-top">What a paid report gives you</td>
+              <td className="px-4 py-2.5 align-top">Per-question counts, the raw answers behind them, and the method — never a score out of 100, never a predicted citation</td>
+            </tr>
+            <tr className="border-t border-[var(--line)]">
+              <td className="px-4 py-2.5 align-top">When a paid order is refundable</td>
+              <td className="px-4 py-2.5 align-top">Until the question bank is frozen; after that the engine calls are already spent</td>
             </tr>
             </tbody>
           </table>
