@@ -64,10 +64,24 @@ jobs:
         if: env.CF_TOKEN != ''
         run: npm ci
 
-      # The OpenNext build runs the Next.js build itself.
+      # The OpenNext build runs the Next.js build itself - and the report pages are PRERENDERED, so
+      # anything they read from process.env is read HERE, in the runner, not from the Worker's
+      # environment when the page is requested. Setting a Cloudflare variable alone would not change
+      # /refund/, which is why the value is passed at build time.
+      #
+      # OPERATOR_IDENTITY is the seller's name and postal address shown on /refund/. It lives in a
+      # repository VARIABLE rather than in this file because this repository is public: OPERATIONS.md
+      # is explicit that an address must not be committed to it, and a variable is not part of the
+      # source. Set it in GitHub -> Settings -> Secrets and variables -> Actions -> Variables ->
+      # New repository variable -> OPERATOR_IDENTITY.
+      #
+      # Without it the page prints its fallback sentence ("given with every quote and invoice")
+      # instead of an address: honest, and not what a payment reviewer opens the page to find.
       - name: Build for Cloudflare
         if: env.CF_TOKEN != ''
         run: npx opennextjs-cloudflare build
+        env:
+          OPERATOR_IDENTITY: ${{ vars.OPERATOR_IDENTITY }}
 
       - name: Deploy to Cloudflare Workers
         if: env.CF_TOKEN != ''
