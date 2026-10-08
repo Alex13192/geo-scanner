@@ -1908,7 +1908,7 @@ advice.push(
  * THE PLAN IS A SCHEDULE, NOT A FORECAST, and every row names the same bank fingerprint the whole document
  * names: a re-test on a different bank is a different measurement.
  */
-const plan: string[][] = [
+const planZh: string[][] = [
   [
     "第 1—14 天",
     entityFirstQuestion
@@ -1938,6 +1938,39 @@ const plan: string[][] = [
     `同题复测的原始回答文件；逐题计数对照表（本次基线 ${totals.nonBrandBrandMentions} / ${totals.nonBrandRuns}）`,
   ],
 ];
+
+const planEn: string[][] = [
+  [
+    "Days 1-14",
+    entityFirstQuestion
+      ? `Settle the entity: agree the legal name, the official short form, former names and where each one is used, and publish a facts page on the site (for questions ${nameQuestionFacts
+          .map((q) => q.id)
+          .join(", ")}).`
+      : "Fill in the intake's alias and former-name fields, so the next bank can produce a name question (this run never measured that layer).",
+    "One entity facts sheet (with sources and dates); a link to the site's facts page; standard answers",
+  ],
+  [
+    "Days 15-30",
+    claims.length > 0
+      ? `Verify the ${claims.length} kinds of number-bearing assertion listed in section 8 - find evidence for each, or remove it.`
+      : "Turn the factual statements that appeared in the answers into a list, with sources.",
+    "Evidence, or a decision to remove, for every assertion; a record of who authorised it",
+  ],
+  [
+    "Days 31-60",
+    zeroMentionNonBrand.length > 0
+      ? `Publish citable content for ${zeroIds}, prioritised on the kinds of source the answers already cite.`
+      : "List the kinds of source this run cited, as placement targets for later content.",
+    "A list of content pages and their links; the evidence behind each one",
+  ],
+  [
+    "Days 61-90",
+    `Re-run the same bank (fingerprint ${bankFingerprint || "see section 1"}), the same model and the same ${runsPerQuestion} runs, compare the counts question by question, and record the model version and the date.`,
+    `The raw answer files from the re-run; a per-question count comparison (this baseline ${totals.nonBrandBrandMentions} / ${totals.nonBrandRuns})`,
+  ],
+];
+
+const plan: string[][] = lang === "en" ? planEn : planZh;
 
 const limitsZh: string[] = [
   competitorsMeasured
