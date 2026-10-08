@@ -719,8 +719,36 @@ type QuestionFact = {
 /** How many per-run columns the report prints. Three is what the DOCX table's geometry has room for. */
 const RUN_COLUMNS = 3;
 
-const COPY_NOT_MEASURED = "未测量";
-const COPY_NOT_RUN = "未运行";
+/**
+ * WHICH LANGUAGE THE REPORT IS WRITTEN IN - AND IT IS RESOLVED BEFORE ANYTHING THAT READS IT.
+ *
+ * This switch has now been moved twice, both times because a line above it read `lang` and node
+ * refused at run time with "Cannot access 'lang' before initialization". The first move put it above
+ * the copy dictionary and left the group metadata below it; the second put it above the group
+ * metadata and left two legend words below it. TypeScript caught the second and not the first, and
+ * the first was worse than an error: the report never rendered while the comparison against a
+ * missing file reported zero differences, so a broken build looked like a passing check.
+ *
+ * The lesson is positional, not stylistic: this constant belongs above EVERY use, so it sits here,
+ * before the model source, the legend words, the group metadata and the copy dictionary - and any
+ * new language-dependent value must be added below this line rather than above it.
+ *
+ * Default comes from the run header, so an English bank produces an English report with no flag.
+ */
+type ReportLang = "zh" | "en";
+const langFlag = (arg("lang") || "").trim().toLowerCase();
+const headerLang = (header?.run?.language ?? "").trim().toLowerCase();
+const lang: ReportLang =
+  langFlag === "zh" || langFlag === "en"
+    ? langFlag
+    : headerLang === "en" || headerLang === "zh"
+      ? headerLang
+      : "zh";
+
+// These two are interpolated into the per-run legend, so hardcoding them in Chinese put Chinese in
+// an English sentence.
+const COPY_NOT_MEASURED = lang === "en" ? "not measured" : "未测量";
+const COPY_NOT_RUN = lang === "en" ? "not run" : "未运行";
 
 /**
  * A COLUMN THAT WAS NOT MEASURED IS null, NOT 0, and this is the one place where that decision is made.
@@ -765,27 +793,6 @@ const questions: QuestionFact[] = questionIds.map((q) => {
 /** A question "names the brand" when its own text carries one of the brand's spellings. */
 const nonBrandQuestions = questions.filter((q) => !q.namesBrand);
 const promptedQuestions = questions.filter((q) => q.namesBrand);
-
-/**
- * WHICH LANGUAGE THE REPORT IS WRITTEN IN. It has to be resolved before EVERYTHING that chooses by
- * language, and that includes the group metadata below - not just the copy dictionary. An earlier
- * version of this switch sat next to the copy and a later line read it, which TypeScript accepted and
- * node refused at run time: "Cannot access 'lang' before initialization". The report never rendered,
- * and a comparison against a missing file reported zero differences, so the failure looked like a
- * pass. Both halves of that are fixed: the switch is first, and the check now fails when the file it
- * compares against is absent.
- *
- * Default comes from the run header, so an English bank produces an English report with no flag.
- */
-type ReportLang = "zh" | "en";
-const langFlag = (arg("lang") || "").trim().toLowerCase();
-const headerLang = (header?.run?.language ?? "").trim().toLowerCase();
-const lang: ReportLang =
-  langFlag === "zh" || langFlag === "en"
-    ? langFlag
-    : headerLang === "en" || headerLang === "zh"
-      ? headerLang
-      : "zh";
 
 /*
  * THE GROUP SHORT LABELS ARE CHINESE IN BOTH BANKS, AND THAT IS NOT A TRANSLATION PROBLEM.
@@ -2328,7 +2335,7 @@ const methodEn: string[] = [
       "hiding the retries would leave the cost figures unreconcilable, which is the lesson the previous collection left behind."
     : `Calls: 0. This run is a ${runMode}, so no call was made to any model and both token usage and attempts are 0; ` +
       "those two zeros are facts, not gaps. In a real collection every line records attempts (retries included), because a truncated call is billed the same.",
-  `The model name and the measurement date come from the run file's provenance header (${modelSource}; date source: ${dateSource}). ` +
+  `The model name and the measurement date come from the run file's provenance header (model: ${header ? "recorded by the collector" : "supplied on the command line"}; date: ${header ? "recorded by the collector" : "passed to this report"}). ` +
     (header
       ? "The collector scripts/report/run-bank.mts writes those fields into the first line before the run starts, so they sit in the same file, recorded at the same moment as the answers."
       : "This file has no provenance header, so both are inputs this report was given."),
