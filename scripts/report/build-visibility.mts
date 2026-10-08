@@ -1661,7 +1661,7 @@ const coverageNoteBodyEn =
 
 const coverageNoteBody = lang === "en" ? coverageNoteBodyEn : coverageNoteBodyZh;
 
-const claimsNoteBody =
+const claimsNoteBodyZh =
   claims.length > 0
     ? `每一条都写了它出现在哪一次运行，可以直接在数据文件里找到原文核对。带数字的断言一共出现在 ${claimSentencesFound} 次回答里、涉及 ${claimCandidates.length} 道题，` +
       `本节按题各取一条、共列 ${claims.length} 条（筛选规则：『该次回答里第一句带数字的话』${
@@ -1671,7 +1671,19 @@ const claimsNoteBody =
     : `本次 ${totals.runs} 次回答里没有找到带数字的断言，所以这一节没有表。这不是『回答都对』，而是『没有可核对的数字』；` +
       "核对清单为空与核对通过是两件事。";
 
-const questionsLeadBody =
+const claimsNoteBodyEn =
+  claims.length > 0
+    ? `Each row records which run it came from, so the wording can be found in the data file and checked. Number-bearing assertions appear in ${claimSentencesFound} answers across ${claimCandidates.length} questions, ` +
+      `and this section lists one per question - ${claims.length} in total (the rule: 'the first sentence in that answer that contains a number'${
+        claimCandidates.length > claims.length ? "; questions beyond the cap are not listed separately" : ""
+      }). ` +
+      "This report does not decide whether these assertions are true, and does not suggest repeating them in marketing material: a number inside an answer has no source behind it."
+    : `No number-bearing assertion was found in the ${totals.runs} answers of this run, so this section has no table. That is not 'the answers are correct' but 'there are no numbers to check'; ` +
+      "an empty checklist and a passed check are two different things.";
+
+const claimsNoteBody = lang === "en" ? claimsNoteBodyEn : claimsNoteBodyZh;
+
+const questionsLeadBodyZh =
   `✓ 表示该次运行的回答里出现了品牌名（${brandTokens.map((t) => t.value).join(" / ")} 任一），— 表示没有出现，` +
   `『${COPY_NOT_MEASURED}』表示这一次运行没有拿到完整回答` +
   (runsPerQuestion < RUN_COLUMNS
@@ -1680,6 +1692,18 @@ const questionsLeadBody =
   (runsPerQuestion > RUN_COLUMNS
     ? `本表只画前 ${RUN_COLUMNS} 次运行的标记（表中放不下更多列），第 ${RUN_COLUMNS + 1} 到 ${runsPerQuestion} 次的逐题计数在右侧的『品牌提及』列里，逐行明细在数据文件里。`
     : "判定由采集脚本在采集时写入，本报告不重新判定。");
+
+const questionsLeadBodyEn =
+  `A check mark means that run's answer contained the brand name (any of ${brandTokens.map((t) => t.value).join(" / ")}), a dash means it did not, ` +
+  `and '${COPY_NOT_MEASURED}' means that run produced no complete answer` +
+  (runsPerQuestion < RUN_COLUMNS
+    ? `, while '${COPY_NOT_RUN}' means this measurement ran only ${runsPerQuestion} times per question (the extra columns have no run behind them).`
+    : ".") +
+  (runsPerQuestion > RUN_COLUMNS
+    ? ` This table marks only the first ${RUN_COLUMNS} runs, because the table cannot hold more columns; the per-question counts for runs ${RUN_COLUMNS + 1} to ${runsPerQuestion} are in the 'brand mentions' column to the right, and the per-line detail is in the data file.`
+    : " The marks are written by the collector during collection; this report does not decide them again.");
+
+const questionsLeadBody = lang === "en" ? questionsLeadBodyEn : questionsLeadBodyZh;
 
 const entityRunsLeadBodyZh = entityFirstQuestion
   ? `下面是 ${entityFirstQuestion.id}「${entityFirstQuestion.question}」各次运行的开头，逐字摘录（每次取回答的第一行与紧随其后的一行；只去掉 Markdown 的加粗与标题标记）。` +
