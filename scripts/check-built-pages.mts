@@ -76,6 +76,10 @@ const ROUTES: Route[] = [
   { route: "/terms/", file: "terms.html", indexable: true },
   // Tool output, generated per request and disallowed in robots.txt.
   { route: "/report/", file: "report.html", indexable: false },
+  // Where Creem sends a buyer after payment. It is noindex and absent from the sitemap, so it is
+  // listed here only so that no page goes unaccounted for - and deliberately without a content
+  // floor, because a page nobody should reach by searching has no reason to satisfy one.
+  { route: "/thanks/", file: "thanks.html", indexable: false },
 ];
 
 /*
