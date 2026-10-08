@@ -1328,7 +1328,12 @@ if (entityRunsTotal > 0 && entityConnected + entityNotConnected !== entityRunsTo
 }
 
 const entityConclusionRuleText =
-  `分类规则：名字题（题库里问简称/别名/曾用名的 ${nameQuestionFacts.length} 道题，id ` +
+  lang === "en"
+    ? `How the runs are classified: for every completed run of a name question (${nameQuestionFacts.length} questions ask about a short form, an alias or a former name; ids ` +
+      `${nameQuestionFacts.map((q) => q.id).join(", ") || "(none)"}), a cited domain containing the client's own domain stem "${brandStem || "(the brand name has no usable ASCII stem, so this rule does not apply)"}" counts as citing the client's own domain, and anything else counts as not citing it; ` +
+      `among those that do not cite it, an answer whose text contains any of these phrases is counted separately as saying outright that it cannot find the company: ${NOT_FOUND_SIGNALS.join(", ")}. ` +
+      "This rule reads only the cited domains the collector recorded and the answer text, and makes no semantic judgement; the verbatim extract of every run is in this section, so each one can be checked."
+    : `分类规则：名字题（题库里问简称/别名/曾用名的 ${nameQuestionFacts.length} 道题，id ` +
   `${nameQuestionFacts.map((q) => q.id).join("、") || "（没有）"}）的每一次已完成运行，` +
   `回答引用的域名里出现客户自己域名的主干「${brandStem || "（品牌名里没有可用的 ASCII 主干，本规则不适用）"}」计为『引用到客户自己的域名』，其余计为『没有引用到』；` +
   `『没有引用到』的那些里，回答文本含有下列任一表述的另计一类『明确说找不到』：${NOT_FOUND_SIGNALS.join("、")}。` +
@@ -1341,7 +1346,10 @@ const entityRuns = entityFirstQuestion
 
 const entityQuote = entityFirstQuestion
   ? {
-      label: `${entityFirstQuestion.id} · 第 ${firstRun(entityFirstQuestion.q).run} 次运行 · 实体识别`,
+      label:
+        lang === "en"
+          ? `${entityFirstQuestion.id} · run ${firstRun(entityFirstQuestion.q).run} · entity identification`
+          : `${entityFirstQuestion.id} · 第 ${firstRun(entityFirstQuestion.q).run} 次运行 · 实体识别`,
       question: firstRun(entityFirstQuestion.q).question,
       run: firstRun(entityFirstQuestion.q).run,
       text: trimTrailingLabel(headOf(plain(firstRun(entityFirstQuestion.q).answer), 280)),
@@ -2593,7 +2601,10 @@ const model = {
   },
   headline: {
     value: `${totals.nonBrandBrandMentions} / ${totals.nonBrandRuns}`,
-    caption: `不含品牌名的问题 · ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次`,
+    caption:
+      lang === "en"
+        ? `Questions without the brand name · the brand is mentioned in ${totals.nonBrandBrandMentions} of ${totals.nonBrandRuns} runs`
+        : `不含品牌名的问题 · ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次`,
     callout: T("summaryCallout"),
   },
   groups: groups.map((g) => ({
