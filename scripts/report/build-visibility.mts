@@ -656,6 +656,21 @@ const lang: ReportLang =
 const COPY_NOT_MEASURED = lang === "en" ? "not measured" : "未测量";
 const COPY_NOT_RUN = lang === "en" ? "not run" : "未运行";
 
+/*
+ * THE GROUP SHORT LABELS ARE CHINESE IN BOTH BANKS, AND THAT IS NOT A TRANSLATION PROBLEM.
+ * run-bank.mts writes `short` from a hardcoded table (ARCHETYPE_SHORT), so an English bank still
+ * records "品类" - and the report prints it in the group rows, the by-group counts and the question
+ * tables. The four archetype ids are fixed and known, so the English label is looked up here rather
+ * than re-collected. It sits above the language switch's dependents for the same reason the switch
+ * itself does: a value that reads a later declaration is a run-time failure TypeScript may not see.
+ */
+const ARCHETYPE_SHORT_EN: Record<string, string> = {
+  category: "Category",
+  scenario: "Scenario",
+  comparison: "Comparison",
+  fact: "Fact",
+};
+
 const bankPageRows: [string, string][] = header
   ? lang === "en"
     ? [
@@ -819,7 +834,10 @@ const questions: QuestionFact[] = questionIds.map((q) => {
     q,
     id: bankRecord?.id ?? sample.id ?? `Q${q}`,
     group,
-    groupShort: meta?.short ?? group,
+    groupShort:
+      lang === "en"
+        ? (ARCHETYPE_SHORT_EN[meta?.id ?? ""] ?? meta?.short ?? group)
+        : (meta?.short ?? group),
     question: sample.question,
     namesBrand: bankRecord?.namesBrand ?? brandTokens.some((t) => findMention(sample.question.toLowerCase(), t.value) !== -1),
     okRuns: list.length,
@@ -835,22 +853,6 @@ const questions: QuestionFact[] = questionIds.map((q) => {
 /** A question "names the brand" when its own text carries one of the brand's spellings. */
 const nonBrandQuestions = questions.filter((q) => !q.namesBrand);
 const promptedQuestions = questions.filter((q) => q.namesBrand);
-
-/*
- * THE GROUP SHORT LABELS ARE CHINESE IN BOTH BANKS, AND THAT IS NOT A TRANSLATION PROBLEM.
- * run-bank.mts writes `short` from a hardcoded table (ARCHETYPE_SHORT), so an English bank still
- * records "品类" and the report prints it in the group rows, the source breakdown and the by-group
- * counts - which is why several translated paragraphs kept failing the language check. The four
- * archetype ids are fixed and known, so the English label is looked up here rather than re-collected:
- * every run file already on disk carries the Chinese one, and re-running the measurement to fix a
- * label would be the wrong price for it.
- */
-const ARCHETYPE_SHORT_EN: Record<string, string> = {
-  category: "Category",
-  scenario: "Scenario",
-  comparison: "Comparison",
-  fact: "Fact",
-};
 
 const groups = groupOrder
   .map((id) => {
@@ -1461,7 +1463,9 @@ const competitorRows: CompetitorRow[] = competitorsMeasured
           name,
           nonBrand: hits.filter((r) => r.id !== undefined && nonBrandIds.has(r.id)).length,
           all: hits.length,
-          byGroup: groups.map((g) => `${g.short}:${hits.filter((r) => r.group === g.id).length}`).join("、"),
+          byGroup: groups
+            .map((g) => `${g.short}:${hits.filter((r) => r.group === g.id).length}`)
+            .join(lang === "en" ? ", " : "、"),
         };
       })
       .sort((a, b) => b.nonBrand - a.nonBrand || b.all - a.all)
@@ -1643,14 +1647,21 @@ for (const r of rejected) {
 /** "HTTP 429 × 30", without the surrounding sentence, so two places can use it without nesting. */
 const failureDigest = [...rejectedByStatus.entries()]
   .map(([s, n]) => `${/^\d+$/.test(s) ? `HTTP ${s}` : s} × ${n}`)
-  .join("、");
+  .join(lang === "en" ? ", " : "、");
 const failureSummary =
-  `${rejected.length} / ${parsedLines} 行` +
-  (rejected.length
-    ? `（${failureDigest}${
-        timeoutsTotal > 0 ? `，其中 ${timeoutsTotal} 次是超时（超时上限 ${header?.run?.timeout_ms ?? "?"}ms，记录在每一行的 status 里）` : ""
-      }，未计入任何计数）`
-    : "（没有失败行）");
+  lang === "en"
+    ? `${rejected.length} / ${parsedLines} lines` +
+      (rejected.length
+        ? ` (${failureDigest}${
+            timeoutsTotal > 0 ? `, ${timeoutsTotal} of them timeouts (the limit is ${header?.run?.timeout_ms ?? "?"}ms, recorded in each line's status)` : ""
+          }, not counted in any figure)`
+        : " (no failed lines)")
+    : `${rejected.length} / ${parsedLines} 行` +
+      (rejected.length
+        ? `（${failureDigest}${
+            timeoutsTotal > 0 ? `，其中 ${timeoutsTotal} 次是超时（超时上限 ${header?.run?.timeout_ms ?? "?"}ms，记录在每一行的 status 里）` : ""
+          }，未计入任何计数）`
+        : "（没有失败行）");
 
 /* ------------------------------------------------------------------ */
 /* The model                                                          */
@@ -1864,8 +1875,16 @@ const overviewLeadBody = lang === "en" ? overviewLeadBodyEn : overviewLeadBodyZh
  * any call happened at all.
  */
 const runModeLabelText =
-  runMode === "api"
-    ? "api（真实调用）"
+  lang === "en"
+    ? runMode === "api"
+      ? "api (live calls)"
+      : runMode === "dry-run"
+        ? "dry-run (synthesised answers, no call made)"
+        : runMode === "replay"
+          ? "replay (replaying a recorded run, no call made)"
+          : `(the run file records mode ${runMode})`
+    : runMode === "api"
+      ? "api（真实调用）"
     : runMode === "dry-run"
       ? "dry-run（本地合成回答，没有发出任何调用）"
       : runMode === "replay"
@@ -2659,8 +2678,12 @@ const model = {
          * descriptions of the same group. One string, one author.
          */
         heading:
-          `${g.label} · ${g.questions} 题` +
-          (meta?.target ? `（目标 ${meta.target}${meta.status ? `，状态 ${meta.status}` : ""}）` : ""),
+          (lang === "en" ? `${g.label} · ${g.questions} questions` : `${g.label} · ${g.questions} 题`) +
+          (meta?.target
+            ? lang === "en"
+              ? ` (target ${meta.target}${meta.status ? `, status ${meta.status}` : ""})`
+              : `（目标 ${meta.target}${meta.status ? `，状态 ${meta.status}` : ""}）`
+            : ""),
         measures: g.purpose,
         target: meta?.target ?? 0,
         generated: meta?.generated ?? g.questions,
@@ -3009,7 +3032,9 @@ md.push("");
 md.push(T("sourcesLead"), "");
 table(
   [COPY.thDomain, COPY.thCount, COPY.thWhere],
-  domains.map((d) => [d.domain, String(d.count), d.groups.join("、")])
+  // The group column in the workbook's cited-domains sheet: the separator is CJK punctuation, which
+  // an English sheet must not carry.
+  domains.map((d) => [d.domain, String(d.count), d.groups.join(lang === "en" ? ", " : "、")])
 );
 md.push(T("sourcesNote"), "");
 figure("figSources", "sources.png");
