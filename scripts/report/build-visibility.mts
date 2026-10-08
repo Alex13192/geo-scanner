@@ -1872,7 +1872,14 @@ const T = (key: string) => FILLED_COPY[key] ?? COPY[key];
 /* Advice and plan - read out of this measurement, not from a template */
 /* ------------------------------------------------------------------ */
 
-const zeroIds = zeroMentionNonBrand.map((q) => q.id).join("、");
+/*
+ * ONE SEPARATOR, TWO LANGUAGES - AND IT IS NOT COSMETIC HERE. `、` is CJK punctuation, so an English
+ * sentence that interpolates this list still contains a CJK character, and the language check
+ * correctly refuses to print it. That is why translating a whole advice block moved the count by one
+ * instead of five: the title carried no list, and every other field carried this one. The check was
+ * right and the separator was wrong.
+ */
+const zeroIds = zeroMentionNonBrand.map((q) => q.id).join(lang === "en" ? ", " : "、");
 
 const advice: { title: string; problem: string; action: string; deliverable: string; acceptance: string }[] = [];
 
@@ -1906,33 +1913,73 @@ if (claims.length > 0) {
   });
 }
 
+/*
+ * LANGUAGE, CHOSEN FIELD BY FIELD RATHER THAN THROUGH THE DICTIONARY. Every field here interleaves
+ * counts with a sentence, so a per-language template would put the same expression in two places and
+ * the two would drift. One ternary per field keeps the arithmetic in one place and the sentence in
+ * two - which is the shape of the problem.
+ */
 advice.push(
   zeroMentionNonBrand.length > 0
     ? {
-        title: "P1-1 针对 0 次提及的问题补可引用内容",
+        title:
+          lang === "en"
+            ? "P1-1 Publish citable content for the questions that never mention the brand"
+            : "P1-1 针对 0 次提及的问题补可引用内容",
         problem:
-          `不含品牌名的 ${totals.nonBrandQuestions} 道题、共 ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次；` +
-          `其中 ${zeroIds} 在 ${zeroMentionNonBrand[0]?.okRuns ?? runsPerQuestion} 次运行里一次都没有被提到。` +
-          (mentionedNonBrand.length > 0
-            ? `而 ${mentionedNonBrand.map((q) => q.id).join("、")} 提到过——差别说明现有可被引用的材料覆盖了一部分问法，没有覆盖另外一部分。`
-            : ""),
+          lang === "en"
+            ? `Across the ${totals.nonBrandQuestions} questions without the brand name and their ${totals.nonBrandRuns} runs, the brand is mentioned ${totals.nonBrandBrandMentions} times; ` +
+              `${zeroIds} is mentioned in none of ${zeroMentionNonBrand[0]?.okRuns ?? runsPerQuestion} runs.` +
+              (mentionedNonBrand.length > 0
+                ? ` ${mentionedNonBrand.map((q) => q.id).join(", ")} were mentioned, which shows the citable material already covers some phrasings and not others.`
+                : "")
+            : `不含品牌名的 ${totals.nonBrandQuestions} 道题、共 ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次；` +
+              `其中 ${zeroIds} 在 ${zeroMentionNonBrand[0]?.okRuns ?? runsPerQuestion} 次运行里一次都没有被提到。` +
+              (mentionedNonBrand.length > 0
+                ? `而 ${mentionedNonBrand.map((q) => q.id).join("、")} 提到过——差别说明现有可被引用的材料覆盖了一部分问法，没有覆盖另外一部分。`
+                : ""),
         action:
-          `围绕 ${zeroIds} 的用词建立可引用页面：产品与适用场景、检测与认证、标准参与情况、真实案例。` +
-          "优先把内容放到回答已经引用过的域名类型上（行业门户、行业目录、标准与认证页面），而不是只发在自家官网。",
-        deliverable: `覆盖 ${zeroIds} 用词的内容页面；每条内容对应一个可核验的证据。`,
-        acceptance: `复测时 ${zeroIds} 的计数从 0 变成非 0 即为进展；没有变成非 0 时，结论是内容还没有被引用，而不是要再写一遍同样的东西。`,
+          lang === "en"
+            ? `Build citable pages around the vocabulary of ${zeroIds}: what the product is and where it applies, testing and certification, participation in standards, real cases. ` +
+              "Put that content where the answers already cite from - industry portals and directories, standards and certification pages - rather than only on the company's own site."
+            : `围绕 ${zeroIds} 的用词建立可引用页面：产品与适用场景、检测与认证、标准参与情况、真实案例。` +
+              "优先把内容放到回答已经引用过的域名类型上（行业门户、行业目录、标准与认证页面），而不是只发在自家官网。",
+        deliverable:
+          lang === "en"
+            ? `Content pages covering the vocabulary of ${zeroIds}, each one backed by evidence that can be checked.`
+            : `覆盖 ${zeroIds} 用词的内容页面；每条内容对应一个可核验的证据。`,
+        acceptance:
+          lang === "en"
+            ? `On the retest, ${zeroIds} moving from 0 to a non-zero count is progress; if it stays at 0, the conclusion is that the content has not been cited yet, not that the same pages should be written again.`
+            : `复测时 ${zeroIds} 的计数从 0 变成非 0 即为进展；没有变成非 0 时，结论是内容还没有被引用，而不是要再写一遍同样的东西。`,
       }
     : {
-        title: "P1-1 保持：不含品牌名的问题全部至少被提到过一次",
+        title:
+          lang === "en"
+            ? "P1-1 Hold: every question without the brand name mentions it at least once"
+            : "P1-1 保持：不含品牌名的问题全部至少被提到过一次",
         problem:
-          `不含品牌名的 ${totals.nonBrandQuestions} 道题、共 ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次，没有 0 次提及的题。` +
-          "这是一个基线，不是结论：它只说这几道题在这一次测量里被想到了。",
+          lang === "en"
+            ? `Across the ${totals.nonBrandQuestions} questions without the brand name and their ${totals.nonBrandRuns} runs, the brand is mentioned ${totals.nonBrandBrandMentions} times, with no question at zero. ` +
+              "That is a baseline, not a conclusion: it says these questions were thought of in this one measurement."
+            : `不含品牌名的 ${totals.nonBrandQuestions} 道题、共 ${totals.nonBrandRuns} 次运行里，品牌被提及 ${totals.nonBrandBrandMentions} 次，没有 0 次提及的题。` +
+              "这是一个基线，不是结论：它只说这几道题在这一次测量里被想到了。",
         action:
-          "把本次被引用的域名与出现在回答里的表述整理成清单，明确哪些页面在支撑这个结果，下一次复测时逐题对照，并把这份题库的指纹与模型版本一起记录下来。",
-        deliverable: "本次测量里回答引用过的域名与表述清单；每条对应它支撑的题目。",
-        acceptance: `复测时逐题计数不低于本次（${questions
-          .map((q) => `${q.id} ${q.brandMentions}/${q.okRuns}`)
-          .join("、")}）；下降的题要能指出是哪一次变化的。`,
+          lang === "en"
+            ? "List the domains the answers cited and the phrasings that appeared in them, say which pages are carrying that result, compare question by question at the next retest, and record the bank fingerprint and the model version alongside it."
+            : "把本次被引用的域名与出现在回答里的表述整理成清单，明确哪些页面在支撑这个结果，下一次复测时逐题对照，并把这份题库的指纹与模型版本一起记录下来。",
+        deliverable:
+          lang === "en"
+            ? "A list of the domains and phrasings the answers cited in this measurement, each tied to the questions it supported."
+            : "本次测量里回答引用过的域名与表述清单；每条对应它支撑的题目。",
+        acceptance:
+          lang === "en"
+            ? `On the retest, per-question counts are no lower than this run's (${questions
+                .map((q) => `${q.id} ${q.brandMentions}/${q.okRuns}`)
+                .join(", ")}); a question that drops must be traceable to a specific change.`
+            : `复测时逐题计数不低于本次（${questions
+                .map((q) => `${q.id} ${q.brandMentions}/${q.okRuns}`)
+                .join("、")}）；下降的题要能指出是哪一次变化的。`,
       }
 );
 
