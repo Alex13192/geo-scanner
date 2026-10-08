@@ -212,6 +212,22 @@ export default function SiteNav() {
           >
             About
           </a>
+
+          {/*
+            PRICING IS A TOP-LEVEL LINK, AND IT IS HERE BECAUSE OF WHAT THE FOOTER DOES NOT COVER.
+            The legal row in PageFooter carries Pricing on every page that renders it - but the
+            homepage does not render PageFooter, it has its own footer, so on the front door the
+            price was reachable from nowhere at all. Measured, not assumed: the built homepage
+            contained zero links to /pricing/. A site whose only paid page cannot be reached from its
+            own navigation is a site that does not sell it, and a payment reviewer opens the homepage
+            first - Creem's checklist asks for pricing "clearly displayed and easy for users to find".
+          */}
+          <a
+            href="/pricing/"
+            className="rounded-full px-3.5 py-2 text-[15px] text-[var(--ink-2)] transition-colors hover:text-[var(--ink-1)]"
+          >
+            Pricing
+          </a>
         </nav>
 
         {/*

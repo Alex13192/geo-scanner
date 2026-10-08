@@ -1154,8 +1154,26 @@ export default function HomePage() {
             </div>
 
             <div>
-              <p className="mb-3 text-xs font-semibold text-[var(--ink-1)]">Legal</p>
+              {/*
+                The column used to be "Legal" and held only the privacy policy and the terms. It now
+                carries the two pages the money depends on as well, because this footer is the only
+                one the homepage has: PageFooter's legal row never reaches here, so /pricing/ and
+                /refund/ were unreachable from the front door. Renamed rather than relabelled
+                wrongly - a price is not a legal document, and a heading that misdescribes its own
+                list is how a footer stops being read.
+              */}
+              <p className="mb-3 text-xs font-semibold text-[var(--ink-1)]">Pricing and legal</p>
               <ul className="space-y-2.5 text-[13px] text-[var(--ink-2)]">
+                <li>
+                  <a href="/pricing/" className="hover:text-[var(--ink-1)]">
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a href="/refund/" className="hover:text-[var(--ink-1)]">
+                    Refunds
+                  </a>
+                </li>
                 <li>
                   <a href="/privacy/" className="hover:text-[var(--ink-1)]">
                     Privacy policy
