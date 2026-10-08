@@ -1573,7 +1573,7 @@ const Q = (q: number) => questions.find((x) => x.q === q);
  * The sentences that depend on which shape the data has, built once here rather than branched inside the
  * copy block: a sentence that has to choose between two truths is easier to read as two sentences.
  */
-const summaryReachBody =
+const summaryReachBodyZh =
   `${totals.nonBrandQuestions} 道不含品牌名的问题、每题 ${runsPerQuestion} 次运行，共 ${totals.nonBrandRuns} 次运行里品牌被提及 ${totals.nonBrandBrandMentions} 次。` +
   (zeroMentionNonBrand.length > 0
     ? `其中 ${zeroMentionNonBrand.map((q) => q.id).join("、")}（共 ${zeroMentionNonBrand.length} 道）一次都没有提到它；` +
@@ -1586,14 +1586,38 @@ const summaryReachBody =
         .join("、")}）。`) +
   "逐题原文与计数见第三节，问题原文见第一节。";
 
-const summaryFactsBody =
+const summaryReachBodyEn =
+  `${totals.nonBrandQuestions} questions without the brand name, ${runsPerQuestion} runs each: across ${totals.nonBrandRuns} runs the brand is mentioned ${totals.nonBrandBrandMentions} times.` +
+  (zeroMentionNonBrand.length > 0
+    ? ` ${zeroMentionNonBrand.map((q) => q.id).join(", ")} (${zeroMentionNonBrand.length} questions) do not mention it at all; ` +
+      (mentionedNonBrand.length > 0
+        ? `${mentionedNonBrand.map((q) => `${q.id} ${q.brandMentions}/${q.okRuns}`).join(", ")} do.`
+        : "none of them does.") +
+      " A zero is a measurement result, not a gap: those answers are complete, they simply recommend other vendors."
+    : ` Every question without the brand name mentions it at least once (${mentionedNonBrand
+        .map((q) => `${q.id} ${q.brandMentions}/${q.okRuns}`)
+        .join(", ")}).`) +
+  " Per-question extracts and counts are in section 3, and the questions themselves are in section 1.";
+
+const summaryReachBody = lang === "en" ? summaryReachBodyEn : summaryReachBodyZh;
+
+const summaryFactsBodyZh =
   `事实层：${promptedQuestions.length} 道点名品牌的问题、${totals.promptedRuns} 次运行里品牌被提及 ${totals.promptedBrandMentions} 次。` +
   (claims.length > 0
     ? `带数字的断言出现在 ${claimSentencesFound} 次回答里、涉及 ${claimCandidates.length} 道题，本报告按题各取一条列出（共 ${claims.length} 条，见第八节），没有核验任何一条。`
     : "本次回答里没有找到带数字的断言，所以第八节没有可核对的清单。") +
   "逐题计数在第三节，原文在各节摘录里，任何人都可以自己复算。";
 
-const coverageNoteBody =
+const summaryFactsBodyEn =
+  `Facts: ${promptedQuestions.length} questions that name the brand, and across ${totals.promptedRuns} runs the brand is mentioned ${totals.promptedBrandMentions} times.` +
+  (claims.length > 0
+    ? ` Assertions carrying numbers appear in ${claimSentencesFound} answers across ${claimCandidates.length} questions; this report lists one per question (${claims.length} in total, section 8) and verified none of them.`
+    : " No assertion carrying a number was found in these answers, so section 8 has no list to check.") +
+  " Per-question counts are in section 3 and the extracts are in each section, so anyone can recompute them.";
+
+const summaryFactsBody = lang === "en" ? summaryFactsBodyEn : summaryFactsBodyZh;
+
+const coverageNoteBodyZh =
   `『品牌提及』的判定是答案文本里是否出现 ${brandTokens.map((t) => t.value).join(" / ")} 中的任意一个` +
   `（${
     header?.brand?.tokens_source === "intake" ? "来自 intake 的品牌名与别名" : "来自运行文件记录的品牌写法"
@@ -1602,6 +1626,20 @@ const coverageNoteBody =
     ? `『品类词提及』是是否出现客户自己的品类词 ${categoryTokensForReport.map((t) => t.value).join(" / ")}。`
     : "『品类词提及』本次无法判定：intake 的 industry.category_terms 是空的，所以这一列没有数字。") +
   "两个标记都由采集脚本写入，本报告直接读，不重新判定。";
+
+const coverageNoteBodyEn =
+  `A brand mention is marked when the answer text contains any of ${brandTokens.map((t) => t.value).join(" / ")}` +
+  ` (${
+    header?.brand?.tokens_source === "intake"
+      ? "the names and aliases from the intake"
+      : "the spellings recorded in the run file"
+  }; CJK names match as substrings and Latin names on word boundaries, so see lib/answer-check/rules.ts); ` +
+  (hasCategoryTokens
+    ? `a category mention is marked when the answer contains one of the client's own category terms: ${categoryTokensForReport.map((t) => t.value).join(" / ")}.`
+    : "a category mention could not be decided in this run: the intake's industry.category_terms is empty, so that column carries no number.") +
+  " Both marks are written by the collector; this report reads them and does not decide them again.";
+
+const coverageNoteBody = lang === "en" ? coverageNoteBodyEn : coverageNoteBodyZh;
 
 const claimsNoteBody =
   claims.length > 0
