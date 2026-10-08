@@ -1661,7 +1661,7 @@ const questionsLeadBody =
     ? `本表只画前 ${RUN_COLUMNS} 次运行的标记（表中放不下更多列），第 ${RUN_COLUMNS + 1} 到 ${runsPerQuestion} 次的逐题计数在右侧的『品牌提及』列里，逐行明细在数据文件里。`
     : "判定由采集脚本在采集时写入，本报告不重新判定。");
 
-const entityRunsLeadBody = entityFirstQuestion
+const entityRunsLeadBodyZh = entityFirstQuestion
   ? `下面是 ${entityFirstQuestion.id}「${entityFirstQuestion.question}」各次运行的开头，逐字摘录（每次取回答的第一行与紧随其后的一行；只去掉 Markdown 的加粗与标题标记）。` +
     `这一题问的是${
       nameQuestions.find((n) => n.id === entityFirstQuestion.id)?.value
@@ -1670,7 +1670,18 @@ const entityRunsLeadBody = entityFirstQuestion
     }，所以每一份回答都要先把它对回法定主体；各次运行的结论是否一致，读下面这几行就知道。`
   : "";
 
-const entityFindingBody = entityFirstQuestion
+const entityRunsLeadBodyEn = entityFirstQuestion
+  ? `Below are the openings of each run of ${entityFirstQuestion.id} "${entityFirstQuestion.question}", quoted verbatim (the first line of each answer and the line after it; only Markdown bold and heading marks were removed). ` +
+    `This question asks about ${
+      nameQuestions.find((n) => n.id === entityFirstQuestion.id)?.value
+        ? `"${nameQuestions.find((n) => n.id === entityFirstQuestion.id)!.value}"`
+        : "one of the client's own name spellings"
+    }, so every answer has to tie it back to the legal entity first; reading the lines below shows whether the runs agree.`
+  : "";
+
+const entityRunsLeadBody = lang === "en" ? entityRunsLeadBodyEn : entityRunsLeadBodyZh;
+
+const entityFindingBodyZh = entityFirstQuestion
   ? `名字题的 ${entityRunsTotal} 次运行里，${entityConnected} 次的回答引用了客户自己的域名，${entityNotConnected} 次没有引用到；没有引用到的那些里，${entityNotFound} 次明确说找不到这家公司。` +
     (entityNotFound > 0
       ? `这是本次测量里最值得注意的一件事：名字被反复提到，却没有一次把回答指向这家公司自己的页面——『提到名字』和『认得这家公司』是两件事，本节的计数只算后者。`
@@ -1679,19 +1690,40 @@ const entityFindingBody = entityFirstQuestion
         : "本次没有任何一次把回答指向客户自己的域名；本节附有各次运行的原文，可以逐条核对。")
   : "";
 
+const entityFindingBodyEn = entityFirstQuestion
+  ? `Across the ${entityRunsTotal} runs of the name question, ${entityConnected} answers cited the client's own domain and ${entityNotConnected} did not; among those that did not, ${entityNotFound} said outright that they could not find the company.` +
+    (entityNotFound > 0
+      ? ` That is the single most notable result in this measurement: the name is mentioned repeatedly, and not once do the answers point at the company's own pages. "The name appears" and "the company is recognised" are two different things, and this section counts only the second.`
+      : entityConnected > 0
+        ? " Some runs did point at the client's own domain; that does not mean the name is trouble-free, only that the model found the company in these runs."
+        : " No run pointed at the client's own domain; this section carries the verbatim extract of every run, so each one can be checked.")
+  : "";
+
+const entityFindingBody = lang === "en" ? entityFindingBodyEn : entityFindingBodyZh;
+
 /**
  * THE COVERAGE SENTENCE DEPENDS ON WHETHER THE COLUMN EXISTS AT ALL. With category terms from the intake,
  * the 品类词 column shows how often an answer was demonstrably about this industry; with none, there is no
  * such column and the report says NOT MEASURED rather than printing a row of zeros that a reader would take
  * for "the answers were not about the industry".
  */
-const overviewLeadBody =
+const overviewLeadBodyZh =
   `下表是全部 ${questions.length} 道题。` +
   (hasCategoryTokens
     ? `『品类词提及』一列说明回答确实在谈这个客户所在的品类：${totals.runs} 次运行里有 ${totals.coatingsMentions} 次出现了客户自己的品类词，` +
       "所以表里的 0 是『没有提到这家公司』，不是『没有回答这个问题』。"
     : "本次没有『品类词提及』数字：intake 的 industry.category_terms 是空的，采集脚本没有可判定的品类词，" +
       "所以这一列写『未测量』而不是 0——0 会被读成『回答没谈这个品类』，而那是没有依据的。");
+
+const overviewLeadBodyEn =
+  `The table below covers all ${questions.length} questions.` +
+  (hasCategoryTokens
+    ? ` The 'category mentions' column shows that the answers really were about the category this client is in: ${totals.coatingsMentions} of ${totals.runs} runs contained one of the client's own category terms, ` +
+      "so a 0 in that column means 'this company was not mentioned', not 'the question was not answered'."
+    : " There are no 'category mentions' figures in this run: the intake's industry.category_terms is empty, so the collector had no category terms to decide against, " +
+      "and that column reads 'not measured' rather than 0 - a 0 would be read as 'the answers were not about this category', which nothing supports.");
+
+const overviewLeadBody = lang === "en" ? overviewLeadBodyEn : overviewLeadBodyZh;
 
 /**
  * HOW THE ANSWERS WERE PRODUCED, in one phrase, printed on the cover, in the limits and in the method. It
