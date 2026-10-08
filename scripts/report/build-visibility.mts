@@ -1766,7 +1766,11 @@ const fills: Record<string, string | number> = {
   topDomainCount,
   otherDomains,
   otherEvents,
-  citationsByGroup: citationsByGroup.map((c) => `${c.label} ${c.count} 次`).join("、"),
+  // Same class of bug as the question-id list: " 次" and "、" are both Chinese, and this value is
+  // interpolated into an English sentence, so a translated paragraph would still fail the check.
+  citationsByGroup: citationsByGroup
+    .map((c) => (lang === "en" ? `${c.label} ${c.count}` : `${c.label} ${c.count} 次`))
+    .join(lang === "en" ? ", " : "、"),
   minAnswerChars: Math.min(...answerLengths),
   maxAnswerChars: Math.max(...answerLengths),
   bankLanguage: header?.run?.language ?? "（未记录）",
