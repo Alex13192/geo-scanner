@@ -2011,31 +2011,62 @@ const advice: { title: string; problem: string; action: string; deliverable: str
 
 if (entityFirstQuestion && entityNotConnected > 0) {
   advice.push({
-    title: "P0-1 把实体口径写死，并在所有可查的地方用同一个版本",
+    title:
+      lang === "en"
+        ? "P0-1 Fix the entity vocabulary, and use one version everywhere it can be checked"
+        : "P0-1 把实体口径写死，并在所有可查的地方用同一个版本",
     problem:
-      `题库里 ${nameQuestionFacts.length} 道题问的是客户自己的名字写法（${nameQuestions
-        .map((n) => `${n.id}「${n.value}」`)
-        .join("、")}），` +
-      `其中 ${entityNotConnected} 次运行的回答里没有出现法定名称「${BRAND}」。每一次回答都要先做一次名称推断，而推断会出错——这就是名字层面的风险。`,
+      lang === "en"
+        ? `The bank asks about the client's own name spellings in ${nameQuestionFacts.length} questions (${nameQuestions
+            .map((n) => `${n.id} "${n.value}"`)
+            .join(", ")}), and in ${entityNotConnected} runs the answers do not contain the legal name "${BRAND}". Every answer has to infer which entity a name refers to, and inference gets it wrong - that is the risk at the name layer.`
+        : `题库里 ${nameQuestionFacts.length} 道题问的是客户自己的名字写法（${nameQuestions
+            .map((n) => `${n.id}「${n.value}」`)
+            .join("、")}），` +
+          `其中 ${entityNotConnected} 次运行的回答里没有出现法定名称「${BRAND}」。每一次回答都要先做一次名称推断，而推断会出错——这就是名字层面的风险。`,
     action:
-      "先确认一组标准口径：法定全称、官方简称、曾用名、成立年份、注册地、主营业务，以及每个口语名在什么场合使用。" +
-      "把这一组口径同时落到官网（一个可以单独引用的页面）、工商与备案信息、行业目录和百科词条上；每个字段注明更新日期与出处。",
-    deliverable: "1 份实体事实表（字段、内容、出处、更新日期）；1 个官网事实页；一批标准问答（每条都能指向出处）。",
-    acceptance: "同一批名字题复测时，回答里出现法定名称的运行次数不再下降；无法确认的字段写『待核实』而不是留空。",
+      lang === "en"
+        ? "Agree one standard set first: the legal name, the official short form, former names, the founding year, the place of registration, what the business does, and where each spoken name is used. " +
+          "Put that set on the site (on a page that can be cited on its own), in the company register and filing records, in industry directories and in encyclopedia entries - with an update date and a source for every field."
+        : "先确认一组标准口径：法定全称、官方简称、曾用名、成立年份、注册地、主营业务，以及每个口语名在什么场合使用。" +
+          "把这一组口径同时落到官网（一个可以单独引用的页面）、工商与备案信息、行业目录和百科词条上；每个字段注明更新日期与出处。",
+    deliverable:
+      lang === "en"
+        ? "One entity facts sheet (field, content, source, update date); one facts page on the site; a set of standard answers, each of which can point at its source."
+        : "1 份实体事实表（字段、内容、出处、更新日期）；1 个官网事实页；一批标准问答（每条都能指向出处）。",
+    acceptance:
+      lang === "en"
+        ? "On a retest of the same name questions, the number of runs containing the legal name does not fall; a field that cannot be confirmed reads 'to be verified' rather than being left blank."
+        : "同一批名字题复测时，回答里出现法定名称的运行次数不再下降；无法确认的字段写『待核实』而不是留空。",
   });
 }
 
 if (claims.length > 0) {
   advice.push({
-    title: "P0-2 先核验已经出现在回答里的断言，再决定要不要对外引用",
+    title:
+      lang === "en"
+        ? "P0-2 Verify the assertions already appearing in the answers before deciding to repeat them"
+        : "P0-2 先核验已经出现在回答里的断言，再决定要不要对外引用",
     problem:
-      `第八节列出的 ${claims.length} 条带数字的断言（文件里共出现在 ${claimSentencesFound} 次回答里）都出现在回答里，但本报告没有核验。` +
-      "这些正是采购方与媒体最容易追问的地方，也是被追问时最贵的部分。",
+      lang === "en"
+        ? `The ${claims.length} number-bearing assertions listed in section 8 (they appear in ${claimSentencesFound} answers in total) all appear in answers, and this report verified none of them. ` +
+          "These are exactly what a procurement team or a journalist asks about, and the most expensive part of being asked."
+        : `第八节列出的 ${claims.length} 条带数字的断言（文件里共出现在 ${claimSentencesFound} 次回答里）都出现在回答里，但本报告没有核验。` +
+          "这些正是采购方与媒体最容易追问的地方，也是被追问时最贵的部分。",
     action:
-      "逐条找证据：数字以清单形式给出并区分口径与截止日；资质与荣誉保留颁发机构、编号和日期；客户与工程保留项目名称、时间、范围，并取得对方同意公开。" +
-      "有证据的写成可引用的页面，没有证据的先从对外材料里拿掉——写不清楚的断言会被下一次回答原样重复。",
-    deliverable: "每条断言的证据文件或删除决定；客户与工程的公开授权记录；更新后的对外材料。",
-    acceptance: "第八节每一类断言都有一个结果：证据、改写后的表述，或删除。没有『口径待定』的条目。",
+      lang === "en"
+        ? "Find the evidence for each one: numbers as a list with the basis and the cut-off date; credentials and awards with the issuer, the number and the date; customers and projects with the name, the period and the scope, plus the other party's consent to publish. " +
+          "Turn the ones with evidence into citable pages, and take the ones without evidence out of outward-facing material first - an assertion that cannot be written clearly will be repeated verbatim by the next answer."
+        : "逐条找证据：数字以清单形式给出并区分口径与截止日；资质与荣誉保留颁发机构、编号和日期；客户与工程保留项目名称、时间、范围，并取得对方同意公开。" +
+          "有证据的写成可引用的页面，没有证据的先从对外材料里拿掉——写不清楚的断言会被下一次回答原样重复。",
+    deliverable:
+      lang === "en"
+        ? "The evidence file or the deletion decision for every assertion; a record of publication consent from customers and projects; the updated outward-facing material."
+        : "每条断言的证据文件或删除决定；客户与工程的公开授权记录；更新后的对外材料。",
+    acceptance:
+      lang === "en"
+        ? "Every kind of assertion in section 8 has an outcome: evidence, a rewritten statement, or a deletion. There are no 'basis to be decided' entries."
+        : "第八节每一类断言都有一个结果：证据、改写后的表述，或删除。没有『口径待定』的条目。",
   });
 }
 
