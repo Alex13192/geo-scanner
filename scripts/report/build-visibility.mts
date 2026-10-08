@@ -1758,7 +1758,17 @@ const fills: Record<string, string | number> = {
   groupRuns: groups.map((g) => g.runs).join(" / "),
   measuredOn,
   model: modelDisplay,
-  webSearchSentence: webSearch ? "开启联网搜索" : "关闭联网搜索",
+  // Hardcoded Chinese in a value that an English sentence interpolates: replication1 reads "..., web
+  // search on (tools: [web_search]), on one day if possible", and the whole paragraph failed the
+  // language check because of this one phrase rather than because of the sentence.
+  webSearchSentence:
+    lang === "en"
+      ? webSearch
+        ? "web search on (tools: [web_search])"
+        : "web search off"
+      : webSearch
+        ? "开启联网搜索"
+        : "关闭联网搜索",
   citationEvents,
   distinctDomains: domainMap.size,
   domainLimit: domains.length,
