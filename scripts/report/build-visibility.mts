@@ -1475,7 +1475,10 @@ for (const q of questions) {
 }
 
 function claimRow(candidate: Candidate): Claim {
-  const source = `${candidate.id} 第 ${candidate.run} 次运行`;
+  const source =
+    lang === "en"
+      ? `${candidate.id} run ${candidate.run}`
+      : `${candidate.id} 第 ${candidate.run} 次运行`;
   const answer = runOf(candidate.q, candidate.run).answer;
   const evidence = candidate.raw.replace(/…$/, "");
   if (!answer.includes(evidence)) {
@@ -1487,9 +1490,14 @@ function claimRow(candidate: Candidate): Claim {
   return {
     claim: plain(candidate.raw),
     source,
+    // One template, eight rows: every row's handling sentence comes from here, which is why
+    // translating it clears eight entries of the language check at once.
     handling:
-      "本报告未核验。这一句是回答里带数字的断言；引用前需要企业提供对应证据（清单、编号、日期、出处）。" +
-      "回答里的数字没有出处，而这正是客户最容易被追问的地方。",
+      lang === "en"
+        ? "Not verified by this report. The sentence is a number-bearing assertion taken from an answer, so repeating it needs evidence from the company: a list, a number, a date, a source. " +
+          "A number inside an answer has no source behind it, and that is exactly where a client is most likely to be questioned."
+        : "本报告未核验。这一句是回答里带数字的断言；引用前需要企业提供对应证据（清单、编号、日期、出处）。" +
+          "回答里的数字没有出处，而这正是客户最容易被追问的地方。",
   };
 }
 
@@ -2485,7 +2493,7 @@ if (lang === "en") {
     throw new Error(
       [
         `报告语言是 en,但还有 ${chinese.length} 处本文案是中文 —— 现在停下,而不是印出一份中英混排的报告。`,
-        `前几处:${chinese.slice(0, 8).map(([k]) => k).join("、")}`,
+        `全部 ${chinese.length} 处:${chinese.map(([k]) => k).join("\n")}`,
         "把这几块改成按 lang 取值(zh/en 两条文案),这道检查就会放行。",
       ].join("\n")
     );
