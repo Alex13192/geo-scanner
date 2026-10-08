@@ -149,6 +149,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { findMention } from "../../lib/answer-check/rules.ts";
+import { COPY_EN } from "./report-copy-en.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "..", "..");
@@ -902,7 +903,24 @@ function runOf(q: number, n: number): RunLine {
  * client arrives through {placeholders} filled from the run header, or through the data-derived blocks
  * built above (quotes, claims, advice). That is the property this file lost once already.
  */
-const COPY: Record<string, string> = {
+/**
+ * WHICH LANGUAGE THE REPORT IS WRITTEN IN. Resolved here, before the copy it selects, rather than
+ * where the model is assembled: the copy block is what the language chooses between, and a switch
+ * that runs after its own input has already been built is not a switch.
+ *
+ * Default comes from the run header, so an English bank produces an English report with no flag.
+ */
+type ReportLang = "zh" | "en";
+const langFlag = (arg("lang") || "").trim().toLowerCase();
+const headerLang = (header?.run?.language ?? "").trim().toLowerCase();
+const lang: ReportLang =
+  langFlag === "zh" || langFlag === "en"
+    ? langFlag
+    : headerLang === "en" || headerLang === "zh"
+      ? headerLang
+      : "zh";
+
+const COPY_ZH: Record<string, string> = {
   reportName: "AI 可见度报告",
   footer: "AI 可见度报告",
   tableItem: "项目",
@@ -1132,6 +1150,15 @@ const COPY: Record<string, string> = {
     "图 4｜信源分布：回答引用次数最多的 {domainLimit} 个域名。标签为次数（引用事件次数），n = {citationEvents} 次引用事件、{distinctDomains} 个域名；另有 {otherDomains} 个域名合计 {otherEvents} 次引用事件未逐一列出。排序是引用事件的计数顺序，不是影响力排名。",
   figSourcesAxis: "引用事件次数",
 };
+
+/**
+ * THE COPY THE REPORT ACTUALLY PRINTS: English merged over Chinese when the report is English.
+ *
+ * A key missing from COPY_EN silently falls back to the Chinese string, and that is deliberate - it
+ * is the failure mode the authored-prose check below exists to catch, and catching it there turns a
+ * forgotten key into a failed build rather than a document with two languages in it.
+ */
+const COPY: Record<string, string> = lang === "en" ? { ...COPY_ZH, ...COPY_EN } : COPY_ZH;
 
 /**
  * The rule from the service definition, enforced instead of remembered.
@@ -2025,34 +2052,22 @@ const provenance: string[] = [
 ];
 
 /**
- * WHICH LANGUAGE THE REPORT IS WRITTEN IN - AND THE CHECK THAT REFUSES A HALF-TRANSLATED ONE.
+ * THE CHECK THAT REFUSES A HALF-TRANSLATED REPORT.
  *
- * The report has always been Chinese, and the reason it was hard to add a second language is that
- * only PART of the text lives in COPY: the rest is prose built inline (limits, method, provenance,
- * the coding table, the plan, the advice scaffolding). A switch over COPY alone would produce an
- * English document with Chinese appendices, which is worse than a document that is uniformly one
- * language - so the switch is paired with a scanner that reads every string WE author and fails the
- * build on any CJK character in an English report.
+ * The report's text comes from two places: the COPY dictionaries, which have an English half, and
+ * prose built inline in this file (limits, method, provenance, the coding table, the plan, the advice
+ * scaffolding). A language switch over the dictionaries alone would produce an English document with
+ * Chinese appendices, which is worse than a document that is uniformly one language - so this scans
+ * every string WE author and fails the build on any CJK character in an English report.
  *
- * WHY A CHARACTER SCAN AND NOT A KEY-PARITY CHECK: parity proves the dictionary is complete and says
- * nothing about the prose. This catches both, and it counts what is left rather than reporting a
- * missing key somewhere in a 2500-line file.
+ * WHY A CHARACTER SCAN AND NOT A KEY-PARITY CHECK: parity proves the two dictionaries match and says
+ * nothing about the inline prose. This catches both, and it counts what is left rather than naming a
+ * missing key somewhere in a 2600-line file.
  *
  * WHAT IT DELIBERATELY DOES NOT SCAN: anything quoted from the client or from a model's answer -
  * question text, brand spellings, answer excerpts, domain names. Those are verbatim and may contain
  * any script; an English report of a Chinese brand is still an English report.
- *
- * Default comes from the run header, so an English bank produces an English report with no flag.
  */
-type ReportLang = "zh" | "en";
-const langFlag = (arg("lang") || "").trim().toLowerCase();
-const headerLang = (header?.run?.language ?? "").trim().toLowerCase();
-const lang: ReportLang =
-  langFlag === "zh" || langFlag === "en"
-    ? langFlag
-    : headerLang === "en" || headerLang === "zh"
-      ? headerLang
-      : "zh";
 
 /** CJK ideographs plus the fullwidth/CJK punctuation block: what makes a Chinese sentence Chinese. */
 const HAS_CJK = /[\u3000-\u303f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/;
