@@ -1879,6 +1879,15 @@ const fills: Record<string, string | number> = {
   bankGroups: groups.length,
   bankFingerprint: bankFingerprint || "（题库没有记录指纹）",
   bankFrozenSentence:
+    lang === "en"
+      ? (frozenNote ? `${frozenNote}　` : "") +
+        (bankFingerprint
+          ? `This measurement used exactly this bank: the sha256 fingerprint of the question list is ${bankFingerprint}, ` +
+            (header?.bank?.fingerprint_verified === true
+              ? "and the collector recomputed it against bank.fingerprint_rule before the run started and matched it, which means nobody changed a question after approval."
+              : "and the collector cannot check it, because the rule the bank records is not the rule it implements.")
+          : "This run file records no bank fingerprint, so there is no evidence for which version of the bank was used.")
+      :
     (frozenNote ? `${frozenNote}　` : "") +
     (bankFingerprint
       ? `本次测量使用的就是这份题库：题面清单的 sha256 指纹是 ${bankFingerprint}，` +
@@ -1919,8 +1928,12 @@ const fills: Record<string, string | number> = {
   notFoundRuns: entityNotFound,
   entityConclusionRuleBody: entityConclusionRuleText,
   entityConclusionLineBody: entityFirstQuestion
-    ? `引用到客户自己的域名 ${entityConnected} 次、没有引用到 ${entityNotConnected} 次（n = ${entityRunsTotal}），其中 ${entityNotFound} 次明确说找不到这家公司。判定规则：回答引用的域名里出现客户自己域名的主干「${brandStem || "（品牌名没有可用的 ASCII 主干，本规则不适用）"}」计为『引用到』；『明确说找不到』按一张固定的表述清单判定，清单全文在工作簿的元数据页（entity_conclusion_rule）。`
-    : "本次没有名字题，因此没有这条测量。",
+    ? lang === "en"
+      ? `${entityConnected} runs cited the client's own domain and ${entityNotConnected} did not (n = ${entityRunsTotal}), and ${entityNotFound} of those that did not say outright that they cannot find the company. The rule: a cited domain containing the client's own domain stem "${brandStem || "(the brand name has no usable ASCII stem, so this rule does not apply)"}" counts as citing it, and "says outright that it cannot find" is decided against a fixed phrase list printed in full on the workbook's metadata sheet (entity_conclusion_rule).`
+      : `引用到客户自己的域名 ${entityConnected} 次、没有引用到 ${entityNotConnected} 次（n = ${entityRunsTotal}），其中 ${entityNotFound} 次明确说找不到这家公司。判定规则：回答引用的域名里出现客户自己域名的主干「${brandStem || "（品牌名没有可用的 ASCII 主干，本规则不适用）"}」计为『引用到』；『明确说找不到』按一张固定的表述清单判定，清单全文在工作簿的元数据页（entity_conclusion_rule）。`
+    : lang === "en"
+      ? "This run had no name question, so it has no measurement of this kind."
+      : "本次没有名字题，因此没有这条测量。",
   entityQuestions: nameQuestionFacts.length,
   entityTotalRuns: entityRunsTotal,
   entitySameConclusion: entityConnected,
