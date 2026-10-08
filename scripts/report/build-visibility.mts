@@ -279,6 +279,8 @@ type RunHeader = {
       approved_by?: string;
       approved_on?: string;
       frozen_note?: string;
+      /** The same note for an English bank. Absent from banks generated before it existed. */
+      frozen_note_en?: string;
       expected_approver_from_intake?: string;
     } | null;
     totals?: Record<string, any> | null;
@@ -599,6 +601,13 @@ const bankApprovedBy = (header?.bank?.approval?.approved_by ?? "").trim();
 const bankApprovedOn = (header?.bank?.approval?.approved_on ?? "").trim();
 const intakeExpectedApprover = (header?.bank?.approval?.expected_approver_from_intake ?? "").trim();
 const frozenNote = (header?.bank?.approval?.frozen_note ?? "").trim();
+/**
+ * THE ENGLISH BANK'S OWN NOTE, WHEN IT HAS ONE. Banks generated before this field existed carry only
+ * the Chinese sentence, and the English report omits it rather than printing Chinese in an English
+ * document - which is the honest failure: a missing sentence, not a mistranslated one. It cannot be
+ * back-filled, because the bank was frozen when the client approved it.
+ */
+const frozenNoteEn = (header?.bank?.approval?.frozen_note_en ?? "").trim();
 const bankFingerprint = (header?.bank?.fingerprint ?? "").trim();
 const bankGenerator = header?.bank?.generator
   ? `${header.bank.generator.script ?? "?"} · v${header.bank.generator.version ?? "?"}` +
@@ -1941,7 +1950,7 @@ const fills: Record<string, string | number> = {
   bankFingerprint: bankFingerprint || "（题库没有记录指纹）",
   bankFrozenSentence:
     lang === "en"
-      ? 
+      ? (frozenNoteEn ? `${frozenNoteEn} ` : "") +
         (bankFingerprint
           ? `This measurement used exactly this bank: the sha256 fingerprint of the question list is ${bankFingerprint}, ` +
             (header?.bank?.fingerprint_verified === true

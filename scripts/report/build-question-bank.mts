@@ -2076,6 +2076,15 @@ const yamlDoc = {
       approved_on: "",
       frozen_note:
         "题库一经批准即冻结：批准后不得增删、改写或重排任何一题；复测必须使用同一份题库，否则两次测量的数字不可比。",
+      /*
+       * THE SAME SENTENCE IN ENGLISH, BECAUSE THE ENGLISH BANK NEEDS IT TOO. An English bank used to
+       * carry only the Chinese note, and the English report - correctly refusing to print Chinese -
+       * omitted the sentence altogether rather than mangle it: a missing sentence, not a wrong one.
+       * Written as a second field rather than a per-language choice because the bank is frozen once
+       * approved, and an already-frozen bank must not be regenerated to gain a translation.
+       */
+      frozen_note_en:
+        "A bank is frozen once approved: no question may be added, removed, rewritten or reordered afterwards, and a retest must use the same bank - otherwise the two measurements cannot be compared.",
       expected_approver_from_intake: facts.approvedBy,
     },
     compliance_sensitive: facts.complianceSensitive,
