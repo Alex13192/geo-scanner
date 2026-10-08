@@ -1850,7 +1850,12 @@ const fills: Record<string, string | number> = {
       "正式交付前必须补上签字并把批准日期写回题库文件；否则『客户批准过的题库』这句话没有依据，而这份报告的第一节就是它的位置。",
   bankDriftSentence: intakeDrift,
   overviewLeadBody,
-  runModeLabel: runModeLabelText,
+  // The mode label is a Chinese phrase by default, and it is interpolated into English sentences
+  // (noScore2 among them), so it is chosen by language here rather than at each sentence.
+  runModeLabel:
+    lang === "en"
+      ? ({ api: "live API collection", "dry-run": "dry run", replay: "replay" }[runMode] ?? runMode)
+      : runModeLabelText,
   summaryReachBody,
   summaryEntityBody,
   summaryFactsBody,
@@ -1920,7 +1925,10 @@ if (!competitorsMeasured) {
   for (const [key, value] of Object.entries(unmeasured)) FILLED_COPY[key] = value;
 } else {
   /** The advice lead promises "no competitor was measured" - true until it was. */
-  FILLED_COPY.adviceLead = "下面几条是从本次测量直接读出来的，不是通用建议。它们都不承诺效果：本报告没有测量内容上线后会发生什么。";
+  FILLED_COPY.adviceLead =
+  lang === "en"
+    ? "The items below are read directly out of this measurement rather than from a template. None of them promises an outcome: this report measured no competitor, and it did not measure what happens after content goes live."
+    : "下面几条是从本次测量直接读出来的，不是通用建议。它们都不承诺效果：本报告没有测量内容上线后会发生什么。";
 }
 
 /** Copy as the document prints it: already filled, so the renderer never substitutes anything. */
@@ -2545,7 +2553,12 @@ const model = {
     citationEvents,
     distinctDomains: domainMap.size,
     runMode,
-    runModeLabel: runModeLabelText,
+    // The mode label is a Chinese phrase by default, and it is interpolated into English sentences
+  // (noScore2 among them), so it is chosen by language here rather than at each sentence.
+  runModeLabel:
+    lang === "en"
+      ? ({ api: "live API collection", "dry-run": "dry run", replay: "replay" }[runMode] ?? runMode)
+      : runModeLabelText,
     runSchema: header?.schema ?? null,
     attemptsTotal,
     timeoutsTotal,
