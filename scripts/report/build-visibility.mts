@@ -625,47 +625,120 @@ function displayPath(p: string | null | undefined): string {
   return parts.slice(-2).join("/");
 }
 
+/**
+ * WHICH LANGUAGE THE REPORT IS WRITTEN IN - AND IT GOES BEFORE EVERYTHING THAT READS IT.
+ *
+ * This switch has been moved three times: each time a value ABOVE it read `lang`, and node refused at
+ * run time with "Cannot access 'lang' before initialization". TypeScript caught two of the three; the
+ * third was worse than an error, because the report never rendered while a comparison against a
+ * missing file reported zero differences, so a broken build looked like a passing check. It now sits
+ * above the bank-approval rows, the legend words, the model source, the group metadata and the copy
+ * dictionaries, which is every use in the file.
+ *
+ * THE RULE, so this does not happen again: a type-checker cannot see declaration order across a
+ * thousand lines of prose, so anything that reads `lang` belongs BELOW this block. If a new value
+ * needs it and sits above, move this block up rather than duplicating the switch.
+ *
+ * Default comes from the run header, so an English bank produces an English report with no flag.
+ */
+type ReportLang = "zh" | "en";
+const langFlag = (arg("lang") || "").trim().toLowerCase();
+const headerLang = (header?.run?.language ?? "").trim().toLowerCase();
+const lang: ReportLang =
+  langFlag === "zh" || langFlag === "en"
+    ? langFlag
+    : headerLang === "en" || headerLang === "zh"
+      ? headerLang
+      : "zh";
+
+// These two are interpolated into the per-run legend, so hardcoding them in Chinese put Chinese in
+// an English sentence.
+const COPY_NOT_MEASURED = lang === "en" ? "not measured" : "未测量";
+const COPY_NOT_RUN = lang === "en" ? "not run" : "未运行";
+
 const bankPageRows: [string, string][] = header
-  ? [
-      ["题库文件", displayPath(header.bank?.path)],
-      [
-        "题库指纹（sha256，题面清单）",
-        `${bankFingerprint || "（题库没有记录指纹）"}` +
-          (header.bank?.fingerprint_verified === true
-            ? "　✓ 采集脚本按 bank.fingerprint_rule 重算并核对通过"
-            : header.bank?.fingerprint_verified === false
-              ? "　✗ 与重算结果不一致"
-              : "　（未核对：bank.fingerprint_rule 不是本采集脚本实现的规则）"),
-      ],
-      ["指纹规则", header.bank?.fingerprint_rule ?? "（未记录）"],
-      ["题库生成器", bankGenerator || "（未记录）"],
-      ["题库生成日期", String(header.bank?.generated_on ?? header.bank?.generated_at ?? "（未记录）")],
-      [
-        "来源 intake",
-        `${displayPath(header.intake?.resolved_path) || "（未记录）"}` +
-          (header.intake?.sha256_actual ? `　sha256 ${header.intake.sha256_actual}` : "") +
-          (header.intake?.sha256_matches === true
-            ? "　✓ 与题库记录一致"
-            : header.intake?.sha256_matches === false
-              ? "　✗ 与题库记录不一致（题库生成后被改过）"
-              : "　（题库未记录 intake 哈希）"),
-      ],
-      ["批准人 / 批准日期", bankApprovedBy ? `${bankApprovedBy}　${bankApprovedOn || "（未写日期）"}` : "（空：题库还没有人签字）"],
-      ["intake 里填写的确认人", intakeExpectedApprover || "（intake 未填）"],
-      ["本次运行的语言 / 题数", `${header.run?.language ?? "?"}　${bankQuestions.length} 题`],
-      [
-        "本次运行的文件",
-        `${displayPath(answersPath)}　（第 1 行是采集脚本写入的 provenance 头，共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`,
-      ],
-    ]
-  : [
-      ["题库文件", "（这份运行文件没有 run-header，所以没有题库路径）"],
-      ["题库指纹", "（未记录：本次运行由没有 provenance 头的采集脚本写入）"],
-      ["批准人 / 批准日期", "（未记录）"],
-      ["来源 intake", "（未记录）"],
-      ["题目来源", `按每行 answer 的 group 字段分组；共 ${bankQuestions.length} 题`],
-      ["本次运行的文件", `${displayPath(answersPath)}　（共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`],
-    ];
+  ? lang === "en"
+    ? [
+        ["Bank file", displayPath(header.bank?.path)],
+        [
+          "Bank fingerprint (sha256 of the question list)",
+          `${bankFingerprint || "(the bank records no fingerprint)"}` +
+            (header.bank?.fingerprint_verified === true
+              ? " ✓ recomputed by the collector against bank.fingerprint_rule and matched"
+              : header.bank?.fingerprint_verified === false
+                ? " ✗ does not match the recomputed value"
+                : " (not checked: bank.fingerprint_rule is not a rule this collector implements)"),
+        ],
+        ["Fingerprint rule", header.bank?.fingerprint_rule ?? "(not recorded)"],
+        ["Bank generator", bankGenerator || "(not recorded)"],
+        ["Bank generated on", String(header.bank?.generated_on ?? header.bank?.generated_at ?? "(not recorded)")],
+        [
+          "Intake source",
+          `${displayPath(header.intake?.resolved_path) || "(not recorded)"}` +
+            (header.intake?.sha256_actual ? ` sha256 ${header.intake.sha256_actual}` : "") +
+            (header.intake?.sha256_matches === true
+              ? " ✓ matches the bank's record"
+              : header.intake?.sha256_matches === false
+                ? " ✗ does not match the bank's record (edited after the bank was generated)"
+                : " (the bank records no intake hash)"),
+        ],
+        ["Approved by / approved on", bankApprovedBy ? `${bankApprovedBy} ${bankApprovedOn || "(no date written)"}` : "(empty: nobody has signed the bank)"],
+        ["Approver named in the intake", intakeExpectedApprover || "(not filled in)"],
+        ["Language / question count for this run", `${header.run?.language ?? "?"} ${bankQuestions.length} questions`],
+        [
+          "This run's file",
+          `${displayPath(answersPath)} (line 1 is the provenance header the collector wrote; ${parsedLines} answer records${rejected.length > 0 ? `, ${rejected.length} failed` : ""})`,
+        ],
+      ]
+    : [
+        ["题库文件", displayPath(header.bank?.path)],
+        [
+          "题库指纹（sha256，题面清单）",
+          `${bankFingerprint || "（题库没有记录指纹）"}` +
+            (header.bank?.fingerprint_verified === true
+              ? "　✓ 采集脚本按 bank.fingerprint_rule 重算并核对通过"
+              : header.bank?.fingerprint_verified === false
+                ? "　✗ 与重算结果不一致"
+                : "　（未核对：bank.fingerprint_rule 不是本采集脚本实现的规则）"),
+        ],
+        ["指纹规则", header.bank?.fingerprint_rule ?? "（未记录）"],
+        ["题库生成器", bankGenerator || "（未记录）"],
+        ["题库生成日期", String(header.bank?.generated_on ?? header.bank?.generated_at ?? "（未记录）")],
+        [
+          "来源 intake",
+          `${displayPath(header.intake?.resolved_path) || "（未记录）"}` +
+            (header.intake?.sha256_actual ? `　sha256 ${header.intake.sha256_actual}` : "") +
+            (header.intake?.sha256_matches === true
+              ? "　✓ 与题库记录一致"
+              : header.intake?.sha256_matches === false
+                ? "　✗ 与题库记录不一致（题库生成后被改过）"
+                : "　（题库未记录 intake 哈希）"),
+        ],
+        ["批准人 / 批准日期", bankApprovedBy ? `${bankApprovedBy}　${bankApprovedOn || "（未写日期）"}` : "（空：题库还没有人签字）"],
+        ["intake 里填写的确认人", intakeExpectedApprover || "（intake 未填）"],
+        ["本次运行的语言 / 题数", `${header.run?.language ?? "?"}　${bankQuestions.length} 题`],
+        [
+          "本次运行的文件",
+          `${displayPath(answersPath)}　（第 1 行是采集脚本写入的 provenance 头，共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`,
+        ],
+      ]
+  : lang === "en"
+    ? [
+        ["Bank file", "(this run file has no run-header, so there is no bank path)"],
+        ["Bank fingerprint", "(not recorded: this run was written by a collector that records no provenance header)"],
+        ["Approved by / approved on", "(not recorded)"],
+        ["Intake source", "(not recorded)"],
+        ["Where the questions come from", `Grouped by the group field of each answer line; ${bankQuestions.length} questions in total`],
+        ["This run's file", `${displayPath(answersPath)} (${parsedLines} answer records${rejected.length > 0 ? `, ${rejected.length} failed` : ""})`],
+      ]
+    : [
+        ["题库文件", "（这份运行文件没有 run-header，所以没有题库路径）"],
+        ["题库指纹", "（未记录：本次运行由没有 provenance 头的采集脚本写入）"],
+        ["批准人 / 批准日期", "（未记录）"],
+        ["来源 intake", "（未记录）"],
+        ["题目来源", `按每行 answer 的 group 字段分组；共 ${bankQuestions.length} 题`],
+        ["本次运行的文件", `${displayPath(answersPath)}　（共 ${parsedLines} 条回答记录${rejected.length > 0 ? `、${rejected.length} 条失败记录` : ""}）`],
+      ];
 
 /* ------------------------------------------------------------------ */
 /* The answers                                                        */
@@ -718,37 +791,6 @@ type QuestionFact = {
 
 /** How many per-run columns the report prints. Three is what the DOCX table's geometry has room for. */
 const RUN_COLUMNS = 3;
-
-/**
- * WHICH LANGUAGE THE REPORT IS WRITTEN IN - AND IT IS RESOLVED BEFORE ANYTHING THAT READS IT.
- *
- * This switch has now been moved twice, both times because a line above it read `lang` and node
- * refused at run time with "Cannot access 'lang' before initialization". The first move put it above
- * the copy dictionary and left the group metadata below it; the second put it above the group
- * metadata and left two legend words below it. TypeScript caught the second and not the first, and
- * the first was worse than an error: the report never rendered while the comparison against a
- * missing file reported zero differences, so a broken build looked like a passing check.
- *
- * The lesson is positional, not stylistic: this constant belongs above EVERY use, so it sits here,
- * before the model source, the legend words, the group metadata and the copy dictionary - and any
- * new language-dependent value must be added below this line rather than above it.
- *
- * Default comes from the run header, so an English bank produces an English report with no flag.
- */
-type ReportLang = "zh" | "en";
-const langFlag = (arg("lang") || "").trim().toLowerCase();
-const headerLang = (header?.run?.language ?? "").trim().toLowerCase();
-const lang: ReportLang =
-  langFlag === "zh" || langFlag === "en"
-    ? langFlag
-    : headerLang === "en" || headerLang === "zh"
-      ? headerLang
-      : "zh";
-
-// These two are interpolated into the per-run legend, so hardcoding them in Chinese put Chinese in
-// an English sentence.
-const COPY_NOT_MEASURED = lang === "en" ? "not measured" : "未测量";
-const COPY_NOT_RUN = lang === "en" ? "not run" : "未运行";
 
 /**
  * A COLUMN THAT WAS NOT MEASURED IS null, NOT 0, and this is the one place where that decision is made.
@@ -2549,6 +2591,17 @@ function authoredProse(): [string, string][] {
   }
   for (const g of groups) out.push([`groups.${g.id}.purpose`, g.purpose]);
   for (const q of quotes) out.push([`quotes.note:${q.label}`, q.note]);
+  /*
+   * THE METADATA ROWS, ADDED AFTER THE CHECK MISSED THEM. The count reached zero while the English
+   * report still contained 67 CJK occurrences, all of them in the bank-approval table: its labels and
+   * a few of its values live outside the copy dictionaries and were never in this list. A check that
+   * passes while the artifact is wrong is worse than no check, so the rows are scanned now - and any
+   * new row type belongs here on the day it is added, not the day someone notices.
+   */
+  for (const [label, value] of bankPageRows) {
+    out.push([`bankPageRows.label:${label}`, label]);
+    out.push([`bankPageRows.value:${label}`, value]);
+  }
   for (const c of claims) out.push([`claims.handling:${c.source}`, c.handling]);
   if (entityQuote) out.push(["entityQuote.note", entityQuote.note]);
   return out;
