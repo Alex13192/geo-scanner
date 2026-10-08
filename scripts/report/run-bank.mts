@@ -473,6 +473,18 @@ const ARCHETYPE_SHORT: Record<string, string> = {
   comparison: "对比",
   fact: "事实",
 };
+/*
+ * THE ENGLISH SHORT LABELS, BECAUSE THE HEADER IS WRITTEN FOR THE BANK'S LANGUAGE, NOT OURS. The
+ * table above was the only place a run header could record a Chinese label in an English run, and it
+ * took a report-side workaround to undo: the header is the record of what was measured, so it should
+ * have been right when it was written. The four ids are fixed by the taxonomy.
+ */
+const ARCHETYPE_SHORT_EN: Record<string, string> = {
+  category: "Category",
+  scenario: "Scenario",
+  comparison: "Comparison",
+  fact: "Fact",
+};
 type ArchetypeRow = {
   id: string;
   label: string;
@@ -497,7 +509,7 @@ const archetypes: ArchetypeRow[] = (
   return {
     id,
     label: String(a?.label ?? fallback?.label ?? id),
-    short: ARCHETYPE_SHORT[id] ?? id,
+    short: (language === "en" ? ARCHETYPE_SHORT_EN[id] : ARCHETYPE_SHORT[id]) ?? id,
     measures,
     target: Number(a?.target ?? fallback?.target ?? 0),
     generated: Number(a?.generated ?? fallback?.generated ?? 0),
