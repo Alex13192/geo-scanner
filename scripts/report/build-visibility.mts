@@ -2392,8 +2392,8 @@ const provenanceEn: string[] = [
     (header?.collector?.version !== undefined ? ` v${header.collector.version}` : "") +
     (header?.collector?.script_sha256 ? `, script sha256 ${String(header.collector.script_sha256).slice(0, 16)}...` : "") +
     `; mode ${runMode}${header?.run?.answers_source ? ` (${header.run.answers_source})` : ""}.`,
-  `Model name: ${modelDisplay} (${modelSource}).`,
-  `Date measured: ${measuredOn} (${dateSource}).`,
+  `Model name: ${modelDisplay} (${header ? "recorded by the collector" : "supplied on the command line"}).`,
+  `Date measured: ${measuredOn} (${header ? "recorded by the collector" : "passed to this report"}).`,
   `Web search: ${webSearch ? "on" : "off"} (recorded in the run file's provenance header).`,
   `Spellings used to decide a brand mention: ${brandTokens.map((t) => `${t.value} (${t.field})`).join(", ")}` +
     `; source: ${
