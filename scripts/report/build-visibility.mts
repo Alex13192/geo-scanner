@@ -1939,7 +1939,7 @@ const plan: string[][] = [
   ],
 ];
 
-const limits: string[] = [
+const limitsZh: string[] = [
   competitorsMeasured
     ? `竞品只统计客户在 intake 里点名的 ${competitorRows.length} 家。回答里提到的其他厂商没有被计数，本报告也不据此对任何一家作判断。`
     : "没有测量任何竞品。这份数据里没有第二家公司的提及计数，所以报告里没有竞品对比、没有份额、没有排名。",
@@ -1960,14 +1960,40 @@ const limits: string[] = [
       : `本次的采集模式是 ${runModeLabelText}：文件里的回答不是模型输出，这份报告只能用来验证「题库 → 运行文件 → 报告」这条链路，不能作为任何对外结论。`,
 ];
 
+const limitsEn: string[] = [
+  competitorsMeasured
+    ? `Competitors are counted only for the ${competitorRows.length} names the client listed in the intake. Other vendors the answers mention are not counted, and this report draws no conclusion about any of them.`
+    : "No competitor was measured. This data holds no mention counts for a second company, so the report has no competitor comparison, no share of voice and no ranking.",
+  "No sentiment analysis. 'Mentioned' means the brand name or one of its spellings appears in the answer text; it says nothing about whether the mention is positive or negative.",
+  `The source list is the domains the answers cited, not an authority ranking. ${citationEvents} citation events fall across ${domainMap.size} domains, and appearing near the top means only that the domain was linked more often.`,
+  `One model, one day: ${modelDisplay}, ${measuredOn}, ${webSearch ? "web search on" : "web search off"}, ${runsPerQuestion} runs per question.` +
+    " Observations on one day, of one model, over one set of questions are not a trend, and they do not stand for another model or another date.",
+  "Assertions inside the answers (numbers, customer names, credentials) were not verified by this report; it records only which run each appeared in.",
+  `Failed lines are treated as not measured. Of the ${parsedLines} lines in this file, ${rejected.length} are failure records (${failureDigest || "none"}); they are not counted as zero mentions, and a question with no completed run reads 'not measured' rather than 0. This run's target was ${runsPerQuestion} runs for each of ${questions.length} questions.`,
+  truncatedTotal > 0
+    ? `${truncatedTotal} calls were truncated (timeout or interrupted stream). A truncated answer is still billed, so it enters no count and is not treated as zero mentions; the status and usage of every line are kept.`
+    : "No call in this run was truncated (timeout or interrupted stream).",
+  runMode === "api"
+    ? "This measures the answers an API returned, not what a person sees in a chat window. The two can differ, and this report did not compare them."
+    : runMode === "replay"
+      ? "The collection mode for this report is replay: the answers come from a recorded real API call, and only the mention marks were recomputed under the current rules - for example the competitor marks added later. No new call was made, and token usage and failed lines are carried over from that recording."
+      : `The collection mode for this run is ${runModeLabelText}: the answers in the file are not model output, so this report can only verify the chain from bank to run file to report, and it is not evidence for any claim about the outside world.`,
+];
+
+const limits: string[] = lang === "en" ? limitsEn : limitsZh;
+
 if (!header) {
   limits.push(
-    "这份运行文件没有 provenance 头（run-header）：模型名、日期、联网搜索状态与题库指纹都是本报告从命令行或文件名里取的，不是采集时的记录。要拿到可核对的来源，请用 npm run measure 重新采集。"
+    lang === "en"
+      ? "This run file has no provenance header: the model name, the date, the web-search state and the bank fingerprint were taken by this report from the command line or from the filename, not recorded at collection time. For a checkable source, re-run npm run measure."
+      : "这份运行文件没有 provenance 头（run-header）：模型名、日期、联网搜索状态与题库指纹都是本报告从命令行或文件名里取的，不是采集时的记录。要拿到可核对的来源，请用 npm run measure 重新采集。"
   );
 }
 if (header?.intake?.sha256_matches === false) {
   limits.push(
-    "intake 在题库生成之后被改过：本次的品牌名与别名判定用的是文件当前内容，而题面仍是题库里的原题面，两者口径不同，数字不能直接与基线并列。"
+    lang === "en"
+      ? "The intake was edited after the bank was generated: this report decides brand and alias mentions from the file's current content, while the questions are still the bank's frozen wording. The two are different in scope, so these numbers cannot be placed beside a baseline."
+      : "intake 在题库生成之后被改过：本次的品牌名与别名判定用的是文件当前内容，而题面仍是题库里的原题面，两者口径不同，数字不能直接与基线并列。"
   );
 }
 
