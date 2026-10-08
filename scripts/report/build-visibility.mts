@@ -1971,7 +1971,7 @@ if (header?.intake?.sha256_matches === false) {
   );
 }
 
-const coding: string[][] = [
+const codingZh: string[][] = [
   ["id", "题库里的题号（如 C1、F4），由 build-question-bank.mts 生成", "报告里逐题引用；复测时用它对齐同一道题"],
   ["q", "本次运行里的序号（1 到题数），按题库顺序", "报告里写作 Q1…；与 id 一一对应"],
   [
@@ -2007,6 +2007,45 @@ const coding: string[][] = [
   ["usage.tool_usage.web_search", "这次调用里联网搜索的次数", "证明这次是按 header 记录的搜索设置跑出来的"],
   ["answer", "模型返回的完整回答文本", "原文摘录与断言定位的来源"],
 ];
+
+const codingEn: string[][] = [
+  ["id", "the question's id in the bank (C1, F4, ...), written by build-question-bank.mts", "cited per question throughout the report; a retest uses it to line up the same question"],
+  ["q", "this run's index (1 to the number of questions), in bank order", "printed as Q1... in the report; one-to-one with id"],
+  [
+    "group",
+    `the bank's own archetype id (this run: ${groups.map((g) => g.id).join(" / ")})`,
+    "group statistics and totals; the denominators differ by group and cannot be added together",
+  ],
+  ["question", "the question text", "the per-question tables, and the wording a retest has to reuse"],
+  ["run", `which run this was (1 to ${runsPerQuestion})`, "printed as 'run N'; several runs of one question are separate sessions"],
+  ["ok", "whether this call produced a complete answer", "only ok=true lines are counted; an ok=false line enters no count at all"],
+  [
+    "status / errorBody",
+    "HTTP status and error body; a timeout is recorded as timeout, a missing replay line as replay-missing",
+    `used only to say what the excluded lines are (this run: ${failureDigest || "no failed lines"})`,
+  ],
+  ["attempts", "how many calls this run consumed (failures are retried)", "the cost basis: retried and truncated calls were both billed"],
+  ["truncated", "whether this call was cut off (timeout or interrupted stream)", "a truncated answer enters no count, but its tokens were already spent"],
+  [
+    "mentionsBrand",
+    `whether the answer contains the brand name or one of its aliases: ${brandTokens.map((t) => t.value).join(" / ")}`,
+    "the brand-mention count - this report's headline figure",
+  ],
+  ["mentionsPrimary", `whether the answer contains the legal name: ${BRAND}`, "the field the entity section classifies"],
+  [
+    "mentionsCoatings",
+    hasCategoryTokens
+      ? `whether the answer contains one of the client's own category terms: ${categoryTokensForReport.map((t) => t.value).join(" / ")}`
+      : "could not be decided in this run (the intake has no industry.category_terms)",
+    "the 'category mentions' column, which shows the answer really was about this category",
+  ],
+  ["domains", "the domains this answer cited", "the source-network section; a domain cited twice inside one answer counts once"],
+  ["usage.total_tokens", "the token usage of this call", `the total-usage figure (this run ${totalTokens}, see the metadata sheet)`],
+  ["usage.tool_usage.web_search", "how many web searches this call made", "evidence that this run used the search setting the header records"],
+  ["answer", "the complete answer text the model returned", "the source for the extracts and for locating assertions"],
+];
+
+const coding: string[][] = lang === "en" ? codingEn : codingZh;
 
 /**
  * THE METHOD SENTENCES. The four facts verification cares about - model, date, runs per question and whether
