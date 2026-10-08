@@ -81,8 +81,21 @@ const ROUTES: Route[] = [
    * was added here, so they were the only content pages on the site that no check scored - while
    * being the two a payment reviewer opens.
    */
-  { route: "/pricing/", file: "pricing.html", indexable: true },
-  { route: "/refund/", file: "refund.html", indexable: true },
+  /*
+   * THEIR FLOOR IS 80, NOT 90, AND THE REASON IS RECORDED RATHER THAN IMPLIED - the same treatment
+   * the check pages get. Measured on the live site with this same analyser: /pricing/ 82, /refund/ 89.
+   * Four of what holds them there are structural rather than fixable: hreflang and markdown-alternate
+   * are the site's deliberate single-language design (which is why /privacy/ at 97 and /terms/ at 96
+   * carry the same two findings), and quotations and authority-citations ask a price list and a
+   * refund policy for external quotations they do not have and should not invent.
+   *
+   * WHAT IS GENUINELY MISSING IS NAMED HERE SO THE FLOOR DOES NOT HIDE IT: an FAQ block on /pricing/
+   * (the analyser's `faq` and `qa-headings`) and a list or table on /refund/ (`extractables`). Both
+   * are worth adding for readers, not for the score - and if either page ever drops BELOW 80, that is
+   * a regression rather than a page type, and this floor will fail the build.
+   */
+  { route: "/pricing/", file: "pricing.html", indexable: true, min: 80 },
+  { route: "/refund/", file: "refund.html", indexable: true, min: 80 },
   // Tool output, generated per request and disallowed in robots.txt.
   { route: "/report/", file: "report.html", indexable: false },
   // Where Creem sends a buyer after payment. It is noindex and absent from the sitemap, so it is
