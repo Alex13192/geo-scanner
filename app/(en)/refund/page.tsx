@@ -25,6 +25,24 @@ import { CONTACT_EMAIL, OPERATOR_IDENTITY } from "@/lib/site";
 import { og } from "@/lib/og";
 
 const TITLE = "Refunds";
+
+/**
+ * THIS PAGE IS RENDERED PER REQUEST, AND THAT IS NOT AN OVERSIGHT - the other legal pages are
+ * prerendered and this one cannot be.
+ *
+ * The seller's identity comes from a deployment variable (OPERATOR_IDENTITY). The first version of
+ * this page was prerendered, so it read that variable during the BUILD; the build had no value for
+ * it, and the fallback sentence was then written into a static file and shipped - where no later
+ * change to the variable could ever reach it. Nothing failed, the page looked finished, and the
+ * address was simply absent from the one page a payment reviewer opens. That is the silent-absence
+ * failure this repository keeps writing warnings about, so it is fixed at the cause rather than by
+ * re-running a deploy until the value happens to be present.
+ *
+ * Rendering per request reads the Worker's environment instead, which also means the address can be
+ * corrected without a rebuild - the right property for a field that changes when a business moves.
+ */
+export const dynamic = "force-dynamic";
+
 const DESCRIPTION =
   "When a measurement report is refundable, what happens if we miss the delivery window, how a retest is billed, and the EU and UK consumer right of withdrawal.";
 const UPDATED = "8 October 2026";

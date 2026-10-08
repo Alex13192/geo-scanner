@@ -64,24 +64,22 @@ jobs:
         if: env.CF_TOKEN != ''
         run: npm ci
 
-      # The OpenNext build runs the Next.js build itself - and the report pages are PRERENDERED, so
-      # anything they read from process.env is read HERE, in the runner, not from the Worker's
-      # environment when the page is requested. Setting a Cloudflare variable alone would not change
-      # /refund/, which is why the value is passed at build time.
+      # The OpenNext build runs the Next.js build itself.
       #
-      # OPERATOR_IDENTITY is the seller's name and postal address shown on /refund/. It lives in a
-      # repository VARIABLE rather than in this file because this repository is public: OPERATIONS.md
-      # is explicit that an address must not be committed to it, and a variable is not part of the
-      # source. Set it in GitHub -> Settings -> Secrets and variables -> Actions -> Variables ->
-      # New repository variable -> OPERATOR_IDENTITY.
+      # OPERATOR_IDENTITY IS NOT MAPPED HERE, and the first attempt to map it is why. The refund page
+      # was prerendered, so a build-time value would have been baked into a static file - and when the
+      # build had no value, the fallback sentence shipped and no later change could reach it. That
+      # page is now rendered per request and reads the Worker's environment instead, so the address
+      # belongs to the Worker's configuration, not to this file:
       #
-      # Without it the page prints its fallback sentence ("given with every quote and invoice")
-      # instead of an address: honest, and not what a payment reviewer opens the page to find.
+      #   npx wrangler secret put OPERATOR_IDENTITY -c wrangler.jsonc
+      #
+      # An address is public by design - it is printed on /refund/ - but it is not committed to a
+      # public repository either: OPERATIONS.md is explicit about that, which is why it lives in the
+      # deployment's environment and not in this file.
       - name: Build for Cloudflare
         if: env.CF_TOKEN != ''
         run: npx opennextjs-cloudflare build
-        env:
-          OPERATOR_IDENTITY: ${{ vars.OPERATOR_IDENTITY }}
 
       - name: Deploy to Cloudflare Workers
         if: env.CF_TOKEN != ''

@@ -2024,10 +2024,79 @@ const provenance: string[] = [
   "本报告由 scripts/report/build-visibility.mts 生成，DOCX/XLSX 由 scripts/report/render-report.py 渲染；同一份模型文件也可以单独重渲染。",
 ];
 
+/**
+ * WHICH LANGUAGE THE REPORT IS WRITTEN IN - AND THE CHECK THAT REFUSES A HALF-TRANSLATED ONE.
+ *
+ * The report has always been Chinese, and the reason it was hard to add a second language is that
+ * only PART of the text lives in COPY: the rest is prose built inline (limits, method, provenance,
+ * the coding table, the plan, the advice scaffolding). A switch over COPY alone would produce an
+ * English document with Chinese appendices, which is worse than a document that is uniformly one
+ * language - so the switch is paired with a scanner that reads every string WE author and fails the
+ * build on any CJK character in an English report.
+ *
+ * WHY A CHARACTER SCAN AND NOT A KEY-PARITY CHECK: parity proves the dictionary is complete and says
+ * nothing about the prose. This catches both, and it counts what is left rather than reporting a
+ * missing key somewhere in a 2500-line file.
+ *
+ * WHAT IT DELIBERATELY DOES NOT SCAN: anything quoted from the client or from a model's answer -
+ * question text, brand spellings, answer excerpts, domain names. Those are verbatim and may contain
+ * any script; an English report of a Chinese brand is still an English report.
+ *
+ * Default comes from the run header, so an English bank produces an English report with no flag.
+ */
+type ReportLang = "zh" | "en";
+const langFlag = (arg("lang") || "").trim().toLowerCase();
+const headerLang = (header?.run?.language ?? "").trim().toLowerCase();
+const lang: ReportLang =
+  langFlag === "zh" || langFlag === "en"
+    ? langFlag
+    : headerLang === "en" || headerLang === "zh"
+      ? headerLang
+      : "zh";
+
+/** CJK ideographs plus the fullwidth/CJK punctuation block: what makes a Chinese sentence Chinese. */
+const HAS_CJK = /[\u3000-\u303f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/;
+
+/** Every string this pipeline authors for the reader, gathered so the check cannot miss a block. */
+function authoredProse(): [string, string][] {
+  const out: [string, string][] = [];
+  for (const [key, value] of Object.entries(FILLED_COPY)) out.push([`copy.${key}`, value]);
+  limits.forEach((v, i) => out.push([`limits[${i}]`, v]));
+  method.forEach((v, i) => out.push([`method[${i}]`, v]));
+  provenance.forEach((v, i) => out.push([`provenance[${i}]`, v]));
+  plan.forEach((row, i) => row.forEach((cell, c) => out.push([`plan[${i}][${c}]`, cell])));
+  coding.forEach((row, i) => row.forEach((cell, c) => out.push([`coding[${i}][${c}]`, cell])));
+  for (const item of advice) {
+    out.push([`advice.${item.title}`, item.title]);
+    out.push([`advice.problem`, item.problem]);
+    out.push([`advice.action`, item.action]);
+    out.push([`advice.deliverable`, item.deliverable]);
+    out.push([`advice.acceptance`, item.acceptance]);
+  }
+  for (const g of groups) out.push([`groups.${g.id}.purpose`, g.purpose]);
+  for (const q of quotes) out.push([`quotes.note:${q.label}`, q.note]);
+  for (const c of claims) out.push([`claims.handling:${c.source}`, c.handling]);
+  if (entityQuote) out.push(["entityQuote.note", entityQuote.note]);
+  return out;
+}
+
+if (lang === "en") {
+  const chinese = authoredProse().filter(([, value]) => HAS_CJK.test(value));
+  if (chinese.length > 0) {
+    throw new Error(
+      [
+        `报告语言是 en,但还有 ${chinese.length} 处本文案是中文 —— 现在停下,而不是印出一份中英混排的报告。`,
+        `前几处:${chinese.slice(0, 8).map(([k]) => k).join("、")}`,
+        "把这几块改成按 lang 取值(zh/en 两条文案),这道检查就会放行。",
+      ].join("\n")
+    );
+  }
+}
+
 const model = {
   reportType: "ai-visibility",
   generatedBy: "geo-scanner scripts/report/build-visibility.mts",
-  lang: "zh",
+  lang,
   /**
    * THE FILLED COPY, not the templates. render-report.py prints these strings verbatim and never substitutes
    * into them - that is what keeps the DOCX and the Markdown saying the same thing - so a placeholder that
@@ -2177,6 +2246,26 @@ console.log(`wrote ${modelPath}`);
 /* ------------------------------------------------------------------ */
 
 const esc = (s: string) => String(s).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+/*
+ * THE SECOND HALF OF THE LANGUAGE CHECK, AND WHY THERE ARE TWO. The group readings and the headline
+ * are built inside the model above, because they interpolate counts that only exist there; every
+ * other authored string is checked before the model is assembled. Between the two, no sentence this
+ * pipeline writes for the reader goes unchecked in an English report.
+ */
+if (lang === "en") {
+  const modelProse: [string, string][] = [
+    ...model.groups.map((g) => [`groups.${g.id}.reading`, g.reading] as [string, string]),
+    ["headline.caption", model.headline.caption],
+    ["headline.callout", model.headline.callout],
+  ];
+  const chinese = modelProse.filter(([, value]) => HAS_CJK.test(value));
+  if (chinese.length > 0) {
+    throw new Error(
+      `报告语言是 en,但还有 ${chinese.length} 处文案是中文:${chinese.map(([k]) => k).join("、")} —— 现在停下,而不是印出一份中英混排的报告。`
+    );
+  }
+}
+
 const md: string[] = [];
 const table = (headers: string[], rows: string[][]) => {
   md.push(`| ${headers.map(esc).join(" | ")} |`);
