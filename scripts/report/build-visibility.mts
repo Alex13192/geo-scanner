@@ -1354,7 +1354,10 @@ const entityQuote = entityFirstQuestion
       run: firstRun(entityFirstQuestion.q).run,
       text: trimTrailingLabel(headOf(plain(firstRun(entityFirstQuestion.q).answer), 280)),
       note:
-        `原文摘录（${entityFirstQuestion.id} 第 1 次运行，取回答开头 280 个字符以内并按换行截断）。` +
+        lang === "en"
+          ? `A verbatim extract (${entityFirstQuestion.id}, run 1: the first 280 characters of the answer, cut at a line break). ` +
+            "Only Markdown bold and heading marks were removed; no wording and no punctuation was changed. This question asks about one of the client's own short forms, aliases or former names, so it tests whether the model can tie that name back to the legal entity."
+          : `原文摘录（${entityFirstQuestion.id} 第 1 次运行，取回答开头 280 个字符以内并按换行截断）。` +
         "只去掉了 Markdown 的加粗与标题标记，文字与标点未改动。这一题问的是客户自己的简称/别名/曾用名，所以它测的是模型能不能把这个名字对回法定主体。",
     }
   : null;
@@ -1526,14 +1529,23 @@ const quotes = groups
     const pick = [...candidates].sort((a, b) => a.brandMentions - b.brandMentions || a.q - b.q)[0];
     const r = firstRun(pick.q);
     return {
-      label: `${pick.id} · 第 ${r.run} 次运行 · ${g.label}`,
+      label:
+        lang === "en"
+          ? `${pick.id} · run ${r.run} · ${g.label}`
+          : `${pick.id} · 第 ${r.run} 次运行 · ${g.label}`,
       question: pick.question,
       run: r.run,
       text: trimTrailingLabel(headOf(plain(r.answer), 240)),
+      // One template for every quoted run. The note carries the group's own counts so the extract
+      // cannot be read out of context, and translating it clears all four entries of the check.
       note:
-        `原文摘录（${pick.id} 第 ${r.run} 次运行，取回答开头 240 个字符以内并按换行截断）。只去掉了 Markdown 的加粗与标题标记。` +
-        `选它的规则是：这一组里品牌被提及次数最少的一道题${pick.brandMentions === 0 ? "（本题一次都没有提到它）" : ""}，` +
-        `同组各题的计数是 ${candidates.map((c) => `${c.id} ${c.brandMentions}/${c.okRuns}`).join("、")}。`,
+        lang === "en"
+          ? `A verbatim extract (${pick.id}, run ${r.run}: the first 240 characters of the answer, cut at a line break). Only Markdown bold and heading marks were removed. ` +
+            `It was chosen because it mentions the brand least often in its group${pick.brandMentions === 0 ? " (this question never mentions it)" : ""}, ` +
+            `and that group's per-question counts are ${candidates.map((c) => `${c.id} ${c.brandMentions}/${c.okRuns}`).join(", ")}.`
+          : `原文摘录（${pick.id} 第 ${r.run} 次运行，取回答开头 240 个字符以内并按换行截断）。只去掉了 Markdown 的加粗与标题标记。` +
+            `选它的规则是：这一组里品牌被提及次数最少的一道题${pick.brandMentions === 0 ? "（本题一次都没有提到它）" : ""}，` +
+            `同组各题的计数是 ${candidates.map((c) => `${c.id} ${c.brandMentions}/${c.okRuns}`).join("、")}。`,
     };
   })
   .filter((q): q is NonNullable<typeof q> => q !== null);
