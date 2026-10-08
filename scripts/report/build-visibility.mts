@@ -1352,16 +1352,28 @@ const entityQuote = entityFirstQuestion
   : null;
 
 const entityLeadBody = entityFirstQuestion
-  ? `这一节回答一个具体问题：模型看得懂这家公司的名字吗？题库里有 {nameQuestions} 道题问的是简称、别名或曾用名` +
-    `（${nameQuestions.map((n) => `${n.id}「${n.value}」`).join("、")}），共 {nameRuns} 次完成的运行。判定不看语气、不看结论句，只看证据：回答有没有引用到客户自己的域名。` +
-    `本次 {nameConnected} 次引用到了，{nameNotConnected} 次没有；没有引用到的那些里，{notFoundRuns} 次的原文明确说找不到这家公司。模型知道这个名字背后的公司，与模型能把一个口语名稳定地对回法定主体，是两件事。下面这一段是模型的原话。`
-  : `题库里没有问简称、别名或曾用名的题：intake 的 brand.short_name / brand.aliases / brand.former_names 里没有可用的值，题库生成器因此没有出这一类题。` +
-    "所以本次没有测量『名字能不能对回法定主体』，这是一个缺口，不是一个结论——报告不会把『没问』写成『没问题』。";
+  ? lang === "en"
+    ? `This section answers one specific question: does the model understand the name this company goes by? The bank asks about a short form, an alias or a former name in {nameQuestions} questions` +
+      ` (${nameQuestions.map((n) => `${n.id} "${n.value}"`).join(", ")}), across {nameRuns} completed runs. The decision reads no tone and no concluding sentence; it reads evidence - whether the answer cited the client's own domain.` +
+      ` In this run {nameConnected} runs cite it and {nameNotConnected} do not, and among those that do not, {notFoundRuns} say outright that they cannot find the company. That a model knows the company behind a name, and that it can reliably tie a spoken name back to the legal entity, are two different things. What follows is what the model actually said.`
+    : `这一节回答一个具体问题：模型看得懂这家公司的名字吗？题库里有 {nameQuestions} 道题问的是简称、别名或曾用名` +
+      `（${nameQuestions.map((n) => `${n.id}「${n.value}」`).join("、")}），共 {nameRuns} 次完成的运行。判定不看语气、不看结论句，只看证据：回答有没有引用到客户自己的域名。` +
+      `本次 {nameConnected} 次引用到了，{nameNotConnected} 次没有；没有引用到的那些里，{notFoundRuns} 次的原文明确说找不到这家公司。模型知道这个名字背后的公司，与模型能把一个口语名稳定地对回法定主体，是两件事。下面这一段是模型的原话。`
+  : lang === "en"
+    ? `The bank asks no question about a short form, an alias or a former name: brand.short_name, brand.aliases and brand.former_names in the intake hold no usable value, so the bank generator produced none of that kind.` +
+      " This run therefore did not measure whether the name ties back to the legal entity, and that is a gap rather than a conclusion - the report does not write 'not asked' as 'no problem'."
+    : `题库里没有问简称、别名或曾用名的题：intake 的 brand.short_name / brand.aliases / brand.former_names 里没有可用的值，题库生成器因此没有出这一类题。` +
+      "所以本次没有测量『名字能不能对回法定主体』，这是一个缺口，不是一个结论——报告不会把『没问』写成『没问题』。";
 
 const summaryEntityBody = entityFirstQuestion
-  ? `实体层：{runs} 次完成的回答里 {brandRuns} 次出现了品牌名；问题里点名品牌的 {promptedRuns} 次运行里 {promptedMentions} 次出现。` +
-    `名字这一层：{nameQuestions} 道题问的是简称/别名/曾用名，共 {nameRuns} 次运行里 {nameConnected} 次引用了客户自己的域名（{BRAND}），{nameNotConnected} 次没有引用到，其中 {notFoundRuns} 次明确说找不到这家公司。`
-  : "实体层：题库里没有问简称、别名或曾用名的题（intake 没有填这些字段），所以本次没有测量名字与法定主体之间的对应关系；这是这次测量的一个缺口，不是结论。";
+  ? lang === "en"
+    ? `Entity layer: across {runs} completed answers the brand name appears in {brandRuns}; among the {promptedRuns} runs whose question names the brand, it appears in {promptedMentions}.` +
+      ` The name layer: {nameQuestions} questions ask about a short form, an alias or a former name, and across {nameRuns} runs {nameConnected} cite the client's own domain ({BRAND}), {nameNotConnected} do not, and {notFoundRuns} of those say outright that they cannot find the company.`
+    : `实体层：{runs} 次完成的回答里 {brandRuns} 次出现了品牌名；问题里点名品牌的 {promptedRuns} 次运行里 {promptedMentions} 次出现。` +
+      `名字这一层：{nameQuestions} 道题问的是简称/别名/曾用名，共 {nameRuns} 次运行里 {nameConnected} 次引用了客户自己的域名（{BRAND}），{nameNotConnected} 次没有引用到，其中 {notFoundRuns} 次明确说找不到这家公司。`
+  : lang === "en"
+    ? "Entity layer: the bank asks no question about a short form, an alias or a former name (the intake left those fields empty), so this run did not measure how the name maps to the legal entity; that is a gap in this measurement, not a conclusion."
+    : "实体层：题库里没有问简称、别名或曾用名的题（intake 没有填这些字段），所以本次没有测量名字与法定主体之间的对应关系；这是这次测量的一个缺口，不是结论。";
 
 /* ------------------------------------------------------------------ */
 /* Claims: assertions in the answers that this report does NOT verify  */
