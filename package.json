@@ -27,7 +27,8 @@
     "test:rate-limit": "node scripts/test-rate-limit.mts",
     "test:report-link": "node scripts/test-report-link.mts",
     "test:answer-check": "node scripts/test-answer-check.mts",
-    "test:sitemap": "node scripts/test-sitemap.mts"
+    "test:sitemap": "node scripts/test-sitemap.mts",
+    "test:site-scan": "node scripts/test-site-scan.mts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.8",

@@ -7,7 +7,7 @@
 // place allowed to call fetch with a hostname supplied by the caller. Read that
 // file before adding another one here.
 import { NextResponse } from "next/server";
-import { runScan } from "@/lib/geo/scan";
+import { parseSiteScope, runScan, runSiteScan } from "@/lib/geo/scan";
 import { inspectTarget } from "@/lib/net/fetch-safe";
 import { clientKey, takeToken } from "@/lib/net/rate-limit";
 
@@ -137,6 +137,29 @@ export async function GET(request: Request) {
     });
   }
 
+  /*
+   * SITE SCOPE, OPT-IN, AND OFF BY DEFAULT.
+   *
+   * `?scope=site` adds a `site` block: the homepage plus a few more pages the sitemap
+   * names, each scored by the same analyser against the same robots.txt, llms.txt and
+   * sitemap.xml. Without the parameter this route returns exactly what it returned
+   * before the parameter existed - which is the point. The free page scan is a
+   * published method with a published score, and a caller who did not ask for a
+   * different unit must not silently receive one.
+   *
+   * `?pages=N` is the same thing with the budget stated; it is clamped inside
+   * runSiteScan rather than here, so the ceiling travels with the code that spends it.
+   *
+   * NOT COMBINED WITH `brief=1`. Brief exists so a caller collecting many sites does not
+   * pull ~8 KB per domain, and a site block is the opposite of that trade. The early
+   * return above therefore wins, and asking for both gets the brief form.
+   */
+  const { wanted: wantsSite, maxPages } = parseSiteScope(
+    searchParams.get("scope"),
+    searchParams.get("pages"),
+  );
+  const site = wantsSite ? await runSiteScan(domain, scan, { maxPages }) : null;
+
   // Note: a non-200 homepage is NOT treated as unreachable. The analyser scores
   // it accordingly, and the access verdict now combines robots.txt with what the
   // server did to a crawler-shaped request and to a browser-shaped one, so a
@@ -164,5 +187,8 @@ export async function GET(request: Request) {
     checksNotApplicable: result.checksNotApplicable,
     issues: result.issues,
     metrics: result.metrics,
+    // Last, and absent unless asked for: every field above is exactly what this route
+    // returned before `scope` existed, in the same order, so no existing reader moves.
+    ...(site ? { site } : {}),
   });
 }

@@ -105,6 +105,16 @@ jobs:
       - name: Run the rate limiter's tests
         run: npm run test:rate-limit
 
+      # `?scope=site` is the only thing that can change what /api/scan returns, and every
+      # way it can go wrong is quiet: the homepage counted twice in the site average, a
+      # PDF from the sitemap scored as a page, five budget slots spent inside one section,
+      # or the cross-page issue list padded with problems that appeared on one page. Each
+      # of those produces a plausible report rather than an error, and the free endpoint's
+      # contract is the thing this route is trusted for - so it is gated rather than
+      # remembered. It stubs the network; nothing in it leaves the runner.
+      - name: Run the site scan's tests
+        run: npm run test:site-scan
+
       # The webhook endpoint is public by necessity - it is called by a third party - so the
       # signature check is the only thing between it and anyone who learns its URL. Every case in
       # that suite exists because of a specific way to get this wrong, and every positive case is

@@ -132,8 +132,25 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
               stated intent, not by guessing from one response code.
             </li>
             <li>
-              <strong>Only the homepage is analysed.</strong> Site-wide problems on interior
-              pages are invisible to a single-URL scan.
+              {/*
+                This read "Only the homepage is analysed" until a site scope existed. The
+                free scan still reads one page, and a single-URL scan still cannot see
+                interior pages - so the sentence was not wrong, it was incomplete, and
+                incomplete in the direction of claiming more than the method delivers once
+                the second unit exists. It is now stated as the default it is.
+
+                The query parameter is deliberately NOT published here. Site scope is a paid
+                capability, and naming it on this page would turn the free endpoint into a
+                ten-page scraper for anyone who reads the docs - which is a cost decision for
+                the operator, not a wording decision for this comment. What is published is
+                the limit, because a reader is owed that either way.
+              */}
+              <strong>The score describes one page unless a site scan is asked for.</strong> A
+              single-URL scan cannot see site-wide problems on interior pages. A site scan reads a
+              few more pages the sitemap names &mdash; capped at five by default and ten at most
+              &mdash; scores each of them with exactly these rules, and reports every
+              page&rsquo;s score separately, so a homepage number is never passed off as a site
+              number.
             </li>
             <li>
               <strong>Performance checks are coarse.</strong> Real Core Web Vitals need a
