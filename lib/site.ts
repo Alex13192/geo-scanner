@@ -68,3 +68,22 @@ export const CONTACT_EMAIL = "services@llmention-geo.com";
  * says where the identity is given rather than printing a blank line.
  */
 export const OPERATOR_IDENTITY = (process.env.OPERATOR_IDENTITY ?? "").trim();
+
+/**
+ * The price of one site scan, in yuan, as one sentence a reader can act on.
+ *
+ * WHY A CONSTANT AND NOT A SENTENCE IN THE PAGE: this number appears in three places that
+ * must agree - the seller's own price table, the payment platform's registration, and the
+ * listing form on the skill marketplace - and two of those three are not in this repository.
+ * A price written directly into JSX is the copy that drifts last and is noticed first, by a
+ * buyer who was charged something else. Keeping it here at least makes the site-side number
+ * single-sourced and greppable.
+ *
+ * IT MUST MATCH THE WORKER'S `PRICE_CNY`. The worker and the site are separate deployments
+ * with separate build pipelines, so nothing fails a build if they diverge; the only real check
+ * is a paid call, which is the wrong place to find an inconsistency.
+ *
+ * IT IS NOT INVENTED. 9.90 is what the deployed worker charged when this was written - read off
+ * a live 402 response, not copied from a draft. Re-read it from a live bill before trusting it.
+ */
+export const SITE_SCAN_PRICE_CNY = "9.90";

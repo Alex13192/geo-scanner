@@ -48,6 +48,41 @@ Two things to settle first. Both are recorded there, and both are still true:
   anything committed here is published whether or not a page renders it. That was the note in
   `lib/legal-entity.ts`, and it is why that file carried no address.
 
+## The site scan is reachable now, after being callable-only (14 October 2026)
+
+**What changed.** The site scan - the homepage plus up to five sitemap pages, each scored
+separately - existed and was paid for, but nothing on the site named it. `/report/`'s "What
+this report cannot tell you" said "Only the homepage is analysed" and stopped there, and
+`/pricing/` sells the manual measurement report and never mentioned it. The only way to buy it
+was to already know the endpoint and speak the 402 protocol by hand.
+
+**Why it was that way, and why that was not a bug.** `methodology/page.tsx` carries a comment
+saying the query parameter is deliberately unpublished, because naming it turns the free
+endpoint into a ten-page scraper for anyone who reads the docs. That reasoning was sound for
+*publishing the parameter*. It did not follow that the *existence* of the paid scan should be
+unstated - those are different disclosures, and conflating them is what left a paying customer
+with nowhere to click.
+
+**What the page says now.** One sentence added to the existing limitation bullet, in the
+reader's terms: the score describes one page unless a site scan is asked for; a site scan is
+available; here is the ceiling; here is the price; here is the address. Not the parameter, not
+the protocol. The sentence points at both routes that actually work today - email us and pay a
+transfer, or install the skill from the marketplace and let it call the endpoint - because a
+checkout does not exist on this site and must not be implied.
+
+**The price is a constant, not a sentence.** `SITE_SCAN_PRICE_CNY` in `lib/site.ts`, and it must
+equal the worker's `PRICE_CNY`. Those are two separate deployments with two build pipelines, so
+nothing fails a build when they diverge; the two other places the number must match - the
+payment platform's registration and the marketplace listing form - are not in this repository at
+all. On the worker side `test/price-consistency.mjs` now fails on drift within its own
+repository. Neither check can see the other repository, so a paid call remains the only complete
+verification, which is the wrong place to find a mismatch.
+
+**Still not done on this page: a checkout.** There is none, and the new sentence does not
+pretend otherwise. When the A2M buyer-side access is approved and the paid skill clears review,
+this is the paragraph to revisit - it currently routes a buyer to email, and it should route
+them to the skill.
+
 ## The site returns 1102 after a deploy (4 October 2026)
 
 **Symptom.** Opening a page shows Cloudflare's `Worker exceeded resource limits` page. It is
