@@ -19,7 +19,7 @@ import { CHECK_CATALOG, DIMENSION_CATALOG } from '@/lib/geo/catalog';
  * is manual, so: any commit that changes `app/` or `lib/` content is a commit that
  * changes this line.
  */
-const LAST_MODIFIED = new Date('2026-10-08');
+const LAST_MODIFIED = new Date('2026-10-14');
 
 /**
  * NOTE ON TRAILING SLASHES
