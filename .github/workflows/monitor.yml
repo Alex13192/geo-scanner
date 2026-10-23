@@ -33,11 +33,14 @@ name: monitor
 
 on:
   schedule:
-    # The first of the month, 06:17 UTC. The odd minute avoids the backlog at :00 and carries no other
-    # meaning. The intended measurement day is the first WORKING day; when the 1st is a weekend the
-    # "Check the first-working-day rule" step below skips the real run and says so, and a maintainer
-    # starts the workflow by hand on the Monday. The dry run still happens on the 1st either way.
-    - cron: "17 6 1 * *"
+    # THE FIRST THREE DAYS OF THE MONTH, 06:17 UTC, AND THE JOB DECIDES WHICH ONE IS THE FIRST
+    # WORKING DAY. GitHub's cron has no "first weekday" expression, so scheduling only the 1st
+    # would silently skip every month that starts on a weekend - which is the failure a monthly
+    # time series cannot tolerate. Three firings cover every case: if the 1st is a weekday the job
+    # runs then; if it is Saturday the first working day is the 3rd; if Sunday, the 2nd. The step
+    # below computes that date and the other two firings exit after the dry run with a notice, so
+    # a no-op is visible in the log rather than looking like a month with no data.
+    - cron: "17 6 1-3 * *"
   workflow_dispatch:
 
 # Reading only: this job measures and uploads. It commits nothing, so it needs nothing else.
@@ -84,12 +87,23 @@ jobs:
         id: cadence
         if: github.event_name == 'schedule'
         run: |
-          day=$(date -u +%u)
-          if [ "$day" -gt 5 ]; then
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=Cadence::The 1st falls on a weekend. The dry run above still proves the bank and runner; the real measurement is skipped instead of being labelled with a day that is not the first working day. Start this workflow by hand on the first working day."
-          else
+          day=$(date -u +%d)
+          dow=$(date -u +%u)   # 1 = Monday ... 7 = Sunday
+          # Which weekday was the 1st? Derived from today rather than from a calendar lookup,
+          # so the step has no data to keep in sync. 1 = Monday ... 7 = Sunday.
+          dow1=$(( (dow - (10#$day - 1)) % 7 ))
+          [ "$dow1" -le 0 ] && dow1=$(( dow1 + 7 ))
+          case "$dow1" in
+            6) expected=3 ;;   # 1st is Saturday: first working day is Monday the 3rd
+            7) expected=2 ;;   # 1st is Sunday:   first working day is Monday the 2nd
+            *) expected=1 ;;
+          esac
+          if [ "$((10#$day))" -eq "$expected" ]; then
             echo "proceed=true" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Cadence::Today ($(date -u +%Y-%m-%d)) is the first working day of the month; measuring."
+          else
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Cadence::The first working day of this month is the ${expected}th; this firing is a dry-run-only pass. Nothing is measured and no run file is written."
           fi
 
       # The per-provider guard, made visible. The runner skips an engine with no key and records it;
