@@ -92,6 +92,44 @@ jobs:
           # `wrangler deploy`, not `wrangler pages deploy` - this is a Worker now.
           command: deploy
 
+      # THE STEP THAT MAKES A DEPLOY VISIBLE TO SOMEBODY ELSE'S CACHE.
+      #
+      # On 2026-10-23 an external audit fetched the site after a deploy and reported the
+      # pre-deploy homepage - old banner, old footer, no links to the pages that had just
+      # shipped - while the origin was serving the new version. HTML no longer permits that
+      # (next.config.ts now sends `max-age=0, must-revalidate` for every content page), but
+      # public/ assets such as llms.txt and sitemap.xml are edge-cached by Cloudflare, and a
+      # cache entry can outlive the deploy that changed the file. Purging once after the
+      # Worker is live removes every stale copy in one call.
+      #
+      # CONTINUE-ON-ERROR IS DELIBERATE: the token may not carry the "Cache Purge"
+      # permission (the default Workers template does not). A purge that is not authorised
+      # does not mean the deploy failed, and the log has to say which of the two happened
+      # rather than turning a released deploy red. The hostname is read from lib/site.ts,
+      # never copied here - check:values fails on a second copy of the origin.
+      - name: Purge the edge cache so the deploy is visible
+        if: env.CF_TOKEN != ''
+        continue-on-error: true
+        run: |
+          HOST=$(node -e 'const fs=require("fs");const m=fs.readFileSync("lib/site.ts","utf8").match(/SITE_URL\s*=\s*"([^"]+)"/);process.stdout.write(new URL(m[1]).host)')
+          ZONE=$(curl -sS -H "Authorization: Bearer $CF_TOKEN" \
+            "https://api.cloudflare.com/client/v4/zones?name=$HOST" \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);process.stdout.write(j.success&&j.result[0]?j.result[0].id:"")}catch{process.stdout.write("")}})')
+          if [ -z "$ZONE" ]; then
+            echo "::notice title=Cache purge skipped::The token cannot read the zone for $HOST. Purge it in the dashboard, or add Zone:Read and Cache Purge to CLOUDFLARE_API_TOKEN. The deploy itself succeeded."
+            exit 0
+          fi
+          STATUS=$(curl -sS -o "$RUNNER_TEMP/purge.json" -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $CF_TOKEN" -H "Content-Type: application/json" \
+            -d '{"purge_everything":true}' \
+            "https://api.cloudflare.com/client/v4/zones/$ZONE/purge_cache")
+          if [ "$STATUS" = "200" ]; then
+            echo "Edge cache purged for $HOST."
+          else
+            echo "::warning title=Cache purge failed::HTTP $STATUS. Add Zone:Read and Cache Purge to CLOUDFLARE_API_TOKEN; the deploy itself succeeded. Public files may stay cached until they expire."
+            cat "$RUNNER_TEMP/purge.json" 2>/dev/null || true
+          fi
+
       # THE SECOND WORKER, AND THE SILENTEST FAILURE THIS REPOSITORY CAN HAVE.
       #
       # Without this step the site deploys and the weekly runner does not. Every visible

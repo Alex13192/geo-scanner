@@ -112,23 +112,48 @@ const SECURITY_HEADERS = [
  * fix, and the Cache Rule named above is worth adding but could not be confirmed from
  * outside, because this Worker's responses carry no cf-cache-status to read. The headers
  * below are still inert either way.
+ *
+ * THIS SETTING CAUSED A REAL FALSE NEGATIVE ON 2026-10-23, SO IT CHANGED THAT DAY. An
+ * external audit read the site after a deploy and reported the pre-deploy homepage: the
+ * old banner, 97/100, the old footer, and no links to the newly shipped pages. The origin
+ * was serving the new version (verified from two colos with cache-busting requests), so the
+ * stale copy was held by an intermediary honouring these headers. The old values were
+ * `s-maxage=86400` for content pages and 600 for the homepage, with
+ * `stale-while-revalidate=604800` - which is precisely permission to keep serving a stale
+ * copy for up to a week after a deploy. For a site whose whole claim is "the published
+ * version is the running version", that is the wrong trade: a page that is 24 hours stale
+ * is worse than a Worker invocation.
+ *
+ * HTML therefore now says `public, max-age=0, must-revalidate`: caches may store it but
+ * must check with the origin every time, and the ETag makes that check a 304 rather than a
+ * full response. `stale-while-revalidate` is gone from HTML entirely. Static assets are
+ * untouched - Next still emits `immutable` for /_next/static, which is correct because the
+ * filenames are content-hashed.
  */
-const CACHE_LONG = [
-  { key: "Cache-Control", value: "public, s-maxage=86400, stale-while-revalidate=604800" },
-];
+const CACHE_HTML = [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }];
 
-const CACHE_SHORT = [
-  { key: "Cache-Control", value: "public, s-maxage=600, stale-while-revalidate=3600" },
-];
-
-/** Paths whose content is fixed at build time and only changes on deploy. */
+/**
+ * Paths whose HTML is a content page. Listed explicitly so no route inherits Next's
+ * one-year `s-maxage=31536000` default for prerendered pages - that default is what
+ * /tools/ and /self-audit/ carried before this change, and a shared cache may keep a page
+ * for a year on the strength of it. Adding a page means adding it here; an omission is
+ * caught by the `cache-control` assertion in scripts/check-live.mjs.
+ */
 const CACHEABLE = [
   "/checks/:path*",
   "/docs/:path*",
+  "/dimensions/:path*",
   "/methodology/",
   "/study/",
   "/about/",
   "/contact/",
+  "/tools/",
+  "/answer-check/",
+  "/author/",
+  "/insights/:path*",
+  "/compare/:path*",
+  "/self-audit/",
+  "/monitor/",
   "/llms-txt-studio/",
   "/readiness-badge/",
   "/privacy/",
@@ -180,13 +205,15 @@ const nextConfig: NextConfig = {
         headers: SECURITY_HEADERS,
       },
       {
-        // The homepage carries the dated self-report panel, so it is the one page whose
-        // staleness a reader can actually see. Ten minutes is long enough to absorb a
-        // traffic spike and short enough that the figure is never a day old.
+        // The homepage carries the dated self-report panel, so it is the page whose
+        // staleness a reader can actually see. It was given ten minutes; after the
+        // 2026-10-23 false-negative it revalidates like every other HTML page, because an
+        // intermediary holding a "fresh" homepage is exactly how a deploy looks like a
+        // non-deploy.
         source: "/",
-        headers: CACHE_SHORT,
+        headers: CACHE_HTML,
       },
-      ...CACHEABLE.map((source) => ({ source, headers: CACHE_LONG })),
+      ...CACHEABLE.map((source) => ({ source, headers: CACHE_HTML })),
       ...NEVER_CACHEABLE.map((source) => ({ source, headers: CACHE_NEVER })),
     ];
   },

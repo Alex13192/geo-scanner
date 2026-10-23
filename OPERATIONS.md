@@ -341,3 +341,34 @@ evidence that it really was a runtime upgrade rather than a behaviour change.
 HOW TO CONFIRM IT IS THE SAME FAILURE NEXT TIME: run the build command directly and read the error.
 If it names the Next version and the support window, it is this; do not go looking at wrangler or
 the adapter version first.
+
+## An external audit saw the previous deploy (23 October 2026)
+
+THE SYMPTOM IS THE IMPORTANT PART, BECAUSE NOTHING WAS BROKEN AT THE ORIGIN. After two deploys on
+2026-10-23, an external audit fetched llmention-geo.com and reported the pre-deploy site: the old
+announcement banner, 97/100, 38/40, "Last verified on 4 October", the old footer tagline, and no
+links to the pages that had just shipped (/self-audit/, /compare/, /author/, /insights/). The origin
+was serving the new version — verified with cache-busting requests, from two Cloudflare colos
+(AMS and LHR), and by a third-party metadata probe returning the new title.
+
+THE CAUSE WAS A CACHE LIFETIME, NOT A DEPLOYMENT. Content pages were sent with
+`Cache-Control: public, s-maxage=86400, stale-while-revalidate=604800`, the homepage with
+`s-maxage=600`, and anything not listed in next.config.ts's CACHEABLE list (including /tools/ and
+/self-audit/) inherited Next's default `s-maxage=31536000`. Those are shared-cache directives that
+explicitly permit a stale copy to be served for up to a week — even a year — without contacting the
+origin. No origin-side check can see this, because the origin is always right.
+
+THE FIX, IN TWO PLACES. next.config.ts now sends `public, max-age=0, must-revalidate` for every
+content HTML route, with `stale-while-revalidate` removed; the CACHEABLE list was extended to every
+content page so none inherits the one-year default. scripts/check-live.mjs asserts the header on six
+routes, and asserts that llms.txt and sitemap.xml contain the current route markers (they are public
+assets and are edge-cached separately). deploy.yml now purges the zone's cache after the Worker is
+live, best-effort: it warns rather than failing when the API token lacks "Cache Purge", because a
+successful deploy must not be marked red by a missing permission.
+
+WHAT TO DO IF A READER STILL SEES AN OLD PAGE: have them fetch with a cache-busting query
+(`?cachebust=<timestamp>`), and check `cache-control`, `date`, `cf-ray` and `x-opennext` in the
+response they get — that identifies the cache hop. Purge from the dashboard (Caching → Purge
+Everything) if the token cannot. The lesson worth keeping: for a site whose product claim is
+"published equals running", a 24-hour HTML cache lifetime is not a performance setting, it is a
+correctness bug that only shows up in somebody else's tool.

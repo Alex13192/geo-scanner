@@ -175,7 +175,22 @@ console.log("\n=== llms.txt ===");
   if (error) bad("could not fetch llms.txt", error);
   else if (res.status !== 200 || body.trim().length < 20) {
     bad("llms.txt is not served usefully", `HTTP ${res.status}, ${body.trim().length} bytes`);
-  } else ok("served", `${body.length} bytes`);
+  } else {
+    ok("served", `${body.length} bytes`);
+    /*
+     * A FRESHNESS MARKER, BECAUSE THIS FILE IS THE ONE THING THE EDGE REALLY CACHES.
+     * public/ assets are served from Cloudflare's cache (cf-cache-status: HIT), so a
+     * deployment that changes llms.txt can still leave the old file being served until the
+     * cache is purged or revalidated. The audit that prompted this check read a pre-deploy
+     * llms.txt and concluded the new pages were unreachable; the routes below are the ones
+     * that arrived in the 2026-10-23 changes. If they are missing from a live response, the
+     * file is stale, and the remedy is a purge rather than an edit.
+     */
+    const requiredRoutes = ["/self-audit/", "/compare/", "/answer-check/"];
+    const missing = requiredRoutes.filter((route) => !body.includes(route));
+    if (missing.length === 0) ok("carries the current route set", requiredRoutes.join(", "));
+    else bad("llms.txt looks stale", `missing ${missing.join(", ")} — purge the edge cache`);
+  }
 }
 
 /* ---- ads.txt ---- */
@@ -402,8 +417,43 @@ console.log("\n=== the rule section ===");
   }
   const { body: sitemap, error: sitemapError } = await get("/sitemap.xml");
   if (sitemapError) bad("could not fetch the sitemap", sitemapError);
-  else if (sitemap.includes("/checks/")) ok("the sitemap lists the rule pages");
-  else bad("the sitemap does not mention /checks/");
+  else if (!sitemap.includes("/checks/")) bad("the sitemap does not mention /checks/");
+  else if (!sitemap.includes("/self-audit/")) {
+    /* Same stale-cache class as llms.txt: sitemap.xml is a public asset, so an old copy can
+       outlive a deploy and hide the new pages from the crawler that reads it first. */
+    bad("the sitemap is stale", "no /self-audit/ entry — purge the edge cache");
+  } else ok("the sitemap lists the rule pages and the self-audit page");
+}
+
+/* ---- HTML must not be cacheable past a deploy ---- */
+console.log("\n=== html cache headers ===");
+{
+  /*
+   * WHY THIS IS ASSERTED RATHER THAN LEFT TO THE CONFIG: on 2026-10-23 an external audit
+   * fetched the site after a deploy and reported the pre-deploy homepage — old banner, old
+   * footer, no links to the pages that had just shipped — while the origin was serving the
+   * new version. The cause was a cache lifetime that outlived the deploy
+   * (s-maxage=86400 with stale-while-revalidate=604800). The failure is invisible from the
+   * origin, because the origin is always right; this is the assertion that notices when the
+   * headers regress, and it is also the sentence to quote at any intermediary that insists
+   * the site did not change.
+   */
+  const paths = ["/", "/study/", "/tools/", "/self-audit/", "/about/", "/compare/"];
+  for (const path of paths) {
+    const { res, error } = await get(path);
+    if (error) {
+      bad(`${path} unreachable`, error);
+      continue;
+    }
+    const cc = (res.headers.get("cache-control") || "").toLowerCase();
+    if (!cc.includes("must-revalidate") || !/max-age=0\b/.test(cc)) {
+      bad(`${path} may be cached past a deploy`, `cache-control: ${cc || "(none)"}`);
+    } else if (cc.includes("stale-while-revalidate")) {
+      bad(`${path} may serve stale after a deploy`, `cache-control: ${cc}`);
+    } else {
+      ok(`${path} revalidates`, cc);
+    }
+  }
 }
 
 /* ---- Edge caching: a measurement, deliberately NOT an assertion ---- */
