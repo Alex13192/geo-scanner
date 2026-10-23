@@ -264,8 +264,10 @@ console.log("\n=== withdrawn pages ===");
 
   /*
    * This one used to point at the English withdrawal notice. That page is gone with the
-   * paid audit, so the redirect was repointed at the homepage: a chain through a URL that
-   * itself redirects is a slower 301 with an extra hop for every crawler to record.
+   * paid audit, so the redirect was repointed at /refund/ on 2026-10-23: the consumer
+   * withdrawal notice lives there, and that is the page a buyer asking about cancellation
+   * actually needs. A chain through a URL that itself redirects would be a slower 301 with
+   * an extra hop for every crawler to record.
    *
    * THE TRAILING SLASH IS PART OF THE ASSERTION, not a detail. next.config.ts sets
    * `trailingSlash`, so a bare path is normalised by Next with a 308 BEFORE middleware
@@ -278,8 +280,8 @@ console.log("\n=== withdrawn pages ===");
   if (error) bad("could not fetch /de/widerrufsrecht/", error);
   else {
     const target = (res.headers.get("location") || "").replace(/^https?:\/\/[^/]+/, "");
-    if (target === "/") ok("/de/widerrufsrecht/ resolves in one hop to /");
-    else bad("/de/widerrufsrecht/ does not resolve to /", `HTTP ${res.status} -> ${target || "(no location)"}`);
+    if (target === "/refund/") ok("/de/widerrufsrecht/ resolves in one hop to /refund/");
+    else bad("/de/widerrufsrecht/ does not resolve to /refund/", `HTTP ${res.status} -> ${target || "(no location)"}`);
   }
 }
 
@@ -449,7 +451,7 @@ console.log("\n=== localized pages ===");
       bad(`${code} pages unreachable`, home.error || pricing.error);
       continue;
     }
-    const hreflangs = (home.body.match(/hreflang="/g) || []).length;
+    const hreflangs = (home.body.match(/hreflang="/gi) || []).length;
     const correctLang = new RegExp(`<html[^>]+lang="${lang}"`, "i").test(home.body);
     if (home.res.status !== 200 || pricing.res.status !== 200) {
       bad(`${code} pages do not return 200`, `home ${home.res.status}, pricing ${pricing.res.status}`);
