@@ -134,7 +134,7 @@ const en: Dictionary = {
         name: "Signal report",
         tagline: "Confirm whether the problem exists before buying a bigger measurement.",
         features: [
-          "25–25–30 questions built from your vocabulary",
+          "25–30 questions built from your vocabulary",
           "3 runs per question, each in a fresh session",
           "1 AI engine of your choice",
           "Report and data workbook by email",
@@ -225,7 +225,7 @@ const zh: Dictionary = {
         name: "Signal 报告",
         tagline: "先确认问题是否存在,再决定要不要做更大的测量。",
         features: [
-          "15 个问题,用你自己的行业词汇构建",
+          "25–30 个问题,用你自己的行业词汇构建",
           "每个问题跑 3 次,每次独立会话",
           "1 个你选择的 AI 引擎",
           "报告与数据表,邮件交付",
@@ -235,7 +235,7 @@ const zh: Dictionary = {
         name: "Pro 报告",
         tagline: "一份可以跨时间对比、也可以拿去向内部解释的测量。",
         features: [
-          "30 个问题,用你自己的行业词汇构建",
+          "25–30 个问题,用你自己的行业词汇构建",
           "每个问题跑 3 次,每次独立会话",
           "2 个你选择的 AI 引擎",
           "报告、数据表、行动清单,以及 90 天内 1 次复测",
@@ -415,7 +415,7 @@ const es: Dictionary = {
         name: "Informe Signal",
         tagline: "Confirma si el problema existe antes de comprar una medición mayor.",
         features: [
-          "25–25–30 preguntas creadas con tu vocabulario",
+          "25–30 preguntas creadas con tu vocabulario",
           "3 ejecuciones por pregunta, cada una en sesión nueva",
           "1 motor de IA a tu elección",
           "Informe y libro de datos por correo",
@@ -510,7 +510,7 @@ const de: Dictionary = {
         name: "Signal-Bericht",
         tagline: "Erst prüfen, ob das Problem existiert, bevor eine größere Messung gekauft wird.",
         features: [
-          "25–25–30 Fragen aus Ihrer eigenen Sprache",
+          "25–30 Fragen aus Ihrer eigenen Sprache",
           "3 Durchläufe pro Frage, jeweils in neuer Sitzung",
           "1 KI-Engine Ihrer Wahl",
           "Bericht und Datenmappe per E-Mail",
@@ -605,7 +605,7 @@ const fr: Dictionary = {
         name: "Rapport Signal",
         tagline: "Confirmer que le problème existe avant d'acheter une mesure plus large.",
         features: [
-          "25–25–30 questions construites avec votre vocabulaire",
+          "25–30 questions construites avec votre vocabulaire",
           "3 exécutions par question, chacune en session neuve",
           "1 moteur d'IA de votre choix",
           "Rapport et classeur de données par e-mail",
