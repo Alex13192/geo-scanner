@@ -8,12 +8,12 @@ import { CHECK_COPY } from "@/lib/geo/check-copy";
 import { guidePathForCheck } from "@/lib/geo/check-links";
 import { INSIGHTS, insightPath } from "@/lib/insights";
 import { MAX_FETCH_PAGES, MAX_LINKS_PER_SECTION } from "@/lib/llms-txt";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 /**
  * /tools/ - every entry point on the site, grouped by what the reader is trying to do.
  *
- * WHY THIS EXISTS. The site published roughly sixty useful destinations - four tools, one
+ * WHY THIS EXISTS. The site published roughly sixty useful destinations - five tools, one
  * page per rule, one page per dimension, the guides, the method - and had no page listing
  * any of them. Navigation named three, the footer named a few more, and a reader who wanted
  * "the page about llms.txt" had to know that /checks/llms-txt/ was the address. The sites
@@ -43,7 +43,7 @@ import { og } from "@/lib/og";
  *                                   same two strings the check page renders in its <title>
  *                                   and meta description
  *   - dimension names and reasons   DIMENSION_CATALOG's label and rationale
- *   - the four counts in the table  the lengths of the arrays themselves
+ *   - the counts in the table       the lengths of the arrays themselves
  *
  * The comparison entries are the exception and are listed by hand: they are three
  * pages written together, and the sentence on each is the one its own page opens
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: CANONICAL },
-  openGraph: og({ title: TITLE, description: DESCRIPTION, url: CANONICAL }),
+  ...social({ title: TITLE, description: DESCRIPTION, url: CANONICAL }),
 };
 
 /** A destination in the index. `note` is the honest qualifier, where one is needed. */
@@ -85,7 +85,7 @@ type Group = {
   entries: Entry[];
 };
 
-/* --- the four tools, described in the words their own pages open with --- */
+/* --- the five tools, described in the words their own pages open with --- */
 const TOOL_ENTRIES: Entry[] = [
   {
     href: "/report/",
@@ -93,6 +93,13 @@ const TOOL_ENTRIES: Entry[] = [
     description:
       "Scores one homepage against the published checks and lists what failed with the evidence each check produced.",
     note: "Free. No account. No email. Nothing about the site is stored, and the result exists only in the URL you are on.",
+  },
+  {
+    href: "/answer-check/",
+    label: "Answer checker",
+    description:
+      "Six published rules, applied to an answer you paste from ChatGPT, Perplexity or Gemini: does it mention you, mention you early, list you, recommend you, and cite your domain.",
+    note: "Free, and no AI engine is contacted - the rules run against the text you paste, in your browser - and there is nothing to sign up for.",
   },
   {
     href: "/llms-txt-studio/",
@@ -289,11 +296,11 @@ export default function ToolsIndexPage() {
       description={
         <>
           <p>
-            {totalEntries} destinations: {TOOL_ENTRIES.length} tools that read a page you own,{" "}
+            {totalEntries} destinations: {TOOL_ENTRIES.length} tools you can run yourself,{" "}
             {runnableChecks.length} pages describing the individual rules,{" "}
             {DIMENSION_CATALOG.length} describing the dimensions those rules are scored in,{" "}
-            {guidesList.length} guides for the fixes that recur, {INSIGHTS.length} pieces of
-            first-party writing, {COMPARE_ENTRIES.length} comparisons between measurements, and
+            {guidesList.length} guides for the fixes that recur, {WRITING_ENTRIES.length} writing
+            and author destinations, {COMPARE_ENTRIES.length} comparisons between measurements, and
             the method they all rest on.
           </p>
           <p>
@@ -435,7 +442,7 @@ export default function ToolsIndexPage() {
             items={[
               {
                 q: "Do I need an account for any of this?",
-                a: `No. The ${TOOL_ENTRIES.length} tools read a page you own and report what they found, and the ${runnableChecks.length} rule pages, the ${DIMENSION_CATALOG.length} dimension pages and the method are published documents. The one thing that takes an address is the weekly report, and confirming that address is the whole subscription.`,
+                a: `No. The ${TOOL_ENTRIES.length} tools are free and work on a page you own or an answer you already have, and the ${runnableChecks.length} rule pages, the ${DIMENSION_CATALOG.length} dimension pages and the method are published documents. The one thing that takes an address is the weekly report, and confirming that address is the whole subscription.`,
               },
               {
                 q: "Where do I start if I only have five minutes?",
@@ -447,7 +454,7 @@ export default function ToolsIndexPage() {
               },
               {
                 q: "Is there an API?",
-                a: "No. The scanner is a public endpoint behind rate limiting rather than a documented API, and this page does not pretend otherwise. What is published instead is the method itself - every rule, its points and its pass condition - so the score can be recomputed rather than trusted.",
+                a: "Not a documented one. The scanner is a public endpoint - the study's figures were collected through /api/scan?brief=1&domain= - but it is rate-limited and unversioned, so it is the scanner's front door rather than an interface to build on. What is published instead is the method itself - every rule, its points and its pass condition - so the score can be recomputed rather than trusted.",
               },
             ]}
           />

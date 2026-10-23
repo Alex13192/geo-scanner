@@ -42,7 +42,12 @@ const WIDTH_CLASS: Record<Width, string> = {
 
 type PageFooterProps = {
   width?: Width;
-  /** "LLMention" on the site, "LLMention Knowledge Base" under /docs/. */
+  /**
+   * The publication name. Every page uses "LLMention": /docs/ used to pass "LLMention Knowledge
+   * Base", which made one section of the site look like a separate brand for no reason a reader
+   * could see. The prop stays so a future rename has one place to change, and defaults to the one
+   * name the site publishes.
+   */
   brand?: string;
   align?: "center" | "start";
 };
@@ -60,7 +65,7 @@ export default function PageFooter({
     >
       <LegalLinks className={align === "center" ? "mb-3" : "mb-3 justify-start"} />
       <p>
-        © {new Date().getFullYear()} {brand}. Brand Generative Engine Optimization Intelligence.
+        © {new Date().getFullYear()} {brand}. GEO scanner.
       </p>
       {/*
         The AI Agents Directory badge. It is here because their free listing tier requires it:

@@ -5,7 +5,7 @@ import AuthorLine from "@/app/components/AuthorLine";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 /**
  * The comparison hub.
  *
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/compare/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/compare/",

@@ -8,6 +8,8 @@ import Evidence, {
   GEO_PRIMARY_SOURCES,
 } from "@/app/components/Evidence";
 import Faq, { type FaqItem } from "@/app/components/Faq";
+import { AUTHOR } from "@/lib/author";
+import { formatDate } from "@/lib/insights";
 
 /**
  * Shared chrome for the long-form /docs/<slug> articles.
@@ -50,6 +52,13 @@ type ArticleShellProps = {
   title: string;
   description: string;
   readTime: string;
+  /**
+   * ISO dates, not prose. The audit that prompted the byline asked for a named author and a
+   * date a reader can check; "October 2026" is a month rather than a date, and a byline that
+   * cannot be checked is decoration. They are formatted by lib/insights.ts so the printed
+   * date and the machine-readable one cannot disagree.
+   */
+  published: string;
   updated: string;
   /** Replace with article-specific sources where you have them. */
   sources?: EvidenceSource[];
@@ -63,6 +72,7 @@ export default function ArticleShell({
   title,
   description,
   readTime,
+  published,
   updated,
   sources = GEO_PRIMARY_SOURCES,
   faq,
@@ -105,8 +115,26 @@ export default function ArticleShell({
               <p className="text-base leading-relaxed text-[var(--ink-2)] md:text-lg">
                 {description}
               </p>
-              <p className="font-mono text-xs text-[var(--ink-3)]">
-                {readTime} · Updated {updated}
+              {/*
+                The byline, added 2026-10-23. Before it, the guides were signed by nobody
+                and dated only by a month - while /study/ and /methodology/ carried a named
+                author and an exact date. A guide about what an AI engine should trust was
+                asking the reader to trust an unsigned page; the author page it links to is
+                the same one the rest of the site's writing points at.
+              */}
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-[var(--ink-3)]">
+                <span>
+                  By{" "}
+                  <Link href={AUTHOR.path} className="text-[var(--accent)] hover:opacity-75">
+                    {AUTHOR.name}
+                  </Link>
+                </span>
+                <span aria-hidden="true">·</span>
+                <time dateTime={published}>Published {formatDate(published)}</time>
+                <span aria-hidden="true">·</span>
+                <time dateTime={updated}>Updated {formatDate(updated)}</time>
+                <span aria-hidden="true">·</span>
+                <span>{readTime}</span>
               </p>
             </div>
           </div>
@@ -146,7 +174,9 @@ export default function ArticleShell({
         </section>
       </main>
 
-      <PageFooter width="3xl" brand="LLMention Knowledge Base" />
+      {/* One brand across the site: /docs/ stopped being "LLMention Knowledge Base" because a
+          second name for the same section read as a separate publication to a newcomer. */}
+      <PageFooter width="3xl" />
     </div>
   );
 }

@@ -23,7 +23,7 @@ import Faq from "@/app/components/Faq";
 interface Guide {
   id: string;
   /*
-   * "Method" exists because the first four guides are all "how to change something on your site",
+   * "Method" exists because the other four guides are all "how to change something on your site",
    * and this one is "how to measure something yourself". Filing it under Content would have made the
    * label wrong on the index: the reader is not being told to rewrite anything.
    */
@@ -105,7 +105,7 @@ export default function DocsPage() {
               L
             </span>
             <span className="text-[15px] font-semibold tracking-tight text-[var(--ink-1)]">
-              LLMention Docs
+              LLMention guides
             </span>
           </Link>
           <Link
@@ -193,9 +193,16 @@ export default function DocsPage() {
                 The guides
               </h2>
               <p>
-                Four technical guides. Together they cover the checks the scanner most often fails
-                on a site that is otherwise well built.
+                {guides.length} guides. The technical ones cover the checks the scanner most often
+                fails on a site that is otherwise well built; the method one is how to check the
+                result by hand rather than trusting the score.
               </p>
+              {/*
+                Read from the same array the grid above renders, so the table cannot list a
+                different number of guides from the sentence under it. Before this, the count
+                was typed into the paragraph and the rows were typed into the table, and the
+                two had already drifted apart once.
+              */}
               <div className="overflow-x-auto rounded-xl border border-[var(--line)]">
                 <table className="w-full border-collapse text-sm">
                   <thead className="bg-[var(--surface-1)] text-[var(--ink-2)]">
@@ -206,34 +213,13 @@ export default function DocsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-t border-[var(--line)]">
-                      <td className="px-4 py-3 align-top">
-                        How to generate and deploy an llms.txt file
-                      </td>
-                      <td className="px-4 py-3 align-top">Setup</td>
-                      <td className="px-4 py-3 align-top">3 min read</td>
-                    </tr>
-                    <tr className="border-t border-[var(--line)]">
-                      <td className="px-4 py-3 align-top">
-                        Configuring robots.txt and WAF for GPTBot and PerplexityBot
-                      </td>
-                      <td className="px-4 py-3 align-top">Technical</td>
-                      <td className="px-4 py-3 align-top">4 min read</td>
-                    </tr>
-                    <tr className="border-t border-[var(--line)]">
-                      <td className="px-4 py-3 align-top">
-                        Optimizing headings for direct AI citation
-                      </td>
-                      <td className="px-4 py-3 align-top">Content</td>
-                      <td className="px-4 py-3 align-top">4 min read</td>
-                    </tr>
-                    <tr className="border-t border-[var(--line)]">
-                      <td className="px-4 py-3 align-top">
-                        Implementing Schema.org JSON-LD for entity disambiguation
-                      </td>
-                      <td className="px-4 py-3 align-top">Schema</td>
-                      <td className="px-4 py-3 align-top">5 min read</td>
-                    </tr>
+                    {guides.map((guide) => (
+                      <tr key={guide.id} className="border-t border-[var(--line)]">
+                        <td className="px-4 py-3 align-top">{guide.title}</td>
+                        <td className="px-4 py-3 align-top">{guide.category}</td>
+                        <td className="px-4 py-3 align-top">{guide.readTime}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -269,7 +255,7 @@ export default function DocsPage() {
         </section>
       </main>
 
-      <PageFooter width="7xl" brand="LLMention Knowledge Base" />
+      <PageFooter width="7xl" />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import ProsePage from "@/app/components/ProsePage";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 import MonitorForm from "./MonitorForm";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 /**
  * The signup page for the weekly report.
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/monitor/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/monitor/",

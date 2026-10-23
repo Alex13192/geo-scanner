@@ -3,7 +3,7 @@ import Link from "next/link";
 import PostShell from "@/app/components/PostShell";
 import { AUTHOR } from "@/lib/author";
 import type { PostMeta } from "@/lib/insights";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Who writes this site";
 const DESCRIPTION =
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: AUTHOR.path },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: AUTHOR.path,

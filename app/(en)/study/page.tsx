@@ -32,7 +32,7 @@ import { SITE_URL } from "@/lib/site";
  *    between two requests made seconds apart, so a "refused" mark is one
  *    observation rather than a property of the site.
  */
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 import { formatDate, getInsight, insightPath } from "@/lib/insights";
 // The rows, the aggregates and the scan date live in one module so the page, the
 // machine-readable endpoint at /study/data/ and the tests all read the same array.
@@ -48,6 +48,7 @@ import {
   STUDY_ROWS,
   gradeCount,
 } from "@/lib/study-data";
+import { CHECK_CATALOG } from "@/lib/geo/catalog";
 
 const TITLE = "We scanned 30 major sites for AI visibility";
 const DESCRIPTION =
@@ -80,6 +81,19 @@ if (formatDate(SCAN_DATE_ISO) !== SCAN_DATE) {
 const METHOD_REVISED_ISO = "2026-10-23";
 
 /**
+ * How many checks the scanner publishes today, for the note that keeps the 38 below
+ * from reading as the current number.
+ *
+ * The 38 stays typed because it is a fact about this run: those rows were measured
+ * under the rule set of the day, and rewriting them under today's method would be the
+ * backdating this page exists against. The current count is read from the catalogue
+ * instead, because it is a property of the build rather than of the study, and a
+ * second hand-typed "40" here would be exactly the kind of copy that went stale the
+ * last time two checks were added.
+ */
+const CURRENT_CHECK_COUNT = CHECK_CATALOG.filter((check) => !check.alias).length;
+
+/**
  * The pieces that interpret this table, looked up in the archive registry rather than
  * retyped here. A slug that moves takes its link and its title with it, and a piece removed
  * from lib/insights.ts throws through getInsight at build time rather than leaving a dead
@@ -95,7 +109,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/study/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/study/",
@@ -321,8 +335,10 @@ export default function StudyPage() {
               on the <a href="/methodology/">methodology page</a>.
             </li>
             <li>
-              robots.txt, llms.txt and sitemap.xml were requested from the same origin, and the
-              38 documented checks were run over the result.
+              robots.txt, llms.txt and sitemap.xml were requested from the same origin, and
+              38 documented checks were run over the result. That was the count when these rows
+              were measured; the scanner publishes {CURRENT_CHECK_COUNT} checks today, so re-running
+              a domain here can score it differently even when nothing on the site has changed.
             </li>
             <li>
               No AI engine was queried. Nothing on this page is a measurement of what ChatGPT,

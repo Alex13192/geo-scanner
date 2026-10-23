@@ -20,21 +20,25 @@ import { CONTACT_EMAIL } from "@/lib/site";
  *    consent paragraph states the obligation that applies in the EEA, UK and
  *    Switzerland; the consent management platform must actually be deployed
  *    before personalised advertising is served there.
+ *  - "No analytics of our own" is the claim this page can defend, and it is
+ *    worded as exactly that. It must not slide back into "this site does not
+ *    measure you": Google's advertising measures visitors, as the advertising
+ *    section says, and the absolute version contradicted that section.
  *
  * Not legal advice. Have it reviewed before selling to consumers in the EU.
  */
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Privacy policy";
 const DESCRIPTION =
   "What LLMention processes when you run a scan, what the server logs contain, how advertising cookies are handled, and how to exercise your data rights.";
-const UPDATED = "5 October 2026";
+const UPDATED = "23 October 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/privacy/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/privacy/",
@@ -53,17 +57,21 @@ export default function PrivacyPage() {
         <article className="doc-article text-[17px] leading-[1.65] text-[var(--ink-2)]">
           <h2>What this policy covers</h2>
           <p>
-            This covers the free scanner, the /llms.txt generator and every guide on this site. It
-            says what is processed, why, how long it is kept, and what you can ask us to do about
-            it. It does not cover third-party sites you reach by following a link from here.
+            This covers the scanner (free scans and the paid multi-page site scan), the weekly
+            report, the /llms.txt generator, the paid measurement report and its retest, and every
+            guide on this site. It says what is processed, why, how long it is kept, and what you can
+            ask us to do about it. It does not cover third-party sites you reach by following a link
+            from here.
           </p>
 
           <h2>Who is responsible</h2>
           <p>
             LLMention is an independent project, and it is the controller for the processing
             described below. Questions, requests and complaints all go to the same address:{" "}
-            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. There is no tracking of
-            individual visitors behind this site, so that address is also the fastest route to an
+            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. The site itself runs no
+            analytics, no tracking pixels and no session recording; the one place where visitors
+            are measured is the advertising described below, which is Google&rsquo;s and not ours.
+            So for anything the site itself processes, that address is the fastest route to an
             answer.
           </p>
 
@@ -93,8 +101,9 @@ export default function PrivacyPage() {
 
           <h2>What a subscription stores</h2>
           <p>
-            The weekly report is separate from the scanner, and it is the only part of this site
-            that holds anything about a person. It needs an address to send to and a domain to check.
+            The weekly report is separate from the scanner. Together with the paid products
+            described below, it is one of the parts of this site that hold anything about a person.
+            It needs an address to send to and a domain to check.
           </p>
           <ul>
             <li>The email address, so the report can be sent to it.</li>
@@ -112,12 +121,51 @@ export default function PrivacyPage() {
             exists: "when did this person ask us to stop" cannot be answered from a row that is gone.
           </p>
 
+          <h2>The paid measurement report</h2>
+          <p>
+            The measurement report is ordered by email. It is one of the paid products on this site
+            — the other is the multi-page site scan — and it is the only one that asks you for an
+            intake. It is described here because a buyer should be able to read what is held before
+            they send it, not after.
+          </p>
+          <ul>
+            <li>
+              <strong>The intake you send</strong> — the brand names and aliases to be measured, the
+              competitors to be counted, the words your buyers use, and the questions they ask.
+              Nothing is measured until you have corrected and approved the question bank, so the
+              intake is the material the report is built from rather than background information.
+            </li>
+            <li>
+              <strong>Payment details, handled by the payment channel.</strong> Payment is by bank
+              transfer or through a payment link. The details needed to move the money are handled by
+              the payment channel or the bank; no card number is entered on this site, and no card
+              data is stored by it.
+            </li>
+            <li>
+              <strong>Delivery.</strong> The report and the data workbook are sent to the address the
+              order came from. They carry the answers the engines gave and the domains those answers
+              cited, which are public sources rather than data about a person.
+            </li>
+            <li>
+              <strong>Retention.</strong> The intake, the frozen question bank and the run records are
+              kept, because a retest is a comparison and a comparison needs the earlier run to compare
+              against. Deleting them ends that comparison; how to ask is described under Your rights
+              below.
+            </li>
+          </ul>
+          <p>
+            The question bank is sent to you for correction before anything is measured, and once you
+            approve it its fingerprint is printed in both the report and the workbook — so the record
+            of what was asked is part of the deliverable rather than a separate file.
+          </p>
+
           <h2>What is deliberately not done</h2>
           <ul>
             <li>No account system, so there is no user profile to hold.</li>
             <li>
-              No analytics, tracking pixels or session recording of our own. This site does not
-              measure you.
+              No analytics, tracking pixels or session recording of our own. The site does not measure
+              you itself; the advertising described below is where visitors are measured, and that is
+              Google&rsquo;s measurement rather than ours.
             </li>
             <li>
               No history of the domains you scan. The score is computed per request and is not
@@ -203,6 +251,12 @@ export default function PrivacyPage() {
               <strong>Google</strong> serves the advertising described above.
             </li>
             <li>
+              <strong>The payment channel</strong> that handles a payment for a paid product — a bank
+              transfer or payment link for a report, the pay-as-you-go flow for a site scan —
+              processes the payment details for that transaction under its own terms and privacy
+              policy. No card data reaches this site.
+            </li>
+            <li>
               <strong>GitHub</strong> hosts the public source repository. If you open an issue
               there, GitHub&apos;s own terms and privacy policy apply to that.
             </li>
@@ -218,6 +272,11 @@ export default function PrivacyPage() {
               <strong>Consent</strong> (Article 6(1)(a) GDPR) for advertising cookies and
               personalised advertising where consent is required.
             </li>
+            <li>
+              <strong>Performance of a contract</strong> (Article 6(1)(b) GDPR) for the weekly report
+              and the paid products you asked for: the address, domain and intake are processed in
+              order to deliver them.
+            </li>
           </ul>
 
           <h2>How long it is kept</h2>
@@ -225,7 +284,9 @@ export default function PrivacyPage() {
             Server and security logs are kept for a short period, determined by our hosting
             provider&apos;s log retention, and are used for security and capacity rather than
             analysis of individuals. Scan results are not stored beyond the request that produced
-            them. Correspondence is kept for as long as it takes to answer it. Advertising cookie
+            them. A paid report&apos;s intake, question bank and run records are kept as the baseline
+            a retest is compared against, and are not used to build a profile of the buyer.
+            Correspondence is kept for as long as it takes to answer it. Advertising cookie
             lifetimes are set by Google, not by us.
           </p>
 
@@ -300,7 +361,7 @@ export default function PrivacyPage() {
         </div>
         <div className="mt-16 space-y-6 text-sm leading-relaxed text-[var(--ink-2)]">
           <h2 className="text-xl font-bold text-[var(--ink-1)]">Summary of what is processed</h2>
-          <p>Four kinds of data are involved in running a scan or answering a message. Each is explained in full further down this page.</p>
+          <p>Six kinds of data are involved in running a scan, sending the weekly report, delivering a paid report or answering a message. Each row points at the section that explains it.</p>
           <div className="overflow-x-auto">
           <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
             <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
@@ -314,22 +375,32 @@ export default function PrivacyPage() {
             <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">The domain you submit, and the page the scanner fetches</td>
               <td className="px-4 py-2.5 align-top">They are the subject of the scan; the checks read that response</td>
-              <td className="px-4 py-2.5 align-top">What this policy covers</td>
+              <td className="px-4 py-2.5 align-top">What a scan processes</td>
             </tr>
             <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Standard request logs at the edge</td>
               <td className="px-4 py-2.5 align-top">Keeping the service available, and limiting how often one address can scan</td>
-              <td className="px-4 py-2.5 align-top">Server logs</td>
+              <td className="px-4 py-2.5 align-top">What a scan processes</td>
             </tr>
             <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Cookies set by advertising partners</td>
               <td className="px-4 py-2.5 align-top">They fund a free tool rather than a subscription</td>
-              <td className="px-4 py-2.5 align-top">Advertising cookies</td>
+              <td className="px-4 py-2.5 align-top">Advertising and third-party cookies</td>
+            </tr>
+            <tr className="border-t border-[var(--line)]">
+              <td className="px-4 py-2.5 align-top">The email address you sign up to the weekly report with</td>
+              <td className="px-4 py-2.5 align-top">So the report can be sent, and a change in score reported to you</td>
+              <td className="px-4 py-2.5 align-top">What a subscription stores</td>
+            </tr>
+            <tr className="border-t border-[var(--line)]">
+              <td className="px-4 py-2.5 align-top">The intake for a paid report — brand names, competitors, buyer questions and the delivery address</td>
+              <td className="px-4 py-2.5 align-top">They define the questions that are measured, and where the report is sent</td>
+              <td className="px-4 py-2.5 align-top">The paid measurement report</td>
             </tr>
             <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">Your email address, if you write to us</td>
               <td className="px-4 py-2.5 align-top">So the message can be answered and the record kept</td>
-              <td className="px-4 py-2.5 align-top">Your data rights</td>
+              <td className="px-4 py-2.5 align-top">Your rights</td>
             </tr>
             </tbody>
           </table>

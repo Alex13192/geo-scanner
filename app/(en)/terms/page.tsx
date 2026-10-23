@@ -35,7 +35,7 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * NOT LEGAL ADVICE, AND THIS IS THE FIRST VERSION THAT GOVERNS A PAID CONTRACT. Have it reviewed
  * before the first overseas invoice is issued - that is the one deadline this file cannot miss.
  */
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Terms of service";
 const DESCRIPTION =
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/terms/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/terms/",

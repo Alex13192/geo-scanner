@@ -5,7 +5,7 @@ import AuthorLine from "@/app/components/AuthorLine";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import { DIMENSION_CATALOG } from "@/lib/geo/catalog";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 /**
  * The conceptual comparison: citable versus cited.
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/compare/readiness-vs-mention-tracking/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/compare/readiness-vs-mention-tracking/",

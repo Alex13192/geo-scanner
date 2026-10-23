@@ -652,12 +652,28 @@ export default function HomePage() {
                   value={SELF_AUDIT.score}
                   label={`This site scores ${SELF_AUDIT.score} out of 100`}
                 />
-                <a
-                  href={`/report/?domain=${SITE_HOST}`}
-                  className="rounded-xl border border-[var(--line)] bg-[var(--surface-1)] px-5 py-3 text-center text-xs font-semibold text-[var(--ink-1)] transition-colors hover:border-[var(--accent)]"
-                >
-                  Scan this site →
-                </a>
+                {/*
+                  THE EVIDENCE LINK IS THE SELF-AUDIT PAGE, NOT THE REPORT. /report/ is generated
+                  per request and is deliberately noindex and disallowed in robots.txt, so the page
+                  this panel used to offer as proof was one a crawler - and therefore an AI engine -
+                  cannot read. /self-audit/ publishes the same measured record on an indexable URL,
+                  and the report link stays underneath as the "run it yourself" option, because
+                  re-measuring is still the strongest evidence a reader can get.
+                */}
+                <div className="flex flex-col items-center gap-2">
+                  <a
+                    href="/self-audit/"
+                    className="rounded-xl border border-[var(--line)] bg-[var(--surface-1)] px-5 py-3 text-center text-xs font-semibold text-[var(--ink-1)] transition-colors hover:border-[var(--accent)]"
+                  >
+                    Read the self-audit →
+                  </a>
+                  <a
+                    href={`/report/?domain=${SITE_HOST}`}
+                    className="text-xs text-[var(--ink-3)] underline hover:text-[var(--ink-1)]"
+                  >
+                    Or run it yourself →
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -1188,10 +1204,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--line)] pt-6 text-xs text-[var(--ink-3)]">
-            <span>
-              © {new Date().getFullYear()} LLMention. Brand Generative Engine Optimization
-              Intelligence.
-            </span>
+            <span>© {new Date().getFullYear()} LLMention. GEO scanner.</span>
             <span>Not affiliated with OpenAI, Anthropic, Google or Perplexity.</span>
           </div>
 

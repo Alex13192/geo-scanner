@@ -4,7 +4,7 @@ import "../globals.css";
 import { ADSENSE_SCRIPT_SRC } from "@/lib/ads";
 import { AUTHOR, personNode } from "@/lib/author";
 import { OG_IMAGE } from "@/lib/og";
-import { BRAND, BRAND_FULL, SITE_URL } from "@/lib/site";
+import { BRAND, BRAND_FULL, CONTACT_EMAIL, SITE_URL } from "@/lib/site";
 
 /**
  * The site's typefaces.
@@ -167,12 +167,21 @@ const jsonLd = {
       disambiguatingDescription:
         "An independent GEO readiness audit. Not affiliated with, connected to, or partnered with DataForSEO's LLM Mentions API (llm.dataforseo.com), which measures brand mentions - a different measurement.",
       url: SITE_URL,
-      logo: `${SITE_URL}/favicon.ico`,
+      // A real 512px mark rather than the favicon: the audit that prompted this found the
+      // Organization node pointing at favicon.ico, which is a 16-32px browser icon rather
+      // than the logo an entity graph is supposed to name. The file is the same asset the
+      // social card and the footer use.
+      logo: `${SITE_URL}/logo.png`,
+      email: CONTACT_EMAIL,
       description: DESCRIPTION,
       // sameAs is what lets a model resolve the brand to a single entity instead
-      // of guessing whether the name and the domain are the same thing. Both URLs
-      // are accounts the project already publishes under; no profile is invented.
-      sameAs: [AUTHOR.github, AUTHOR.githubRepo],
+      // of guessing whether the name and the domain are the same thing. All three URLs
+      // are profiles the project already publishes under; none is invented.
+      sameAs: [
+        AUTHOR.github,
+        AUTHOR.githubRepo,
+        "https://aiagentsdirectory.com/agent/llmention",
+      ],
       /*
        * The person is now a node of its own rather than being folded into the
        * organisation. The comment that used to sit here said a named Person would be a

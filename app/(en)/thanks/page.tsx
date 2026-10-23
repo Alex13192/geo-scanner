@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import ProsePage from "@/app/components/ProsePage";
 import { CONTACT_EMAIL } from "@/lib/site";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 /**
  * Where a buyer lands after Creem takes the payment.
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/thanks/" },
   // Reached after a purchase, useful to nobody who finds it by searching.
   robots: { index: false, follow: false },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/thanks/",

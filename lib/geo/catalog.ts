@@ -484,13 +484,27 @@ export const CHECK_CATALOG: CatalogCheck[] = [
   },
 ];
 
-/** Grade bands applied to the weighted total. */
+/**
+ * Grade bands applied to the weighted total.
+ *
+ * THE LABELS DESCRIBE READINESS, NOT A PREDICTION. They used to say a score was
+ * "likely" or "rarely" cited, which is a claim about what an engine will do and one
+ * this method cannot support: it never queries an engine. The site's own study says
+ * the same thing from the other direction - a low-scoring page can still be quoted
+ * tomorrow - so a band says what the page has that a citation needs, and nothing
+ * about whether the citation happens. This is the only copy: the report reads these
+ * labels through lib/geo/analyze.ts rather than keeping a second set of strings.
+ */
 export const GRADE_BANDS = [
-  { grade: "A", min: 90, label: "Excellent - highly likely to be cited" },
-  { grade: "B", min: 80, label: "Good - likely to be cited" },
-  { grade: "C", min: 70, label: "Average - several dimensions need work" },
-  { grade: "D", min: 60, label: "Poor - significant GEO gaps" },
-  { grade: "F", min: 0, label: "Critical - rarely cited by AI engines" },
+  { grade: "A", min: 90, label: "Excellent readiness — the page has what a citation needs" },
+  { grade: "B", min: 80, label: "Good readiness — most of what a citation needs" },
+  {
+    grade: "C",
+    min: 70,
+    label: "Average readiness — some of what a citation needs, and several dimensions need work",
+  },
+  { grade: "D", min: 60, label: "Poor readiness — significant GEO gaps" },
+  { grade: "F", min: 0, label: "Critical readiness — most of what a citation needs is missing" },
 ];
 
 /** Primary literature the weighting decisions lean on. */

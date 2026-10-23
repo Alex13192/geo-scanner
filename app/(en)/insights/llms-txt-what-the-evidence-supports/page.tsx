@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PostShell from "@/app/components/PostShell";
 import { getInsight, insightPath } from "@/lib/insights";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const insight = getInsight("llms-txt-what-the-evidence-supports");
 const TITLE = insight.title;
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: insightPath(insight.slug) },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: insightPath(insight.slug),

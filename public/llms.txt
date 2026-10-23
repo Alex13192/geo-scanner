@@ -20,11 +20,19 @@ relationship or shared operator between the two.
 - [AI Crawler Passability](https://llmention-geo.com/): Scans robots.txt
   and WAF rules to verify that GPTBot, ClaudeBot, PerplexityBot, Bytespider and
   other AI crawler user-agents are not blocked.
+- [Answer Checker](https://llmention-geo.com/answer-check/): Applies six published
+  rules to an answer you paste from ChatGPT, Perplexity or Gemini - whether the
+  brand is mentioned, mentioned early, listed, recommended, and which domains the
+  answer cites. Runs in the browser, contacts no AI engine, and gives a count
+  rather than a score out of 100.
 - [llms.txt Studio](https://llmention-geo.com/llms-txt-studio/): Generates
   a standardized markdown context file so LLMs can digest a domain's content
   cleanly, ready to deploy at the domain root.
 - [Readiness Badge](https://llmention-geo.com/readiness-badge/): Produces
   an embeddable real-time GEO readiness badge for GitHub READMEs and site footers.
+- [Weekly GEO report](https://llmention-geo.com/monitor/): The same checks re-run
+  once a week, emailed as a diff that names the rules which newly fail, with the
+  evidence each failing check saw.
 
 ## Documentation
 
@@ -33,6 +41,9 @@ relationship or shared operator between the two.
   grade bands, the primary research behind the weighting, and a statement of what
   the score cannot tell you. Generated from the same data the analyser runs on.
 - [GEO knowledge hub](https://llmention-geo.com/docs/): Index of all guides.
+- [How to check whether AI engines mention your brand](https://llmention-geo.com/docs/ai-visibility-self-check/):
+  Twenty questions to ask an engine yourself, the six mechanical checks for scoring
+  an answer, and why one run is an anecdote rather than a measurement.
 - [How to generate and deploy an llms.txt file](https://llmention-geo.com/docs/llms-txt-deployment/):
   File format, hosting location, verification steps, and an honest assessment of
   what llms.txt does and does not do for AI visibility.
@@ -44,6 +55,13 @@ relationship or shared operator between the two.
   answer-first paragraphs.
 - [Implementing Schema.org JSON-LD for entity disambiguation](https://llmention-geo.com/docs/schema-org-jsonld/):
   Connecting Organization, WebSite and SoftwareApplication nodes into one entity.
+
+## Pricing
+
+- [Pricing](https://llmention-geo.com/pricing/): What stays free - the scanner, the
+  published checks and the weekly report for one domain - and what the paid
+  measurement work costs: a report built from answers the engines actually gave,
+  and the quarterly retest that shows what changed.
 
 ## Comparisons
 
@@ -97,6 +115,9 @@ relationship or shared operator between the two.
   funded.
 - [Study](https://llmention-geo.com/study/): First-party measurements over 30
   major homepages, published with the sample and the date they were taken.
+- [Self-audit](https://llmention-geo.com/self-audit/): This site measured by its own
+  scanner: the score, the date it was taken, and the evidence behind every check,
+  published rather than quoted.
 
 ## Contact and legal
 
@@ -117,6 +138,9 @@ Claude-SearchBot, anthropic-ai (Anthropic); PerplexityBot, Perplexity-User
 
 ## Notes
 
+- Last updated 2026-10-23. This file is maintained by hand, not generated, so it
+  must be regenerated whenever a route is added or renamed; generating it at build
+  time is the intended fix.
 - The scanner and the llms.txt generator are free and do not require an account.
 - Scan result pages under /report/ are generated per request and are excluded from
   search indexing via robots.txt.

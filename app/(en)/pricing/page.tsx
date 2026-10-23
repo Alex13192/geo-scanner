@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import ProsePage from "@/app/components/ProsePage";
+import Faq from "@/app/components/Faq";
+import SellerIdentity from "@/app/components/SellerIdentity";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -22,18 +24,32 @@ import { CONTACT_EMAIL } from "@/lib/site";
  *  - No guarantee of a score, a ranking or a citation. The whole method is built against that
  *    promise; see /methodology/.
  */
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Pricing";
+
+/**
+ * RENDERED PER REQUEST FOR THE SAME REASON AS /refund/: "Who you are buying from" prints the
+ * seller's identity from the deployment variable OPERATOR_IDENTITY. A prerendered page reads that
+ * variable at build time, the build has no value for it, and the fallback sentence would then be
+ * baked into a static file that no later deploy could correct. /refund/ records that failure in
+ * full next to the same export.
+ *
+ * THE COST IS NAMED RATHER THAN HIDDEN: /pricing/ is no longer prerendered, so it is not in the
+ * build's HTML tree and scripts/check-built-pages.mts reports it as "not in this build" instead of
+ * scoring it. Shipping a price page whose seller is silently absent would be the worse trade.
+ */
+export const dynamic = "force-dynamic";
+
 const DESCRIPTION =
   "The scanner is free and stays free. What costs money is measurement work we run on your behalf: a report built from answers the engines actually gave, and the retest that shows what changed.";
-const UPDATED = "8 October 2026";
+const UPDATED = "23 October 2026";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/pricing/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/pricing/",
@@ -128,10 +144,16 @@ export default function PricingPage() {
         <ol>
           <li>You email {CONTACT_EMAIL} with the brand and the domain.</li>
           <li>We confirm scope, price and dates in writing.</li>
-          <li>Payment instructions follow. There is no checkout on this site yet, and no card is taken anywhere on it.</li>
+          <li>
+            You pay by bank transfer or through a payment link. There is no checkout on this site,
+            and no card is taken anywhere on it.
+          </li>
           <li>You fill the intake form and approve the question bank. The bank is frozen at that point.</li>
           <li>The measurement runs. You receive the report and the workbook.</li>
         </ol>
+
+        <h2>Who you are buying from</h2>
+        <SellerIdentity />
 
         <h2>What this is not</h2>
         <ul>
@@ -168,6 +190,33 @@ export default function PricingPage() {
           <a href="/refund/">refunds page</a>.
         </p>
       </article>
+
+      {/*
+        The FAQ is the one question a reader arrives with that the price list above cannot answer:
+        what the money actually buys that the free scan does not. The other two are the order and
+        cancellation questions the page otherwise buries in the list of steps. Faq emits the
+        FAQPage node as well as the visible headings, so the answers are extractable rather than
+        only readable.
+      */}
+      <div className="mt-16 space-y-10 text-sm leading-relaxed text-[var(--ink-2)]">
+        <Faq
+          title="Questions about buying a report"
+          items={[
+            {
+              q: "What does the paid report give me that the free scan does not?",
+              a: "The free scan reads your pages and scores whether an engine could crawl, parse and cite them. The report asks the engines your buyers' questions and records the answers: what was said, which names appeared, and which domains were cited.",
+            },
+            {
+              q: "Is there a checkout on this site?",
+              a: "No. You email, we confirm the scope and price in writing, and payment is by bank transfer or a payment link after that. No card is entered anywhere on this site.",
+            },
+            {
+              q: "When does the report stop being refundable?",
+              a: "Once you approve and freeze the question bank. The measurement runs are the cost of the report and cannot be unspent. Before that point the refund is full and needs no reason.",
+            },
+          ]}
+        />
+      </div>
     </ProsePage>
   );
 }

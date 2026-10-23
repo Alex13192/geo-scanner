@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ProsePage from "@/app/components/ProsePage";
 import Faq from "@/app/components/Faq";
+import { AUTHOR } from "@/lib/author";
 import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
@@ -23,7 +24,7 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * the shape the service actually has; /pricing/ and /refund/ describe what is bought
  * and when it is refundable. See OPERATIONS.md.
  */
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Contact";
 const DESCRIPTION =
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/contact/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/contact/",
@@ -124,10 +125,13 @@ export default function ContactPage() {
 
           <h2>Who you are writing to</h2>
           <p>
-            LLMention is an independent project, not a company with a support desk. Who maintains
-            it, what it deliberately does not do, and where the source lives are all on the{" "}
-            <a href="/about/">about page</a>. If a claim on this site cannot be traced to a source,
-            or a check produces a result you believe is wrong, that is the message worth sending.
+            LLMention is maintained by{" "}
+            <a href={AUTHOR.path}>{AUTHOR.name}</a> as an independent project. It is not a company and
+            there is no support desk: the author page names the person who maintains it, that one
+            address above is monitored by them, and they are accountable for what the tool reports.
+            What the project deliberately does not do, and where the source lives, are on the{" "}
+            <a href="/about/">about page</a>. If a claim on this site cannot be traced to a source, or
+            a check produces a result you believe is wrong, that is the message worth sending.
           </p>
 
           <h2>What not to send</h2>

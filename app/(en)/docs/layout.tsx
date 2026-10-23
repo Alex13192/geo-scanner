@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "GEO Guides: llms.txt, JSON-LD and AI Crawler Access";
 const DESCRIPTION =
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/docs/",
   },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/docs/",

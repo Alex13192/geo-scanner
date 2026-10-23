@@ -11,7 +11,9 @@ import {
   Library,
   ListChecks,
   Mail,
+  MessageSquareText,
   PenLine,
+  SearchCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -68,6 +70,17 @@ const GROUPS: Group[] = [
         icon: LayoutGrid,
       },
       {
+        /*
+         * Second rather than last: this is the one tool that works on an answer a visitor
+         * already has, so it is reachable to somebody who has not decided to scan a site
+         * yet - which is most of the traffic that arrives asking whether AI mentions them.
+         */
+        href: "/answer-check/",
+        label: "Answer checker",
+        description: "Paste an AI answer and see whether it names, recommends and cites you.",
+        icon: MessageSquareText,
+      },
+      {
         href: "/monitor/",
         label: "Weekly report",
         description: "The same 40 checks, re-run every Monday, emailed as a diff.",
@@ -108,6 +121,18 @@ const GROUPS: Group[] = [
         label: "Study",
         description: "What the checks measured across a set of well-known sites.",
         icon: BarChart3,
+      },
+      {
+        /*
+         * The page that answers "why should I believe the score" with this site's own
+         * result rather than a claim about it. It sits beside Study because both are
+         * evidence rather than method, and it is reachable here rather than only from
+         * the homepage panel so a reader comparing tools can find it.
+         */
+        href: "/self-audit/",
+        label: "Self-audit",
+        description: "This site scored by its own scanner, with the evidence behind every check.",
+        icon: SearchCheck,
       },
       {
         /*

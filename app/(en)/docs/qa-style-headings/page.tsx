@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
 import DiagramHeadingRetrieval from "../_components/DiagramHeadingRetrieval";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Optimizing Headings for Direct AI Citation";
 const DESCRIPTION =
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/docs/qa-style-headings/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/docs/qa-style-headings/",
@@ -26,8 +26,9 @@ export default function Page() {
       category="Content"
       title={TITLE}
       description={DESCRIPTION}
+      published="2026-10-02"
       readTime="4 min read"
-      updated="October 2026"
+      updated="2026-10-23"
       faq={{
         title: "Questions about question-shaped headings",
         items: [

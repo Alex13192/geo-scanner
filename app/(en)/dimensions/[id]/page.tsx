@@ -7,7 +7,7 @@ import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/componen
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
 import { CHECK_COPY } from "@/lib/geo/check-copy";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 /**
  * A dimension's weighting sentence with the comparison to other dimensions removed.
@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: `/dimensions/${dimension.id}/` },
-    openGraph: og({ title, description, url: `/dimensions/${dimension.id}/` }),
+    ...social({ title, description, url: `/dimensions/${dimension.id}/` }),
   };
 }
 

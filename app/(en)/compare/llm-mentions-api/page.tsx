@@ -5,7 +5,7 @@ import AuthorLine from "@/app/components/AuthorLine";
 import { type EvidenceSource } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 /**
  * The head-to-head page for the two products whose names get merged.
@@ -102,7 +102,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/compare/llm-mentions-api/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/compare/llm-mentions-api/",

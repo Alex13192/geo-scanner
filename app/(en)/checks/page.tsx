@@ -4,7 +4,7 @@ import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
 import { CHECK_COPY } from "@/lib/geo/check-copy";
 import ProsePage from "@/app/components/ProsePage";
 import Faq from "@/app/components/Faq";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 /**
  * /checks/ - the index of every published rule.
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/checks/" },
-  openGraph: og({ title: TITLE, description: DESCRIPTION, url: "/checks/" }),
+  ...social({ title: TITLE, description: DESCRIPTION, url: "/checks/" }),
 };
 
 /** The first sentence, which is enough to recognise a rule by. */

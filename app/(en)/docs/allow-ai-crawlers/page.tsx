@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
 import DiagramRobotsMatch from "../_components/DiagramRobotsMatch";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Configuring robots.txt and WAF for GPTBot and PerplexityBot";
 const DESCRIPTION =
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/docs/allow-ai-crawlers/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/docs/allow-ai-crawlers/",
@@ -26,8 +26,9 @@ export default function Page() {
       category="Technical"
       title={TITLE}
       description={DESCRIPTION}
+      published="2026-10-02"
       readTime="4 min read"
-      updated="October 2026"
+      updated="2026-10-23"
       faq={{
         title: "Questions about crawler access",
         items: [

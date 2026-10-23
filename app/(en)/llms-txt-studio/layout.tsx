@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { BRAND } from "@/lib/site";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "llms.txt Generator — Free AI Context File Builder";
 /**
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/llms-txt-studio/",
   },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/llms-txt-studio/",

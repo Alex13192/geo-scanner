@@ -496,8 +496,7 @@ Your Site Name is published at https://your-domain.com. This file lists the page
           all before, so it was failing a rule it publishes.
         */}
         <p className="mt-6">
-          © {new Date().getFullYear()} LLMention. Brand Generative Engine Optimization
-          Intelligence.
+          © {new Date().getFullYear()} LLMention. GEO scanner.
         </p>
       </footer>
     </div>

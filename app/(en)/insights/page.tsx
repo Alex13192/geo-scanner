@@ -5,7 +5,7 @@ import SiteNav from "@/app/components/SiteNav";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import { INSIGHTS, formatDate, insightPath } from "@/lib/insights";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Writing and study notes";
 const DESCRIPTION =
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/insights/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/insights/",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ProsePage from "@/app/components/ProsePage";
-import { CONTACT_EMAIL, OPERATOR_IDENTITY } from "@/lib/site";
+import SellerIdentity from "@/app/components/SellerIdentity";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Refunds, and the consumer right of withdrawal.
@@ -19,24 +20,27 @@ import { CONTACT_EMAIL, OPERATOR_IDENTITY } from "@/lib/site";
  * THE SELLER'S IDENTITY COMES FROM THE ENVIRONMENT, NOT FROM THIS FILE. OPERATIONS.md records the
  * constraint: an Impressum or a withdrawal notice that is addressable needs a postal address, and
  * anything committed to this repository is published whether or not a page renders it. So the value
- * lives in a deployment variable (OPERATOR_IDENTITY) and the repository keeps no address. When it is
- * not set, the page says where the identity is given instead of printing a blank line.
+ * lives in a deployment variable (OPERATOR_IDENTITY) and the repository keeps no address. It is
+ * rendered by app/components/SellerIdentity.tsx, which /pricing/ uses too, so the two pages a buyer
+ * reads cannot drift into disagreeing about whether an address is published. When it is not set,
+ * the component says where the identity is given instead of printing a blank line.
  */
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Refunds";
 
 /**
  * THIS PAGE IS RENDERED PER REQUEST, AND THAT IS NOT AN OVERSIGHT - the other legal pages are
- * prerendered and this one cannot be.
+ * prerendered, and /pricing/ is dynamic for the same reason this one is.
  *
- * The seller's identity comes from a deployment variable (OPERATOR_IDENTITY). The first version of
- * this page was prerendered, so it read that variable during the BUILD; the build had no value for
- * it, and the fallback sentence was then written into a static file and shipped - where no later
- * change to the variable could ever reach it. Nothing failed, the page looked finished, and the
- * address was simply absent from the one page a payment reviewer opens. That is the silent-absence
- * failure this repository keeps writing warnings about, so it is fixed at the cause rather than by
- * re-running a deploy until the value happens to be present.
+ * The seller's identity comes from a deployment variable (OPERATOR_IDENTITY), read inside
+ * SellerIdentity. The first version of this page was prerendered, so it read that variable during
+ * the BUILD; the build had no value for it, and the fallback sentence was then written into a
+ * static file and shipped - where no later change to the variable could ever reach it. Nothing
+ * failed, the page looked finished, and the address was simply absent from the one page a payment
+ * reviewer opens. That is the silent-absence failure this repository keeps writing warnings about,
+ * so it is fixed at the cause rather than by re-running a deploy until the value happens to be
+ * present.
  *
  * Rendering per request reads the Worker's environment instead, which also means the address can be
  * corrected without a rebuild - the right property for a field that changes when a business moves.
@@ -51,7 +55,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/refund/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/refund/",
@@ -134,14 +138,7 @@ export default function RefundPage() {
         <p>This does not affect your rights if we deliver something that does not match what was agreed.</p>
 
         <h2>Who you are buying from</h2>
-        {OPERATOR_IDENTITY ? (
-          <p>{OPERATOR_IDENTITY}</p>
-        ) : (
-          <p>
-            The seller&rsquo;s name and postal address are given with every quote and invoice, and by
-            email on request: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
-          </p>
-        )}
+        <SellerIdentity />
 
         <h2>How to ask</h2>
         <p>

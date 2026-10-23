@@ -84,11 +84,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      /* The index of everything else: the four tools, the rule reference, the dimensions, the
+      /* The index of everything else: the tools, the rule reference, the dimensions, the
          method and the guides, grouped by the question a reader arrives with. High priority
          because it is an entry point to the other fifty-odd URLs rather than a destination in
          its own right - and because a site with this many indexable pages needs one hub that
-         lists them. */
+         lists them. The count used to read "the four tools" and stopped being true when the
+         index grew; the comment now names the groups rather than a number nobody maintains. */
       url: `${SITE_URL}/tools/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
@@ -167,6 +168,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.9,
+    },
+    {
+      /* The site's own measurement, published at a URL a crawler may read.
+         The homepage already presents its score as evidence, but links the detail at
+         /report/, which is noindex and disallowed in robots.txt because it is a
+         user-specific, per-request tool output - so the evidence itself was invisible
+         to the engines it is aimed at. This page is the indexable statement of the
+         recorded measurement; the record behind it is re-measured by the self-audit
+         workflow, which is why the page is worth listing as fresh content. Priority
+         matches the other trust pages rather than leading: it is evidence, not an
+         entry point. */
+      url: `${SITE_URL}/self-audit/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
     },
     /* The writing. Listed individually rather than as an index-only entry because each piece
        is a standalone answer to a question nobody else has measured, and the archive page is

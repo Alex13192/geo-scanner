@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { BRAND } from "@/lib/site";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "GEO Readiness Badge for GitHub READMEs and Websites";
 /**
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/readiness-badge/",
   },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/readiness-badge/",

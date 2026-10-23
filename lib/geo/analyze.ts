@@ -19,6 +19,16 @@
  * resource, and a full HTML parser is not worth the budget.
  */
 
+/*
+ * The grade bands are imported rather than restated here. The label this file
+ * returns is printed under the grade in /report/ and the same catalogue entries are
+ * printed in the grade table on /methodology/, so two copies of those strings meant
+ * the table could describe a band differently from the report that awarded it. The
+ * import is safe in both directions: catalog.ts imports nothing, so there is no
+ * cycle, and it is data rather than a second implementation.
+ */
+import { GRADE_BANDS } from "./catalog.ts";
+
 /**
  * "na" exists because a check can be inapplicable rather than failed.
  *
@@ -1412,18 +1422,17 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
       ? Math.round(dimensions.reduce((s, d) => s + d.score * d.applicableWeight, 0) / totalWeight)
       : 0;
 
-  const grade =
-    score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
-  const gradeLabel =
-    score >= 90
-      ? "Excellent - highly likely to be cited"
-      : score >= 80
-        ? "Good - likely to be cited"
-        : score >= 70
-          ? "Average - several dimensions need work"
-          : score >= 60
-            ? "Poor - significant GEO gaps"
-            : "Critical - rarely cited by AI engines";
+  /*
+   * One lookup against the published bands, rather than a second ladder of grade
+   * letters and labels here. The list is ordered highest-min first, so the first
+   * band whose floor the score reaches is the band it earned; the F floor of 0
+   * guarantees a match for every score this function can return.
+   */
+  const band =
+    GRADE_BANDS.find((candidate) => score >= candidate.min) ??
+    GRADE_BANDS[GRADE_BANDS.length - 1];
+  const grade = band.grade;
+  const gradeLabel = band.label;
 
   // Severity first, then the dimension that carries the most weight. Ordering by
   // applicableWeight rather than the nominal weight keeps a dimension that was

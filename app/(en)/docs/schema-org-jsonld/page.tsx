@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
 import DiagramEntityGraph from "../_components/DiagramEntityGraph";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Implementing Schema.org JSON-LD for AI Entity Disambiguation";
 const DESCRIPTION =
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/docs/schema-org-jsonld/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/docs/schema-org-jsonld/",
@@ -26,8 +26,9 @@ export default function Page() {
       category="Schema"
       title={TITLE}
       description={DESCRIPTION}
+      published="2026-10-02"
       readTime="5 min read"
-      updated="October 2026"
+      updated="2026-10-23"
       faq={{
         title: "Questions about entity markup",
         items: [

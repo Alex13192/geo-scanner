@@ -8,7 +8,7 @@ import { guidePathForCheck } from "@/lib/geo/check-links";
 import ProsePage from "@/app/components/ProsePage";
 import Faq from "@/app/components/Faq";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 /**
  * The readable name of a fix branch, used as the step's name in the HowTo below.
@@ -124,7 +124,7 @@ export async function generateMetadata({
        */
       types: { "text/markdown": `/checks/${check.id}/markdown/` },
     },
-    openGraph: og({ title, description, url: `/checks/${check.id}/`, type: "article" }),
+    ...social({ title, description, url: `/checks/${check.id}/`, type: "article" }),
   };
 }
 

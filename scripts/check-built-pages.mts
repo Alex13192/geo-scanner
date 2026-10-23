@@ -71,6 +71,13 @@ const ROUTES: Route[] = [
   { route: "/monitor/", file: "monitor.html", indexable: true },
   { route: "/methodology/", file: "methodology.html", indexable: true },
   { route: "/study/", file: "study.html", indexable: true },
+  /* The site's own measurement. Added with the page itself, for this script's opening reason: a
+     page that is new must not skip the gate by being new. It carries no custom floor because a
+     dated record with a table, a FAQ and a method section is the easiest page type on the site to
+     score well - if it falls below 90 it has lost content rather than been written short. The
+     page reads lib/self-audit.json, which this run already compares with the built homepage
+     below, so scoring it also proves the published record is readable on the page it describes. */
+  { route: "/self-audit/", file: "self-audit.html", indexable: true },
   /* The comparisons. Added in the same change as the routes, for the reason this file's
      opening comment gives: a page that is new must not skip the gate by being new. They
      carry no custom floor because a comparison page is prose with a table and a FAQ, which
@@ -122,10 +129,11 @@ const ROUTES: Route[] = [
    */
   /*
    * THEIR FLOOR IS 80, NOT 90, AND THE REASON IS RECORDED RATHER THAN IMPLIED - the same treatment
-   * the check pages get. Measured on this build with this same analyser: /pricing/ 84. /refund/ is
-   * rendered per request, because it reads the deployment's OPERATOR_IDENTITY, so it is not in the
-   * build and is not scored here; the live measurement that put it at 89 is what its floor was set
-   * against.
+   * the check pages get. BOTH PAGES ARE NOW RENDERED PER REQUEST, because both read the deployment's
+   * OPERATOR_IDENTITY so the seller's identity is not baked into a build: /refund/ always did, and
+   * /pricing/ joined it on 2026-10-23 when it gained a "Who you are buying from" section. Neither is
+   * therefore in the static build and neither is scored here; the live measurements the floor was set
+   * against were /pricing/ 84 and /refund/ 89.
    *
    * WHAT HOLDS THEM THERE HAS CHANGED AND IS NAMED RATHER THAN IMPLIED. hreflang no longer costs a
    * single-language page anything: a page that declares no hreflang is marked not applicable rather
@@ -137,10 +145,10 @@ const ROUTES: Route[] = [
    * quotations and authority-citations - ask a price list and a refund policy for external citations
    * they do not have and should not invent.
    *
-   * WHAT IS GENUINELY MISSING IS NAMED HERE SO THE FLOOR DOES NOT HIDE IT: an FAQ block on /pricing/
-   * (the analyser's `faq` and `qa-headings`) and a list or table on /refund/ (`extractables`). Both
-   * are worth adding for readers, not for the score - and if either page ever drops BELOW 80, that is
-   * a regression rather than a page type, and this floor will fail the build.
+   * WHAT WAS GENUINELY MISSING AND WAS ADDED ON 2026-10-23: an FAQ block on /pricing/ (the analyser's
+   * `faq` and `qa-headings`), which is worth having for readers rather than for the score. /refund/
+   * still needs a list or table (`extractables`). If either page ever becomes prerendered and drops
+   * BELOW 80, that is a regression rather than a page type, and this floor will fail the build.
    */
   { route: "/pricing/", file: "pricing.html", indexable: true, min: 80 },
   { route: "/refund/", file: "refund.html", indexable: true, min: 80 },

@@ -339,8 +339,7 @@ export default function ReadinessBadgePage() {
         </div>
         <LegalLinks className="justify-start" />
         <p className="mt-6">
-          © {new Date().getFullYear()} LLMention. Brand Generative Engine Optimization
-          Intelligence.
+          © {new Date().getFullYear()} LLMention. GEO scanner.
         </p>
       </footer>
     </div>

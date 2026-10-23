@@ -7,7 +7,7 @@ import Faq from "@/app/components/Faq";
 import AnswerCheckWidget from "./AnswerCheckWidget";
 import { QUESTION_GROUPS, questionBankText } from "@/lib/answer-check/questions";
 import { RECOMMENDATION_CUES, HEDGE_CUES, EARLY_CHARS, CUE_WINDOW } from "@/lib/answer-check/rules";
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 /**
  * Score one AI answer, in the browser.
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/answer-check/" },
-  openGraph: og({ title: TITLE, description: DESCRIPTION, url: "/answer-check/", type: "website" }),
+  ...social({ title: TITLE, description: DESCRIPTION, url: "/answer-check/", type: "website" }),
 };
 
 export default function Page() {

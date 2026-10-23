@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
 import DiagramFileRoles from "../_components/DiagramFileRoles";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "How to Generate and Deploy an llms.txt File";
 const DESCRIPTION =
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/docs/llms-txt-deployment/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/docs/llms-txt-deployment/",
@@ -26,8 +26,9 @@ export default function Page() {
       category="Setup"
       title={TITLE}
       description={DESCRIPTION}
+      published="2026-10-02"
       readTime="3 min read"
-      updated="October 2026"
+      updated="2026-10-23"
       faq={{
         title: "Questions about deploying llms.txt",
         items: [

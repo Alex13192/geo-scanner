@@ -15,7 +15,7 @@ import {
 // the other is the drift the catalogue-driven method exists to prevent.
 import { NA_BY_PAGE_TYPE } from "@/lib/geo/analyze";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "Methodology — how the GEO score is calculated";
 const DESCRIPTION =
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/methodology/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/methodology/",

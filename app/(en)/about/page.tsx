@@ -6,7 +6,7 @@ import ProsePage from "@/app/components/ProsePage";
 import { AUTHOR } from "@/lib/author";
 import { BRAND_FULL, CONTACT_EMAIL } from "@/lib/site";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "About LLMention";
 const DESCRIPTION =
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/about/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/about/",
@@ -79,8 +79,9 @@ export default function AboutPage() {
           <h2>Who runs it</h2>
           <p>
             LLMention is maintained by{" "}
-            <Link href={AUTHOR.path}>{AUTHOR.name}</Link> as an independent project. It is not
-            affiliated with OpenAI, Anthropic, Google or Perplexity, and it holds no data
+            <Link href={AUTHOR.path}>{AUTHOR.name}</Link> as an independent project. He is an
+            independent developer based in China; this is not a company, and the site is not
+            affiliated with OpenAI, Anthropic, Google or Perplexity or holding any data
             relationship with them. The scanner is free and requires no account.
           </p>
           <p>

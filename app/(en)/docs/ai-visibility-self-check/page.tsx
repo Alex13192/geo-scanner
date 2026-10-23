@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import ArticleShell from "../_components/ArticleShell";
 
-import { og } from "@/lib/og";
+import { social } from "@/lib/og";
 
 const TITLE = "How to Check Whether AI Engines Mention Your Brand";
 const DESCRIPTION =
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/docs/ai-visibility-self-check/" },
-  openGraph: og({
+  ...social({
     title: TITLE,
     description: DESCRIPTION,
     url: "/docs/ai-visibility-self-check/",
@@ -25,8 +25,9 @@ export default function Page() {
       category="Method"
       title={TITLE}
       description={DESCRIPTION}
+      published="2026-10-06"
       readTime="6 min read"
-      updated="October 2026"
+      updated="2026-10-23"
       faq={{
         title: "Questions about checking AI visibility yourself",
         items: [

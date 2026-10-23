@@ -84,3 +84,41 @@ export function og({
     images: [OG_IMAGE],
   };
 }
+
+/**
+ * The whole social block for a page: openGraph plus the Twitter card.
+ *
+ * WHY THIS EXISTS, AND IT IS A BUG REPORT RATHER THAN A CONVENIENCE. Next's metadata
+ * inheritance is per field, and `twitter` was declared only in the root layout. Every page
+ * that declared its own `openGraph` therefore kept the ROOT twitter card: the audit that
+ * prompted this checked four pages and found each one sharing the homepage's
+ * twitter:title and twitter:description, so a link to /study/ unfurled as the homepage
+ * with the homepage's promise on it. `openGraph` was fixed by routing it through og(); the
+ * Twitter half was simply never given the same treatment, which is the kind of asymmetry a
+ * reader never sees and a crawler always does.
+ *
+ * Returning both blocks from one function means a page cannot fix one and forget the other,
+ * and it is why the call sites spread this object instead of writing `openGraph:` and
+ * `twitter:` separately.
+ */
+export function social({
+  title,
+  description,
+  url,
+  type = "website",
+}: {
+  title: string;
+  description: string;
+  url: string;
+  type?: "website" | "article";
+}) {
+  return {
+    openGraph: og({ title, description, url, type }),
+    twitter: {
+      card: "summary_large_image" as const,
+      title,
+      description,
+      images: [OG_IMAGE],
+    },
+  };
+}
