@@ -155,7 +155,7 @@ export default async function ChineseApiDocsPage({
               <pre>{`GET ${SITE_URL}/api/scan?domain=example.com`}</pre>
               <p>
                 扫描在请求过程中完成，所以对一个冷域名的第一次调用，耗时等于抓取该域名本身的耗时。同一个分析器也支撑着
-                <Link href="/report/" hrefLang="en">
+                <Link href="/zh/report/">
                   报告页（英文）
                 </Link>
                 和

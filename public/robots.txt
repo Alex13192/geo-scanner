@@ -79,6 +79,7 @@ Allow: /
 
 # Scan result pages are user-specific and thin - keep them out of the index.
 Disallow: /report/
+Disallow: /zh/report/
 
 # Report links carry a token that stands for one subscription, so the URL is a capability rather
 # than a page. Disallowed here AND marked noindex in the route's layout, which is not redundant: a

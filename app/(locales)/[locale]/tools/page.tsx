@@ -99,20 +99,18 @@ type Group = {
  */
 const TOOL_ENTRIES: Entry[] = [
   {
-    href: "/report/",
-    label: "GEO audit report",
+    href: "/zh/report/",
+    label: "GEO 审计报告",
     description:
       "按已公布的检查为一个首页打分，并列出未通过的项，附上每项检查产生的证据。",
     note: "免费。无需账号。无需邮箱。不存储关于该站点的任何信息，结果只存在于你当前所在的 URL 里。",
-    english: true,
   },
   {
-    href: "/answer-check/",
-    label: "Answer checker",
+    href: "/zh/answer-check/",
+    label: "答案检查器",
     description:
       "六条公开规则，用在你从 ChatGPT、Perplexity 或 Gemini 粘贴的一段回答上：它有没有提到你、有没有在开头提到你、有没有把你列出来、有没有推荐你，以及有没有引用你的域名。",
     note: "免费，而且不会联系任何 AI 引擎——规则在你浏览器里、针对你粘贴的文本运行——也没有什么需要注册的。",
-    english: true,
   },
   {
     href: "/llms-txt-studio/",

@@ -190,7 +190,19 @@ const CACHEABLE = [
 const CACHE_NEVER = [{ key: "Cache-Control", value: "no-store, must-revalidate" }];
 
 /** Match both the bare path and anything under it, with and without the trailing slash. */
-const NEVER_CACHEABLE = ["/report", "/report/", "/report/:path*", "/api", "/api/:path*"];
+const NEVER_CACHEABLE = [
+  "/report",
+  "/report/",
+  "/report/:path*",
+  /* The Chinese report is per-request for the same reason: a scan result is written into the
+     URL, and /zh/:path* is cacheable, so without this the Chinese report inherits the HTML
+     cache policy instead of no-store. */
+  "/zh/report",
+  "/zh/report/",
+  "/zh/report/:path*",
+  "/api",
+  "/api/:path*",
+];
 
 const nextConfig: NextConfig = {
   // 必须移除 output: 'export'，否则动态 API 无法在 Cloudflare 上编译

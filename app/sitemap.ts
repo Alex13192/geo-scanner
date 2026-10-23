@@ -231,6 +231,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
+      alternates: pairAlternates('/answer-check/', '/zh/answer-check/'),
+    },
+    {
+      url: `${SITE_URL}/zh/answer-check/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+      alternates: pairAlternates('/answer-check/', '/zh/answer-check/'),
     },
     {
       url: `${SITE_URL}/readiness-badge/`,

@@ -346,7 +346,7 @@ export default async function ChineseSelfAuditPage({
                         <td>被测页面</td>
                         <td>
                           位于 <code>/</code> 的首页，域名{" "}
-                          <Link href={`/report/?domain=${SITE_HOST}`} hrefLang="en">
+                          <Link href={`/zh/zh/report/?domain=${SITE_HOST}`} hrefLang="en">
                             {SITE_HOST}
                           </Link>
                           （英文）
@@ -465,7 +465,7 @@ export default async function ChineseSelfAuditPage({
                 ) : null}
                 <p>
                   失败是关于页面在被测量那一刻的判断，不是永久结论。
-                  <Link href={`/report/?domain=${SITE_HOST}`} hrefLang="en">
+                  <Link href={`/zh/zh/report/?domain=${SITE_HOST}`} hrefLang="en">
                     实时报告
                   </Link>
                   （英文）显示某项检查现在是否仍然失败，并附上分析器看到的证据；这一页保留带日期的
@@ -536,8 +536,8 @@ export default async function ChineseSelfAuditPage({
                 <ul>
                   <li>
                     <strong>在浏览器里：</strong>{" "}
-                    <Link href={`/report/?domain=${SITE_HOST}`} hrefLang="en">
-                      /report/?domain={SITE_HOST}
+                    <Link href={`/zh/zh/report/?domain=${SITE_HOST}`} hrefLang="en">
+                      /zh/report/?domain={SITE_HOST}
                     </Link>
                     （英文）显示 {DIMENSION_CATALOG.length} 个维度的分数和每项检查背后的证据。
                   </li>
@@ -655,7 +655,7 @@ export default async function ChineseSelfAuditPage({
                     },
                     {
                       q: "我能不信任这一页就自己核对数字吗？",
-                      a: `可以。自己运行 /report/?domain=${SITE_HOST}，或者用 brief=1 调用公开 API；两者都会重新测量当前页面。记录就是仓库里的 lib/self-audit.json，当构建出的页面与记录不一致时，check:built 会让构建失败。`,
+                      a: `可以。自己运行 /zh/report/?domain=${SITE_HOST}，或者用 brief=1 调用公开 API；两者都会重新测量当前页面。记录就是仓库里的 lib/self-audit.json，当构建出的页面与记录不一致时，check:built 会让构建失败。`,
                     },
                   ]}
                   footer={

@@ -41,8 +41,7 @@ export default function LocalizedHome({
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
-                href="/#scan"
-                hrefLang="en"
+                href={locale === "zh" ? "/zh/report/" : "/#scan"}
                 className="rounded-full bg-[var(--accent)] px-7 py-3.5 text-sm font-semibold text-[var(--on-accent)] transition-transform hover:scale-[1.03]"
               >
                 {dict.hero.primaryCta}

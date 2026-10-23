@@ -316,7 +316,7 @@ Fact (your brand by name)
                 引擎无法引用它抓取不到的页面，而一个在边缘就被拒绝的爬虫，再多内容也救不回来。
                 对你在意的页面跑一遍
                 <Link
-                  href="/report/"
+                  href="/zh/report/"
                   hrefLang="en"
                   className="text-[var(--accent)] underline hover:opacity-75"
                 >

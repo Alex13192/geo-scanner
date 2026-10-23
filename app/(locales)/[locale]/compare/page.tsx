@@ -175,7 +175,7 @@ export default async function ChineseCompareHubPage({
                       <tbody>
                         <tr>
                           <td>
-                            <Link href="/report/" hrefLang="en">
+                            <Link href="/zh/report/">
                               就绪度审计
                             </Link>{" "}
                             <span className="text-[var(--ink-3)]">（本站，英文）</span>
@@ -283,7 +283,7 @@ export default async function ChineseCompareHubPage({
                       每条规则、它的权重和通过条件，都来自扫描器运行的那同一份目录。
                     </li>
                     <li>
-                      <Link href="/report/" hrefLang="en">
+                      <Link href="/zh/report/">
                         运行审计
                       </Link>
                       （英文）—— 本站提供的免费测量，未通过的检查会连同每条检查看到的证据一起列出。

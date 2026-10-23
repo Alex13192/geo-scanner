@@ -374,7 +374,7 @@ export default async function ChineseStudyPage({
                       <tr key={row.domain} className="border-t border-[var(--line)]">
                         <td className="px-3 py-2 font-mono text-[var(--ink-1)]">
                           <Link
-                            href={`/report/?domain=${row.domain}`}
+                            href={`/zh/zh/report/?domain=${row.domain}`}
                             hrefLang="en"
                             className="hover:opacity-75 transition-colors"
                           >

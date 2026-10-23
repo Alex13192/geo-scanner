@@ -35,7 +35,15 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/answer-check/" },
+  alternates: {
+    canonical: "/answer-check/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/answer-check/",
+      "zh-Hans": "/zh/answer-check/",
+      "x-default": "/answer-check/",
+    },
+  },
   ...social({ title: TITLE, description: DESCRIPTION, url: "/answer-check/", type: "website" }),
 };
 

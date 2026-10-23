@@ -64,8 +64,7 @@ export function LocaleHeader({
         <div className="ml-auto flex items-center gap-2.5">
           <LanguageSwitcher current={locale} label={dict.nav.language} />
           <Link
-            href="/#scan"
-            hrefLang="en"
+            href={locale === "zh" ? "/zh/report/" : "/#scan"}
             className="rounded-full bg-[var(--accent)] px-4 py-2 text-[13.5px] font-medium text-[var(--on-accent)] transition-transform hover:scale-[1.03]"
           >
             {dict.nav.scan}
