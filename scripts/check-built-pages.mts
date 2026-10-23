@@ -192,6 +192,14 @@ const ROUTES: Route[] = [
     indexable: true,
     min: 50,
   })),
+  /* Japanese writing: the archive and all six essays. */
+  { route: "/ja/insights/", file: "ja/insights.html", indexable: true, min: 50 },
+  ...INSIGHTS.map((insight) => ({
+    route: `/ja/insights/${insight.slug}/`,
+    file: `ja/insights/${insight.slug}.html`,
+    indexable: true,
+    min: 50,
+  })),
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

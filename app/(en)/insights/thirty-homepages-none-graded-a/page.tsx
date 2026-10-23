@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     languages: {
       en: `/insights/${insight.slug}/`,
       "zh-Hans": `/zh/insights/${insight.slug}/`,
+      ja: `/ja/insights/${insight.slug}/`,
       "x-default": `/insights/${insight.slug}/`,
     },
   },

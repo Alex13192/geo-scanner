@@ -76,11 +76,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   });
 
-  /* The writing is translated into English and Chinese only; same two-language map. */
+  /* The writing is translated into English, Chinese and Japanese. */
   const insightsAlternates = (slug: string) => ({
     languages: {
       en: `${SITE_URL}/insights${slug}/`,
       'zh-Hans': `${SITE_URL}/zh/insights${slug}/`,
+      ja: `${SITE_URL}/ja/insights${slug}/`,
       'x-default': `${SITE_URL}/insights${slug}/`,
     },
   });
@@ -376,6 +377,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
       priority: 0.6,
+      alternates: insightsAlternates(`/${insight.slug}`),
+    })),
+    {
+      url: `${SITE_URL}/ja/insights/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+      alternates: insightsAlternates(''),
+    },
+    ...INSIGHTS.map((insight) => ({
+      url: `${SITE_URL}/ja/insights/${insight.slug}/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
       alternates: insightsAlternates(`/${insight.slug}`),
     })),
     /* The author page. Priority low because it is not what anyone searches for, listed because

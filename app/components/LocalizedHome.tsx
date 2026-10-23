@@ -135,6 +135,12 @@ export default function LocalizedHome({
                 >
                   ガイド →
                 </Link>
+                <Link
+                  href="/ja/insights/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  研究ノート →
+                </Link>
               </p>
             ) : null}
           </div>
