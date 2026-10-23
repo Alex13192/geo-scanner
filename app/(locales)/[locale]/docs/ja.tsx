@@ -56,8 +56,8 @@ const guides: Guide[] = [
     description:
       "エンジン自身に投げる 20 の質問、回答を採点する 6 つの機械的チェック、そして 1 回の実行が測定ではなく逸話にすぎない理由。",
     readTime: "6 分で読めます",
-    href: "/docs/ai-visibility-self-check/",
-    hrefLang: "en",
+    href: "/ja/docs/ai-visibility-self-check/",
+    hrefLang: "ja",
     codeSnippet: `Category  — no brand name in the question ("which vendors do X?")
 Scenario  — a problem, no brand name ("how do I solve Y?")
 Comparison — your brand against a named one
@@ -86,8 +86,8 @@ Ask each question three times. Report "2 of 3", never a percentage.`,
     description:
       "一般的な H2/H3 見出しを、実際の AI 検索エンジンのユーザークエリに合う自然な疑問文に書き換えます。",
     readTime: "4 分で読めます",
-    href: "/docs/qa-style-headings/",
-    hrefLang: "en",
+    href: "/ja/docs/qa-style-headings/",
+    hrefLang: "ja",
     codeSnippet: `<!-- Poor -->\n<h2>Features</h2>\n\n<!-- Optimized for GEO -->\n<h2>How Does Your Company Measure Brand AI Visibility?</h2>`,
   },
   {
@@ -98,8 +98,8 @@ Ask each question three times. Report "2 of 3", never a percentage.`,
     description:
       "モデルがあなたのブランドを 1 つのエンティティとして解決できるよう、Organization、WebSite、sameAs のマークアップを宣言する方法と、その検証方法。",
     readTime: "5 分で読めます",
-    href: "/docs/schema-org-jsonld/",
-    hrefLang: "en",
+    href: "/ja/docs/schema-org-jsonld/",
+    hrefLang: "ja",
     codeSnippet: `<script type="application/ld+json">\n{\n  "@context": "https://schema.org",\n  "@type": "Organization",\n  "name": "Your Brand Name",\n  "url": "https://your-domain.com"\n}\n</script>`,
   },
   {

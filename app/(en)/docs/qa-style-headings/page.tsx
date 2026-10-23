@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     languages: {
       en: "/docs/qa-style-headings/",
       "zh-Hans": "/zh/docs/qa-style-headings/",
+      ja: "/ja/docs/qa-style-headings/",
       "x-default": "/docs/qa-style-headings/",
     },
   },

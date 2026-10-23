@@ -211,7 +211,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: LAST_MODIFIED,
         changeFrequency: 'monthly' as const,
         priority: slug === "llms-txt-deployment" || slug === "allow-ai-crawlers" ? 0.8 : 0.7,
-        alternates: docsAlternates(`/${slug}`, slug === "llms-txt-deployment" || slug === "allow-ai-crawlers"),
+        alternates: docsAlternates(`/${slug}`, true),
       })
     ),
     {
@@ -221,7 +221,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
       alternates: docsAlternates("", true),
     },
-    ...["llms-txt-deployment", "allow-ai-crawlers"].map((slug) => ({
+    ...["llms-txt-deployment", "allow-ai-crawlers", "qa-style-headings", "schema-org-jsonld", "ai-visibility-self-check"].map((slug) => ({
       url: `${SITE_URL}/ja/docs/${slug}/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
@@ -241,7 +241,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: LAST_MODIFIED,
         changeFrequency: 'monthly' as const,
         priority: slug === "llms-txt-deployment" || slug === "allow-ai-crawlers" ? 0.7 : 0.6,
-        alternates: docsAlternates(`/${slug}`, slug === "llms-txt-deployment" || slug === "allow-ai-crawlers"),
+        alternates: docsAlternates(`/${slug}`, true),
       })
     ),
     {

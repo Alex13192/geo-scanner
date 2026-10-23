@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     languages: {
       en: "/docs/schema-org-jsonld/",
       "zh-Hans": "/zh/docs/schema-org-jsonld/",
+      ja: "/ja/docs/schema-org-jsonld/",
       "x-default": "/docs/schema-org-jsonld/",
     },
   },

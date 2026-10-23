@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     languages: {
       en: "/docs/ai-visibility-self-check/",
       "zh-Hans": "/zh/docs/ai-visibility-self-check/",
+      ja: "/ja/docs/ai-visibility-self-check/",
       "x-default": "/docs/ai-visibility-self-check/",
     },
   },
