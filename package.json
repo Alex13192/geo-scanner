@@ -33,7 +33,8 @@
     "test:monitor": "node scripts/test-monitor.mts",
     "monitor": "node scripts/monitor/run.mts",
     "check:i18n": "node scripts/check-i18n.mts",
-    "test:paywall": "node scripts/test-paywall.mts"
+    "test:paywall": "node scripts/test-paywall.mts",
+    "check:prices": "node scripts/check-prices.mjs"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "1.20.13",

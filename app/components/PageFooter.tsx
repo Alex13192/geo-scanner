@@ -69,7 +69,7 @@ export default function PageFooter({
       </p>
       {/*
         The AI Agents Directory badge. It is here because their free listing tier requires it:
-        the paid tiers ($19-$499) skip it, and paying for a listing to avoid an outbound link
+        the paid tiers skip it, and paying for a listing to avoid an outbound link
         would be paying to buy a link, which is the thing search engines discount. The trade is
         explicit and small - one badge in the footer, one followed link back - and it is placed
         here rather than anywhere prominent because it is a condition of a free listing, not

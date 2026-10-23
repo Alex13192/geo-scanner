@@ -16,7 +16,7 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * as a process page for a process nobody runs (see OPERATIONS.md).
  *
  * THE PURCHASE CAME BACK ON 2026-10-08 AND THESE SECTIONS CAME BACK WITH IT. The site sells a
- * measurement report and a quarterly retest, so this page now states what is sold, how an order and
+ * measurement report and the Pro report's included retest, so this page now states what is sold, how an order and
  * a refund work, and the consumer right of withdrawal. /pricing/ and /refund/ carry the detail; this
  * is where the contract lives, and the two must not drift apart - if a price or a refund boundary
  * changes there, it changes here in the same commit.
@@ -84,14 +84,13 @@ export default function TermsPage() {
 
           <h2>What is sold</h2>
           <p>
-            Two services, and they are services rather than licences. A{" "}
-            <strong>measurement report</strong> at $299: we take an intake from you, generate a
-            25–30 question bank out of your own vocabulary, send it back for you to correct and
-            approve, freeze it, put each question to the engine you selected three times with web
-            search on, and deliver a report and a data workbook within 5–10 working days of the bank
-            being frozen. A <strong>quarterly retest</strong> at $499: the same frozen bank, run
-            again, with the comparison between the two runs. Multi-brand and agency work is quoted in
-            writing.
+            Two one-time digital products, each a written report and a data workbook delivered by
+            email. A <strong>Signal report</strong> at $39: a 25–30 question bank built from your own
+            vocabulary, sent back for you to correct and approve, frozen, put to one AI engine three
+            times per question with web search on, and delivered within 5–10 working days of the bank
+            being frozen. A <strong>Pro report</strong> at $99: the same bank and the same three runs,
+            measured against two engines you choose, with an action list and one retest of the frozen
+            bank within 90 days. Multi-brand and agency work is quoted in writing.
           </p>
           <p>
             Prices, what each includes and what neither includes are stated on the{" "}
@@ -102,10 +101,11 @@ export default function TermsPage() {
 
           <h2>Orders, payment and delivery</h2>
           <p>
-            An order starts as an email to <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. We
-            confirm scope, price and dates in writing before anything is charged. There is no checkout
-            on this site, and no card details are taken anywhere on it; payment instructions follow
-            that confirmation.
+            An order starts with the buy button on the pricing page, which opens the payment
+            provider's hosted checkout. Until a card checkout is live, that button opens a prefilled
+            order email instead, and we confirm scope, price and dates in writing before anything is
+            charged. No card details are entered on this site; the payment provider is the merchant of
+            record and handles tax.
           </p>
           <p>
             What we need from you is the intake form and an approval of the question bank. Nothing is
@@ -268,7 +268,7 @@ export default function TermsPage() {
             </tr>
             <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">What is sold</td>
-              <td className="px-4 py-2.5 align-top">A measurement report at $299 and a quarterly retest at $499, ordered by email</td>
+              <td className="px-4 py-2.5 align-top">A Signal report at $39 or a Pro report at $99, one-time, through the pricing page or by email</td>
             </tr>
             <tr className="border-t border-[var(--line)]">
               <td className="px-4 py-2.5 align-top">What a paid report gives you</td>

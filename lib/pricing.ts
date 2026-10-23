@@ -30,7 +30,7 @@ export type Product = {
 };
 
 export const PRODUCTS: Product[] = [
-  { id: "signal", name: "Signal report", priceUsd: 39, questions: 15, engines: 1, checkoutEnv: "CHECKOUT_URL_SIGNAL" },
+  { id: "signal", name: "Signal report", priceUsd: 39, questions: 30, engines: 1, checkoutEnv: "CHECKOUT_URL_SIGNAL" },
   { id: "pro", name: "Pro report", priceUsd: 99, questions: 30, engines: 2, checkoutEnv: "CHECKOUT_URL_PRO" },
 ];
 

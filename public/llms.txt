@@ -63,8 +63,8 @@ relationship or shared operator between the two.
 
 - [Pricing](https://llmention-geo.com/pricing/): What stays free - the scanner, the
   published checks and the weekly report for one domain - and what the paid
-  measurement work costs: a report built from answers the engines actually gave,
-  and the quarterly retest that shows what changed.
+  measurement work costs: a Signal report at $39, and a Pro report at $99 with a
+  second engine and one retest of the same question bank within 90 days.
 
 ## Comparisons
 

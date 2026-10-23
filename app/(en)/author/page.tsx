@@ -208,8 +208,10 @@ export default function AuthorPage() {
       <h2>How is the site funded?</h2>
       <p>
         Two ways, both printed on the site rather than discovered later: advertising served by
-        Google, and the paid measurement report described on the{" "}
-        <Link href="/pricing/">pricing page</Link> at <strong>$299</strong>.
+        Google, and the paid measurement reports described on the{" "}
+        <Link href="/pricing/">pricing page</Link>, from <strong>$39</strong>. The prices are
+        imported from <code>lib/pricing.ts</code> and are the same numbers the checkout uses; when
+        they change, they change in one place.
       </p>
       <p>
         The obvious conflict is that a paying customer might prefer a better number. Three things

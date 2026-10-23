@@ -78,6 +78,13 @@ jobs:
       - name: Check that declared values agree
         run: npm run check:values
 
+      # THE STALE-PRICE GATE. The site sold at $299/$499 until 2026-10-23 and two pages kept
+      # quoting the old numbers after the pricing page moved - a published price that
+      # disagrees with the checkout. This asserts no user-facing page or llms.txt carries a
+      # retired price and that the pricing page renders through lib/pricing.ts.
+      - name: Check that no retired price is still published
+        run: npm run check:prices
+
       # The database id has to appear in wrangler.jsonc AND cron/wrangler.jsonc, and the two
       # have to match. A divergence there produces no error at runtime: the site writes
       # subscriptions to one database while the weekly runner reads from the other, both work

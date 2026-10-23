@@ -134,7 +134,7 @@ const en: Dictionary = {
         name: "Signal report",
         tagline: "Confirm whether the problem exists before buying a bigger measurement.",
         features: [
-          "15 questions built from your vocabulary",
+          "25–25–30 questions built from your vocabulary",
           "3 runs per question, each in a fresh session",
           "1 AI engine of your choice",
           "Report and data workbook by email",
@@ -144,7 +144,7 @@ const en: Dictionary = {
         name: "Pro report",
         tagline: "A measurement you can compare over time and defend internally.",
         features: [
-          "30 questions built from your vocabulary",
+          "25–30 questions built from your vocabulary",
           "3 runs per question, each in a fresh session",
           "2 AI engines of your choice",
           "Report, workbook and action list, plus one retest within 90 days",
@@ -320,7 +320,7 @@ const ja: Dictionary = {
         name: "Signal レポート",
         tagline: "大きな測定の前に、問題が実在するかを確認する。",
         features: [
-          "自社の語彙から作る 15 の質問",
+          "自社の語彙から作る 25〜30 の質問",
           "各質問を 3 回、毎回新しいセッションで実行",
           "選択した AI エンジン 1 つ",
           "レポートとデータ表をメールで納品",
@@ -330,7 +330,7 @@ const ja: Dictionary = {
         name: "Pro レポート",
         tagline: "時系列で比較でき、社内説明にも使える測定。",
         features: [
-          "自社の語彙から作る 30 の質問",
+          "自社の語彙から作る 25〜30 の質問",
           "各質問を 3 回、毎回新しいセッションで実行",
           "選択した AI エンジン 2 つ",
           "レポート、データ表、アクションリスト、90 日以内の再測定 1 回",
@@ -415,7 +415,7 @@ const es: Dictionary = {
         name: "Informe Signal",
         tagline: "Confirma si el problema existe antes de comprar una medición mayor.",
         features: [
-          "15 preguntas creadas con tu vocabulario",
+          "25–25–30 preguntas creadas con tu vocabulario",
           "3 ejecuciones por pregunta, cada una en sesión nueva",
           "1 motor de IA a tu elección",
           "Informe y libro de datos por correo",
@@ -425,7 +425,7 @@ const es: Dictionary = {
         name: "Informe Pro",
         tagline: "Una medición comparable en el tiempo y defendible internamente.",
         features: [
-          "30 preguntas creadas con tu vocabulario",
+          "25–30 preguntas creadas con tu vocabulario",
           "3 ejecuciones por pregunta, cada una en sesión nueva",
           "2 motores de IA a tu elección",
           "Informe, libro de datos y plan de acción, más una repetición en 90 días",
@@ -510,7 +510,7 @@ const de: Dictionary = {
         name: "Signal-Bericht",
         tagline: "Erst prüfen, ob das Problem existiert, bevor eine größere Messung gekauft wird.",
         features: [
-          "15 Fragen aus Ihrer eigenen Sprache",
+          "25–25–30 Fragen aus Ihrer eigenen Sprache",
           "3 Durchläufe pro Frage, jeweils in neuer Sitzung",
           "1 KI-Engine Ihrer Wahl",
           "Bericht und Datenmappe per E-Mail",
@@ -520,7 +520,7 @@ const de: Dictionary = {
         name: "Pro-Bericht",
         tagline: "Eine Messung, die über die Zeit vergleichbar und intern vertretbar ist.",
         features: [
-          "30 Fragen aus Ihrer eigenen Sprache",
+          "25–30 Fragen aus Ihrer eigenen Sprache",
           "3 Durchläufe pro Frage, jeweils in neuer Sitzung",
           "2 KI-Engines Ihrer Wahl",
           "Bericht, Datenmappe und Maßnahmenliste, plus eine Wiederholung innerhalb von 90 Tagen",
@@ -605,7 +605,7 @@ const fr: Dictionary = {
         name: "Rapport Signal",
         tagline: "Confirmer que le problème existe avant d'acheter une mesure plus large.",
         features: [
-          "15 questions construites avec votre vocabulaire",
+          "25–25–30 questions construites avec votre vocabulaire",
           "3 exécutions par question, chacune en session neuve",
           "1 moteur d'IA de votre choix",
           "Rapport et classeur de données par e-mail",
@@ -615,7 +615,7 @@ const fr: Dictionary = {
         name: "Rapport Pro",
         tagline: "Une mesure comparable dans le temps et défendable en interne.",
         features: [
-          "30 questions construites avec votre vocabulaire",
+          "25–30 questions construites avec votre vocabulaire",
           "3 exécutions par question, chacune en session neuve",
           "2 moteurs d'IA de votre choix",
           "Rapport, classeur et plan d'action, plus une nouvelle mesure sous 90 jours",

@@ -110,7 +110,7 @@ export default function PricingPage() {
                 </p>
               </div>
               <ul className="mt-4 flex-1 space-y-2 text-sm leading-relaxed text-[var(--ink-2)]">
-                <li>{product.questions} questions built from your vocabulary</li>
+                <li>25–30 questions built from your vocabulary</li>
                 <li>3 runs per question, each in a fresh session</li>
                 <li>
                   {product.engines} AI {product.engines === 1 ? "engine" : "engines"} of your

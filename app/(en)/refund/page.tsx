@@ -112,15 +112,17 @@ export default function RefundPage() {
           money.
         </p>
 
-        <h2>Quarterly retests</h2>
+        <h2>The included retest (Pro report)</h2>
         <p>
-          Retests are billed per quarter and can be cancelled any time before that quarter's
-          measurement starts. If a quarter's measurement has already started, that quarter is not
-          refundable — the runs are the cost, exactly as above.
+          The Pro report includes one retest of the frozen bank within 90 days of delivery. It is
+          included in the $99, not a subscription: nothing recurs, there is no quarterly billing, and
+          there is nothing to cancel. If you do not use it within the window it expires, and an unused
+          retest is not refundable as a separate item.
         </p>
         <p>
-          The extra re-measurement included in a quarter is for that quarter. It does not carry over,
-          and it is not refundable if unused.
+          The retest is the same questions, run again, with the comparison between the two runs. Once
+          a retest has started, its runs are already paid for and it cannot be refunded for the same
+          reason the first measurement cannot: the engine calls are the cost.
         </p>
 
         <h2>Your right of withdrawal (consumers in the EU and UK)</h2>
