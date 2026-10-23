@@ -25,7 +25,16 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/checks/" },
+  alternates: {
+    canonical: "/checks/",
+    /* The Chinese overview is translated; the rule pages it links to are not, so only the
+       overview pair is claimed. */
+    languages: {
+      en: "/checks/",
+      "zh-Hans": "/zh/checks/",
+      "x-default": "/checks/",
+    },
+  },
   ...social({ title: TITLE, description: DESCRIPTION, url: "/checks/" }),
 };
 

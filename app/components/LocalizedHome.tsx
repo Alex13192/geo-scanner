@@ -77,12 +77,18 @@ export default function LocalizedHome({
               ))}
             </ul>
             {locale === "zh" ? (
-              <p className="mt-6 text-sm">
+              <p className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 <Link
                   href="/zh/methodology/"
                   className="font-medium text-[var(--accent)] hover:opacity-75"
                 >
-                  方法论:GEO 分数是怎么算出来的 →
+                  方法论：GEO 分数是怎么算出来的 →
+                </Link>
+                <Link
+                  href="/zh/checks/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  全部 40 条规则 →
                 </Link>
               </p>
             ) : null}

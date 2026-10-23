@@ -4,6 +4,7 @@ import PageFooter from "@/app/components/PageFooter";
 import { CONTACT_EMAIL, SITE_SCAN_PRICE_CNY } from "@/lib/site";
 import ReportMailForm from "./ReportMailForm";
 import ReportWidget from "./ReportWidget";
+import ReportPreview from "@/app/components/ReportPreview";
 
 /**
  * /report/ - the server-rendered half.
@@ -208,6 +209,10 @@ export default async function ReportPage({
             <ReportMailForm domain={domain} />
           </section>
         ) : null}
+
+        {/* The paid deliverable, shown rather than described. Placed after the free result and
+            the weekly-report form so nothing the scan found is hidden behind it. */}
+        <ReportPreview />
 
         <section className="mt-16 max-w-3xl space-y-8 text-sm leading-relaxed text-[var(--ink-2)]">
           <div>

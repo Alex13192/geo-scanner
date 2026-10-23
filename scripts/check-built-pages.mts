@@ -122,6 +122,8 @@ const ROUTES: Route[] = [
    * rules cannot score Chinese prose as fairly as they score English prose.
    */
   { route: "/zh/methodology/", file: "zh/methodology.html", indexable: true, min: 60 },
+  /* The rule overview in Chinese: same localized floor and the same analyser caveat. */
+  { route: "/zh/checks/", file: "zh/checks.html", indexable: true, min: 60 },
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

@@ -324,6 +324,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
         },
       },
     },
+    {
+      url: `${SITE_URL}/zh/checks/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/checks/`,
+          'zh-Hans': `${SITE_URL}/zh/checks/`,
+          'x-default': `${SITE_URL}/checks/`,
+        },
+      },
+    },
     /*
      * The localized home and pricing pages, one entry per locale. They are the only pages with
      * a real translation in this phase, so they are the only ones whose sitemap entries carry

@@ -5,6 +5,7 @@ import { LocaleFooter, LocaleHeader } from "@/app/components/LocalizedChrome";
 import { CHECK_CATALOG, DIMENSION_CATALOG, GRADE_BANDS } from "@/lib/geo/catalog";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { homePath } from "@/lib/i18n/config";
+import { ZH_DIMENSION_LABELS } from "@/lib/i18n/zh-copy";
 import { social } from "@/lib/og";
 
 /**
@@ -44,20 +45,7 @@ export const metadata: Metadata = {
   ...social({ title: TITLE, description: DESCRIPTION, url: "/zh/methodology/" }),
 };
 
-const DIMENSION_LABELS_ZH: Record<string, string> = {
-  "ai-crawler-access": "AI 爬虫访问",
-  "machine-readability": "机器可读性",
-  "content-depth": "内容深度",
-  citability: "可引用性与证据",
-  "answer-readiness": "答案就绪度",
-  "trust-authority": "信任与权威",
-  "semantic-structure": "语义结构",
-  metadata: "元数据与可发现性",
-  "llms-txt": "AI 上下文文件",
-  freshness: "时效性",
-  multilingual: "国际就绪度",
-  delivery: "交付与移动端",
-};
+const DIMENSION_LABELS_ZH = ZH_DIMENSION_LABELS;
 
 export default async function ChineseMethodologyPage({
   params,
