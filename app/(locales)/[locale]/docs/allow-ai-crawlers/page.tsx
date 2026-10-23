@@ -171,7 +171,7 @@ export default async function ChineseAllowAiCrawlersPage({
               */}
               <DiagramRobotsMatch />
               <p className="text-sm leading-relaxed text-[var(--ink-3)]">
-                图中标注保留英文技术术语（user-agent、Allow、Disallow），以便与 robots.txt 原文逐项对照。
+                图中标注保留英文，其中 user-agent、Allow、Disallow 等为技术术语，以便与 robots.txt 原文逐项对照。
               </p>
 
               <h2>如何在 robots.txt 中允许它们？</h2>
