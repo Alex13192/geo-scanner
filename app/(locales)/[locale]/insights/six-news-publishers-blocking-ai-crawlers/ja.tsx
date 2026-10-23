@@ -251,8 +251,7 @@ export default function JapaneseSixNewsPublishersPage() {
               </p>
               <p>
                 そのほかのすべての人にとって重要な区別はこれです。これらのクローラーをブロックしている小さなサイトは、たいていライセンス戦略を実行しているわけではありません。テンプレートをコピーしたか、WAFルールを継承したか、あるスクレイピングの事故の際に「bot全般をブロック」するルールを追加して、user-agent のリストを見直さなかったのです。確認する価値があるのはこちらのケースで、それを順に説明しているのが
-                <Link href="/ja/docs/allow-ai-crawlers/">robots.txt と WAF のガイド</Link>{" "}
-                です。
+                <Link href="/ja/docs/allow-ai-crawlers/">robots.txt と WAF のガイド</Link>です。
               </p>
 
               <h2>サイト所有者はまず何を確認すべきですか？</h2>
