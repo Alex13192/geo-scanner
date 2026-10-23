@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     languages: {
       en: "/docs/allow-ai-crawlers/",
       "zh-Hans": "/zh/docs/allow-ai-crawlers/",
+      ja: "/ja/docs/allow-ai-crawlers/",
       "x-default": "/docs/allow-ai-crawlers/",
     },
   },

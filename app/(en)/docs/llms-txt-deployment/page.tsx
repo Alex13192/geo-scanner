@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     languages: {
       en: "/docs/llms-txt-deployment/",
       "zh-Hans": "/zh/docs/llms-txt-deployment/",
+      ja: "/ja/docs/llms-txt-deployment/",
       "x-default": "/docs/llms-txt-deployment/",
     },
   },

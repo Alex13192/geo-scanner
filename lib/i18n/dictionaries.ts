@@ -181,7 +181,7 @@ const zh: Dictionary = {
     pricingDescription:
       "扫描免费。付费的是一次性的 AI 可见度测量：把你的买家问题交给 AI 引擎，记录它的回答。",
   },
-  nav: { home: "首页", pricing: "定价", docs: "指南(英文)", scan: "扫描网站", language: "语言" },
+  nav: { home: "首页", pricing: "定价", docs: "指南", scan: "扫描网站", language: "语言" },
   hero: {
     eyebrow: "这是就绪度审计，不是提及监测",
     title: "你的网站，准备好被 AI 引用了吗?",
@@ -276,7 +276,7 @@ const ja: Dictionary = {
     pricingDescription:
       "スキャンは無料です。有料なのは一度きりの AI 可視性測定:購入者の質問を AI エンジンに投げ、回答を記録します。",
   },
-  nav: { home: "ホーム", pricing: "料金", docs: "ガイド(英語)", scan: "サイトを診断", language: "言語" },
+  nav: { home: "ホーム", pricing: "料金", docs: "ガイド", scan: "サイトを診断", language: "言語" },
   hero: {
     eyebrow: "メンション追跡ではなく、引用準備度の診断",
     title: "あなたのサイトは、AI 検索に引用される状態ですか?",

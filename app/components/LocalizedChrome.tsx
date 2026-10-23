@@ -54,8 +54,8 @@ export function LocaleHeader({
             {dict.nav.pricing}
           </Link>
           <Link
-            href={locale === "zh" ? "/zh/docs/" : "/docs/"}
-            hrefLang={locale === "zh" ? "zh-Hans" : "en"}
+            href={locale === "zh" ? "/zh/docs/" : locale === "ja" ? "/ja/docs/" : "/docs/"}
+            hrefLang={locale === "zh" ? "zh-Hans" : locale === "ja" ? "ja" : "en"}
             className="rounded-full px-3 py-2 text-[14.5px] text-[var(--ink-2)] hover:text-[var(--ink-1)]"
           >
             {dict.nav.docs}

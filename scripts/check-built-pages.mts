@@ -182,6 +182,10 @@ const ROUTES: Route[] = [
     indexable: true,
     min: 50,
   })),
+  /* Japanese guides: the index and the two translated guides. */
+  { route: "/ja/docs/", file: "ja/docs.html", indexable: true, min: 50 },
+  { route: "/ja/docs/llms-txt-deployment/", file: "ja/docs/llms-txt-deployment.html", indexable: true, min: 50 },
+  { route: "/ja/docs/allow-ai-crawlers/", file: "ja/docs/allow-ai-crawlers.html", indexable: true, min: 50 },
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

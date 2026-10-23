@@ -129,6 +129,12 @@ export default function LocalizedHome({
                 >
                   全 40 のルール →
                 </Link>
+                <Link
+                  href="/ja/docs/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  ガイド →
+                </Link>
               </p>
             ) : null}
           </div>

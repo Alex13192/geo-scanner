@@ -62,14 +62,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
   });
 
   /*
-   * The guides are translated into English and Chinese only so far. A six-language map here
-   * would point at pages that do not exist - the half-built hreflang this site already
-   * withdrew once - so the pair is built explicitly rather than reusing alternatesFor.
+   * The guides are translated into English and Chinese, and into Japanese for the ones that
+   * have a Japanese page. A six-language map here would point at pages that do not exist -
+   * the half-built hreflang this site already withdrew once - so the pair is built explicitly
+   * and the Japanese key is added only where the translation exists.
    */
-  const docsAlternates = (slug: string) => ({
+  const docsAlternates = (slug: string, withJapanese = false) => ({
     languages: {
       en: `${SITE_URL}/docs${slug}/`,
       'zh-Hans': `${SITE_URL}/zh/docs${slug}/`,
+      ...(withJapanese ? { ja: `${SITE_URL}/ja/docs${slug}/` } : {}),
       'x-default': `${SITE_URL}/docs${slug}/`,
     },
   });
@@ -201,7 +203,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
-      alternates: docsAlternates(""),
+      alternates: docsAlternates("", true),
     },
     ...["llms-txt-deployment", "allow-ai-crawlers", "qa-style-headings", "schema-org-jsonld", "ai-visibility-self-check"].map(
       (slug) => ({
@@ -209,15 +211,29 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: LAST_MODIFIED,
         changeFrequency: 'monthly' as const,
         priority: slug === "llms-txt-deployment" || slug === "allow-ai-crawlers" ? 0.8 : 0.7,
-        alternates: docsAlternates(`/${slug}`),
+        alternates: docsAlternates(`/${slug}`, slug === "llms-txt-deployment" || slug === "allow-ai-crawlers"),
       })
     ),
+    {
+      url: `${SITE_URL}/ja/docs/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+      alternates: docsAlternates("", true),
+    },
+    ...["llms-txt-deployment", "allow-ai-crawlers"].map((slug) => ({
+      url: `${SITE_URL}/ja/docs/${slug}/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+      alternates: docsAlternates(`/${slug}`, true),
+    })),
     {
       url: `${SITE_URL}/zh/docs/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
-      alternates: docsAlternates(""),
+      alternates: docsAlternates("", true),
     },
     ...["llms-txt-deployment", "allow-ai-crawlers", "qa-style-headings", "schema-org-jsonld", "ai-visibility-self-check"].map(
       (slug) => ({
@@ -225,7 +241,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: LAST_MODIFIED,
         changeFrequency: 'monthly' as const,
         priority: slug === "llms-txt-deployment" || slug === "allow-ai-crawlers" ? 0.7 : 0.6,
-        alternates: docsAlternates(`/${slug}`),
+        alternates: docsAlternates(`/${slug}`, slug === "llms-txt-deployment" || slug === "allow-ai-crawlers"),
       })
     ),
     {
