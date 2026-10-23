@@ -116,6 +116,17 @@ export async function generateMetadata({
     alternates: {
       canonical: `/checks/${check.id}/`,
       /*
+       * Every rule page has a Chinese translation of the rule text and the fixes, so the
+       * pair is claimed here and on the Chinese page. The long analysis prose remains
+       * English; the localized page says so rather than pretending the whole page is
+       * translated.
+       */
+      languages: {
+        en: `/checks/${check.id}/`,
+        "zh-Hans": `/zh/checks/${check.id}/`,
+        "x-default": `/checks/${check.id}/`,
+      },
+      /*
        * Rendered by Next as <link rel="alternate" type="text/markdown" href="...">.
        * Using the metadata API rather than writing the link by hand keeps the
        * declaration and the route that serves it described in one place, and the

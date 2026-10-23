@@ -115,8 +115,7 @@ export default async function ChineseChecksPage({
                             {check.points} pt
                           </span>
                           <Link
-                            href={`/checks/${check.id}/`}
-                            hrefLang="en"
+                            href={`/zh/checks/${check.id}/`}
                             className="font-medium text-[var(--accent)] underline hover:opacity-75"
                           >
                             {ZH_CHECK_TITLES[check.id] ?? check.id}

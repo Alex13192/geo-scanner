@@ -256,10 +256,10 @@ export default async function ChineseMethodologyPage({
               <h2>继续阅读</h2>
               <ul>
                 <li>
-                  <Link href="/checks/" hrefLang="en" className="text-[var(--accent)] hover:opacity-75">
-                    全部 {runnable.length} 条规则(英文)
+                  <Link href="/zh/checks/" className="text-[var(--accent)] hover:opacity-75">
+                    全部 {runnable.length} 条规则(中文总览)
                   </Link>
-                  ——每条规则的点数、通过条件和证据。
+                  ——每条规则的点数、所属维度,以及逐条规则页。
                 </li>
                 <li>
                   <Link href="/study/" hrefLang="en" className="text-[var(--accent)] hover:opacity-75">

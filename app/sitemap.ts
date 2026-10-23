@@ -300,11 +300,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    /* One Chinese page per rule, paired with its English page. Only these two languages are
+       translated, so the alternates map stays two languages rather than the six the home and
+       pricing pages claim. */
+    ...CHECK_CATALOG.filter((check) => !check.alias).map((check) => ({
+      url: `${SITE_URL}/zh/checks/${check.id}/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.4,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/checks/${check.id}/`,
+          'zh-Hans': `${SITE_URL}/zh/checks/${check.id}/`,
+          'x-default': `${SITE_URL}/checks/${check.id}/`,
+        },
+      },
+    })),
     ...CHECK_CATALOG.filter((check) => !check.alias).map((check) => ({
       url: `${SITE_URL}/checks/${check.id}/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
       priority: 0.5,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/checks/${check.id}/`,
+          'zh-Hans': `${SITE_URL}/zh/checks/${check.id}/`,
+          'x-default': `${SITE_URL}/checks/${check.id}/`,
+        },
+      },
     })),
     /*
      * The first deep page with a real translation. Only English and Chinese are declared,

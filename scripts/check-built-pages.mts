@@ -36,6 +36,7 @@ import { join } from "node:path";
 import { SITE_HOST } from "../lib/site.ts";
 import { analyze } from "../lib/geo/analyze.ts";
 import { INSIGHTS, insightPath } from "../lib/insights.ts";
+import { CHECK_CATALOG } from "../lib/geo/catalog.ts";
 import { PREFIXED_LOCALES } from "../lib/i18n/config.ts";
 
 const APP_DIR = join(process.cwd(), ".next", "server", "app");
@@ -124,6 +125,19 @@ const ROUTES: Route[] = [
   { route: "/zh/methodology/", file: "zh/methodology.html", indexable: true, min: 60 },
   /* The rule overview in Chinese: same localized floor and the same analyser caveat. */
   { route: "/zh/checks/", file: "zh/checks.html", indexable: true, min: 60 },
+  /*
+   * The 40 translated rule pages. Floor 50 rather than 60: these pages are deliberately the
+   * short form - translated rule, failure meaning and fixes, with the long analysis left on
+   * the English page and linked - so they carry less text than the methodology or the rule
+   * overview, and the analyser scores Chinese prose with English-shaped rules on top of that.
+   * The floor still catches a page that shipped as a stub.
+   */
+  ...CHECK_CATALOG.filter((check) => !check.alias).map((check) => ({
+    route: `/zh/checks/${check.id}/`,
+    file: `zh/checks/${check.id}.html`,
+    indexable: true,
+    min: 50,
+  })),
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same
