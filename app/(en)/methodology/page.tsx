@@ -51,7 +51,16 @@ const METHOD_CHANGELOG = [
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/methodology/" },
+  alternates: {
+    canonical: "/methodology/",
+    /* Only Chinese is translated so far; an hreflang entry for a locale that has no page
+       would be the half-built translation this site already withdrew once. */
+    languages: {
+      en: "/methodology/",
+      "zh-Hans": "/zh/methodology/",
+      "x-default": "/methodology/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

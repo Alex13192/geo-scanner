@@ -307,6 +307,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     })),
     /*
+     * The first deep page with a real translation. Only English and Chinese are declared,
+     * because the other four locales do not have this page yet; a full six-language map
+     * would be the half-built translation the site already withdrew once.
+     */
+    {
+      url: `${SITE_URL}/zh/methodology/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/methodology/`,
+          'zh-Hans': `${SITE_URL}/zh/methodology/`,
+          'x-default': `${SITE_URL}/methodology/`,
+        },
+      },
+    },
+    /*
      * The localized home and pricing pages, one entry per locale. They are the only pages with
      * a real translation in this phase, so they are the only ones whose sitemap entries carry
      * alternates. English is the x-default; every entry points at the same matrix, which is

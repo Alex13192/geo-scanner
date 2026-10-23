@@ -117,6 +117,12 @@ const ROUTES: Route[] = [
     { route: `/${locale}/pricing/`, file: `${locale}/pricing.html`, indexable: true, min: 60 },
   ]),
   /*
+   * The first translated deep page. Same 60 floor as the rest of the localized surface, for
+   * the same analyser reason documented above: it is genuinely translated, and the English
+   * rules cannot score Chinese prose as fairly as they score English prose.
+   */
+  { route: "/zh/methodology/", file: "zh/methodology.html", indexable: true, min: 60 },
+  /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same
    * registry the sitemap reads, so one that is published and missing from this list would have

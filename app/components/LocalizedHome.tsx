@@ -76,6 +76,16 @@ export default function LocalizedHome({
                 </li>
               ))}
             </ul>
+            {locale === "zh" ? (
+              <p className="mt-6 text-sm">
+                <Link
+                  href="/zh/methodology/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  方法论:GEO 分数是怎么算出来的 →
+                </Link>
+              </p>
+            ) : null}
           </div>
         </section>
 

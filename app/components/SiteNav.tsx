@@ -7,7 +7,6 @@ import {
   BookOpen,
   ChevronDown,
   Code,
-  CreditCard,
   FileText,
   GitCompareArrows,
   Info,
@@ -185,21 +184,15 @@ const GROUPS: Group[] = [
   },
   {
     /*
-     * Company sits last and exists because the pricing page was reachable only from the
-     * footer and from /about/; an audit called the paid offer "not prominent". Putting
-     * pricing, accountability and the contact route together also answers the question a
-     * buyer asks before paying - who is selling this - without making them hunt through
-     * three pages.
+     * Company holds the pages about WHO is behind the site - accountability and the contact
+     * route - and deliberately not Pricing. Pricing is a top-level link (below) because it is
+     * the paid offer and has to be reachable without opening a menu; keeping a copy inside
+     * this group made the same two links appear twice in one row, which is what a reader
+     * notices first and what the "duplicate About and Pricing" fix removed.
      */
     key: "company",
     label: "Company",
     items: [
-      {
-        href: "/pricing/",
-        label: "Pricing",
-        description: "What is free, what the paid report costs, and who you are buying from.",
-        icon: CreditCard,
-      },
       {
         href: "/about/",
         label: "About",
@@ -317,21 +310,12 @@ export default function SiteNav() {
             </div>
           ))}
 
-          <a
-            href="/about/"
-            className="rounded-full px-3.5 py-2 text-[15px] text-[var(--ink-2)] transition-colors hover:text-[var(--ink-1)]"
-          >
-            About
-          </a>
-
           {/*
-            PRICING IS A TOP-LEVEL LINK, AND IT IS HERE BECAUSE OF WHAT THE FOOTER DOES NOT COVER.
-            The legal row in PageFooter carries Pricing on every page that renders it - but the
-            homepage does not render PageFooter, it has its own footer, so on the front door the
-            price was reachable from nowhere at all. Measured, not assumed: the built homepage
-            contained zero links to /pricing/. A site whose only paid page cannot be reached from its
-            own navigation is a site that does not sell it, and a payment reviewer opens the homepage
-            first - Creem's checklist asks for pricing "clearly displayed and easy for users to find".
+            ABOUT IS NOT REPEATED HERE. It lives in the Company group with Author and Contact,
+            which is where a reader looking for "who runs this" already goes. The top-level row
+            used to carry both About and Pricing while the Company panel carried copies of both,
+            so the same two words appeared twice in one row - the duplication this row now
+            avoids. Pricing stays top-level: it is the paid offer and must not need a menu.
           */}
           <a
             href="/pricing/"
