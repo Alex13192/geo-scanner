@@ -1,6 +1,14 @@
-# LLMention
+# LLMention GEO Scanner
 
-A GEO scanner for AI search visibility, at https://llmention-geo.com.
+[![40 published checks](https://img.shields.io/badge/checks-40%20published-blue)](https://llmention-geo.com/checks/)
+[![llms.txt](https://img.shields.io/badge/llms.txt-published-blueviolet)](https://llmention-geo.com/llms.txt)
+[![markdown twin](https://img.shields.io/badge/markdown-twin-lightgrey)](https://llmention-geo.com/markdown/)
+[![MIT license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+A GEO scanner for AI search visibility, at https://llmention-geo.com. The full name is
+**LLMention GEO Scanner**; it is an independent project and is **not affiliated** with DataForSEO's
+LLM Mentions API — that product measures brand mentions in AI answers, which is a different
+measurement. Similar vocabulary, no relationship.
 
 **What it does not do:** it never queries an AI engine. It measures whether a page *can* be read,
 extracted and cited — not whether any engine currently mentions you. That limit is stated in the
@@ -15,7 +23,9 @@ and the executed method cannot drift apart.
 - Every rule: `/checks/`, one page per check, generated from `lib/geo/catalog.ts`
 - The full method, the weights and the limits: `/methodology/`
 - The study over 30 homepages: `/study/`, collected by `npm run study:run`
-- 
+- Who writes it, and how it is funded: `/author/`
+- First-party writing on the study and the rules: `/insights/`
+
 ## Run a scan without installing anything
 
 ```bash
@@ -87,7 +97,7 @@ creates no DNS record and needs none. The comment in that file records the error
 
 ## Checking it
 
-Six gates. The first five inspect local build output; the sixth is the only one that can see
+Eight gates. The first seven inspect local build output; the last is the only one that can see
 what is actually being served.
 
 | Command | What it proves |
@@ -95,34 +105,48 @@ what is actually being served.
 | `npm run check:values` | every static URL and address agrees with `lib/site.ts` |
 | `npm run test:analyze` | the scoring engine: robots.txt parsing, measurement guards, page-type exemptions, generated copy, the ranges the site publishes for its own titles, and that no source file declares the edge runtime |
 | `npm run test:rate-limit` | the token bucket, including that a flood of distinct keys cannot reset an exhausted client |
+| `npm run test:monitor` | the monthly mention monitor's detector, including that "LLMention" does not match "LLM Mentions API" |
 | `npx tsc --noEmit` | types |
+| `npm run self-audit` | re-measures the published self-score from the built homepage; `check:built` fails when the page and `lib/self-audit.json` disagree |
 | `npx opennextjs-cloudflare build` | the adapter accepts the app, then `npm run check:built` scores the built HTML with the scanner's own analyser and fails below a floor |
-| `npm run check:live` | the deployed origin, taken from `lib/site.ts`: security headers, which deployment is answering, robots.txt, llms.txt, `/ads.txt`, the `/report/` canonical, a markdown twin resolving, the withdrawn pages redirecting, and the rule hub |
+| `npm run check:live` | the deployed origin, taken from `lib/site.ts`: security headers, which deployment is answering, robots.txt, llms.txt, `/ads.txt`, the `/report/` canonical, the homepage and rule-page markdown twins resolving, the withdrawn pages redirecting, and the rule hub |
 
 `check:live` takes any origin, so it also works against `npm run preview` or a preview
 hostname. Its `deployment identity` assertion checks for the `x-opennext` response header:
 without it, a run against a hostname still served by the old Pages deployment passed every
 content check and looked like a successful cutover.
 
+`.github/workflows/self-audit.yml` re-measures the homepage weekly and dispatches the deploy;
+`.github/workflows/monitor.yml` runs the 25-question bank monthly when provider keys exist (see
+[`monitoring/README.md`](monitoring/README.md)).
+
 ## Layout
 
 ```
 app/                 routes; (en)/ is the only locale, deliberately
   (en)/checks/       the rule reference, generated from the catalogue
+  (en)/compare/      the three comparison pages, including vs DataForSEO's LLM Mentions API
+  (en)/insights/     dated first-party writing, generated from lib/insights.ts
   api/               scan and llms.txt endpoints, Node runtime inside the Worker
 lib/geo/             the scoring engine, the published catalogue, generated copy
+lib/monitoring/      the 25-question bank and the four-engine detector
 lib/og.ts            the openGraph block, built in one place
 lib/site.ts          the origin and contact address, declared once
-scripts/             the gates above, plus the study runner
+scripts/             the gates above, the study runner, the monitor runner
+monitoring/          the monthly runner's documentation; runs/ is gitignored
 public/_headers      static asset caching, read under Workers
 wrangler.jsonc       the Worker: entry, compatibility flags, bindings, routes
 ```
+
+Next.js 16 / React 19.3 / Node 20.9+; the site builds with Turbopack and deploys through
+`@opennextjs/cloudflare` 1.20. The Next 16 migration and the one stopgap it replaced are recorded
+in `OPERATIONS.md`.
 
 ## A note on the comments
 
 They are long, and they explain why rather than what. Several of them record a mistake that
 was made and what it cost, because the reasoning is the part that does not survive a rewrite
-of the code. `lib/geo/analyze.ts`, `middleware.ts` and `next.config.ts` are the densest.
+of the code. `lib/geo/analyze.ts`, `proxy.ts` and `next.config.ts` are the densest.
 
 ## License
 

@@ -33,7 +33,7 @@ const LAST_MODIFIED = new Date('2026-10-23');
  * single-language site must not declare `languages` at all, because an alternate
  * that names a page which no longer exists tells search engines an alternate
  * exists and then fails to deliver it. /de/* now 301s to the English
- * equivalent - see middleware.ts, which is where those redirects actually live.
+ * equivalent - see proxy.ts, which is where those redirects actually live.
  * This comment used to point at public/_redirects; that file was removed once it
  * turned out not to run, and the pointer was left behind.
  *
@@ -60,6 +60,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.9,
+    },
+    /* Comparisons. Listed individually rather than as a hub-only entry because each one answers
+       a different question and each is the kind of page a generative answer cites: "X vs Y" and
+       "should I use X or Y" are asked directly. The hub is the entry point; the two detail pages
+       are destinations. */
+    {
+      url: `${SITE_URL}/compare/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/compare/llm-mentions-api/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/compare/readiness-vs-mention-tracking/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
     },
     {
       /* The index of everything else: the four tools, the rule reference, the dimensions, the
@@ -184,7 +206,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
        /refund/ are the two a payment reviewer opens.
        THEY CAME BACK ON 2026-10-08 with the measurement report: the site sells
        something again, so a price and a refund policy now describe work that is
-       actually run. Both were 301s to "/" from middleware.ts while nothing was for
+       actually run. Both were 301s to "/" from proxy.ts while nothing was for
        sale, and they are listed here again rather than left as redirects - an
        indexed redirect to the homepage is not an answer to "how much does this
        cost". /withdrawal/ stayed deleted: the consumer withdrawal notice is folded

@@ -9,7 +9,7 @@ import { CONTACT_EMAIL, OPERATOR_IDENTITY } from "@/lib/site";
  * withdrawal notice and it was written as its own document. It is folded in here: a buyer deciding
  * whether to pay wants one page that answers "what do I get back if this goes wrong", and a second
  * page that repeats the same contract in legal register is a second thing to keep in step. The old
- * /withdrawal/ URL still 301s to the homepage - see middleware.ts, which is where that survives.
+ * /withdrawal/ URL still 301s to the homepage - see proxy.ts, which is where that survives.
  *
  * THE LINE THE PAGE DRAWS, AND WHY IT IS THERE RATHER THAN LATER: the measurement is paid for in API
  * calls, and those calls happen the moment the client-approved question bank is frozen. So the

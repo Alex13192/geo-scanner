@@ -24,7 +24,7 @@ import { og } from "@/lib/og";
  * WHY IT IS GROUPED BY PURPOSE RATHER THAN BY URL. /checks/, /dimensions/ and /docs/ are the
  * same shape of address and answer completely different questions: what the scanner tests,
  * how the score is weighted, and how to carry out a fix. Sorting by address would put those
- * three next to each other and call it a list. The five groups below are the five questions
+ * three next to each other and call it a list. The six groups below are the six questions
  * a reader actually arrives with:
  *
  *   Run a scan                  I want a number for my own site.
@@ -32,6 +32,7 @@ import { og } from "@/lib/og";
  *   Scoring dimensions          Where does the number come from, and what is it worth?
  *   Method and the evidence     What is this built on, and what can it not see?
  *   Guides                      Something is broken; how do I fix it?
+ *   Comparisons                 Which measurement do I actually need?
  *
  * WHERE EVERY STRING ON THIS PAGE COMES FROM. Nothing here is new marketing copy, and the
  * comment on each source below records where the sentence was read from, so the index can
@@ -43,6 +44,11 @@ import { og } from "@/lib/og";
  *                                   and meta description
  *   - dimension names and reasons   DIMENSION_CATALOG's label and rationale
  *   - the four counts in the table  the lengths of the arrays themselves
+ *
+ * The comparison entries are the exception and are listed by hand: they are three
+ * pages written together, and the sentence on each is the one its own page opens
+ * with. Keeping them here rather than in a registry is deliberate - three links do
+ * not need a module, and a registry for them would be a fourth copy of the routes.
  *
  * The two numbers the LLM studio copy carries are imported from lib/llms-txt.ts rather than
  * typed here, for the reason that file states at length: a number written into prose is a
@@ -168,6 +174,32 @@ const WRITING_ENTRIES: Entry[] = [
   },
 ];
 
+/*
+ * The comparisons. Written as an array because the table above counts it: the
+ * number of destinations in this group is used by the description, and "3" typed
+ * into both places is the drift /tools/ exists to prevent one level up.
+ */
+const COMPARE_ENTRIES: Entry[] = [
+  {
+    href: "/compare/",
+    label: "Which measurement do you need?",
+    description:
+      "Readiness audits, brand-mention tracking, rank tracking and crawler-log analytics side by side: what each answers, the data it needs, and what it cannot see.",
+  },
+  {
+    href: "/compare/llm-mentions-api/",
+    label: "LLMention vs DataForSEO's LLM Mentions API",
+    description:
+      "Two similarly named products that measure different things, compared on data source, unit of result and blind spot - with DataForSEO's own description and the date it was read.",
+  },
+  {
+    href: "/compare/readiness-vs-mention-tracking/",
+    label: "Can AI cite you, or is it already doing so?",
+    description:
+      "Why readiness is upstream of mentions, why a page can be ready and still go unmentioned, and how to audit first and monitor second.",
+  },
+];
+
 export default function ToolsIndexPage() {
   const runnableChecks = CHECK_CATALOG.filter((check) => !check.alias);
   const totalWeight = DIMENSION_CATALOG.reduce((sum, dimension) => sum + dimension.weight, 0);
@@ -177,6 +209,7 @@ export default function ToolsIndexPage() {
     DIMENSION_CATALOG.length +
     guidesList.length +
     WRITING_ENTRIES.length +
+    COMPARE_ENTRIES.length +
     1;
   const guidedChecks = runnableChecks.filter((check) => guidePathForCheck(check.id)).length;
 
@@ -229,6 +262,12 @@ export default function ToolsIndexPage() {
       ],
     },
     {
+      id: "compare",
+      purpose: "I am choosing between two different measurements",
+      what: "The comparisons",
+      entries: COMPARE_ENTRIES,
+    },
+    {
       id: "guides",
       purpose: "Something failed and I need to fix it",
       what: "The guides",
@@ -254,7 +293,8 @@ export default function ToolsIndexPage() {
             {runnableChecks.length} pages describing the individual rules,{" "}
             {DIMENSION_CATALOG.length} describing the dimensions those rules are scored in,{" "}
             {guidesList.length} guides for the fixes that recur, {INSIGHTS.length} pieces of
-            first-party writing, and the method they all rest on.
+            first-party writing, {COMPARE_ENTRIES.length} comparisons between measurements, and
+            the method they all rest on.
           </p>
           <p>
             The tools are free and need no account. The reference pages are free too, which is the
@@ -266,7 +306,7 @@ export default function ToolsIndexPage() {
       action={{ href: "/", label: "← Back to the scanner" }}
     >
       <div className="space-y-16">
-        {/* The lookup table. Five rows, so a reader can find the right section before
+        {/* The lookup table. Six rows, so a reader can find the right section before
             scrolling, with each row linking to its own section anchor. */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm border border-[var(--line)] rounded-xl overflow-hidden">

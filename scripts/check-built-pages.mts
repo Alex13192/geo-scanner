@@ -71,6 +71,18 @@ const ROUTES: Route[] = [
   { route: "/monitor/", file: "monitor.html", indexable: true },
   { route: "/methodology/", file: "methodology.html", indexable: true },
   { route: "/study/", file: "study.html", indexable: true },
+  /* The comparisons. Added in the same change as the routes, for the reason this file's
+     opening comment gives: a page that is new must not skip the gate by being new. They
+     carry no custom floor because a comparison page is prose with a table and a FAQ, which
+     is the easiest page type on the site to score well - if one falls below 90 it has lost
+     content rather than been written short. */
+  { route: "/compare/", file: "compare.html", indexable: true },
+  { route: "/compare/llm-mentions-api/", file: "compare/llm-mentions-api.html", indexable: true },
+  {
+    route: "/compare/readiness-vs-mention-tracking/",
+    file: "compare/readiness-vs-mention-tracking.html",
+    indexable: true,
+  },
   { route: "/about/", file: "about.html", indexable: true },
   { route: "/contact/", file: "contact.html", indexable: true },
   { route: "/docs/", file: "docs.html", indexable: true },

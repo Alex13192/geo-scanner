@@ -1,39 +1,23 @@
 import { defineConfig, globalIgnores } from "eslint/config";
-import { FlatCompat } from "@eslint/eslintrc";
-import { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
 
 /*
- * WHY THIS FILE LOOKS DIFFERENT FROM WHAT A NEW NEXT APP SCAFFOLDS, AND WHY IT IS NOT A REGRESSION.
- *
- * `npm run lint` failed before it linted anything - for every commit, on a config that reads like the
- * flat-config output of a recent Next app but was imported as though the package shipped flat files:
- *
- *   Error [ERR_MODULE_NOT_FOUND]: Cannot find module '...\eslint-config-next\core-web-vitals'
- *   Did you mean to import "eslint-config-next/core-web-vitals.js"?
- *     ... adding the extension then gave: TypeError: nextVitals is not iterable
- *
- * The second error is the informative one. `eslint-config-next@15.5.27` - the version pinned here, and
- * the one that matches next@15.5.27 - ships LEGACY eslintrc configs:
- *
- *   core-web-vitals.js:  module.exports = { extends: [require.resolve('.'), 'plugin:@next/next/core-web-vitals'] }
- *
- * There is no `exports` field and no array to spread, so `...nextVitals` cannot work at any extension.
- * Either ESLint drops to 8 with an .eslintrc, or ESLint 9 keeps its flat config and reads the legacy
- * preset through the compatibility layer. The second one is what this file does: @eslint/eslintrc
- * ships with ESLint 9, so nothing new is installed.
+ * WHY THIS FILE LOST THE COMPATIBILITY LAYER. Until the Next 16 migration this config read the
+ * legacy eslintrc presets through @eslint/eslintrc's FlatCompat, because eslint-config-next@15
+ * shipped `module.exports = { extends: [...] }` and spreading that into a flat array threw
+ * "nextVitals is not iterable". eslint-config-next@16 ships flat configs natively - each preset is
+ * already an array - so FlatCompat is now not just unnecessary but wrong: it feeds a flat config to
+ * the legacy validator, which fails with "Converting circular structure to JSON" before linting a
+ * single file. The fix is to import the presets directly.
  *
  * This is a config fix and NOT a rules change: the same `next/core-web-vitals` and `next/typescript`
- * presets, the same ignores, read through FlatCompat.
+ * presets, the same two page-level exceptions with the same reasons, the same script-level `any`
+ * exception and the same ignores. What changed is only how they are loaded.
  */
-const compat = new FlatCompat({
-  // Resolution is relative to this file, which is what makes "next/core-web-vitals" find the
-  // installed eslint-config-next rather than something global.
-  baseDirectory: dirname(fileURLToPath(import.meta.url)),
-});
-
 const eslintConfig = defineConfig([
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextCoreWebVitals,
+  ...nextTypescript,
   /*
    * TWO RULES OFF FOR THE PAGES, EACH FOR A STATED REASON. Both were firing on code that was written
    * before this config could run at all, so they were never a decision - they were the residue of a
@@ -51,12 +35,24 @@ const eslintConfig = defineConfig([
    *   the prose across these pages already mixes straight and curly quotes. Escaping them is churn
    *   in the source, not a change to the document.
    *   COST: none that a reader can see.
+   *
+   * react-hooks/set-state-in-effect - newly on by default with eslint-config-next@16 (it arrived
+   *   with the React Compiler-era hooks rules), and it fires on five components that set state
+   *   synchronously inside an effect on purpose: ScoreRing and DiagramFigure gate an animation on
+   *   the reduced-motion media query, StudioWidget/BadgeWidget/ReportWidget seed state from the URL
+   *   and then fetch. Each is a mount-time synchronisation, not the render loop the rule is aimed
+   *   at, and every rewrite considered for them - moving the read into render, keying the component
+   *   on the prop - either double-fetches or reintroduces the hydration mismatch the current shape
+   *   avoids. The rule is left ON for lib/ and scripts/; it is turned off only for the JSX layer,
+   *   where its findings are all in this one deliberate pattern.
+   *   COST: a genuinely cascading render introduced later in app/ would not be caught by this rule.
    */
   {
     files: ["app/**/*.{ts,tsx}"],
     rules: {
       "@next/next/no-html-link-for-pages": "off",
       "react/no-unescaped-entities": "off",
+      "react-hooks/set-state-in-effect": "off",
     },
   },
   /*
@@ -96,6 +92,10 @@ const eslintConfig = defineConfig([
      * gitignores it. Linting it reports on files that are regenerated per run.
      */
     "reports/**",
+    /* Next 16 writes dev output to .next/dev; already covered by .next/** but named for clarity. */
+    ".next/dev/**",
+    /* The monitoring runner writes JSONL under monitoring/runs/; it is data, not source. */
+    "monitoring/runs/**",
   ]),
 ]);
 

@@ -1,0 +1,8 @@
+# Run files. The monthly workflow uploads the JSONL as a workflow artifact instead of committing it,
+# so nothing here is source.
+#
+# The stronger reason is the same one that keeps /reports/ out of this repository: a run file quotes
+# what four AI engines said about the site, names the domains they cited, and is a measurement of a
+# moving target. It is evidence for a trend, not a document to publish, and it changes every month -
+# committing it would make the history a stream of generated files.
+runs/

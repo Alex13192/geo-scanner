@@ -98,7 +98,7 @@ const GEO_COMPARISON: [string, string, string][] = [
 const TOOLS = [
   {
     src: "/shots/report.webp",
-    alt: `The GEO audit report for ${SITE_HOST}, showing the twelve weighted dimension scores and the evidence behind each one.`,
+    alt: `The GEO audit report for ${SITE_HOST}, showing the overall score and the twelve weighted dimension scores.`,
     title: "The audit report",
     body: "Forty published checks across twelve weighted dimensions. Every dimension shows its own score and the evidence behind it, and every failure names the rule it broke.",
     href: `/report/?domain=${SITE_HOST}`,

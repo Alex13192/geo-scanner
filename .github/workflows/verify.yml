@@ -141,6 +141,15 @@ jobs:
       - name: Run the answer-check rule tests
         run: npm run test:answer-check
 
+      # THE MONTHLY MENTION MONITOR'S DETECTOR. The monitor itself needs four API keys and a month
+      # to be meaningful, but the part that turns an answer into a measurement is pure, and it has
+      # the same trap the answer checker was built around: "LLMention" inside "LLM Mentions API".
+      # The suite asserts that the naive normalisation really does collapse the two (so the trap is
+      # demonstrated, not assumed) and that detection rejects it. Without this step, a regression in
+      # the detector would only surface as a wrong number in a monthly report nobody re-checks.
+      - name: Run the monitor detector tests
+        run: npm run test:monitor
+
       - name: Type check
         run: npx tsc --noEmit
 
@@ -156,17 +165,15 @@ jobs:
       #
       # This invokes `next build` itself, so it replaces the step rather than joining it.
       #
-      # THE --dangerouslyUseUnsupportedNextVersion FLAG IS LOAD-BEARING AS OF 2026-10-23, AND IT
-      # IS A STOPGAP RATHER THAN A PREFERENCE. The adapter refuses to build a Next.js major that
-      # the Next team no longer supports, and Next 15's two-year window ended on 2026-10-21; the
-      # first build after that date failed with "Next.js version 15.5.27 is not supported by the
-      # Next.js team". Without the flag, main cannot deploy at all - which is how this was found,
-      # not by reading the policy but by a build refusing to run. The flag only downgrades the
-      # refusal to a warning; it does not make an out-of-support runtime safe. The real fix is the
-      # Next 16 migration, which is a separate change and must not be smuggled into an unrelated
-      # one. Delete this flag in the same commit that moves to a supported major.
+      # THE FLAG THAT USED TO SIT HERE IS GONE, BECAUSE THE REASON FOR IT IS GONE. Next 15 left
+      # the Next.js support window on 2026-10-21 and the adapter refused to build it, so a
+      # --dangerouslyUseUnsupportedNextVersion stopgap kept main deployable for two days. The
+      # migration to Next 16.4.2 (2026-10-23) removed the condition: the adapter's peer range is
+      # now `>=16.4.1`, and this command runs with no override. Do not re-add the flag as a
+      # repair for a failed build - if it is needed again, that is the signal to move to a
+      # supported major, not to silence the check.
       - name: Build for Cloudflare
-        run: npx opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion
+        run: npx opennextjs-cloudflare build
         env:
           # next/font downloads Geist at build time, so this job needs network
           # access; telemetry does not need to be part of it.

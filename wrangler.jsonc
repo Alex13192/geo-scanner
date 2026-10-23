@@ -43,7 +43,7 @@
    *
    * WHAT IT BROKE. The cache key is "the request path, entrypoint, ctx.props, and (by default) the
    * Worker version, NOT by hostname" - Cloudflare's words. This Worker is bound to two hostnames, and
-   * one of them has to REDIRECT: middleware.ts turns geo-scanner.ccie13192.com into a 301 to
+   * one of them has to REDIRECT: proxy.ts turns geo-scanner.ccie13192.com into a 301 to
    * llmention-geo.com, because badge snippets in other people's footers and indexed pages still point
    * at it. With caching on, a request for `/` on the old hostname was answered from the entry cached
    * for `/` on the new one, so the Worker never ran, the middleware never saw the Host header, and the

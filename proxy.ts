@@ -5,7 +5,13 @@ import { LEGACY_HOST, SITE_URL } from "@/lib/site";
  * Two redirects, and they live in the same file because they are the same kind of
  * decision: a request that should not be answered where it arrived.
  *
- * WHY THIS IS MIDDLEWARE AND NOT public/_redirects:
+ * WHY THIS FILE IS NOW CALLED proxy.ts: Next 16 renamed the `middleware` file convention to
+ * `proxy` and deprecated the old name; this was middleware.ts until the migration on
+ * 2026-10-23, and the body did not change with the name. The runtime is Node.js and is not
+ * configurable under the new convention, which is fine for what this does - two string
+ * comparisons and a redirect.
+ *
+ * WHY THIS IS A PROXY AND NOT public/_redirects:
  * A `_redirects` file was the obvious first attempt and it did nothing. The
  * Cloudflare Pages documentation explains why: "Redirects defined in the
  * `_redirects` file are not applied to requests served by Pages Functions, even
@@ -15,7 +21,7 @@ import { LEGACY_HOST, SITE_URL } from "@/lib/site";
  * configuration file that silently does nothing is worse than no file at all -
  * the next person to touch this would trust it.
  *
- * Middleware runs inside the Next.js server, which is what the worker executes,
+ * The proxy runs inside the Next.js server, which is what the worker executes,
  * so this is the layer that actually gets a say in the response. The alternative for
  * the hostname move below was a Cloudflare Redirect Rule, which would work and would
  * be faster, and was rejected for the reason the paragraph above gives: a redirect that
@@ -54,7 +60,7 @@ const GONE: Record<string, string> = {
   "/withdrawal": "/",
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   /*
    * 1. The old hostname moves to the site's own domain.
    *

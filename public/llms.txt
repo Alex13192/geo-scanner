@@ -45,6 +45,19 @@ relationship or shared operator between the two.
 - [Implementing Schema.org JSON-LD for entity disambiguation](https://llmention-geo.com/docs/schema-org-jsonld/):
   Connecting Organization, WebSite and SoftwareApplication nodes into one entity.
 
+## Comparisons
+
+- [Which measurement do you need?](https://llmention-geo.com/compare/): Readiness
+  audits, brand-mention tracking, rank tracking and crawler-log analytics side by
+  side - the question each answers, the data each needs, and what each cannot see.
+- [LLMention GEO Scanner vs DataForSEO's LLM Mentions API](https://llmention-geo.com/compare/llm-mentions-api/):
+  Two similarly named products that measure different things. The two are
+  unaffiliated, and neither replaces the other; the page says what each does, with
+  DataForSEO's own description and the date it was read.
+- [Can AI cite you, or is it already doing so?](https://llmention-geo.com/compare/readiness-vs-mention-tracking/):
+  Why readiness is upstream of mentions, why a page can be ready and still go
+  unmentioned, and how to audit first and monitor second.
+
 ## Machine-readable
 
 - [Homepage as markdown](https://llmention-geo.com/markdown/): A markdown twin of

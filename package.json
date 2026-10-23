@@ -6,9 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "preview": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && opennextjs-cloudflare deploy",
-    "upload": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && opennextjs-cloudflare upload",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "lint": "eslint",
     "check:values": "node scripts/check-values.mjs",
     "check:colours": "node scripts/check-class-colours.mjs",
@@ -29,25 +29,27 @@
     "test:report-link": "node scripts/test-report-link.mts",
     "test:answer-check": "node scripts/test-answer-check.mts",
     "test:sitemap": "node scripts/test-sitemap.mts",
-    "test:site-scan": "node scripts/test-site-scan.mts"
+    "test:site-scan": "node scripts/test-site-scan.mts",
+    "test:monitor": "node scripts/test-monitor.mts",
+    "monitor": "node scripts/monitor/run.mts"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.20.8",
+    "@opennextjs/cloudflare": "1.20.13",
     "lucide-react": "^1.49.0",
-    "next": "15.5.27",
-    "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "eslint": "^9",
-    "eslint-config-next": "15.5.27",
+    "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "wrangler": "^4.147.0",
+    "wrangler": "4.152.0",
     "yaml": "^2.9.1"
   }
 }

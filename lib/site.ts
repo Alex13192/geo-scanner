@@ -37,7 +37,7 @@ export const SITE_HOST = new URL(SITE_URL).host;
  *     resolving sends real crawlers to a domain that is not there and makes the scanner
  *     look like it is lying about who it is
  *
- * middleware.ts redirects it here permanently rather than leaving two hostnames serving
+ * proxy.ts redirects it here permanently rather than leaving two hostnames serving
  * the same pages forever. It can be deleted when nothing is left pointing at it, which
  * is not a date anybody can set: the badge long tail is not in this repository.
  */

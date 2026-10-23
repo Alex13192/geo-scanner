@@ -22,7 +22,7 @@ initOpenNextCloudflareForDev();
  *
  * WHY THIS FILE AND NOT public/_headers:
  * public/_headers is the Cloudflare Pages native mechanism, and it is the wrong
- * one here for the same reason public/_redirects was. middleware.ts already
+ * one here for the same reason public/_redirects was. proxy.ts already
  * documents that trap: a next-on-pages deployment is a single Function serving
  * every route, so no request ever reaches the _redirects parser, and a config file
  * that silently does nothing is worse than no file at all. Next's own headers()
@@ -165,9 +165,13 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  /*
+   * NO `eslint` KEY. Next 16 removed the built-in lint step, and with it the
+   * `eslint.ignoreDuringBuilds` escape hatch this file used to set. Linting is now a
+   * script a person or CI runs (`npm run lint`), not something `next build` does - which
+   * is the correct direction: a build that silently skips lint looks the same as one that
+   * passed it, and this repository's gates are explicit for that reason.
+   */
   async headers() {
     return [
       {

@@ -23,7 +23,7 @@ What went with it, in the same change:
   that cannot happen, and a privacy policy that describes processing you do not carry out is the
   same failure as a process page for a process you do not run.
 - `/contact/` lost its "request an audit" route, and `/about/` lost the sentence offering one.
-- The three URLs 301 to `/` from `middleware.ts`. They were published in the sitemap and may be
+- The three URLs 301 to `/` from `proxy.ts`. They were published in the sitemap and may be
   indexed, and a 404 throws away whatever they hold.
 
 `/privacy/`, `/terms/` and `/contact/` remain. The free scanner still needs a reachable privacy
@@ -94,7 +94,7 @@ Next.js runtime, because `.open-next/assets` contains no prerendered HTML - only
 **10 ms per invocation and cannot be raised**. A cold isolate needs longer than that to start
 the Next.js runtime, and a deployment discards every warm isolate at once. Static assets are
 not part of this: they are served from the assets binding without invoking the Worker, which
-is why the legacy-host redirect in `middleware.ts` does not apply to them.
+is why the legacy-host redirect in `proxy.ts` does not apply to them.
 
 **What is NOT established: whether a Cache Rule can stop the Worker being invoked.** The
 comment above `headers()` in `next.config.ts` predicted this outcome and named that as the
@@ -190,7 +190,7 @@ is no dashboard state to keep in sync.
 "the request path, entrypoint, `ctx.props`, and (by default) the Worker version, **not by hostname**".
 This Worker answers on two hostnames and one of them must redirect, so a request for `/` on
 `geo-scanner.ccie13192.com` was served from the entry cached for `/` on `llmention-geo.com`: the Worker
-never ran, `middleware.ts` never saw the Host header, and the 301 became a 200 carrying the canonical
+never ran, `proxy.ts` never saw the Host header, and the 301 became a 200 carrying the canonical
 page on both hostnames.
 
 **The smoke job caught it, and it is the only gate that could have.** `Deploy to Cloudflare Workers`
@@ -327,6 +327,16 @@ not make an out-of-support runtime safe. Without it, main cannot deploy at all, 
 between an unpatched Next 15 and no releases. The note in verify.yml says to delete the flag in the
 same commit that moves to a supported major; the Next 16 migration is the real fix and is not part
 of that change.
+
+FOLLOW-UP, SAME DAY: THE MIGRATION HAPPENED. Next 16.4.2, React 19.3.1, adapter 1.20.13 (its peer
+range is now `>=16.4.1`) and wrangler 4.152.0. The flag is removed from package.json and both
+workflows. What actually needed changing, measured rather than assumed: `eslint.ignoreDuringBuilds`
+in next.config.ts is gone (Next 16 removed the build-time lint step, so the option no longer
+exists), `middleware.ts` became `proxy.ts` with the function renamed (Next 16 deprecated the old
+convention; the body is unchanged), Next rewrote `jsx: "preserve"` to `"react-jsx"` in tsconfig
+itself during the first build, and `@types/react` had to move with it. The route table, the built
+HTML scores and the self-audit record (100/100) were identical after the migration, which is the
+evidence that it really was a runtime upgrade rather than a behaviour change.
 
 HOW TO CONFIRM IT IS THE SAME FAILURE NEXT TIME: run the build command directly and read the error.
 If it names the Next version and the support window, it is this; do not go looking at wrangler or

@@ -6,6 +6,7 @@ import {
   BookOpen,
   ChevronDown,
   FileText,
+  GitCompareArrows,
   LayoutGrid,
   Library,
   ListChecks,
@@ -107,6 +108,19 @@ const GROUPS: Group[] = [
         label: "Study",
         description: "What the checks measured across a set of well-known sites.",
         icon: BarChart3,
+      },
+      {
+        /*
+         * Comparison sits in Learn rather than beside the tools because it is not a
+         * product: a reader arrives deciding which measurement they need, the same
+         * question /methodology/ answers about the score. It is also the page the
+         * DataForSEO confusion sends people to, so it has to be reachable from the
+         * top navigation rather than only from a footer link.
+         */
+        href: "/compare/",
+        label: "Compare",
+        description: "Which measurement you need, and how readiness differs from mention tracking.",
+        icon: GitCompareArrows,
       },
       {
         /*

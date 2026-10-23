@@ -8,7 +8,7 @@
  * every one of them inspects local build output. `check:built` reads .next/server/app,
  * `test:*` run in-process, `tsc` never leaves the repo. Nothing verified what a real
  * response actually carries - and this repository has already been bitten by exactly
- * that gap: middleware.ts documents that public/_redirects silently does nothing under
+ * that gap: proxy.ts documents that public/_redirects silently does nothing under
  * next-on-pages, because a next-on-pages deployment is a single Function serving every
  * route, so no request ever reaches the _redirects parser. A config file that is correct
  * on disk and inert in production is invisible to all five gates.
@@ -212,9 +212,9 @@ console.log("\n=== ads.txt ===");
 console.log("\n=== withdrawn pages ===");
 {
   /*
-   * WHY THIS IS ASSERTED RATHER THAN ASSUMED: these redirects live in middleware.ts, and
+   * WHY THIS IS ASSERTED RATHER THAN ASSUMED: these redirects live in proxy.ts, and
    * this repository has already been bitten once by a redirect mechanism that was correct
-   * on disk and inert in production - middleware.ts documents public/_redirects doing
+   * on disk and inert in production - proxy.ts documents public/_redirects doing
    * exactly that under next-on-pages. A matcher array is configuration of the same kind:
    * a path missing from it does not redirect, it 404s, and nothing in the repository says
    * so. The pages were listed in the sitemap, so a 404 is a real loss rather than a

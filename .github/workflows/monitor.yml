@@ -1,0 +1,126 @@
+name: monitor
+
+# Ask the fixed monthly question bank of the four AI engines, and keep the answers as an artifact.
+#
+# WHY THIS IS A WORKFLOW AND NOT A CALENDAR ENTRY SOMEBODY REMEMBERS. A monthly measurement is only a
+# time series if it happens every month; a run done "when somebody gets to it" produces months with no
+# data, and a missing month is indistinguishable from a month where nothing was measured because the
+# runner was broken. The schedule is the reminder. The dry run in every invocation is the proof that
+# the bank, the runner and the provider wiring still work even when no key is available.
+#
+# THE DRY RUN ALWAYS RUNS, WITH OR WITHOUT SECRETS. It prints the 25 questions and which engines are
+# configured, makes no external call, and exits 0. That is what makes this job useful on a repository
+# whose secrets are not set: a red result here means the runner itself is broken, not that a key is
+# missing, and the two must not look the same in a log.
+#
+# A REAL RUN HAPPENS ONLY WHEN AT LEAST ONE KEY IS SET AS A REPOSITORY SECRET. Each provider is guarded
+# at the runner: an engine whose key is absent is not asked at all, and the run file's header and footer
+# record that engine as skipped with the name of the missing variable. The step below announces which
+# engines are configured before the run, so the log answers "why are there only two engines" without
+# reading the JSONL.
+#
+# WHY THE ANSWER FILE IS AN ARTIFACT AND NOT A COMMIT. A run file quotes four engines' answers about
+# the site, the domains they cited, and the model that produced each one. It is a measurement of a
+# moving target, regenerated every month - not source. Committing it would put generated files in the
+# history and make the repository the place a claim about visibility is edited. The artifact is the
+# record; monitoring/runs/ is gitignored so a local run cannot be committed by accident either.
+#
+# NO HOSTNAME AND NO SECRET VALUE APPEARS IN THIS FILE. The endpoints live in
+# lib/monitoring/providers.ts, next to the request shapes they serve, because a hostname copied into CI
+# is a second source of truth that check:values cannot see - the failure that once put a stale hostname
+# in a deploy job's command line. The keys are referenced only as `${{ secrets.* }}` and passed to the
+# runner as environment variables; the runner never prints one.
+
+on:
+  schedule:
+    # The first of the month, 06:17 UTC. The odd minute avoids the backlog at :00 and carries no other
+    # meaning. The intended measurement day is the first WORKING day; when the 1st is a weekend the
+    # "Check the first-working-day rule" step below skips the real run and says so, and a maintainer
+    # starts the workflow by hand on the Monday. The dry run still happens on the 1st either way.
+    - cron: "17 6 1 * *"
+  workflow_dispatch:
+
+# Reading only: this job measures and uploads. It commits nothing, so it needs nothing else.
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    # 100 sequential calls, each with a 120s cap on its own. The cap bounds one call, not the job; this
+    # bounds the job. A run that hits it is a provider problem, not a reason to let the runner occupy a
+    # worker for hours.
+    timeout-minutes: 240
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # The suite runs before anything is asked. It needs no key and no network: the question bank, the
+      # word-boundary mention rule (including the LLM Mentions API false positive) and the four response
+      # extractors are all pure. A detector regression should fail here, in a pull-request-sized unit,
+      # not as a strangely quiet month.
+      - name: Run the monitor tests
+        run: node scripts/test-monitor.mts
+
+      - name: Dry run - print the bank and provider availability
+        run: node scripts/monitor/run.mts --dry-run
+
+      - name: Check the first-working-day rule
+        id: cadence
+        if: github.event_name == 'schedule'
+        run: |
+          day=$(date -u +%u)
+          if [ "$day" -gt 5 ]; then
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Cadence::The 1st falls on a weekend. The dry run above still proves the bank and runner; the real measurement is skipped instead of being labelled with a day that is not the first working day. Start this workflow by hand on the first working day."
+          else
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The per-provider guard, made visible. The runner skips an engine with no key and records it;
+      # this step is what makes the log say which engines will be asked, without printing any value.
+      - name: Announce which engines are configured
+        if: steps.cadence.outputs.proceed != 'false'
+        run: |
+          for name in OPENAI_API_KEY ANTHROPIC_API_KEY GOOGLE_API_KEY GEMINI_API_KEY PERPLEXITY_API_KEY; do
+            if [ -n "${!name:-}" ]; then
+              echo "::notice title=Provider configured::$name is set; its engine will be asked."
+            else
+              echo "::notice title=Provider skipped::$name is not set; its engine will be skipped and recorded as skipped."
+            fi
+          done
+
+      # Only when there is something to ask. Without this guard the run would be a dry run that exited 0,
+      # which is indistinguishable from a successful measurement in the job's status.
+      - name: Run the monthly measurement
+        if: |
+          steps.cadence.outputs.proceed != 'false' &&
+          (env.OPENAI_API_KEY != '' || env.ANTHROPIC_API_KEY != '' || env.GOOGLE_API_KEY != '' || env.GEMINI_API_KEY != '' || env.PERPLEXITY_API_KEY != '')
+        run: node scripts/monitor/run.mts
+
+      # Uploaded even when the run failed: a partial run file is still the record of the calls that were
+      # made and paid for, and it is the only way to inspect which engine failed and why. `always()` is
+      # what makes a red job leave evidence behind.
+      - name: Upload the run file
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-${{ github.run_id }}
+          path: monitoring/runs/*.jsonl
+          if-no-files-found: warn
+          retention-days: 90

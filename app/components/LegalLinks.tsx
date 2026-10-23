@@ -8,7 +8,7 @@
  * as /refund/, where the notice is one section rather than a separate document,
  * because the person deciding whether to pay should not have to find a second page
  * reading the same contract. /withdrawal/ itself stays deleted and still redirects
- * from middleware.ts.
+ * from proxy.ts.
  *
  * PRICING IS IN THIS LIST FOR A REASON THAT IS NOT LEGAL EITHER: a price a visitor
  * cannot reach is not a price, and this array is the only footer that every page
