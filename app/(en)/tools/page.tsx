@@ -85,7 +85,7 @@ type Group = {
   entries: Entry[];
 };
 
-/* --- the five tools, described in the words their own pages open with --- */
+/* --- the tools, described in the words their own pages open with --- */
 const TOOL_ENTRIES: Entry[] = [
   {
     href: "/report/",
@@ -120,6 +120,17 @@ const TOOL_ENTRIES: Entry[] = [
     description:
       "Emails you when a site's score changes: the same checks run once a week, naming the checks that newly fail, with the evidence the failing ones saw.",
     note: "No account. The email address is the whole subscription - confirming it starts the report and the unsubscribe link ends it.",
+  },
+  {
+    /*
+     * The API is a tool for the reader who wants the number rather than the page. It sits
+     * last because it is the specialist entry point, not the one a first-time visitor needs.
+     */
+    href: "/api-docs/",
+    label: "Scan API",
+    description:
+      "One public JSON endpoint: the same analyser the report page runs, with no key and no account, documented field by field.",
+    note: "Unversioned and rate-limited; the parameters, status codes and what it cannot see are stated on its page rather than discovered in a call.",
   },
 ];
 

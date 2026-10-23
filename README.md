@@ -23,6 +23,7 @@ and the executed method cannot drift apart.
 - Every rule: `/checks/`, one page per check, generated from `lib/geo/catalog.ts`
 - The full method, the weights and the limits: `/methodology/`
 - The study over 30 homepages: `/study/`, collected by `npm run study:run`
+- The public scan API, documented field by field: `/api-docs/`
 - Who writes it, and how it is funded: `/author/`
 - First-party writing on the study and the rules: `/insights/`
 

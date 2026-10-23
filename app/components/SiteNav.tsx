@@ -5,15 +5,20 @@ import {
   ArrowRight,
   BookOpen,
   ChevronDown,
+  Code,
+  CreditCard,
   FileText,
   GitCompareArrows,
+  Info,
   LayoutGrid,
   Library,
   ListChecks,
   Mail,
+  MessageCircle,
   MessageSquareText,
   PenLine,
   SearchCheck,
+  UserRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -98,6 +103,17 @@ const GROUPS: Group[] = [
         description: "An embeddable badge showing a site's current GEO score.",
         icon: BadgeCheck,
       },
+      {
+        /*
+         * The API has been public since launch and documented nowhere on the site; an
+         * external audit named that as a developer-facing gap. It belongs with the tools
+         * rather than with the method pages because it is the same product in JSON form.
+         */
+        href: "/api-docs/",
+        label: "Scan API",
+        description: "The free JSON endpoint behind every scan: parameters, limits, examples.",
+        icon: Code,
+      },
     ],
   },
   {
@@ -163,6 +179,43 @@ const GROUPS: Group[] = [
         label: "All 40 checks",
         description: "The reference: what each rule looks for and what passes it.",
         icon: ListChecks,
+      },
+    ],
+  },
+  {
+    /*
+     * Company sits last and exists because the pricing page was reachable only from the
+     * footer and from /about/; an audit called the paid offer "not prominent". Putting
+     * pricing, accountability and the contact route together also answers the question a
+     * buyer asks before paying - who is selling this - without making them hunt through
+     * three pages.
+     */
+    key: "company",
+    label: "Company",
+    items: [
+      {
+        href: "/pricing/",
+        label: "Pricing",
+        description: "What is free, what the paid report costs, and who you are buying from.",
+        icon: CreditCard,
+      },
+      {
+        href: "/about/",
+        label: "About",
+        description: "Who runs LLMention, how it is funded, and what it deliberately does not do.",
+        icon: Info,
+      },
+      {
+        href: "/author/",
+        label: "Author",
+        description: "The person accountable for the measurements and the writing.",
+        icon: UserRound,
+      },
+      {
+        href: "/contact/",
+        label: "Contact",
+        description: "One monitored address for corrections, data requests and quotes.",
+        icon: MessageCircle,
       },
     ],
   },

@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * The interactive half of /report/ - fetch, score, dimension bars, issues.
@@ -451,6 +452,27 @@ export default function ReportWidget() {
             )}
           </>
         )}
+
+        {/*
+          A feedback route, added after an audit pointed out that the tool invites a
+          disagreement with its number but never offers a way to report one from the page
+          that shows it. The address is the site's single contact constant, and the subject
+          is prefilled so a reply can be matched to the domain without asking which scan it
+          refers to.
+        */}
+        <p className="mt-8 text-xs leading-relaxed text-[var(--ink-3)]">
+          Something here looks wrong? Email{" "}
+          <a
+            href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+              `Wrong scan result: ${rawDomain}`
+            )}`}
+            className="text-[var(--accent)] underline hover:opacity-75"
+          >
+            {CONTACT_EMAIL}
+          </a>{" "}
+          with the check id and the domain. A specific disagreement with a published rule is
+          the most useful message this project receives.
+        </p>
       </section>
     </div>
   );

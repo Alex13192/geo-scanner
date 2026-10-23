@@ -155,6 +155,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      /* The API reference. It is developer documentation rather than a landing page, so the
+         priority matches the guides; it exists so the endpoint is discoverable by search and
+         by the crawler that reads this sitemap, not only by someone who saw the README. */
+      url: `${SITE_URL}/api-docs/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       /* The weekly-report signup. Listed rather than hidden: it is a page people arrive on
          from a newsletter or a link, and the one page on the site whose job is conversion
          rather than explanation. */

@@ -33,6 +33,9 @@ relationship or shared operator between the two.
 - [Weekly GEO report](https://llmention-geo.com/monitor/): The same checks re-run
   once a week, emailed as a diff that names the rules which newly fail, with the
   evidence each failing check saw.
+- [Scan API](https://llmention-geo.com/api-docs/): The public, keyless JSON endpoint
+  behind every scan - the same analyser, documented parameters, response fields and
+  best-effort rate limit. The published study was collected through it.
 
 ## Documentation
 

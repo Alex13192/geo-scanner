@@ -98,6 +98,9 @@ const ROUTES: Route[] = [
   { route: "/docs/qa-style-headings/", file: "docs/qa-style-headings.html", indexable: true },
   { route: "/docs/schema-org-jsonld/", file: "docs/schema-org-jsonld.html", indexable: true },
   { route: "/docs/ai-visibility-self-check/", file: "docs/ai-visibility-self-check.html", indexable: true },
+  /* The API reference. A page a developer lands on from a search result, and the one that
+     documents the endpoint the study itself was collected through. */
+  { route: "/api-docs/", file: "api-docs.html", indexable: true },
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

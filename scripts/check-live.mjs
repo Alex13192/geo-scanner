@@ -186,7 +186,7 @@ console.log("\n=== llms.txt ===");
      * that arrived in the 2026-10-23 changes. If they are missing from a live response, the
      * file is stale, and the remedy is a purge rather than an edit.
      */
-    const requiredRoutes = ["/self-audit/", "/compare/", "/answer-check/"];
+    const requiredRoutes = ["/self-audit/", "/compare/", "/answer-check/", "/api-docs/"];
     const missing = requiredRoutes.filter((route) => !body.includes(route));
     if (missing.length === 0) ok("carries the current route set", requiredRoutes.join(", "));
     else bad("llms.txt looks stale", `missing ${missing.join(", ")} — purge the edge cache`);
@@ -418,11 +418,11 @@ console.log("\n=== the rule section ===");
   const { body: sitemap, error: sitemapError } = await get("/sitemap.xml");
   if (sitemapError) bad("could not fetch the sitemap", sitemapError);
   else if (!sitemap.includes("/checks/")) bad("the sitemap does not mention /checks/");
-  else if (!sitemap.includes("/self-audit/")) {
+  else if (!sitemap.includes("/self-audit/") || !sitemap.includes("/api-docs/")) {
     /* Same stale-cache class as llms.txt: sitemap.xml is a public asset, so an old copy can
        outlive a deploy and hide the new pages from the crawler that reads it first. */
-    bad("the sitemap is stale", "no /self-audit/ entry — purge the edge cache");
-  } else ok("the sitemap lists the rule pages and the self-audit page");
+    bad("the sitemap is stale", "missing /self-audit/ or /api-docs/ — purge the edge cache");
+  } else ok("the sitemap lists the rule pages, the self-audit page and the API reference");
 }
 
 /* ---- HTML must not be cacheable past a deploy ---- */
