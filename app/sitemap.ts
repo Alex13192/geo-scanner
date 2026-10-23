@@ -83,6 +83,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   });
 
+  /* A plain English/Chinese pair, for the pages translated one at a time. */
+  const pairAlternates = (en: string, zh: string) => ({
+    languages: {
+      en: `${SITE_URL}${en}`,
+      'zh-Hans': `${SITE_URL}${zh}`,
+      'x-default': `${SITE_URL}${en}`,
+    },
+  });
+
   return [
     {
       url: `${SITE_URL}/`,
@@ -96,6 +105,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.9,
+      alternates: pairAlternates('/study/', '/zh/study/'),
+    },
+    {
+      url: `${SITE_URL}/zh/study/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+      alternates: pairAlternates('/study/', '/zh/study/'),
     },
     /* Comparisons. Listed individually rather than as a hub-only entry because each one answers
        a different question and each is the kind of page a generative answer cites: "X vs Y" and
@@ -106,18 +123,48 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
+      alternates: pairAlternates('/compare/', '/zh/compare/'),
     },
     {
       url: `${SITE_URL}/compare/llm-mentions-api/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.7,
+      alternates: pairAlternates('/compare/llm-mentions-api/', '/zh/compare/llm-mentions-api/'),
     },
     {
       url: `${SITE_URL}/compare/readiness-vs-mention-tracking/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.7,
+      alternates: pairAlternates(
+        '/compare/readiness-vs-mention-tracking/',
+        '/zh/compare/readiness-vs-mention-tracking/'
+      ),
+    },
+    {
+      url: `${SITE_URL}/zh/compare/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+      alternates: pairAlternates('/compare/', '/zh/compare/'),
+    },
+    {
+      url: `${SITE_URL}/zh/compare/llm-mentions-api/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+      alternates: pairAlternates('/compare/llm-mentions-api/', '/zh/compare/llm-mentions-api/'),
+    },
+    {
+      url: `${SITE_URL}/zh/compare/readiness-vs-mention-tracking/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+      alternates: pairAlternates(
+        '/compare/readiness-vs-mention-tracking/',
+        '/zh/compare/readiness-vs-mention-tracking/'
+      ),
     },
     {
       /* The index of everything else: the tools, the rule reference, the dimensions, the
@@ -130,6 +177,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
+      alternates: pairAlternates('/tools/', '/zh/tools/'),
+    },
+    {
+      url: `${SITE_URL}/zh/tools/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+      alternates: pairAlternates('/tools/', '/zh/tools/'),
     },
     {
       url: `${SITE_URL}/docs/`,

@@ -102,6 +102,18 @@ export default function LocalizedHome({
                 >
                   研究随笔 →
                 </Link>
+                <Link
+                  href="/zh/study/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  30 站研究数据 →
+                </Link>
+                <Link
+                  href="/zh/compare/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  方法对比 →
+                </Link>
               </p>
             ) : null}
           </div>

@@ -101,7 +101,15 @@ const REVIEWED = "2026-10-23";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/compare/llm-mentions-api/" },
+  alternates: {
+    canonical: "/compare/llm-mentions-api/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/compare/llm-mentions-api/",
+      "zh-Hans": "/zh/compare/llm-mentions-api/",
+      "x-default": "/compare/llm-mentions-api/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

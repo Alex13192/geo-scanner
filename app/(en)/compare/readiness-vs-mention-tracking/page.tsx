@@ -39,7 +39,15 @@ const REVIEWED = "2026-10-23";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/compare/readiness-vs-mention-tracking/" },
+  alternates: {
+    canonical: "/compare/readiness-vs-mention-tracking/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/compare/readiness-vs-mention-tracking/",
+      "zh-Hans": "/zh/compare/readiness-vs-mention-tracking/",
+      "x-default": "/compare/readiness-vs-mention-tracking/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

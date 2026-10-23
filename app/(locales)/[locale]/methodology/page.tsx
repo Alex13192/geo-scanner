@@ -262,8 +262,8 @@ export default async function ChineseMethodologyPage({
                   ——每条规则的点数、所属维度,以及逐条规则页。
                 </li>
                 <li>
-                  <Link href="/study/" hrefLang="en" className="text-[var(--accent)] hover:opacity-75">
-                    30 个首页的公开研究(英文)
+                  <Link href="/zh/study/" className="text-[var(--accent)] hover:opacity-75">
+                    30 个首页的公开研究
                   </Link>
                   ——用同一套公开 API 采集。
                 </li>

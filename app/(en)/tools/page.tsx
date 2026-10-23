@@ -63,7 +63,15 @@ const CANONICAL = "/tools/";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: CANONICAL },
+  alternates: {
+    canonical: CANONICAL,
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/tools/",
+      "zh-Hans": "/zh/tools/",
+      "x-default": "/tools/",
+    },
+  },
   ...social({ title: TITLE, description: DESCRIPTION, url: CANONICAL }),
 };
 
@@ -465,7 +473,7 @@ export default function ToolsIndexPage() {
               },
               {
                 q: "Is there an API?",
-                a: "Not a documented one. The scanner is a public endpoint - the study's figures were collected through /api/scan?brief=1&domain= - but it is rate-limited and unversioned, so it is the scanner's front door rather than an interface to build on. What is published instead is the method itself - every rule, its points and its pass condition - so the score can be recomputed rather than trusted.",
+                a: "Yes. The scan endpoint is documented at /api-docs/: parameters, response shapes, the rate limit and what it does not guarantee. It is still rate-limited per isolate and unversioned - the page says so in those words - so treat it as a published interface rather than a stable product API. The method is published alongside it, so a score can also be recomputed rather than trusted.",
               },
             ]}
           />

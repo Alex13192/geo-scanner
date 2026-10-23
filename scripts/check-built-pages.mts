@@ -151,6 +151,17 @@ const ROUTES: Route[] = [
     indexable: true,
     min: 60,
   })),
+  /* The translated study, comparisons and tools index. */
+  { route: "/zh/study/", file: "zh/study.html", indexable: true, min: 60 },
+  { route: "/zh/compare/", file: "zh/compare.html", indexable: true, min: 60 },
+  { route: "/zh/compare/llm-mentions-api/", file: "zh/compare/llm-mentions-api.html", indexable: true, min: 60 },
+  {
+    route: "/zh/compare/readiness-vs-mention-tracking/",
+    file: "zh/compare/readiness-vs-mention-tracking.html",
+    indexable: true,
+    min: 60,
+  },
+  { route: "/zh/tools/", file: "zh/tools.html", indexable: true, min: 60 },
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

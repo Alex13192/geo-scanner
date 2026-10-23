@@ -108,7 +108,15 @@ const INTERPRETATIONS = [
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/study/" },
+  alternates: {
+    canonical: "/study/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/study/",
+      "zh-Hans": "/zh/study/",
+      "x-default": "/study/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

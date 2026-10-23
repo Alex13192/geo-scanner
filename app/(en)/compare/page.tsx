@@ -52,7 +52,15 @@ const REVIEWED = "2026-10-23";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/compare/" },
+  alternates: {
+    canonical: "/compare/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/compare/",
+      "zh-Hans": "/zh/compare/",
+      "x-default": "/compare/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,
