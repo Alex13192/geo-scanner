@@ -158,6 +158,14 @@ const CACHEABLE = [
   "/readiness-badge/",
   "/privacy/",
   "/terms/",
+  /* Localized home and pricing pages. Without these they would inherit Next's one-year
+     s-maxage default and could be served stale after a deploy, which is the failure the
+     section above records. */
+  "/zh/:path*",
+  "/ja/:path*",
+  "/es/:path*",
+  "/de/:path*",
+  "/fr/:path*",
 ];
 
 /**

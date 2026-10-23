@@ -10,3 +10,30 @@
 # Which of the Next.js env files to load in development. Defaults to "production" when
 # unset, which is the wrong default for a local preview.
 NEXTJS_ENV=development
+
+# ---------------------------------------------------------------------------
+# Paid reports (see lib/pricing.ts and app/api/checkout/route.ts)
+# ---------------------------------------------------------------------------
+# There is no merchant of record yet: Creem rejected this store, and Anyway / Dodo /
+# Polar applications are pending. Until a provider approves the account, the buy button
+# falls back to a prefilled order email, which is the behaviour the site had before.
+#
+# WHEN A PROVIDER APPROVES: set the two checkout URLs below to the product's hosted
+# payment link. The checkout route appends `merchant_reference=<order>` to whichever URL is
+# set, so the reference in the provider dashboard matches the reference in the order table.
+# CHECKOUT_URL_SIGNAL=
+# CHECKOUT_URL_PRO=
+#
+# The webhook route verifies an HMAC-SHA256 signature over "<unix timestamp>.<raw body>"
+# sent as `x-payment-signature: t=<ts>,v1=<hex>`. Generate a long random secret and paste
+# the same value into the provider's webhook configuration. Without it every webhook is
+# rejected with 401, which is the correct failure for an unconfigured deployment.
+# PAYMENT_WEBHOOK_SECRET=
+
+# ---------------------------------------------------------------------------
+# Operator identity (see lib/site.ts and /refund/)
+# ---------------------------------------------------------------------------
+# The seller's name and postal address, printed on /pricing/ and /refund/ when set. Empty
+# in the repository on purpose: a public repo should not carry a home address, and the
+# published page still prints it when the deployment variable exists.
+# OPERATOR_IDENTITY=

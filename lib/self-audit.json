@@ -3,9 +3,7 @@
   "score": 100,
   "grade": "A",
   "checksRun": 40,
-  "checksPassed": 39,
-  "notApplicable": [
-    "hreflang"
-  ],
+  "checksPassed": 40,
+  "notApplicable": [],
   "failures": []
 }

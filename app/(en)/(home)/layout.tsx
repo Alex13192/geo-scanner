@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { homePath, languageAlternates } from "@/lib/i18n/config";
 
 /**
  * The homepage's own metadata, and the only place the markdown twin is declared.
@@ -25,6 +26,13 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   alternates: {
     canonical: "/",
+    /*
+     * The homepage is translated into every locale, so it declares the full hreflang
+     * matrix. Only the localized home and pricing pages claim alternates: the deep
+     * documentation is still English, and an alternate that points at an English page
+     * under a Chinese hreflang would be a false claim.
+     */
+    languages: languageAlternates(homePath),
     types: { "text/markdown": "/markdown/" },
   },
 };

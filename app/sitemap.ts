@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
 import { CHECK_CATALOG, DIMENSION_CATALOG } from '@/lib/geo/catalog';
 import { INSIGHTS, insightPath } from '@/lib/insights';
+import { LOCALES, PREFIXED_LOCALES, homePath, pricingPath } from '@/lib/i18n/config';
 
 /**
  * Bump this date whenever you meaningfully change page content.
@@ -48,12 +49,25 @@ const LAST_MODIFIED = new Date('2026-10-23');
  * report linking into them and from long-tail queries, not from the homepage.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
+  /*
+   * The hreflang matrix for a page that is translated in every locale, as ABSOLUTE URLs.
+   * Next's metadata accepts site-relative paths, but sitemap alternates must be absolute, so
+   * this is built separately from lib/i18n/config's helper rather than reusing it with a
+   * metadataBase assumption.
+   */
+  const alternatesFor = (page: (locale: (typeof LOCALES)[number]) => string) => ({
+    languages: Object.fromEntries(
+      LOCALES.map((locale) => [locale === 'zh' ? 'zh-Hans' : locale, SITE_URL + page(locale)])
+    ),
+  });
+
   return [
     {
       url: `${SITE_URL}/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 1,
+      alternates: alternatesFor(homePath),
     },
     {
       url: `${SITE_URL}/study/`,
@@ -241,6 +255,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'yearly',
       priority: 0.5,
+      alternates: alternatesFor(pricingPath),
     },
     {
       url: `${SITE_URL}/refund/`,
@@ -291,5 +306,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: 0.5,
     })),
+    /*
+     * The localized home and pricing pages, one entry per locale. They are the only pages with
+     * a real translation in this phase, so they are the only ones whose sitemap entries carry
+     * alternates. English is the x-default; every entry points at the same matrix, which is
+     * what reciprocal hreflang requires.
+     */
+    ...PREFIXED_LOCALES.flatMap((locale) => [
+      {
+        url: SITE_URL + homePath(locale),
+        lastModified: LAST_MODIFIED,
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+        alternates: alternatesFor(homePath),
+      },
+      {
+        url: SITE_URL + pricingPath(locale),
+        lastModified: LAST_MODIFIED,
+        changeFrequency: 'yearly' as const,
+        priority: 0.5,
+        alternates: alternatesFor(pricingPath),
+      },
+    ]),
   ];
 }

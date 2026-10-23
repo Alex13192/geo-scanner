@@ -425,6 +425,44 @@ console.log("\n=== the rule section ===");
   } else ok("the sitemap lists the rule pages, the self-audit page and the API reference");
 }
 
+/* ---- localized pages ---- */
+console.log("\n=== localized pages ===");
+{
+  /*
+   * WHY THIS IS ASSERTED: the locale routes are new, and the failure mode is specific - a
+   * page that renders in the right language but is served with `<html lang="en">`, or a
+   * page with the right lang and no hreflang matrix, looks correct in a browser and is
+   * useless to a search engine. The matrix must contain every locale plus x-default, so six
+   * hreflang links is the floor for a page that claims all of them.
+   */
+  const locales = [
+    ["zh", "zh-Hans"],
+    ["ja", "ja"],
+    ["es", "es"],
+    ["de", "de"],
+    ["fr", "fr"],
+  ];
+  for (const [code, lang] of locales) {
+    const home = await get(`/${code}/`);
+    const pricing = await get(`/${code}/pricing/`);
+    if (home.error || pricing.error) {
+      bad(`${code} pages unreachable`, home.error || pricing.error);
+      continue;
+    }
+    const hreflangs = (home.body.match(/hreflang="/g) || []).length;
+    const correctLang = new RegExp(`<html[^>]+lang="${lang}"`, "i").test(home.body);
+    if (home.res.status !== 200 || pricing.res.status !== 200) {
+      bad(`${code} pages do not return 200`, `home ${home.res.status}, pricing ${pricing.res.status}`);
+    } else if (!correctLang) {
+      bad(`${code} homepage has the wrong <html lang>`, `expected lang="${lang}"`);
+    } else if (hreflangs < 6) {
+      bad(`${code} homepage has an incomplete hreflang matrix`, `${hreflangs} hreflang link(s), expected 6+`);
+    } else {
+      ok(`${code} home and pricing`, `lang ${lang}, ${hreflangs} hreflang links`);
+    }
+  }
+}
+
 /* ---- HTML must not be cacheable past a deploy ---- */
 console.log("\n=== html cache headers ===");
 {

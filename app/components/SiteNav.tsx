@@ -1,4 +1,5 @@
 import { BRAND } from "@/lib/site";
+import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import {
   BadgeCheck,
   BarChart3,
@@ -347,6 +348,13 @@ export default function SiteNav() {
           rather than decoration, so it is not hidden.
         */}
         <div className="ml-auto flex shrink-0 items-center gap-2.5 lg:ml-0">
+          {/*
+            The language switcher points at the localized home from any English page. That is
+            the honest behaviour while the deep pages are English: switching from /study/ to
+            中文 lands on a page that is actually fully translated, rather than on an
+            untranslated mirror that would make the switcher a lie.
+          */}
+          <LanguageSwitcher current="en" label="Language" />
           <a
             href="/monitor/"
             className="hidden rounded-full border border-[var(--line)] px-4 py-2.5 text-[14px] font-medium text-[var(--ink-2)] transition-colors hover:border-[var(--ink-3)] hover:text-[var(--ink-1)] sm:inline-block"

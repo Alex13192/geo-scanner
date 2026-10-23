@@ -36,6 +36,7 @@ import { join } from "node:path";
 import { SITE_HOST } from "../lib/site.ts";
 import { analyze } from "../lib/geo/analyze.ts";
 import { INSIGHTS, insightPath } from "../lib/insights.ts";
+import { PREFIXED_LOCALES } from "../lib/i18n/config.ts";
 
 const APP_DIR = join(process.cwd(), ".next", "server", "app");
 const PUBLIC_DIR = join(process.cwd(), "public");
@@ -101,6 +102,20 @@ const ROUTES: Route[] = [
   /* The API reference. A page a developer lands on from a search result, and the one that
      documents the endpoint the study itself was collected through. */
   { route: "/api-docs/", file: "api-docs.html", indexable: true },
+  /*
+   * THE LOCALIZED PAGES, AT A FLOOR OF 60 RATHER THAN 90, AND THE REASON IS THE ANALYSER,
+   * NOT THE PAGES. The scanner's rules are English-shaped: question-style headings look for
+   * English interrogatives, word counts are whitespace tokens, and the quotation checks look
+   * for English attribution patterns. A genuinely good Japanese or Chinese page can therefore
+   * score in the 60s through no fault of its own. Making the engine CJK-aware is a separate,
+   * larger change; until it exists, gating a translation at 90 would either fail on good
+   * pages or force the translation to be written for the analyser instead of for a reader.
+   * The floor still catches a page that shipped as a stub.
+   */
+  ...PREFIXED_LOCALES.flatMap((locale) => [
+    { route: `/${locale}/`, file: `${locale}.html`, indexable: true, min: 60 },
+    { route: `/${locale}/pricing/`, file: `${locale}/pricing.html`, indexable: true, min: 60 },
+  ]),
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

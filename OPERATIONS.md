@@ -372,3 +372,57 @@ response they get — that identifies the cache hop. Purge from the dashboard (C
 Everything) if the token cannot. The lesson worth keeping: for a site whose product claim is
 "published equals running", a 24-hour HTML cache lifetime is not a performance setting, it is a
 correctness bug that only shows up in somebody else's tool.
+
+## Six languages, and two root layouts (23 October 2026)
+
+THE DECISION. English stays unprefixed (`/`, `/pricing/`); Chinese, Japanese, Spanish, German and
+French live under `/<code>/`. Subdirectories rather than subdomains, for the reason the navigation
+already recorded: a subdomain is a separate site for ranking purposes, a subdirectory keeps the
+authority on one origin.
+
+WHY TWO ROOT LAYOUTS. The site already had its `<html>` inside the `(en)` route group. A translated
+page must set `<html lang>`, so it needs its own document: `(locales)/[locale]/layout.tsx` is the
+second root layout, and the `[locale]` segment keeps five locales to three files instead of fifteen.
+`dynamicParams = false` is load-bearing — without it `/xx/` would render a 200 with a language that
+does not exist.
+
+WHAT IS TRANSLATED IN THIS PHASE, AND WHAT IS NOT. Home and pricing, fully, in all five languages
+(lib/i18n/dictionaries.ts is one typed object, so a missing string is a TypeScript error). The 40
+rule pages, the guides, the writing and the legal pages are still English; the localized footer says
+so, and only home and pricing claim hreflang, because pointing hreflang at an untranslated page is
+the half-built translation this site has already withdrawn once.
+
+THE SCORER IS NOT LANGUAGE-NEUTRAL YET, AND THE GATE SAYS SO. The analyser's question-heading,
+word-count and quotation rules are English-shaped; a genuinely good Japanese page scores in the 60s
+for the analyser's reasons, not its own. check:built therefore gates localized pages at 60 rather
+than 90, with the reason recorded next to the floor. Making the engine CJK-aware is a separate
+change and should be treated as a product feature, not a translation detail.
+
+WATCH OUT. proxy.ts used to redirect `/de` and everything under it to `/`; those entries were
+removed because `/de/` is now a real page. Old German deep paths still redirect to the English
+documentation. A deploy that reintroduces a `/de` catch-all hides the entire German site behind a
+301 that looks correct in the dashboard.
+
+## The paywall is provider-agnostic, because there is no provider yet (23 October 2026)
+
+Creem rejected this store (final, no appeal; see payment-setup-kit.md), and Anyway / Dodo / Polar
+applications are pending. The site therefore talks to one internal contract instead of one vendor:
+
+- `lib/pricing.ts` declares the two products ($39 Signal, $99 Pro). Prices appear in the pricing
+  pages and in the checkout route from this module; nothing else may type a number.
+- `POST /api/checkout` creates an order reference and returns the provider's hosted payment URL,
+  with `merchant_reference=<ref>` appended. If `CHECKOUT_URL_SIGNAL` / `CHECKOUT_URL_PRO` are not
+  set, it returns `fallback` and the buy button opens a prefilled order email — the behaviour the
+  site had before, and the reason a pending application does not break selling.
+- `POST /api/webhooks/checkout` verifies `x-payment-signature: t=<unix>,v1=<hmac-sha256 of
+  "<t>.<raw body>">` with `PAYMENT_WEBHOOK_SECRET`, then flips one order from `pending` to `paid`.
+  The transition is the idempotency guard: a retried webhook cannot deliver twice.
+- `migrations/0003_orders.sql` creates the orders table. It was applied to production on
+  2026-10-23 with `wrangler d1 execute ... --remote`; a fresh environment must apply it before the
+  webhook can work, and the checkout route deliberately survives a missing table (the order row is
+  bookkeeping, the provider webhook is the truth).
+
+WHEN A PROVIDER APPROVES: create the two products, put their hosted URLs in the Worker variables,
+put the webhook endpoint `https://llmention-geo.com/api/webhooks/checkout` and the same secret in
+the provider, and change the adapter only if its signature header differs. A test card run must
+produce: an order row `pending`, then `paid` with the provider name, and `/thanks/` reachable.

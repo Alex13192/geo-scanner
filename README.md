@@ -24,6 +24,8 @@ and the executed method cannot drift apart.
 - The full method, the weights and the limits: `/methodology/`
 - The study over 30 homepages: `/study/`, collected by `npm run study:run`
 - The public scan API, documented field by field: `/api-docs/`
+- Six languages: English plus 中文 (`/zh/`), 日本語 (`/ja/`), Español (`/es/`), Deutsch (`/de/`) and
+  Français (`/fr/`). Home and pricing are fully translated; the deep documentation is English.
 - Who writes it, and how it is funded: `/author/`
 - First-party writing on the study and the rules: `/insights/`
 
@@ -57,6 +59,16 @@ npm ci
 npm run dev            # http://localhost:3000
 npm run preview        # build and serve the real Cloudflare Worker locally
 ```
+
+## Paid reports
+
+Two one-time products live in `lib/pricing.ts` ($39 Signal, $99 Pro). The buy button posts to
+`/api/checkout`, which mints an order reference and redirects to the merchant of record's hosted
+payment URL. No provider has approved this store yet, so the checkout URLs are unset and the button
+falls back to a prefilled order email; set `CHECKOUT_URL_SIGNAL` / `CHECKOUT_URL_PRO` and
+`PAYMENT_WEBHOOK_SECRET` as Worker variables when one does. The webhook contract and the order table
+are documented in `OPERATIONS.md`; `migrations/0003_orders.sql` must be applied before the webhook
+can mark an order paid.
 
 ## Deploying
 
@@ -98,7 +110,7 @@ creates no DNS record and needs none. The comment in that file records the error
 
 ## Checking it
 
-Eight gates. The first seven inspect local build output; the last is the only one that can see
+Ten gates. The first nine inspect local build output; the last is the only one that can see
 what is actually being served.
 
 | Command | What it proves |
@@ -107,6 +119,8 @@ what is actually being served.
 | `npm run test:analyze` | the scoring engine: robots.txt parsing, measurement guards, page-type exemptions, generated copy, the ranges the site publishes for its own titles, and that no source file declares the edge runtime |
 | `npm run test:rate-limit` | the token bucket, including that a flood of distinct keys cannot reset an exhausted client |
 | `npm run test:monitor` | the monthly mention monitor's detector, including that "LLMention" does not match "LLM Mentions API" |
+| `npm run check:i18n` | every locale has a complete dictionary, the hreflang matrix covers all six languages plus `x-default`, and the localized routes exist |
+| `npm run test:paywall` | the order-reference format and the webhook signature round trip, including tampering, replay-window and missing-secret rejection |
 | `npx tsc --noEmit` | types |
 | `npm run self-audit` | re-measures the published self-score from the built homepage; `check:built` fails when the page and `lib/self-audit.json` disagree |
 | `npx opennextjs-cloudflare build` | the adapter accepts the app, then `npm run check:built` scores the built HTML with the scanner's own analyser and fails below a floor |

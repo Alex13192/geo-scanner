@@ -150,6 +150,18 @@ jobs:
       - name: Run the monitor detector tests
         run: npm run test:monitor
 
+      # THE LOCALIZATION GATE. A locale that exists in the switcher but has no page, or a
+      # translation missing a string, is invisible until a reader in that language hits it.
+      # This asserts the dictionaries, the hreflang matrix and the localized route files.
+      - name: Check the locale matrix
+        run: npm run check:i18n
+
+      # THE PAYWALL PRIMITIVES. The webhook verifier is the only thing standing between a
+      # signed payment event and a free report; these tests pin the signature round trip and
+      # the three ways it is usually weakened (tampering, replay, missing secret).
+      - name: Run the paywall tests
+        run: npm run test:paywall
+
       - name: Type check
         run: npx tsc --noEmit
 

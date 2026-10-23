@@ -4,9 +4,9 @@ import { CONTACT_EMAIL } from "@/lib/site";
 import { social } from "@/lib/og";
 
 /**
- * Where a buyer lands after Creem takes the payment.
+ * Where a buyer lands after the payment provider takes the payment.
  *
- * WHY THIS PAGE EXISTS AT ALL. Without a return URL, Creem shows its own confirmation page: correct,
+ * WHY THIS PAGE EXISTS AT ALL. Without a return URL, the payment provider shows its own confirmation page: correct,
  * but unbranded and written for a checkout rather than for this service. What a buyer needs to know
  * at the moment they have paid is not "payment successful" - it is what happens next, in what order,
  * and how long it takes. That is the same sentence the product's private note carries, and the two
@@ -17,8 +17,8 @@ import { social } from "@/lib/og";
  * deliberately NOT in app/sitemap.ts for the same reason.
  *
  * WHY IT DOES NOT CLAIM A PAYMENT WAS MADE. Anyone can open this URL, so the page describes where
- * Creem sends people rather than asserting anything about the visitor. The receipt is the email
- * Creem sends, and the page says so.
+ * the payment provider sends people rather than asserting anything about the visitor. The receipt is the email
+ * the payment provider sends, and the page says so.
  */
 const TITLE = "What happens next";
 const DESCRIPTION =
@@ -43,13 +43,13 @@ export default function ThanksPage() {
       eyebrow="After payment"
       title={TITLE}
       description={<p>{DESCRIPTION}</p>}
-      meta="Creem sends buyers here once a payment completes"
+      meta="The payment provider sends buyers here once a payment completes"
       action={{ href: "/pricing/", label: "← Pricing" }}
     >
         <article className="doc-article text-[17px] leading-[1.65] text-[var(--ink-2)]">
           <h2>If you have just paid</h2>
           <p>
-            Your receipt is the email Creem sends to the address you paid with — this page is not a
+            Your receipt is the email the payment provider sends to the address you paid with — this page is not a
             receipt, and it cannot confirm a payment on its own. What it does is tell you the order of
             what happens next, so nothing here is a surprise.
           </p>

@@ -628,12 +628,10 @@ export default function HomePage() {
                   LLMention audits its own homepage with the rules it applies to yours, and links
                   the result rather than quoting a number you have to take on trust. Measured on{" "}
                   {SELF_AUDIT.verified}: {SELF_AUDIT.score} out of 100, grade {SELF_AUDIT.grade},{" "}
-                  {SELF_AUDIT.passed} of {SELF_AUDIT.applicable} applicable checks passing. One rule
-                  is marked not applicable rather than failed: hreflang asks a page to declare at
-                  least two language versions, and this site serves one language. Until October 2026
-                  that was scored as a failure, which penalised every single-language site for a rule
-                  that cannot tell one language from translations not declared yet; it is now excluded
-                  from the score, and the reason is published on the{" "}
+                  {SELF_AUDIT.passed} of {SELF_AUDIT.applicable} checks passing. The hreflang rule
+                  passes because this site now publishes the homepage and the pricing page in five
+                  additional languages, each linked to the others; until October 2026 the site was
+                  English-only and that rule could not judge it, and the change is recorded on the{" "}
                   <a href="/methodology/" className="text-[var(--accent)] underline hover:opacity-75">
                     methodology page
                   </a>
@@ -643,8 +641,8 @@ export default function HomePage() {
                   </a>{" "}
                   from the same content the page renders, so it cannot drift from it. A 100 here is a
                   claim about the method, not about us — run the scan yourself and the report shows
-                  all twelve dimension scores, the evidence behind every check, and exactly which rule
-                  this site failed at the moment you looked.
+                  all twelve dimension scores, the evidence behind every check, and every rule this
+                  site fails at the moment you looked.
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-center gap-5 self-center sm:flex-row">

@@ -354,14 +354,24 @@ export default function SelfAuditPage() {
             ))}
           </ul>
         ) : null}
-        <p>
-          The change that made this an exclusion rather than a failure is recorded, with its date
-          and its reason, in the{" "}
-          <Link href="/methodology/#what-changed">method changelog</Link>. The rule as it executes
-          is published on the{" "}
-          <Link href="/checks/hreflang/">hreflang check page</Link>, and every other rule in the
-          catalogue is listed on the <Link href="/checks/">rule reference</Link>.
-        </p>
+        {NOT_APPLICABLE.length > 0 ? (
+          <>
+            <p>
+              The change that made an exclusion rather than a failure a possibility is recorded, with
+              its date and its reason, in the{" "}
+              <Link href="/methodology/#what-changed">method changelog</Link>. Each rule as it executes
+              is published on its own check page, and every rule in the catalogue is listed on the{" "}
+              <Link href="/checks/">rule reference</Link>.
+            </p>
+          </>
+        ) : (
+          <p>
+            The rule that used to be excluded here is hreflang: it now passes, because the homepage
+            and the pricing page are published in five additional languages and declare the full
+            language matrix. What changed, and when, is on the{" "}
+            <Link href="/methodology/#what-changed">method changelog</Link>.
+          </p>
+        )}
 
         <h2>Which checks failed?</h2>
         <p>

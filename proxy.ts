@@ -35,19 +35,18 @@ import { LEGACY_HOST, SITE_URL } from "@/lib/site";
 
 /** Dead paths on this site: where a path used to be -> where it goes now. */
 const GONE: Record<string, string> = {
-  // The German half of the site, removed before the English-only decision.
-  "/de": "/",
+  /*
+   * The German half of the site was removed before the English-only decision and returned on
+   * 2026-10-23 as one of five localized locales. `/de/` itself is therefore NOT in this table:
+   * redirecting it to `/` would now break a real page. The old German deep paths that have no
+   * localized equivalent still resolve to the English documentation rather than 404ing.
+   */
   "/de/docs": "/docs/",
   "/de/docs/gptbot-robots-txt": "/docs/allow-ai-crawlers/",
   "/de/docs/llms-txt-erstellen": "/docs/llms-txt-deployment/",
   "/de/llms-txt-studio": "/llms-txt-studio/",
   "/de/impressum": "/about/",
-  /*
-   * The German withdrawal notice used to point at the English one. Both are gone
-   * with the paid audit, so this resolves in one hop to the homepage rather than
-   * chaining through a URL that itself redirects.
-   */
-  "/de/widerrufsrecht": "/",
+  "/de/widerrufsrecht": "/refund/",
 
   /*
    * The withdrawal notice: the one page of the three that is still gone. /pricing/ and /refund/ came
@@ -89,17 +88,12 @@ export function proxy(request: NextRequest) {
   const key = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
 
   /*
-   * Anything under /de/ that is not listed above goes to the homepage rather than
-   * 404ing, which keeps stale links from a section that was once fully published
-   * useful.
-   *
-   * The withdrawn pages get no such fallback, and the difference is deliberate: a
-   * path under a removed section has a defensible target, while an arbitrary path
-   * that was never published should 404 rather than quietly becoming the
-   * homepage. Returning null is what makes that distinction enforceable here
-   * instead of depending on the matcher being right.
+   * Anything under /de/ that is not listed above passes through: since 2026-10-23 that is a
+   * real localized site, not a removed section, so it must not fall back to the homepage.
+   * A path under a removed section has a defensible target, while an arbitrary path that was
+   * never published should 404 rather than quietly becoming the homepage.
    */
-  const target = GONE[key] ?? (key === "/de" || key.startsWith("/de/") ? "/" : null);
+  const target = GONE[key] ?? null;
   if (target === null) return NextResponse.next();
 
   const url = request.nextUrl.clone();
