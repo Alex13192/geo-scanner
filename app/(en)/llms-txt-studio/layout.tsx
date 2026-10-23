@@ -17,6 +17,12 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   alternates: {
     canonical: "/llms-txt-studio/",
+    /* Translated into Chinese on 2026-10-24; the pair is claimed on both pages. */
+    languages: {
+      en: "/llms-txt-studio/",
+      "zh-Hans": "/zh/llms-txt-studio/",
+      "x-default": "/llms-txt-studio/",
+    },
   },
   ...social({
     title: TITLE,

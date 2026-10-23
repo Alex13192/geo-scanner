@@ -168,6 +168,10 @@ const ROUTES: Route[] = [
   { route: "/zh/self-audit/", file: "zh/self-audit.html", indexable: true, min: 60 },
   { route: "/zh/api-docs/", file: "zh/api-docs.html", indexable: true, min: 60 },
   { route: "/zh/answer-check/", file: "zh/answer-check.html", indexable: true, min: 60 },
+  /* The remaining tool pages: studio, badge and the weekly-report signup. */
+  { route: "/zh/llms-txt-studio/", file: "zh/llms-txt-studio.html", indexable: true, min: 60 },
+  { route: "/zh/readiness-badge/", file: "zh/readiness-badge.html", indexable: true, min: 60 },
+  { route: "/zh/monitor/", file: "zh/monitor.html", indexable: true, min: 60 },
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

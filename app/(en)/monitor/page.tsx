@@ -30,7 +30,15 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/monitor/" },
+  alternates: {
+    canonical: "/monitor/",
+    /* Translated into Chinese on 2026-10-24; the pair is claimed on both pages. */
+    languages: {
+      en: "/monitor/",
+      "zh-Hans": "/zh/monitor/",
+      "x-default": "/monitor/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

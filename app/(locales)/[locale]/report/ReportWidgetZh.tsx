@@ -365,7 +365,7 @@ export default function ReportWidgetZh() {
             */}
             <button
               disabled={loading || siteUnreachable}
-              onClick={() => navigateTo(`/readiness-badge/?domain=${rootDomain}&score=${overallScore}`)}
+              onClick={() => navigateTo(`/zh/readiness-badge/?domain=${rootDomain}&score=${overallScore}`)}
               className="text-xs bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 border border-purple-500/30 px-3.5 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
             >
               获取徽章（英文）🛡️️

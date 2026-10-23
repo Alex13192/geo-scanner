@@ -113,27 +113,24 @@ const TOOL_ENTRIES: Entry[] = [
     note: "免费，而且不会联系任何 AI 引擎——规则在你浏览器里、针对你粘贴的文本运行——也没有什么需要注册的。",
   },
   {
-    href: "/llms-txt-studio/",
-    label: "/llms.txt studio",
+    href: "/zh/llms-txt-studio/",
+    label: "/llms.txt 生成器",
     description: `根据站点自身的标记草拟一份 llms.txt：真实的页面标题、首页描述，以及每个章节最多 ${MAX_LINKS_PER_SECTION} 个链接；每个链接的描述都取自被链接页面自身的 meta description 或 H1（如果读到了的话）。`,
     note: `文件里的任何描述都不是由工具撰写的。它会读取首页，以及至多 ${MAX_FETCH_PAGES} 个它链接到的页面，然后在文件里说明这份文件是如何生成的，以及它没能读取什么。`,
-    english: true,
   },
   {
-    href: "/readiness-badge/",
-    label: "GEO readiness badge",
+    href: "/zh/readiness-badge/",
+    label: "GEO 就绪度徽章",
     description:
       "以 Markdown（用于 README）或 HTML（用于页脚）嵌入一个带有真实扫描分数的徽章。数字读自扫描结果，无法手动填写。",
     note: "无需账号、无需邮箱，也没有任何需要安装的东西。",
-    english: true,
   },
   {
-    href: "/monitor/",
-    label: "Weekly GEO report",
+    href: "/zh/monitor/",
+    label: "每周 GEO 报告",
     description:
       "当站点分数发生变化时给你发邮件：每周运行同一套检查，点名新近失败的检查，并附上失败检查所看到的证据。",
     note: "无需账号。整个订阅就是这一个邮箱地址——确认它即开始接收报告，退订链接即结束订阅。",
-    english: true,
   },
   {
     /*

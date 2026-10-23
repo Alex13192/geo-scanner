@@ -284,9 +284,9 @@ export default async function ChineseReportPage({
                 </li>
               </ul>
               <p>
-                拿到分数之后，<Link href="/readiness-badge/" hrefLang="en">徽章生成器（英文）</Link>
+                拿到分数之后，<Link href="/zh/readiness-badge/">徽章生成器</Link>
                 可以把它变成一个可嵌入的东西，而{" "}
-                <Link href="/llms-txt-studio/" hrefLang="en">llms.txt 工坊（英文）</Link>
+                <Link href="/zh/llms-txt-studio/">llms.txt 工坊</Link>
                 会起草「AI 上下文文件」维度所寻找的那个上下文文件。
               </p>
             </article>

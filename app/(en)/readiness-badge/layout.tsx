@@ -17,6 +17,12 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   alternates: {
     canonical: "/readiness-badge/",
+    /* Translated into Chinese on 2026-10-24; the pair is claimed on both pages. */
+    languages: {
+      en: "/readiness-badge/",
+      "zh-Hans": "/zh/readiness-badge/",
+      "x-default": "/readiness-badge/",
+    },
   },
   ...social({
     title: TITLE,

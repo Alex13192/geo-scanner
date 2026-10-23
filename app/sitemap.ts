@@ -223,6 +223,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
+      alternates: pairAlternates("/llms-txt-studio/", "/zh/llms-txt-studio/"),
+    },
+    {
+      url: `${SITE_URL}/zh/llms-txt-studio/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+      alternates: pairAlternates("/llms-txt-studio/", "/zh/llms-txt-studio/"),
     },
     {
       /* The answer checker. Same priority as the studio: a page people arrive on directly, and the
@@ -245,6 +253,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.7,
+      alternates: pairAlternates("/readiness-badge/", "/zh/readiness-badge/"),
+    },
+    {
+      url: `${SITE_URL}/zh/readiness-badge/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+      alternates: pairAlternates("/readiness-badge/", "/zh/readiness-badge/"),
     },
     {
       /* The API reference. It is developer documentation rather than a landing page, so the
@@ -264,6 +280,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
+      alternates: pairAlternates("/monitor/", "/zh/monitor/"),
+    },
+    {
+      url: `${SITE_URL}/zh/monitor/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+      alternates: pairAlternates("/monitor/", "/zh/monitor/"),
     },
     {
       url: `${SITE_URL}/methodology/`,
