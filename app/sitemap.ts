@@ -261,6 +261,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.9,
+      alternates: pairAlternates("/methodology/", "/zh/methodology/"),
     },
     {
       /* The site's own measurement, published at a URL a crawler may read.
@@ -385,6 +386,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
+      alternates: pairAlternates("/checks/", "/zh/checks/"),
     },
     /* One Chinese page per rule, paired with its English page. Only these two languages are
        translated, so the alternates map stays two languages rather than the six the home and

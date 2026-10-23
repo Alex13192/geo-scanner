@@ -15,7 +15,15 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/about/" },
+  alternates: {
+    canonical: "/about/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/about/",
+      "zh-Hans": "/zh/about/",
+      "x-default": "/about/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

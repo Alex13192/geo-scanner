@@ -162,6 +162,11 @@ const ROUTES: Route[] = [
     min: 60,
   },
   { route: "/zh/tools/", file: "zh/tools.html", indexable: true, min: 60 },
+  /* About, author, the self-audit record and the API reference. */
+  { route: "/zh/about/", file: "zh/about.html", indexable: true, min: 60 },
+  { route: "/zh/author/", file: "zh/author.html", indexable: true, min: 60 },
+  { route: "/zh/self-audit/", file: "zh/self-audit.html", indexable: true, min: 60 },
+  { route: "/zh/api-docs/", file: "zh/api-docs.html", indexable: true, min: 60 },
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

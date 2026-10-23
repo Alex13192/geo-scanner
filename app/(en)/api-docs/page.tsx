@@ -49,7 +49,15 @@ const SAMPLE_BRIEF = `{
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/api-docs/" },
+  alternates: {
+    canonical: "/api-docs/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/api-docs/",
+      "zh-Hans": "/zh/api-docs/",
+      "x-default": "/api-docs/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

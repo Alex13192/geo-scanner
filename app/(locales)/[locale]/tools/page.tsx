@@ -142,12 +142,11 @@ const TOOL_ENTRIES: Entry[] = [
      * The API is a tool for the reader who wants the number rather than the page. It sits
      * last because it is the specialist entry point, not the one a first-time visitor needs.
      */
-    href: "/api-docs/",
+    href: "/zh/api-docs/",
     label: "Scan API",
     description:
       "一个公开的 JSON 端点：运行的是报告页所用的同一个分析器，无需密钥、无需账号，并逐字段说明。",
     note: "没有版本号、有限流；参数、状态码以及它看不到什么，都写在该页面上，而不是等你调用时才发现。",
-    english: true,
   },
 ];
 

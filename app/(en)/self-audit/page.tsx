@@ -146,7 +146,15 @@ const FAILED = SELF_AUDIT.failures.map((id) => ({
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/self-audit/" },
+  alternates: {
+    canonical: "/self-audit/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/self-audit/",
+      "zh-Hans": "/zh/self-audit/",
+      "x-default": "/self-audit/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

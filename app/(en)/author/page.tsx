@@ -13,7 +13,15 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: AUTHOR.path },
+  alternates: {
+    canonical: AUTHOR.path,
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/author/",
+      "zh-Hans": "/zh/author/",
+      "x-default": "/author/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,
