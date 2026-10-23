@@ -138,6 +138,11 @@ const ROUTES: Route[] = [
     indexable: true,
     min: 50,
   })),
+  /* The translated guides and their index; same localized floor logic as the rest. */
+  { route: "/zh/docs/", file: "zh/docs.html", indexable: true, min: 60 },
+  ...["llms-txt-deployment", "allow-ai-crawlers", "qa-style-headings", "schema-org-jsonld", "ai-visibility-self-check"].map(
+    (slug) => ({ route: `/zh/docs/${slug}/`, file: `zh/docs/${slug}.html`, indexable: true, min: 60 })
+  ),
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

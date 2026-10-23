@@ -11,7 +11,15 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/docs/qa-style-headings/" },
+  alternates: {
+    canonical: "/docs/qa-style-headings/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/docs/qa-style-headings/",
+      "zh-Hans": "/zh/docs/qa-style-headings/",
+      "x-default": "/docs/qa-style-headings/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

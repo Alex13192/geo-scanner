@@ -61,6 +61,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ),
   });
 
+  /*
+   * The guides are translated into English and Chinese only so far. A six-language map here
+   * would point at pages that do not exist - the half-built hreflang this site already
+   * withdrew once - so the pair is built explicitly rather than reusing alternatesFor.
+   */
+  const docsAlternates = (slug: string) => ({
+    languages: {
+      en: `${SITE_URL}/docs${slug}/`,
+      'zh-Hans': `${SITE_URL}/zh/docs${slug}/`,
+      'x-default': `${SITE_URL}/docs${slug}/`,
+    },
+  });
+
   return [
     {
       url: `${SITE_URL}/`,
@@ -114,40 +127,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
+      alternates: docsAlternates(""),
     },
+    ...["llms-txt-deployment", "allow-ai-crawlers", "qa-style-headings", "schema-org-jsonld", "ai-visibility-self-check"].map(
+      (slug) => ({
+        url: `${SITE_URL}/docs/${slug}/`,
+        lastModified: LAST_MODIFIED,
+        changeFrequency: 'monthly' as const,
+        priority: slug === "llms-txt-deployment" || slug === "allow-ai-crawlers" ? 0.8 : 0.7,
+        alternates: docsAlternates(`/${slug}`),
+      })
+    ),
     {
-      url: `${SITE_URL}/docs/llms-txt-deployment/`,
+      url: `${SITE_URL}/zh/docs/`,
       lastModified: LAST_MODIFIED,
-      changeFrequency: 'monthly',
+      changeFrequency: 'weekly' as const,
       priority: 0.8,
+      alternates: docsAlternates(""),
     },
-    {
-      url: `${SITE_URL}/docs/allow-ai-crawlers/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${SITE_URL}/docs/qa-style-headings/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/docs/schema-org-jsonld/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      /* The self-check method. Priority matches the other guides rather than leading, because it is
-         long-tail content: it earns its place by answering a question people type into a search box
-         or an AI assistant, not by being linked from the homepage. */
-      url: `${SITE_URL}/docs/ai-visibility-self-check/`,
-      lastModified: LAST_MODIFIED,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
+    ...["llms-txt-deployment", "allow-ai-crawlers", "qa-style-headings", "schema-org-jsonld", "ai-visibility-self-check"].map(
+      (slug) => ({
+        url: `${SITE_URL}/zh/docs/${slug}/`,
+        lastModified: LAST_MODIFIED,
+        changeFrequency: 'monthly' as const,
+        priority: slug === "llms-txt-deployment" || slug === "allow-ai-crawlers" ? 0.7 : 0.6,
+        alternates: docsAlternates(`/${slug}`),
+      })
+    ),
     {
       url: `${SITE_URL}/llms-txt-studio/`,
       lastModified: LAST_MODIFIED,

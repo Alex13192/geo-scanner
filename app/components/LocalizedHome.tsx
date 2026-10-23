@@ -90,6 +90,12 @@ export default function LocalizedHome({
                 >
                   全部 40 条规则 →
                 </Link>
+                <Link
+                  href="/zh/docs/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  中文指南 →
+                </Link>
               </p>
             ) : null}
           </div>

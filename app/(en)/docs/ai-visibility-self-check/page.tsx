@@ -10,7 +10,15 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/docs/ai-visibility-self-check/" },
+  alternates: {
+    canonical: "/docs/ai-visibility-self-check/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/docs/ai-visibility-self-check/",
+      "zh-Hans": "/zh/docs/ai-visibility-self-check/",
+      "x-default": "/docs/ai-visibility-self-check/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

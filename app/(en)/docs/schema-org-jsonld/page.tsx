@@ -11,7 +11,15 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/docs/schema-org-jsonld/" },
+  alternates: {
+    canonical: "/docs/schema-org-jsonld/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/docs/schema-org-jsonld/",
+      "zh-Hans": "/zh/docs/schema-org-jsonld/",
+      "x-default": "/docs/schema-org-jsonld/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

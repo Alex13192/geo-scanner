@@ -11,7 +11,15 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/docs/allow-ai-crawlers/" },
+  alternates: {
+    canonical: "/docs/allow-ai-crawlers/",
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: "/docs/allow-ai-crawlers/",
+      "zh-Hans": "/zh/docs/allow-ai-crawlers/",
+      "x-default": "/docs/allow-ai-crawlers/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,
