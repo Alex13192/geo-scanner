@@ -96,6 +96,12 @@ export default function LocalizedHome({
                 >
                   中文指南 →
                 </Link>
+                <Link
+                  href="/zh/insights/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  研究随笔 →
+                </Link>
               </p>
             ) : null}
           </div>

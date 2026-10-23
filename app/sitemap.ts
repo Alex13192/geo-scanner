@@ -74,6 +74,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   });
 
+  /* The writing is translated into English and Chinese only; same two-language map. */
+  const insightsAlternates = (slug: string) => ({
+    languages: {
+      en: `${SITE_URL}/insights${slug}/`,
+      'zh-Hans': `${SITE_URL}/zh/insights${slug}/`,
+      'x-default': `${SITE_URL}/insights${slug}/`,
+    },
+  });
+
   return [
     {
       url: `${SITE_URL}/`,
@@ -223,12 +232,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
+      alternates: insightsAlternates(''),
     },
     ...INSIGHTS.map((insight) => ({
       url: SITE_URL + insightPath(insight.slug),
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
       priority: 0.7,
+      alternates: insightsAlternates(`/${insight.slug}`),
+    })),
+    {
+      url: `${SITE_URL}/zh/insights/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+      alternates: insightsAlternates(''),
+    },
+    ...INSIGHTS.map((insight) => ({
+      url: `${SITE_URL}/zh/insights/${insight.slug}/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+      alternates: insightsAlternates(`/${insight.slug}`),
     })),
     /* The author page. Priority low because it is not what anyone searches for, listed because
        it is the page a reader follows from a byline to decide whether to trust the writing -

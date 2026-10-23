@@ -11,7 +11,15 @@ const DESCRIPTION = insight.description;
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: insightPath(insight.slug) },
+  alternates: {
+    canonical: insightPath(insight.slug),
+    /* Translated into Chinese on 2026-10-23; the pair is claimed on both pages. */
+    languages: {
+      en: `/insights/${insight.slug}/`,
+      "zh-Hans": `/zh/insights/${insight.slug}/`,
+      "x-default": `/insights/${insight.slug}/`,
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

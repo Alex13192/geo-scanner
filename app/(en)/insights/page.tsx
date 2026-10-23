@@ -14,7 +14,14 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/insights/" },
+  alternates: {
+    canonical: "/insights/",
+    languages: {
+      en: "/insights/",
+      "zh-Hans": "/zh/insights/",
+      "x-default": "/insights/",
+    },
+  },
   ...social({
     title: TITLE,
     description: DESCRIPTION,

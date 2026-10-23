@@ -143,6 +143,14 @@ const ROUTES: Route[] = [
   ...["llms-txt-deployment", "allow-ai-crawlers", "qa-style-headings", "schema-org-jsonld", "ai-visibility-self-check"].map(
     (slug) => ({ route: `/zh/docs/${slug}/`, file: `zh/docs/${slug}.html`, indexable: true, min: 60 })
   ),
+  /* The translated writing: the archive index and six essays. */
+  { route: "/zh/insights/", file: "zh/insights.html", indexable: true, min: 60 },
+  ...INSIGHTS.map((insight) => ({
+    route: `/zh/insights/${insight.slug}/`,
+    file: `zh/insights/${insight.slug}.html`,
+    indexable: true,
+    min: 60,
+  })),
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same
