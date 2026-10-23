@@ -137,7 +137,17 @@ export default function ReportPreview() {
           <div className="flex shrink-0 items-center gap-3">
             <Link
               href="/pricing/"
-              className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold text-[var(--on-accent)] transition-transform hover:scale-[1.03]"
+              /*
+               * INLINE COLOUR, NOT THE UTILITY CLASS. This component is rendered inside
+               * .doc-article on /pricing/ and /report/, and `.doc-article a` sets the link
+               * colour with higher specificity than `text-[var(--on-accent)]` - so the
+               * utility lost and the label rendered accent-on-accent, i.e. invisible. It was
+               * caught in a screenshot of the live page, not by a gate: the button was a blue
+               * pill with no text. An inline style wins over the component style regardless of
+               * this component's place in the prose tree.
+               */
+              style={{ color: "var(--on-accent)" }}
+              className="rounded-full bg-[var(--accent)] px-4 py-2 text-xs font-semibold transition-transform hover:scale-[1.03]"
             >
               See pricing — from {fromPrice}
             </Link>
