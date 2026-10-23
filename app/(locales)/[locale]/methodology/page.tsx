@@ -5,17 +5,19 @@ import { LocaleFooter, LocaleHeader } from "@/app/components/LocalizedChrome";
 import { CHECK_CATALOG, DIMENSION_CATALOG, GRADE_BANDS } from "@/lib/geo/catalog";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { homePath } from "@/lib/i18n/config";
+import { JA_DIMENSION_LABELS } from "@/lib/i18n/ja-copy";
 import { ZH_DIMENSION_LABELS } from "@/lib/i18n/zh-copy";
 import { social } from "@/lib/og";
 
 /**
- * `/zh/methodology/` - the method page, in Chinese.
+ * `/<locale>/methodology/` — the method page, in Chinese and in Japanese.
  *
- * WHY THIS PAGE FIRST, AND WHY ONLY IN CHINESE. The audit's biggest content complaint was
- * that a reader could not check the method; the rule pages and the guides are long, but this
- * is the page a skeptical buyer actually opens before paying. It is translated alone, and the
- * hreflang pair names only English and Chinese, because a locale that has no page must not be
- * advertised as having one. The remaining deep pages follow the same shape.
+ * なぜ 1 ファイルで 2 言語なのか。`app/(locales)/[locale]/` の 1 つのルートに置ける page は
+ * 1 つだけで、`/zh/methodology/` と `/ja/methodology/` は同じルートを共有している。日本語版を
+ * 別ファイルにすると中国語版の URL が 404 になり、しかもこのページ自身が hreflang で
+ * zh-Hans を宣言している（＝存在しない URL を宣言することになる）ので、locale で分岐する
+ * 1 ファイルに両方を置いている。`zh` と `ja` 以外は `dynamicParams = false` と notFound() で
+ * 弾くので、レンダリングできる URL は増えない。
  *
  * WHY THE NUMBERS COME FROM THE CATALOGUE: the check count, the weights and the grade
  * thresholds are imported, not typed. A translated page that quotes a different total would
@@ -23,41 +25,102 @@ import { social } from "@/lib/og";
  */
 export const dynamicParams = false;
 
+/** 公開している再実行可能なチェック。alias は同じチェックの別結果を記述したものなので数えない。 */
+const RUNNABLE_CHECKS = CHECK_CATALOG.filter((check) => !check.alias);
+const TOTAL_WEIGHT = DIMENSION_CATALOG.reduce((sum, dimension) => sum + dimension.weight, 0);
+
 export function generateStaticParams() {
-  return [{ locale: "zh" }];
+  /* 中国語版は既存のまま残す。日本語版だけを返すと `/zh/methodology/` が消える。 */
+  return [{ locale: "zh" }, { locale: "ja" }];
 }
 
-const TITLE = "GEO 分数是怎么算出来的";
-const DESCRIPTION =
+const ZH_TITLE = "GEO 分数是怎么算出来的";
+const ZH_DESCRIPTION =
   "计分规则、12 个加权维度、两类「不适用」的处理方式，以及扫描器明确不能告诉你的三件事。";
 
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/zh/methodology/",
-    languages: {
-      en: "/methodology/",
-      "zh-Hans": "/zh/methodology/",
-      "x-default": "/methodology/",
-    },
+const JA_TITLE = "GEO スコアはどう計算されるか";
+const JA_DESCRIPTION = `採点ルール、${DIMENSION_CATALOG.length} 個の加重ディメンション、「当てはまらない」の扱い、そしてスキャナが答えられないこと。`;
+
+/**
+ * 何が、いつ変わったか（新しい順）。日付はここが唯一の出所で、上の「最終改訂」はこの配列の
+ * 先頭を読む。文章で日付を二度書くと、履歴に載っていない改訂を名乗れてしまうためである。
+ * 翻訳文だけを変えた編集は載せない。スコアが動きうる変更だけを記録する。
+ */
+const JA_METHOD_CHANGELOG = [
+  {
+    date: "2026-10-23",
+    change:
+      "宣言している言語コードが 2 つ未満のページでは、hreflang が採点されなくなりました。このルールはページに他の言語版の宣言を求めるもので、単一言語のサイトには宣言する対象がありません。スキャナは 1 ページだけを取得するため、「単一言語のサイト」と「翻訳はあるが宣言していないサイト」を区別できません。そこで、何も宣言していない場合は「当てはまらない」として採点から除外します。言語コードをちょうど 1 つだけ宣言しているページは、これまでどおり失敗です。",
   },
-  ...social({ title: TITLE, description: DESCRIPTION, url: "/zh/methodology/" }),
-};
+  {
+    date: "2026-10-03",
+    change:
+      "チェックを、判断できないページ種別に対して「当てはまらない」とマークし、失敗として数えるのではなく採点から除外できるようになりました。法務ページ、お問い合わせページ、記事ページ向けの 6 件の除外を公開しています（プライバシーポリシーは、誰も引用していないからといって劣ったページではありません）。残りのディメンションは再正規化されるため、ルートパスのスコアは以前とまったく同じです。",
+  },
+] as const;
 
-const DIMENSION_LABELS_ZH = ZH_DIMENSION_LABELS;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
 
-export default async function ChineseMethodologyPage({
+  if (locale === "ja") {
+    return {
+      title: JA_TITLE,
+      description: JA_DESCRIPTION,
+      alternates: {
+        canonical: "/ja/methodology/",
+        /* 3 言語すべてを宣言する。x-default は英語（唯一の完全版）を指す。 */
+        languages: {
+          en: "/methodology/",
+          "zh-Hans": "/zh/methodology/",
+          ja: "/ja/methodology/",
+          "x-default": "/methodology/",
+        },
+      },
+      ...social({ title: JA_TITLE, description: JA_DESCRIPTION, url: "/ja/methodology/" }),
+    };
+  }
+
+  if (locale === "zh") {
+    return {
+      title: ZH_TITLE,
+      description: ZH_DESCRIPTION,
+      alternates: {
+        canonical: "/zh/methodology/",
+        /* ja を足すのは、日本語版がこのページを zh-Hans として宣言しているためである。
+           hreflang は相互でなければ片側だけの宣言になる。 */
+        languages: {
+          en: "/methodology/",
+          "zh-Hans": "/zh/methodology/",
+          ja: "/ja/methodology/",
+          "x-default": "/methodology/",
+        },
+      },
+      ...social({ title: ZH_TITLE, description: ZH_DESCRIPTION, url: "/zh/methodology/" }),
+    };
+  }
+
+  return {};
+}
+
+export default async function LocalizedMethodologyPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  if (locale !== "zh") notFound();
+  if (locale === "ja") return <JapaneseMethodology />;
+  if (locale === "zh") return <ChineseMethodology />;
+  notFound();
+}
 
+const DIMENSION_LABELS_ZH = ZH_DIMENSION_LABELS;
+
+function ChineseMethodology() {
   const dict = getDictionary("zh");
-  const runnable = CHECK_CATALOG.filter((check) => !check.alias);
-  const totalWeight = DIMENSION_CATALOG.reduce((sum, dimension) => sum + dimension.weight, 0);
 
   return (
     <div className="min-h-screen bg-[var(--surface-0)] font-sans text-[var(--ink-1)]">
@@ -70,7 +133,7 @@ export default async function ChineseMethodologyPage({
               方法论 · Methodology
             </p>
             <h1 className="mt-4 max-w-3xl text-3xl font-semibold leading-[1.15] tracking-[-0.02em] md:text-5xl">
-              {TITLE}
+              {ZH_TITLE}
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--ink-2)]">
               这一页写的每一条规则，都是扫描器真正执行的规则。下面的内容由引擎运行时使用的同一份目录生成,
@@ -90,14 +153,14 @@ export default async function ChineseMethodologyPage({
             <article className="doc-article max-w-3xl text-[17px] leading-[1.7] text-[var(--ink-2)]">
               <h2>总分是怎么算的</h2>
               <p>
-                扫描器执行 <strong>{runnable.length} 项明确检查</strong>,分布在{" "}
+                扫描器执行 <strong>{RUNNABLE_CHECKS.length} 项明确检查</strong>,分布在{" "}
                 <strong>12 个加权维度</strong>里。每项检查在它所属的维度内有一个固定分值;
                 维度的分数是「拿到的分 / 这一维度可拿的总分」,总分则是 12 个维度分数按权重合并:
               </p>
               <pre className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-4 text-xs leading-relaxed">{`总分 = Σ ( 维度得分 × 维度权重 / 100 )
 
 其中 维度得分 = 已得点数 / 可评估点数 × 100
-且   Σ 维度权重 = ${totalWeight}`}</pre>
+且   Σ 维度权重 = ${TOTAL_WEIGHT}`}</pre>
               <p>
                 没有「分数下限」。一项检查都不满足的页面会接近 0 分，而不会被抬到一个看起来体面的最低分。
                 页面类型不适用的检查会被整体移出计算，而不是记为失败。
@@ -175,7 +238,7 @@ export default async function ChineseMethodologyPage({
                         </td>
                         <td className="px-4 py-2.5 font-mono">{dimension.weight}%</td>
                         <td className="px-4 py-2.5 font-mono">
-                          {runnable.filter((check) => check.dimension === dimension.id).length}
+                          {RUNNABLE_CHECKS.filter((check) => check.dimension === dimension.id).length}
                         </td>
                       </tr>
                     ))}
@@ -257,7 +320,7 @@ export default async function ChineseMethodologyPage({
               <ul>
                 <li>
                   <Link href="/zh/checks/" className="text-[var(--accent)] hover:opacity-75">
-                    全部 {runnable.length} 条规则(中文总览)
+                    全部 {RUNNABLE_CHECKS.length} 条规则(中文总览)
                   </Link>
                   ——每条规则的点数、所属维度,以及逐条规则页。
                 </li>
@@ -309,6 +372,297 @@ export default async function ChineseMethodologyPage({
                 acceptedAnswer: {
                   "@type": "Answer",
                   text: "只有当两次测量使用同一版规则时才可以。每次影响分数的规则变更都记录在变更记录里。",
+                },
+              },
+            ],
+          }),
+        }}
+      />
+    </div>
+  );
+}
+
+function JapaneseMethodology() {
+  const dict = getDictionary("ja");
+
+  return (
+    <div className="min-h-screen bg-[var(--surface-0)] font-sans text-[var(--ink-1)]">
+      <LocaleHeader locale="ja" dict={dict} />
+
+      <main>
+        <section className="band band--alt border-b border-[var(--line)]">
+          <div className="wrap py-14 md:py-20">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">
+              方法論 · Methodology
+            </p>
+            <h1 className="mt-4 max-w-3xl text-3xl font-semibold leading-[1.15] tracking-[-0.02em] md:text-5xl">
+              {JA_TITLE}
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--ink-2)]">
+              このページに書かれているルールは、スキャナが実際に実行しているルールそのものです。
+              以下の内容は、エンジンが実行時に使うのと同じカタログから生成しています。
+              そのため、「公開している方法」と「動いている方法」が食い違うことはありません。
+            </p>
+            <p className="mt-3 text-xs text-[var(--ink-3)]">
+              方法の最終改訂：{JA_METHOD_CHANGELOG[0].date} · 無料スキャンが読み取るのは 1 ページです ·
+              完全な方法は英語版{" "}
+              <Link href="/methodology/" hrefLang="en" className="text-[var(--accent)] hover:opacity-75">
+                /methodology/
+              </Link>
+            </p>
+          </div>
+        </section>
+
+        <section className="band">
+          <div className="wrap py-14 md:py-20">
+            <article className="doc-article max-w-3xl text-[17px] leading-[1.7] text-[var(--ink-2)]">
+              <h2>合計スコアはどう計算されるか</h2>
+              <p>
+                スキャナは <strong>{RUNNABLE_CHECKS.length} 件の明示的なチェック</strong>を、
+                <strong>{DIMENSION_CATALOG.length} 個の加重ディメンション</strong>に分けて実行します。
+                各チェックは、所属するディメンションの中で固定の配点を持ちます。
+                ディメンションのスコアは「獲得した点数 ÷ そのディメンションで獲得できる点数」で、
+                合計スコアはそのディメンションスコアを重みで統合したものです。
+              </p>
+              <pre className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-4 text-xs leading-relaxed">{`合計 = Σ ( ディメンションスコア × ディメンション重み / 100 )
+
+ここで ディメンションスコア = 獲得点数 / 評価可能点数 × 100
+かつ   Σ ディメンション重み = ${TOTAL_WEIGHT}`}</pre>
+              <p>
+                スコアの下限はありません。どのチェックも満たしていないページは 0 に近いスコアになり、
+                見た目のよい最低点まで引き上げられることはありません。
+                ページ種別に当てはまらないチェックは、失敗として数えられるのではなく、計算から丸ごと外されます。
+              </p>
+
+              <h2>「当てはまらない」の 2 種類と、それが減点ではない理由</h2>
+              <p>
+                1 つ目は<strong>ページ種別による除外</strong>です。プライバシーポリシーのページに専門家の引用や
+                統計値を求めることはしませんし、記事本文のページに About と Contact へのリンクも求めません。
+                単一ページの取得では、ページの外側にあるナビゲーションが見えないからです。
+                こうしたチェックは、そもそもその種別のページに問うべきものではありません。
+              </p>
+              <p>
+                2 つ目は<strong>ルール単位の不適用</strong>で、ページ種別ではなく、ルールがページ上で見つけた内容に
+                基づいて判断します。たとえば hreflang は、ページに他の言語版を宣言することを求めます。
+                何も宣言していないページは、「翻訳が存在しない」のか「翻訳はあるが宣言していない」のかを
+                判別できません。そのため、この項目は不適用として扱います。
+                どちらも失敗ではなく、割引でもありません。点数は分子からも分母からも外れ、残ったディメンションは
+                自身の重みの合計に対して再正規化されます。合計は常に「実際に評価できた部分」の百分率です。
+                したがって満点が意味するのは<strong>「このページに当てはまるルールが 1 つも失敗していない」</strong>
+                ということであり、「カタログの全ルールを通過した」ということではありません。
+              </p>
+
+              <h2 id="what-changed">何が、いつ変わったか</h2>
+              <ul>
+                {JA_METHOD_CHANGELOG.map((entry) => (
+                  <li key={entry.date}>
+                    <time dateTime={entry.date} className="font-mono text-[var(--ink-3)]">
+                      {entry.date}
+                    </time>{" "}
+                    — {entry.change}
+                  </li>
+                ))}
+              </ul>
+
+              <h2>グレードとスコア帯</h2>
+              <div className="not-prose overflow-x-auto my-5">
+                <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
+                  <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
+                    <tr>
+                      <th className="text-left px-4 py-2.5 font-semibold">グレード</th>
+                      <th className="text-left px-4 py-2.5 font-semibold">スコア</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[var(--ink-2)]">
+                    {GRADE_BANDS.map((band, index) => (
+                      <tr key={band.grade} className="border-t border-[var(--line)]">
+                        <td className="px-4 py-2.5 font-mono font-bold text-[var(--ink-1)]">
+                          {band.grade}
+                        </td>
+                        <td className="px-4 py-2.5 font-mono">
+                          {band.min}
+                          {index === 0 ? "-100" : `-${GRADE_BANDS[index - 1].min - 1}`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <h2>{DIMENSION_CATALOG.length} 個のディメンションと重み</h2>
+              <div className="not-prose overflow-x-auto my-5">
+                <table className="w-full text-xs border border-[var(--line)] rounded-xl overflow-hidden">
+                  <thead className="bg-[var(--surface-2)] text-[var(--ink-2)]">
+                    <tr>
+                      <th className="text-left px-4 py-2.5 font-semibold">ディメンション</th>
+                      <th className="text-left px-4 py-2.5 font-semibold">重み</th>
+                      <th className="text-left px-4 py-2.5 font-semibold">チェック数</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[var(--ink-2)]">
+                    {DIMENSION_CATALOG.map((dimension) => (
+                      <tr key={dimension.id} className="border-t border-[var(--line)]">
+                        <td className="px-4 py-2.5">
+                          {JA_DIMENSION_LABELS[dimension.id] ?? dimension.label}
+                        </td>
+                        <td className="px-4 py-2.5 font-mono">{dimension.weight}%</td>
+                        <td className="px-4 py-2.5 font-mono">
+                          {RUNNABLE_CHECKS.filter((check) => check.dimension === dimension.id).length}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <h2>スキャナが答えられないこと</h2>
+              <ul>
+                <li>
+                  <strong>どの AI エンジンにも、あなたについて問い合わせません。</strong>{" "}
+                  ここで測っているのは、ChatGPT が今日あなたのブランドを推薦しているかどうかではありません。
+                  あなたのページが「引用されうる状態」にあるかどうかです。これは別の問いであり、
+                  両者を混同することがこの領域で最もよくある過大な主張です。
+                </li>
+                <li>
+                  <strong>拒否されたリクエストは、ブロックの証拠ではありません。</strong>{" "}
+                  大規模なサイトは user-agent ではなく IP アドレスでクローラーを検証します。
+                  そのため、スキャナのリクエストが拒否されても、実際の GPTBot のトラフィックは正常に配信されている
+                  ことがあります。AI クローラーをブロックしているかどうかは、ここでは{" "}
+                  <code>robots.txt</code> を基準にします。それはサイト自身が表明した意図です。
+                </li>
+                <li>
+                  <strong>サイトスキャンを要求しない限り、1 ページだけを記述します。</strong>{" "}
+                  単一 URL のスキャンでは、内側のページにあるサイト全体の問題は見えません。
+                  サイトスキャンは sitemap に記載されたいくつかのページを追加で読み取り（既定 5 ページ、
+                  最大 10 ページ）、まったく同じルールで個別に採点し、ページごとに報告します。
+                  トップページのスコアをサイト全体のスコアとして提示することはありません。
+                </li>
+              </ul>
+
+              <h2>よくある質問</h2>
+              <dl className="space-y-4">
+                <div>
+                  <dt className="font-semibold text-[var(--ink-1)]">
+                    ページの内容は少なくないのに、スコアが低いのはなぜですか。
+                  </dt>
+                  <dd className="mt-1">
+                    スコアが測るのは「AI が取得・解析・引用できるか」だけで、内容の質は測りません。
+                    本文が多くても、見出しが問いの形になっていない、抽出できるリストや表がない、
+                    日付や著者が示されていない、といった点が引用可能性のディメンションを下げます。
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-[var(--ink-1)]">
+                    無料スキャンと有料レポートは何が違いますか。
+                  </dt>
+                  <dd className="mt-1">
+                    無料スキャンはページを読み取り、{RUNNABLE_CHECKS.length} 件のルールで採点します。
+                    有料レポートは購入者の質問を AI エンジンに渡し、回答、言及された名前、引用されたドメインを
+                    記録します。スキャナがエンジンに問い合わせることはなく、問い合わせるのはレポートだけです。
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-[var(--ink-1)]">
+                    日付の違う 2 つのスコアは、そのまま比べられますか。
+                  </dt>
+                  <dd className="mt-1">
+                    2 回の測定が同じ版のルールで行われている場合にかぎり、比べられます。
+                    スコアに影響するルール変更はすべて上の変更履歴に記録しており、日付が比較の前提になります。
+                  </dd>
+                </div>
+              </dl>
+
+              <h2>方法と出典</h2>
+              <ul>
+                <li>
+                  <a href="https://developers.google.com/search/docs/crawling-indexing/robots/intro" className="text-[var(--accent)] hover:opacity-75">
+                    Google Search Central：robots.txt の仕様
+                  </a>
+                  ——クローラーアクセスのディメンションが参照している仕様です。
+                </li>
+                <li>
+                  <a href="https://schema.org/" className="text-[var(--accent)] hover:opacity-75">
+                    schema.org
+                  </a>
+                  ——JSON-LD のエンティティとコンテンツタイプのチェックが参照する語彙です。
+                </li>
+                <li>
+                  <a href="https://llmstxt.org/" className="text-[var(--accent)] hover:opacity-75">
+                    llmstxt.org
+                  </a>
+                  ——/llms.txt の公開された取り決めです。
+                </li>
+                <li>
+                  <a href="https://www.bing.com/webmasters/help/webmasters-guidelines-30fba23a" className="text-[var(--accent)] hover:opacity-75">
+                    Bing Webmaster Guidelines
+                  </a>
+                  ——発見可能性と鮮度のチェックの参照先です。
+                </li>
+              </ul>
+
+              <h2>さらに読む</h2>
+              <ul>
+                <li>
+                  <Link href="/ja/checks/" className="text-[var(--accent)] hover:opacity-75">
+                    全 {RUNNABLE_CHECKS.length} 件のルール（日本語の一覧）
+                  </Link>
+                  ——各ルールの配点、所属するディメンション、個別ルールページ。
+                </li>
+                <li>
+                  <Link href="/study/" hrefLang="en" className="text-[var(--accent)] hover:opacity-75">
+                    トップページ 30 件の公開調査（英語）
+                  </Link>
+                  ——同じ公開 API で収集しました。
+                </li>
+                <li>
+                  <Link href="/ja/pricing/" className="text-[var(--accent)] hover:opacity-75">
+                    料金と有料レポート
+                  </Link>
+                  ——スキャナはエンジンに問い合わせません。レポートは問い合わせます。
+                </li>
+              </ul>
+
+              {/* 日本語ページの戻り口。ヘッダーのロゴ以外に、本文の終わりからも戻れるようにする。 */}
+              <p className="mt-10 text-xs">
+                <Link href="/ja/" className="text-[var(--accent)] hover:opacity-75">
+                  ← トップページへ戻る
+                </Link>
+              </p>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <LocaleFooter locale="ja" dict={dict} target={homePath} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "ページの内容は少なくないのに、スコアが低いのはなぜですか。",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "スコアが測るのは AI が取得・解析・引用できるかだけで、内容の質は測りません。本文が多くても、見出しが問いの形になっていない、抽出できるリストや表がない、日付や著者が示されていない、といった点が引用可能性のディメンションを下げます。",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "無料スキャンと有料レポートは何が違いますか。",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: `無料スキャンはページを読み取り、${RUNNABLE_CHECKS.length} 件のルールで採点します。有料レポートは購入者の質問を AI エンジンに渡し、回答、言及された名前、引用されたドメインを記録します。`,
+                },
+              },
+              {
+                "@type": "Question",
+                name: "日付の違う 2 つのスコアは、そのまま比べられますか。",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "2 回の測定が同じ版のルールで行われている場合にかぎり、比べられます。スコアに影響するルール変更はすべて変更履歴に記録しており、日付が比較の前提になります。",
                 },
               },
             ],

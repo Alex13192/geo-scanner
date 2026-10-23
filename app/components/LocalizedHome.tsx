@@ -115,6 +115,22 @@ export default function LocalizedHome({
                 </Link>
               </p>
             ) : null}
+            {locale === "ja" ? (
+              <p className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                <Link
+                  href="/ja/methodology/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  スコアの計算方法 →
+                </Link>
+                <Link
+                  href="/ja/checks/"
+                  className="font-medium text-[var(--accent)] hover:opacity-75"
+                >
+                  全 40 のルール →
+                </Link>
+              </p>
+            ) : null}
           </div>
         </section>
 

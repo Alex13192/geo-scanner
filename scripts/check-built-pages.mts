@@ -172,6 +172,16 @@ const ROUTES: Route[] = [
   { route: "/zh/llms-txt-studio/", file: "zh/llms-txt-studio.html", indexable: true, min: 60 },
   { route: "/zh/readiness-badge/", file: "zh/readiness-badge.html", indexable: true, min: 60 },
   { route: "/zh/monitor/", file: "zh/monitor.html", indexable: true, min: 60 },
+  /* Japanese deep pages: methodology and the rule overview are long-form (60 floor), the 40
+     rule pages are the short translated form like their Chinese siblings (50). */
+  { route: "/ja/methodology/", file: "ja/methodology.html", indexable: true, min: 60 },
+  { route: "/ja/checks/", file: "ja/checks.html", indexable: true, min: 60 },
+  ...CHECK_CATALOG.filter((check) => !check.alias).map((check) => ({
+    route: `/ja/checks/${check.id}/`,
+    file: `ja/checks/${check.id}.html`,
+    indexable: true,
+    min: 50,
+  })),
   /*
    * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same

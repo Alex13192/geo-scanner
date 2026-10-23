@@ -32,6 +32,7 @@ export const metadata: Metadata = {
     languages: {
       en: "/checks/",
       "zh-Hans": "/zh/checks/",
+      ja: "/ja/checks/",
       "x-default": "/checks/",
     },
   },

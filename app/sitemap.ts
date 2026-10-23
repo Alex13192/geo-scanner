@@ -21,7 +21,7 @@ import { LOCALES, PREFIXED_LOCALES, homePath, pricingPath } from '@/lib/i18n/con
  * is manual, so: any commit that changes `app/` or `lib/` content is a commit that
  * changes this line.
  */
-const LAST_MODIFIED = new Date('2026-10-23');
+const LAST_MODIFIED = new Date('2026-10-24');
 
 /**
  * NOTE ON TRAILING SLASHES
@@ -80,6 +80,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       en: `${SITE_URL}/insights${slug}/`,
       'zh-Hans': `${SITE_URL}/zh/insights${slug}/`,
       'x-default': `${SITE_URL}/insights${slug}/`,
+    },
+  });
+
+  /* The method pages exist in English, Chinese and Japanese; the map is three languages. */
+  const tripleAlternates = (en: string, zh: string, ja: string) => ({
+    languages: {
+      en: `${SITE_URL}${en}`,
+      'zh-Hans': `${SITE_URL}${zh}`,
+      ja: `${SITE_URL}${ja}`,
+      'x-default': `${SITE_URL}${en}`,
     },
   });
 
@@ -290,11 +300,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       alternates: pairAlternates("/monitor/", "/zh/monitor/"),
     },
     {
+      url: `${SITE_URL}/ja/methodology/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+      alternates: tripleAlternates("/methodology/", "/zh/methodology/", "/ja/methodology/"),
+    },
+    {
       url: `${SITE_URL}/methodology/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.9,
-      alternates: pairAlternates("/methodology/", "/zh/methodology/"),
+      alternates: tripleAlternates("/methodology/", "/zh/methodology/", "/ja/methodology/"),
     },
     {
       /* The site's own measurement, published at a URL a crawler may read.
@@ -418,11 +435,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     })),    /* The rule reference: the hub, then one page per rule. */
     {
+      url: `${SITE_URL}/ja/checks/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+      alternates: tripleAlternates("/checks/", "/zh/checks/", "/ja/checks/"),
+    },
+    {
       url: `${SITE_URL}/checks/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
-      alternates: pairAlternates("/checks/", "/zh/checks/"),
+      alternates: tripleAlternates("/checks/", "/zh/checks/", "/ja/checks/"),
     },
     /* One Chinese page per rule, paired with its English page. Only these two languages are
        translated, so the alternates map stays two languages rather than the six the home and
@@ -436,6 +460,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
         languages: {
           en: `${SITE_URL}/checks/${check.id}/`,
           'zh-Hans': `${SITE_URL}/zh/checks/${check.id}/`,
+          ja: `${SITE_URL}/ja/checks/${check.id}/`,
+          'x-default': `${SITE_URL}/checks/${check.id}/`,
+        },
+      },
+    })),
+    ...CHECK_CATALOG.filter((check) => !check.alias).map((check) => ({
+      url: `${SITE_URL}/ja/checks/${check.id}/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.4,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/checks/${check.id}/`,
+          'zh-Hans': `${SITE_URL}/zh/checks/${check.id}/`,
+          ja: `${SITE_URL}/ja/checks/${check.id}/`,
           'x-default': `${SITE_URL}/checks/${check.id}/`,
         },
       },
@@ -449,6 +488,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         languages: {
           en: `${SITE_URL}/checks/${check.id}/`,
           'zh-Hans': `${SITE_URL}/zh/checks/${check.id}/`,
+          ja: `${SITE_URL}/ja/checks/${check.id}/`,
           'x-default': `${SITE_URL}/checks/${check.id}/`,
         },
       },

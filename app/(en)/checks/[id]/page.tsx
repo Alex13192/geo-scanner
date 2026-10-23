@@ -124,6 +124,7 @@ export async function generateMetadata({
       languages: {
         en: `/checks/${check.id}/`,
         "zh-Hans": `/zh/checks/${check.id}/`,
+        ja: `/ja/checks/${check.id}/`,
         "x-default": `/checks/${check.id}/`,
       },
       /*

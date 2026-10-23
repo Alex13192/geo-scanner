@@ -58,6 +58,7 @@ export const metadata: Metadata = {
     languages: {
       en: "/methodology/",
       "zh-Hans": "/zh/methodology/",
+      ja: "/ja/methodology/",
       "x-default": "/methodology/",
     },
   },
