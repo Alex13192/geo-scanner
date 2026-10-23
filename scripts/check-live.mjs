@@ -465,6 +465,31 @@ console.log("\n=== localized pages ===");
   }
 }
 
+/* ---- plain HTTP must move to HTTPS ---- */
+console.log("\n=== plain HTTP ===");
+{
+  /*
+   * WHY THIS IS ASSERTED: measured on 2026-10-23, http://llmention-geo.com/ answered 200.
+   * HSTS only protects a browser that has already visited over HTTPS, so a first-time
+   * visitor and a crawler were served plaintext. The redirect now lives in proxy.ts because
+   * the deployment token cannot change the zone's "Always Use HTTPS" setting - which is
+   * still the better place for it, but a code-level redirect is one this repository can
+   * verify and keep.
+   */
+  const httpBase = base.replace(/^https:/, "http:");
+  try {
+    const res = await fetch(`${httpBase}/`, { redirect: "manual" });
+    const location = res.headers.get("location") || "";
+    if (res.status === 301 && location.startsWith("https://")) {
+      ok("http:// moves to https://", `301 -> ${location}`);
+    } else {
+      bad("http:// does not redirect to https://", `HTTP ${res.status} -> ${location || "(no location)"}`);
+    }
+  } catch (error) {
+    bad("http:// could not be fetched", String(error));
+  }
+}
+
 /* ---- HTML must not be cacheable past a deploy ---- */
 console.log("\n=== html cache headers ===");
 {

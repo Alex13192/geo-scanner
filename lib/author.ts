@@ -28,7 +28,7 @@ export const AUTHOR = {
   /**
    * The public byline. Short, the same everywhere: byline, Person node, masthead.
    */
-  name: "Alex",
+  name: "Alex Xu",
   /** The handle the project is published under, so the byline is verifiable. */
   handle: "Alex13192",
   role: "Maintainer, LLMention",

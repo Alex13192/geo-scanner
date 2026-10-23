@@ -4,6 +4,7 @@ import PostShell from "@/app/components/PostShell";
 import { AUTHOR } from "@/lib/author";
 import type { PostMeta } from "@/lib/insights";
 import { social } from "@/lib/og";
+import { CONTACT_EMAIL } from "@/lib/site";
 
 const TITLE = "Who writes this site";
 const DESCRIPTION =
@@ -113,6 +114,37 @@ export default function AuthorPage() {
         catalogue the page publishes. A reader who thinks a rule is wrong can name it and check
         it, which is a better guarantee than a biography — and the only one this project can
         honestly make.
+      </p>
+
+      <h2>What is his professional background?</h2>
+      <p>
+        Alex Xu has spent 23 years building and operating networks, most of them large enough
+        that a crawler or a misconfigured edge is not an abstraction. He is a Cisco CCIE
+        (#13192, Routing &amp; Switching and Security, with the Service Provider written and lab
+        exams), CCNP and CCNA, Microsoft MCSE and Juniper JNCIS certified, and studied at
+        Shanghai Normal University.
+      </p>
+      <p>
+        Recent roles: Global Technical Lead Engineer at Infosys (2024–), responsible for a
+        network spanning 10+ data centres, 3,000+ retail stores and 60+ corporate offices;
+        Senior Network Architect at LVMH (2023–2024), leading a hybrid-cloud and SD-WAN
+        transformation across 8 data centres and 2,000+ boutiques in Greater China and APAC;
+        Senior Network Engineer at Pearson (2013–2022), running 16 enterprise data centres and
+        the network behind 5,500+ Pearson VUE test centres; and earlier roles at Novartis and at
+        Cisco partners in Kenya and China, including carrier backbone work.
+      </p>
+      <p>
+        The specialities that shape this site&rsquo;s checks are the same ones: data-centre
+        fabrics (VXLAN/EVPN, spine-leaf), BGP/MPLS/SRv6, multicast and low-latency switching for
+        AI clusters, network security (Zscaler, Palo Alto, FortiGate, Cisco ASA/Firepower), and
+        automation with Python, Ansible and Nornir. Crawler access, edge delivery and
+        machine-readable structure are the parts of GEO that are network problems, and they are
+        written by someone who has spent two decades on network problems.
+      </p>
+      <p className="text-sm text-[var(--ink-3)]">
+        A full résumé is available on request at{" "}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Phone number, postal address and
+        date of birth are deliberately not published here.
       </p>
 
       <h2>How is the writing produced?</h2>

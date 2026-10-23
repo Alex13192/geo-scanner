@@ -3,6 +3,7 @@ import ProsePage from "@/app/components/ProsePage";
 import Faq from "@/app/components/Faq";
 import SellerIdentity from "@/app/components/SellerIdentity";
 import BuyButton from "@/app/components/BuyButton";
+import ReportPreview from "@/app/components/ReportPreview";
 import { social } from "@/lib/og";
 import { PRODUCTS, formatUsd } from "@/lib/pricing";
 import { languageAlternates, pricingPath } from "@/lib/i18n/config";
@@ -132,6 +133,12 @@ export default function PricingPage() {
           checkout is being connected; until it is live, the button opens a prefilled order
           email.
         </p>
+
+        {/* The same sample the report page shows, placed where a buyer is already comparing
+            products: the price is on this page, so the deliverable should be too. */}
+        <div className="not-prose mt-12 max-w-3xl">
+          <ReportPreview />
+        </div>
 
         <h2>Agencies and multi-brand work</h2>
         <p>

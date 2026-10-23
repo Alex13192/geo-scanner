@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { LEGACY_HOST, SITE_URL } from "@/lib/site";
+import { LEGACY_HOST, SITE_HOST, SITE_URL } from "@/lib/site";
 
 /**
  * Two redirects, and they live in the same file because they are the same kind of
@@ -61,6 +61,23 @@ const GONE: Record<string, string> = {
 
 export function proxy(request: NextRequest) {
   /*
+   * 0. Plain HTTP from the edge moves to HTTPS here, not only in the zone setting.
+   *
+   * WHY THIS EXISTS: measured on 2026-10-23, http://llmention-geo.com/ answered 200. HSTS
+   * protects a browser that has already visited over HTTPS; a first-time visitor and a
+   * crawler get the plaintext version, and the audit was right that this is a P0 for a site
+   * that publishes a security section. The zone-level "Always Use HTTPS" setting is still
+   * the better place for it (it answers before the Worker runs), but the token in this
+   * account cannot change zone settings, and a redirect that lives in code is one this
+   * repository can verify.
+   */
+  if (request.nextUrl.protocol === "http:") {
+    const secure = request.nextUrl.clone();
+    secure.protocol = "https:";
+    return NextResponse.redirect(secure, 301);
+  }
+
+  /*
    * 1. The old hostname moves to the site's own domain.
    *
    * Checked before the path table, and that order is deliberate: this applies to every
@@ -78,6 +95,20 @@ export function proxy(request: NextRequest) {
       new URL(request.nextUrl.pathname + request.nextUrl.search, SITE_URL),
       301
     );
+  }
+
+  /*
+   * 1b. www moves to the apex.
+   *
+   * The www hostname had no DNS record on 2026-10-23, so it answered 502 rather than
+   * reaching this function - a dashboard change (a proxied www record plus this redirect)
+   * cannot be made from this repository. The branch is here so that the day the record
+   * exists, www does not become a second copy of the site for search engines, which is the
+   * usual outcome of adding the record and stopping there.
+   */
+  if ((request.headers.get("host") ?? "").toLowerCase() === `www.${SITE_HOST}`) {
+    const target = new URL(request.nextUrl.pathname + request.nextUrl.search, SITE_URL);
+    return NextResponse.redirect(target, 301);
   }
 
   /* 2. Dead paths on the current hostname. */
