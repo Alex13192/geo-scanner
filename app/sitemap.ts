@@ -246,6 +246,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.7,
+      alternates: pairAlternates("/api-docs/", "/zh/api-docs/"),
     },
     {
       /* The weekly-report signup. Listed rather than hidden: it is a page people arrive on
@@ -277,6 +278,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.8,
+      alternates: pairAlternates("/self-audit/", "/zh/self-audit/"),
     },
     /* The writing. Listed individually rather than as an index-only entry because each piece
        is a standalone answer to a question nobody else has measured, and the archive page is
@@ -319,12 +321,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'yearly',
       priority: 0.5,
+      alternates: pairAlternates("/author/", "/zh/author/"),
     },
     {
       url: `${SITE_URL}/about/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.6,
+      alternates: pairAlternates("/about/", "/zh/about/"),
     },
     /* Legal and contact.
        These pages are thin by nature, which is why they carry a low priority,
@@ -470,5 +474,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
         alternates: alternatesFor(pricingPath),
       },
     ]),
+    {
+      url: `${SITE_URL}/zh/api-docs/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+      alternates: pairAlternates('/api-docs/', '/zh/api-docs/'),
+    },
+    {
+      url: `${SITE_URL}/zh/self-audit/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+      alternates: pairAlternates('/self-audit/', '/zh/self-audit/'),
+    },
+    {
+      url: `${SITE_URL}/zh/author/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly' as const,
+      priority: 0.4,
+      alternates: pairAlternates('/author/', '/zh/author/'),
+    },
+    {
+      url: `${SITE_URL}/zh/about/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
+      alternates: pairAlternates('/about/', '/zh/about/'),
+    },
+
   ];
 }

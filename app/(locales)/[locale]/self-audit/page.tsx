@@ -440,7 +440,7 @@ export default async function ChineseSelfAuditPage({
                   </p>
                 ) : (
                   <p>
-                    过去在这里被排除的规则是 hreflang：它现在通过了，因为首页和定价页已经用另外{" "}
+                    过去在这里被排除的规则是 hreflang：它现在通过了，因为首页和定价页已经以英文之外的{" "}
                     {ADDITIONAL_LANGUAGES} 种语言发布，并声明了完整的语言矩阵。改了什么、
                     什么时候改的，都在{" "}
                     <Link href="/zh/methodology/#what-changed">方法变更记录</Link>里。
