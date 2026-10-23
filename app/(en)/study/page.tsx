@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ProsePage from "@/app/components/ProsePage";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
+import AuthorLine from "@/app/components/AuthorLine";
 import { SITE_URL } from "@/lib/site";
 
 /**
@@ -32,6 +33,7 @@ import { SITE_URL } from "@/lib/site";
  *    observation rather than a property of the site.
  */
 import { og } from "@/lib/og";
+import { formatDate, getInsight, insightPath } from "@/lib/insights";
 // The rows, the aggregates and the scan date live in one module so the page, the
 // machine-readable endpoint at /study/data/ and the tests all read the same array.
 import {
@@ -50,6 +52,44 @@ import {
 const TITLE = "We scanned 30 major sites for AI visibility";
 const DESCRIPTION =
   "None of the 30 homepages scored an A; the average was 62. Every news publisher disallows AI crawlers. Per-domain results, reproducible from the public API.";
+
+/**
+ * The measurement date in the machine form the byline's <time> element needs.
+ *
+ * SCAN_DATE in lib/study-data.ts is written the way the page prints it ("3 October 2026")
+ * because it lands mid-sentence, and the site does not hand non-ISO strings to Date() -
+ * which is the same reason lib/insights.ts formats dates by hand instead of with Intl. So
+ * the ISO twin is typed here, next to the imported display form, and the check below is
+ * what stops the twin becoming a second, quietly disagreeing date the next time the study
+ * is re-run. A comment would not fail a build; this does.
+ */
+const SCAN_DATE_ISO = "2026-10-03";
+if (formatDate(SCAN_DATE_ISO) !== SCAN_DATE) {
+  throw new Error(
+    `SCAN_DATE_ISO (${SCAN_DATE_ISO}) no longer matches SCAN_DATE ("${SCAN_DATE}") in lib/study-data.ts.`
+  );
+}
+
+/**
+ * The day the hreflang rule changed, as recorded beside the rule in lib/geo/analyze.ts and
+ * as the newest entry in the /methodology/ changelog. The rows below were measured before
+ * it, so the byline names both dates and the note under it says what a re-run would do
+ * differently. The rows stay as measured: re-scoring a published dataset under today's
+ * method and calling it the same study would be the backdating this page exists against.
+ */
+const METHOD_REVISED_ISO = "2026-10-23";
+
+/**
+ * The pieces that interpret this table, looked up in the archive registry rather than
+ * retyped here. A slug that moves takes its link and its title with it, and a piece removed
+ * from lib/insights.ts throws through getInsight at build time rather than leaving a dead
+ * link on a page about checkability.
+ */
+const INTERPRETATIONS = [
+  "thirty-homepages-none-graded-a",
+  "nine-homepages-never-answered",
+  "six-news-publishers-blocking-ai-crawlers",
+].map((slug) => ({ ...getInsight(slug), href: insightPath(slug) }));
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -84,6 +124,33 @@ export default function StudyPage() {
       action={{ href: "/", label: "Scan your own site →" }}
       width="4xl"
     >
+        {/*
+          The byline goes above the numbers rather than inside the header, because the header
+          says what was measured and these two dates answer who measured it and whether the
+          rules have moved since. The note is one sentence and belongs with the date: a study
+          measured under an older rule has to say so where it is dated, and saying it plainly
+          is a smaller claim than quietly presenting old rows as current ones.
+        */}
+        <div className="mb-12 space-y-2">
+          <AuthorLine
+            date={SCAN_DATE_ISO}
+            label="Measurements taken"
+            updated={METHOD_REVISED_ISO}
+          />
+          <p className="text-[13px] leading-relaxed text-[var(--ink-3)]">
+            These rows were measured before the {formatDate(METHOD_REVISED_ISO)} hreflang change,
+            the first entry in the{" "}
+            <a
+              href="/methodology/#what-changed"
+              className="text-[var(--accent)] underline hover:opacity-75"
+            >
+              method changelog
+            </a>
+            . A re-run today would score single-language sites at most 2 points higher, so the
+            rows are published as measured rather than silently re-scored.
+          </p>
+        </div>
+
         {/* Headline numbers */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           <div className="bg-[var(--surface-2)] border border-[var(--line)] rounded-2xl p-5">
@@ -316,6 +383,17 @@ export default function StudyPage() {
             renders, so they cannot disagree with it.
           </p>
           <p>
+            The collection step is in the repository too. <code>npm run study:run</code> walks
+            the same 30 homepages against the live endpoint and prints the rows in the shape the
+            table above stores them in — the same rows{" "}
+            <a href={STUDY_DATA_PATH} className="text-[var(--accent)] hover:opacity-75 underline">
+              <code>{STUDY_DATA_PATH}</code>
+            </a>{" "}
+            serves as JSON. The pacing is part of the method rather than politeness: it stays
+            under the endpoint&rsquo;s own rate limit, because a 429 recorded as a finding about a
+            site would corrupt the data instead of merely slowing the run down.
+          </p>
+          <p>
             Every row above comes from one public endpoint, and{" "}
             <code>brief=1</code> returns just the headline numbers:
           </p>
@@ -332,6 +410,24 @@ export default function StudyPage() {
             score cannot see. If a result here looks wrong, that is a bug report and it is
             welcome — the check will be fixed rather than the number.
           </p>
+
+          {/*
+            The table is the claim; the archive is what it means. Three pieces, from the
+            registry rather than a hand-typed list, so this page cannot point a reader at an
+            article that no longer exists.
+          */}
+          <h3>Three readings of this table</h3>
+          <p>
+            The rows are one thing and what follows from them is another. These three pieces
+            work through the same data and link back to it:
+          </p>
+          <ul>
+            {INTERPRETATIONS.map((piece) => (
+              <li key={piece.slug}>
+                <a href={piece.href}>{piece.title}</a> — {piece.figure} {piece.figureLabel}.
+              </li>
+            ))}
+          </ul>
         </article>
 
         <div className="mt-16 pt-8 border-t border-[var(--line)] flex flex-wrap gap-x-6 gap-y-2">

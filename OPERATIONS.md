@@ -300,3 +300,34 @@ and a failure of the last one is invisible in every place a person would look. T
 duplicate emails and a spent sending allowance, not an error. If this has to be done again, prefer
 a mechanism that cannot get stuck: a guarded endpoint that runs one pass on demand, or accepting
 the wait for the real schedule.
+
+## Next 15 left support and the build stopped (23 October 2026)
+
+THIS ONE DOES NOT FAIL AT RUNTIME AND DOES NOT FAIL IN AN OBVIOUS PLACE. The site kept serving
+normally; what stopped was the ability to deploy it at all.
+
+`npx opennextjs-cloudflare build` exits 1 with:
+
+```
+Next.js version 15.5.27 is not supported by the Next.js team.
+Major versions are supported for 2 years from their release date.
+Unsupported releases may contain unpatched security vulnerabilities.
+If you want to proceed anyway, use the --dangerouslyUseUnsupportedNextVersion flag.
+```
+
+THE MECHANISM, READ FROM THE INSTALLED ADAPTER RATHER THAN GUESSED. `@opennextjs/aws` carries a
+release-date table (`NEXT_RELEASE_DATES`) and refuses a major whose two-year window has closed.
+Next 15's date is 2024-10-21, so the window closed on 2026-10-21 - two days before this was found.
+Nothing in this repository changed to cause it; the calendar did. That is why the last green deploy
+was 14 October and the next one would have failed.
+
+WHAT WAS DONE, AND WHAT IT IS NOT. `--dangerouslyUseUnsupportedNextVersion` was added to the adapter
+build in package.json, verify.yml and deploy.yml. It downgrades the refusal to a warning - it does
+not make an out-of-support runtime safe. Without it, main cannot deploy at all, so the choice was
+between an unpatched Next 15 and no releases. The note in verify.yml says to delete the flag in the
+same commit that moves to a supported major; the Next 16 migration is the real fix and is not part
+of that change.
+
+HOW TO CONFIRM IT IS THE SAME FAILURE NEXT TIME: run the build command directly and read the error.
+If it names the Next version and the support window, it is this; do not go looking at wrangler or
+the adapter version first.

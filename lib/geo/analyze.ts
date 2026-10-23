@@ -1217,24 +1217,53 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
     );
     const codes = Array.from(hreflangCodes);
 
-    c.push(
-      codes.length >= 2
-        ? pass(
-            "hreflang",
-            2,
-            "Alternate language versions are declared",
-            `${codes.length} distinct language codes: ${codes.join(", ")}.`
-          )
-        : fail(
-            "hreflang",
-            2,
-            "No alternate language versions",
-            codes.length === 1
-              ? `Only one language is declared (${codes[0]}); x-default does not count as a language.`
-              : "No hreflang attributes found.",
-            "Declare hreflang for each language version you actually serve, so every version can be retrieved in its own market."
-          )
-    );
+    /*
+     * NO DECLARATION AT ALL IS NOW NOT APPLICABLE, AND THAT IS A CORRECTION OF A
+     * MEASUREMENT ERROR RATHER THAN A SOFTENED RULE.
+     *
+     * Until 2026-10-23 this failed whenever fewer than two distinct codes were declared,
+     * which meant every single-language site lost two points for a question that does not
+     * apply to it. The scanner fetches one page: it cannot tell a site that serves one
+     * language from a site that serves several and has not declared them, so "absent" was
+     * never evidence of a gap - it was evidence of nothing. The audit that prompted the
+     * change named the consequence exactly: a rule that penalises monolingual sites makes
+     * the method itself the thing under suspicion.
+     *
+     * THE THREE CASES ARE STILL DISTINGUISHED, because collapsing them would be the
+     * opposite error: no declaration is not applicable (nothing to judge), one declaration
+     * still fails (a page that publishes an alternate set of one language has published an
+     * incomplete declaration), and two or more distinct codes pass.
+     *
+     * An n/a check leaves both the numerator and the denominator of the score, so this
+     * cannot award points for nothing - it removes a question the page was never asked.
+     */
+    if (codes.length === 0) {
+      c.push(
+        notApplicable(
+          "hreflang",
+          2,
+          "No alternate language versions declared",
+          "No hreflang alternates are declared. A single-language site has nothing to declare, and one fetched page cannot distinguish it from a site that has translations but has not declared them, so this rule is excluded from the score rather than failed. A page that declares exactly one code still fails."
+        )
+      );
+    } else {
+      c.push(
+        codes.length >= 2
+          ? pass(
+              "hreflang",
+              2,
+              "Alternate language versions are declared",
+              `${codes.length} distinct language codes: ${codes.join(", ")}.`
+            )
+          : fail(
+              "hreflang",
+              2,
+              "Incomplete alternate language declaration",
+              `Only one language is declared (${codes[0]}); x-default does not count as a language.`,
+              "Declare hreflang for each language version you actually serve, so every version can be retrieved in its own market."
+            )
+      );
+    }
     // A region subtag is what makes a language market-specific: de-DE is not the
     // same target as de. This check used to run the identical <html lang> regex
     // as html-lang, so a single attribute earned points in two different
@@ -1291,7 +1320,6 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
    * change score-neutral for every page type it does not mention.
    */
   const pageType = detectPageType(input.path, input.html);
-  let checksNotApplicable = 0;
   for (const [checkId, types] of Object.entries(NA_BY_PAGE_TYPE)) {
     if (!types.includes(pageType)) continue;
     for (const dimensionId of Object.keys(checks)) {
@@ -1305,9 +1333,19 @@ export function analyze(input: AnalyzeInput): AnalyzeResult {
         existing.title,
         `Not applicable to a ${pageType} page, so it is excluded from the score rather than counted as a failure.`
       );
-      checksNotApplicable += 1;
     }
   }
+
+  /*
+   * COUNTED FROM THE CHECKS THAT ACTUALLY CAME BACK n/a, rather than incremented where
+   * the page-type exemptions are applied. There are now two reasons a check can be
+   * inapplicable - the page type, and a rule whose premise the page does not meet (hreflang
+   * on a single-language site) - and a counter that only saw the first would under-report
+   * the exclusions on every monolingual site while the score still excluded them.
+   */
+  const checksNotApplicable = Object.values(checks)
+    .flat()
+    .filter((check) => check.status === "na").length;
 
   /* ---- Aggregate ---- */
   const dimensions: Dimension[] = [];

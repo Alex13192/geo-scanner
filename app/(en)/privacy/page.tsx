@@ -91,7 +91,7 @@ export default function PrivacyPage() {
             No account, name or email address is required to run a scan, and we do not ask for one.
           </p>
 
-          <h2>"What a subscription stores</h2>
+          <h2>What a subscription stores</h2>
           <p>
             The weekly report is separate from the scanner, and it is the only part of this site
             that holds anything about a person. It needs an address to send to and a domain to check.

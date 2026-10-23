@@ -3,7 +3,8 @@ import Link from "next/link";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import ProsePage from "@/app/components/ProsePage";
-import { CONTACT_EMAIL } from "@/lib/site";
+import { AUTHOR } from "@/lib/author";
+import { BRAND_FULL, CONTACT_EMAIL } from "@/lib/site";
 
 import { og } from "@/lib/og";
 
@@ -77,23 +78,47 @@ export default function AboutPage() {
 
           <h2>Who runs it</h2>
           <p>
-            LLMention is maintained by the LLMention team as an independent project. It is not
+            LLMention is maintained by{" "}
+            <Link href={AUTHOR.path}>{AUTHOR.name}</Link> as an independent project. It is not
             affiliated with OpenAI, Anthropic, Google or Perplexity, and it holds no data
-            relationship with them. The scanner is free, it requires no account, and there is
-            nothing on this site to buy.
+            relationship with them. The scanner is free and requires no account.
           </p>
           <p>
-            Written and maintained by the LLMention team. The scoring method is published in
-            full on the <Link href="/methodology/">methodology page</Link>, and the source is
+            It is not a free site with nothing behind it, so the funding is stated rather than
+            left to be discovered: advertising served by Google, and a paid measurement report
+            described on the <Link href="/pricing/">pricing page</Link>. Neither can change a
+            score — the score is computed by the scanner from the response it fetches, and a
+            report explains a result rather than editing one. The{" "}
+            <Link href={AUTHOR.path}>author page</Link> sets out the editorial rules and the
+            conflicts that come with that model.
+          </p>
+          <p>
+            Written and maintained by {AUTHOR.name}. The scoring method is published in
+            full on the <Link href="/methodology/">methodology page</Link>, the source is
             public at{" "}
             <a
-              href="https://github.com/Alex13192/geo-scanner"
+              href={AUTHOR.githubRepo}
               target="_blank"
               rel="noopener noreferrer"
             >
               github.com/Alex13192/geo-scanner
             </a>
             , so a disagreement with a result can be specific: say which check and which URL.
+            The longer-form writing — what the study found, and where the method is weaker than
+            it looks — is at <Link href="/insights/">/insights/</Link>.
+          </p>
+
+          <h2>The name, and what it is not</h2>
+          <p>
+            The product&rsquo;s full name is {BRAND_FULL}. It is an independent readiness audit
+            — it fetches your pages the way a crawler would and reports whether they can be
+            read and cited — not a mention tracker, and it does not count mentions or ask an
+            engine about your brand.
+          </p>
+          <p>
+            It is not affiliated with DataForSEO&rsquo;s LLM Mentions API — the product at{" "}
+            <code>llm.dataforseo.com</code> — which measures a different thing: there is no
+            partnership, data relationship, or shared operator between the two.
           </p>
 
           <h2>Contact</h2>
@@ -172,7 +197,8 @@ export default function AboutPage() {
           <Faq
             title="Questions about the project"
             items={[
-            { q: "Who runs LLMention?", a: "An independent project, maintained by the team named on the contact page. It is not affiliated with OpenAI, Anthropic, Google or Perplexity, and holds no data relationship with any of them." },
+            { q: "Who runs LLMention?", a: "Alex, an independent developer, named on the author page with the GitHub account the project is published under. It is not affiliated with OpenAI, Anthropic, Google or Perplexity, and holds no data relationship with any of them." },
+            { q: "Is LLMention the same as DataForSEO's LLM Mentions API?", a: `No. The full name is ${BRAND_FULL}, an independent readiness audit; it does not track mentions or query an engine about a brand. DataForSEO's LLM Mentions API is a different product that measures mentions. There is no partnership, data relationship or shared operator between the two.` },
             { q: "Why publish the scoring method in full?", a: "Because the category has a credibility problem in the other direction: tools describe mysterious AI visibility scores without saying how they are computed. A method you cannot inspect is not evidence." },
             { q: "Does the scanner query ChatGPT about my brand?", a: "No. It measures whether your pages are in a state that makes being cited possible, which is a narrower claim than whether you are being cited, and a more defensible one." },
             ]}

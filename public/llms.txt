@@ -1,14 +1,19 @@
-# LLMention
+# LLMention GEO Scanner
 
-> LLMention is a Generative Engine Optimization (GEO) scanner. It audits whether
-> AI search engines and LLM crawlers can access, parse and cite a website, and it
-> generates the /llms.txt context file that those crawlers read.
+> LLMention GEO Scanner is an independent Generative Engine Optimization (GEO)
+> readiness audit, not a mention tracker: it checks whether AI search engines and
+> LLM crawlers can access, parse and cite a website, and it generates the /llms.txt
+> context file those crawlers may read.
 
 LLMention is a free web tool for developers, SEO teams and marketing teams who
 need to know whether their site is readable by generative search engines such as
 ChatGPT, Claude, Perplexity and Google AI Overviews. It reports crawl blocks,
 missing context files and structural issues that stop a page from being quoted in
 an AI-generated answer, and produces a shareable readiness score.
+
+It is unrelated to DataForSEO's LLM Mentions API: that product measures brand
+mentions, which is a different measurement, and there is no partnership, data
+relationship or shared operator between the two.
 
 ## Core capabilities
 
@@ -40,10 +45,43 @@ an AI-generated answer, and produces a shareable readiness score.
 - [Implementing Schema.org JSON-LD for entity disambiguation](https://llmention-geo.com/docs/schema-org-jsonld/):
   Connecting Organization, WebSite and SoftwareApplication nodes into one entity.
 
+## Machine-readable
+
+- [Homepage as markdown](https://llmention-geo.com/markdown/): A markdown twin of
+  the homepage for engines that parse text more cheaply than HTML. It mirrors the
+  homepage - same sections, same claims - rather than being a second version of it.
+
+## Writing
+
+- [All writing](https://llmention-geo.com/insights/): First-party pieces on what the
+  30-site study found, how the rules fail in practice, and where the method is weaker
+  than it looks.
+- [We scanned 30 homepages and none graded an A](https://llmention-geo.com/insights/thirty-homepages-none-graded-a/):
+  The full grade distribution, the ceiling, and why the average is taken over the 21
+  homepages that answered rather than all 30.
+- [Six news publishers, six blocking AI crawlers](https://llmention-geo.com/insights/six-news-publishers-blocking-ai-crawlers/):
+  Every news site in the sample turns away at least one tracked crawler; the measured
+  status codes and the policy trade behind them.
+- [Nine homepages never answered the crawler](https://llmention-geo.com/insights/nine-homepages-never-answered/):
+  What a 401, 403, 429, 202 or 520 means for a score, and why those rows are published
+  and excluded from the mean.
+- [22 of 30 sites leave AI guessing who they are](https://llmention-geo.com/insights/entity-markup-gap/):
+  The entity and sameAs coverage across the sample, with the smallest JSON-LD graph that
+  passes both rules.
+- [llms.txt: what the evidence actually supports](https://llmention-geo.com/insights/llms-txt-what-the-evidence-supports/):
+  Why the convention is checked, why it is capped at 3.3 of 100 points, and what the
+  crawler documentation does and does not commit to.
+- [How to read a failed check and fix the right thing](https://llmention-geo.com/insights/reading-a-failed-check/):
+  The three questions to ask before editing, and the difference between satisfying a rule
+  and satisfying the reason it exists.
+
 ## Company
 
 - [About](https://llmention-geo.com/about/): Who maintains the tool, what it
   deliberately does not do, and how to report a result you believe is wrong.
+- [Who writes this site](https://llmention-geo.com/author/): The person accountable for
+  the measurements, how the writing is produced and corrected, and how the site is
+  funded.
 - [Study](https://llmention-geo.com/study/): First-party measurements over 30
   major homepages, published with the sample and the date they were taken.
 
@@ -69,4 +107,5 @@ Claude-SearchBot, anthropic-ai (Anthropic); PerplexityBot, Perplexity-User
 - The scanner and the llms.txt generator are free and do not require an account.
 - Scan result pages under /report/ are generated per request and are excluded from
   search indexing via robots.txt.
-- The tool is operated by the LLMention team, reachable at services@llmention-geo.com.
+- The tool is maintained by one independent developer, named on the author page,
+  and is reachable at services@llmention-geo.com.

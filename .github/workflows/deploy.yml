@@ -79,7 +79,11 @@ jobs:
       # deployment's environment and not in this file.
       - name: Build for Cloudflare
         if: env.CF_TOKEN != ''
-        run: npx opennextjs-cloudflare build
+        # The flag, and why it is here rather than optional: see the long note on the same
+        # command in verify.yml. Next 15 left the Next.js support window on 2026-10-21 and the
+        # adapter refuses to build it without --dangerouslyUseUnsupportedNextVersion. The real
+        # fix is the Next 16 migration; this only stops the deploy breaking in the meantime.
+        run: npx opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion
 
       - name: Deploy to Cloudflare Workers
         if: env.CF_TOKEN != ''

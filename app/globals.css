@@ -270,6 +270,48 @@ body {
   color: var(--ink-2);
   margin: 0 0 1rem;
 }
+/*
+ * DATA TABLES INSIDE PROSE.
+ *
+ * The articles under /insights/ carry a table in nearly every piece, and until this rule
+ * existed a table written straight into `.doc-article` rendered with the browser's
+ * defaults: no header background, no row separators, no border, and a 400-weight caption
+ * that read as body copy. Three pages elsewhere on the site had solved it by repeating
+ * the same six Tailwind classes on every table, which is exactly the duplication that
+ * ProsePage and PageFooter were created to stop - and it left any new page free to get
+ * it wrong. Styling the element here means a table in prose looks like a table without
+ * the author having to remember a class string.
+ *
+ * The borders are on the cells rather than the table so the header row keeps a single
+ * top edge and the last row does not double up; `overflow: hidden` and the radius are a
+ * pair, because a radius on a collapsed-border table clips nothing on its own.
+ */
+.doc-article table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  margin: 0 0 1.25rem;
+  font-size: 0.875rem;
+}
+.doc-article thead {
+  background: var(--surface-2);
+}
+.doc-article th {
+  text-align: left;
+  padding: 0.6rem 0.9rem;
+  font-weight: 600;
+  color: var(--ink-1);
+  border-top: 0;
+}
+.doc-article td {
+  text-align: left;
+  padding: 0.6rem 0.9rem;
+  vertical-align: top;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+}
 
 /* ------------------------------------------------------------------
    The homepage's scan console - the one moving thing on the site.

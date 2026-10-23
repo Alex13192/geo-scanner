@@ -537,11 +537,27 @@ console.log("\n=== study prose agrees with study data ===");
   }
 }
 
-/* 5. A single-language site must not pass the multilingual check just because it
-      declares a default. This is the measurement error the project exists to
-      avoid, so it is pinned down explicitly. */
+/* 5. The two cases a single-language site can be in, plus the default-marker trap.
+      These are pinned down separately because they are three different readings of the
+      same absence, and the 2026-10-23 rule change made the first two differ:
+        - no hreflang at all       -> not applicable (nothing was asked of this page)
+        - one code (or en+x-default) -> still a failure (an incomplete declaration)
+        - two distinct codes        -> pass
+      The middle case is the measurement error the project exists to avoid: `en` plus
+      x-default is one language declaring its default, not a multilingual site. */
 console.log("\n=== single-language hreflang guard ===");
 {
+  const undeclared = analyze({
+    ...base,
+    html: `<html lang="en"><head><title>Example</title></head><body><h1>Only English here</h1></body></html>`,
+  });
+  const undeclaredStatus = undeclared.checks.find((c) => c.id === "hreflang")?.status;
+  const undeclaredOk = undeclaredStatus === "na";
+  console.log(
+    `  ${undeclaredOk ? "PASS" : "FAIL"}  no hreflang declaration at all is not applicable (got "${undeclaredStatus}")`
+  );
+  if (!undeclaredOk) process.exitCode = 1;
+
   const single = analyze({
     ...base,
     html: `<html lang="en"><head><link rel="alternate" hreflang="en" href="https://example.com/"><link rel="alternate" hreflang="x-default" href="https://example.com/"></head><body><h1>Only English here</h1></body></html>`,

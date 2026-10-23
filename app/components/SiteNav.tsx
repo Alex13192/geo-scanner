@@ -10,6 +10,7 @@ import {
   Library,
   ListChecks,
   Mail,
+  PenLine,
   type LucideIcon,
 } from "lucide-react";
 
@@ -108,6 +109,17 @@ const GROUPS: Group[] = [
         icon: BarChart3,
       },
       {
+        /*
+         * Writing was added with /insights/ on 2026-10-18. It is in Learn rather than beside
+         * the tools because the archive is not a product: a reader arrives there to decide
+         * whether to trust the measurement, not to run one.
+         */
+        href: "/insights/",
+        label: "Writing",
+        description: "What the study found, and where the method is weaker than it looks.",
+        icon: PenLine,
+      },
+      {
         href: "/checks/",
         label: "All 40 checks",
         description: "The reference: what each rule looks for and what passes it.",
@@ -123,12 +135,18 @@ export default function SiteNav() {
       {/*
         The announcement strip. It sits inside the sticky header rather than above it so the two
         travel together, and it carries the one sentence a first-time visitor needs before they
-        know what GEO is. Borrowed from every site in this category, which is the point: it works,
-        and it costs 40px of a bar that was already there.
+        know what GEO is.
+
+        WHAT THE STRIP SAYS IS THE PRODUCT'S ACTUAL PROMISE, NOT THE ONE THAT SOUNDS BIGGER. It
+        used to read "See where you rank in AI search", which this scanner cannot do: it never
+        ranks or tracks mentions, it fetches a page the way a crawler would and reports whether
+        that page can be crawled, parsed and cited. A first visitor meets this line before any
+        explanation, so an overstatement here is both the easiest claim to disprove and the one
+        that makes everything below it look like the same kind of marketing.
       */}
       <div className="bg-[var(--accent)] text-[var(--on-accent)]">
         <div className="wrap flex h-10 items-center justify-center gap-2.5 text-[13.5px]">
-          <span className="opacity-90">See where you rank in AI search</span>
+          <span className="opacity-90">Check whether AI can crawl, read and cite your site</span>
           <a href="/#scan" className="group inline-flex items-center gap-1 font-semibold">
             Get a free report
             <ArrowRight

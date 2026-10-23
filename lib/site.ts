@@ -46,6 +46,18 @@ export const LEGACY_HOST = "geo-scanner.ccie13192.com";
 export const BRAND = "LLMention";
 
 /**
+ * The full product name, for the places that must be unambiguous rather than short.
+ *
+ * WHY BOTH NAMES LIVE HERE: "LLMention" on its own sits close enough to DataForSEO's
+ * "LLM Mentions API" that a model can merge the two, so <title>, the SoftwareApplication
+ * node and public/llms.txt use the longer form while the nav keeps the name a reader
+ * actually says. The static file cannot import this module, so it remains a copy - but the
+ * TypeScript sites that read the name share one value with the schema, and a rename fails
+ * the build instead of silently updating one of them.
+ */
+export const BRAND_FULL = "LLMention GEO Scanner";
+
+/**
  * One address for the whole site. It is declared here because it appeared as a
  * local constant in six files, which is how a contact address silently diverges
  * between a pricing page and a refund policy.

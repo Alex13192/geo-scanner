@@ -1,0 +1,102 @@
+name: self-audit
+
+# Re-measure the built homepage once a week and commit the refreshed record.
+#
+# WHY A SCHEDULE RATHER THAN A NUMBER SOMEBODY UPDATES: the homepage publishes its own score and
+# the date it was measured. That date used to be typed next to the score, which meant the page kept
+# claiming a current measurement for weeks after anything had been measured - a stale claim dressed
+# as a fresh one. scripts/self-audit.mts measures the built homepage with the same analyser the
+# scanner runs, and this workflow is what keeps the measurement recent.
+#
+# WHY IT COMMITS AND PUSHES: lib/self-audit.json is read at build time by lib/home-content.ts, so the
+# refreshed value has to be in the repository before any page can print it. The push to main is what
+# hands the new record to the deploy workflow - which runs on every push to main - and that build
+# reads the file, so the page is rebuilt with the refreshed date rather than the previous one. A
+# workflow that measured but did not commit would update nothing anybody sees.
+#
+# ONE LIMIT THIS FILE CROSSES EXPLICITLY: a push made with the repository's GITHUB_TOKEN does not
+# start another workflow run - GitHub suppresses that to prevent recursive runs. Without the last
+# step the record would be committed here and the site would not be rebuilt until a human pushed,
+# which is the "date nobody updates" this job exists to remove. `gh workflow run deploy.yml` is the
+# documented exception - a workflow_dispatch may be started with the same token, given actions:
+# write - and it runs the same gates as any deploy, from the commit that contains the refreshed
+# record. The dispatch is guarded on the record having actually changed, so a re-run on the same day
+# does not queue a deploy that would ship nothing new.
+#
+# A FAILED MEASUREMENT MUST NOT OVERWRITE THE RECORD, and the step order is what enforces it.
+# scripts/self-audit.mts writes nothing until analyze() has returned a result, and a non-zero exit
+# stops the job before the commit step runs. A build that no longer renders, or an analyser that
+# throws, therefore leaves the last known-good record in place instead of committing a number
+# produced from a broken page.
+#
+# NO HOSTNAME APPEARS IN THIS FILE. The script reads lib/site.ts; a copy of the canonical origin here
+# would be a second source of truth that check:values cannot see, which is the failure that once put
+# a stale hostname in the smoke job's command line.
+
+on:
+  schedule:
+    # Mondays, 04:17 UTC. The odd minute is deliberate: schedules at :00 are the most delayed ones,
+    # and the exact minute carries no meaning beyond avoiding that queue.
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  # Required for the workflow_dispatch at the end of the job; without it the token cannot start
+  # deploy.yml and the refreshed record never reaches the deployed page.
+  actions: write
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # The measurement reads the HTML next build writes, so the build comes first. Plain
+      # `next build` is enough here: this job measures the analyser's reading of the page, not the
+      # Cloudflare adapter's acceptance of it - verify.yml already proves the adapter builds it.
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - name: Measure the built homepage
+        run: npm run self-audit
+
+      # `git diff --quiet` distinguishes "the record changed" from "the workflow ran", which matters
+      # because a weekly commit of an identical file is noise in the history and on the deploy queue.
+      # If the measurement is stable, the job is a no-op beyond the log.
+      - name: Commit the refreshed record if it changed
+        id: record
+        run: |
+          if git diff --quiet -- lib/self-audit.json; then
+            echo "lib/self-audit.json is unchanged; nothing to commit."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/self-audit.json
+          git commit -m "chore(self-audit): weekly measurement"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # The push above does not start deploy.yml (GITHUB_TOKEN pushes are suppressed to prevent
+      # recursive runs), so the rebuild is requested explicitly. It runs from main, which now
+      # contains the refreshed record, and the deploy workflow repeats every gate before shipping.
+      - name: Rebuild and deploy with the refreshed record
+        if: steps.record.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run deploy.yml --ref main

@@ -155,8 +155,18 @@ jobs:
       # that shape happens in a pull request instead.
       #
       # This invokes `next build` itself, so it replaces the step rather than joining it.
+      #
+      # THE --dangerouslyUseUnsupportedNextVersion FLAG IS LOAD-BEARING AS OF 2026-10-23, AND IT
+      # IS A STOPGAP RATHER THAN A PREFERENCE. The adapter refuses to build a Next.js major that
+      # the Next team no longer supports, and Next 15's two-year window ended on 2026-10-21; the
+      # first build after that date failed with "Next.js version 15.5.27 is not supported by the
+      # Next.js team". Without the flag, main cannot deploy at all - which is how this was found,
+      # not by reading the policy but by a build refusing to run. The flag only downgrades the
+      # refusal to a warning; it does not make an out-of-support runtime safe. The real fix is the
+      # Next 16 migration, which is a separate change and must not be smuggled into an unrelated
+      # one. Delete this flag in the same commit that moves to a supported major.
       - name: Build for Cloudflare
-        run: npx opennextjs-cloudflare build
+        run: npx opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion
         env:
           # next/font downloads Geist at build time, so this job needs network
           # access; telemetry does not need to be part of it.

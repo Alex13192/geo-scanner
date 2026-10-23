@@ -12,6 +12,13 @@
  * of view. This script closes that hole by running the real analyser, the same
  * one the API route calls, over the HTML that `next build` actually wrote.
  *
+ * It also holds the homepage's PUBLISHED self-measurement to the built page.
+ * lib/self-audit.json is written by scripts/self-audit.mts from this same analyser and is what
+ * lib/home-content.ts prints as the site's own score, date and failure list. A build does not
+ * run that script, so a page edit that changes the score could otherwise ship a record measured
+ * against an older version of the page - the stale self-praise the generated record replaced.
+ * A record that no longer matches the build fails this run.
+ *
  * Run it after a build:
  *   npm run build && node scripts/check-built-pages.mts
  *
@@ -28,6 +35,7 @@ import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { SITE_HOST } from "../lib/site.ts";
 import { analyze } from "../lib/geo/analyze.ts";
+import { INSIGHTS, insightPath } from "../lib/insights.ts";
 
 const APP_DIR = join(process.cwd(), ".next", "server", "app");
 const PUBLIC_DIR = join(process.cwd(), "public");
@@ -71,6 +79,25 @@ const ROUTES: Route[] = [
   { route: "/docs/qa-style-headings/", file: "docs/qa-style-headings.html", indexable: true },
   { route: "/docs/schema-org-jsonld/", file: "docs/schema-org-jsonld.html", indexable: true },
   { route: "/docs/ai-visibility-self-check/", file: "docs/ai-visibility-self-check.html", indexable: true },
+  /*
+   * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
+   * that is new must not skip the gate by being new. The articles are generated from the same
+   * registry the sitemap reads, so one that is published and missing from this list would have
+   * to be missing from the sitemap too.
+   *
+   * No custom floor. A piece is long-form prose with a table, a FAQ and sources, which is the
+   * easiest page type on the site to score well - if one falls below 90 it has lost content
+   * rather than been written short, and that is exactly what should fail.
+   */
+  { route: "/insights/", file: "insights.html", indexable: true },
+  ...INSIGHTS.map((insight) => ({
+    route: insightPath(insight.slug),
+    file: `insights/${insight.slug}.html`,
+    indexable: true,
+  })),
+  /* The author page. Scored like any other page: it is the page a reader follows from a byline,
+     and "about the author" is not a licence to ship three paragraphs. */
+  { route: "/author/", file: "author.html", indexable: true },
   { route: "/answer-check/", file: "answer-check.html", indexable: true },
   { route: "/privacy/", file: "privacy.html", indexable: true },
   { route: "/terms/", file: "terms.html", indexable: true },
@@ -83,11 +110,20 @@ const ROUTES: Route[] = [
    */
   /*
    * THEIR FLOOR IS 80, NOT 90, AND THE REASON IS RECORDED RATHER THAN IMPLIED - the same treatment
-   * the check pages get. Measured on the live site with this same analyser: /pricing/ 82, /refund/ 89.
-   * Four of what holds them there are structural rather than fixable: hreflang and markdown-alternate
-   * are the site's deliberate single-language design (which is why /privacy/ at 97 and /terms/ at 96
-   * carry the same two findings), and quotations and authority-citations ask a price list and a
-   * refund policy for external quotations they do not have and should not invent.
+   * the check pages get. Measured on this build with this same analyser: /pricing/ 84. /refund/ is
+   * rendered per request, because it reads the deployment's OPERATOR_IDENTITY, so it is not in the
+   * build and is not scored here; the live measurement that put it at 89 is what its floor was set
+   * against.
+   *
+   * WHAT HOLDS THEM THERE HAS CHANGED AND IS NAMED RATHER THAN IMPLIED. hreflang no longer costs a
+   * single-language page anything: a page that declares no hreflang is marked not applicable rather
+   * than failed, because one fetched page cannot distinguish a single-language site from a
+   * multilingual one that has not declared its versions. markdown twins exist for the homepage and
+   * the rule pages, but not for /pricing/ or /refund/ - that is the markdown-alternate failure still
+   * in the list below, and it is the same single finding that now holds /privacy/ at 99 and /terms/
+   * at 98 (terms also carries a meta description outside the published range). The other two -
+   * quotations and authority-citations - ask a price list and a refund policy for external citations
+   * they do not have and should not invent.
    *
    * WHAT IS GENUINELY MISSING IS NAMED HERE SO THE FLOOR DOES NOT HIDE IT: an FAQ block on /pricing/
    * (the analyser's `faq` and `qa-headings`) and a list or table on /refund/ (`extractables`). Both
@@ -180,6 +216,8 @@ console.log(`threshold for indexable routes: ${threshold} (grade A)\n`);
 
 const failures: string[] = [];
 const skipped: string[] = [];
+/** The homepage's result, kept so it can be compared with the published self-audit record. */
+let homeResult: ReturnType<typeof analyze> | null = null;
 
 for (const { route, file, indexable, min } of ROUTES) {
   const path = join(APP_DIR, file);
@@ -206,6 +244,8 @@ for (const { route, file, indexable, min } of ROUTES) {
      */
     path: route,
   });
+
+  if (route === "/") homeResult = result;
 
   const floor = min ?? threshold;
   const flag = indexable ? " " : "~";
@@ -240,6 +280,102 @@ console.log("Reports are generated per request and are never prerendered,");
 console.log("so a low score there is expected rather than a regression.");
 
 /*
+ * THE PUBLISHED SELF-AUDIT RECORD, CHECKED AGAINST THE PAGE THAT WAS JUST SCORED.
+ *
+ * WHY THIS IS A GATE AND NOT A WARNING: lib/self-audit.json is not an internal note. The
+ * homepage prints its score, its grade, its verification date and its failure list as a claim
+ * about itself, and lib/home-content.ts reads the file at build time. `npm run build` does not
+ * run scripts/self-audit.mts, so without this comparison a page edit that changes the score
+ * would ship a record measured against an older page - the exact failure the generated record
+ * exists to remove. Failing the run is what makes "the number is measured, not typed" true.
+ *
+ * measuredAt is deliberately not compared: it records the day of the measurement, so it would
+ * differ from any later build even when the page is unchanged. The measurable fields are the
+ * ones that describe the page.
+ */
+const SELF_AUDIT_PATH = join(process.cwd(), "lib", "self-audit.json");
+let recordStale = false;
+
+if (!homeResult) {
+  console.log("\nThe homepage is not in this build, so lib/self-audit.json could not be compared.");
+} else {
+  type SelfAuditRecord = {
+    score?: number;
+    grade?: string;
+    checksRun?: number;
+    checksPassed?: number;
+    notApplicable?: string[];
+    failures?: string[];
+  };
+
+  let record: SelfAuditRecord | null = null;
+  try {
+    record = JSON.parse(readFileSync(SELF_AUDIT_PATH, "utf8")) as SelfAuditRecord;
+  } catch {
+    record = null;
+  }
+
+  if (!record) {
+    console.log("\nself-audit record is stale — run npm run self-audit and rebuild");
+    console.log("  lib/self-audit.json is missing or unreadable, so the homepage's");
+    console.log("  published score cannot be verified against the built page.");
+    recordStale = true;
+  } else {
+    /*
+     * Sorted on both sides. The n/a and failure lists are sets of ids, and the order they
+     * happen to be emitted in is not a claim the record makes - comparing the rendered order
+     * would report drift when a check is merely moved in the catalogue.
+     */
+    const sameIds = (a: string[] | undefined, b: string[] | undefined) =>
+      JSON.stringify([...(a ?? [])].sort()) === JSON.stringify([...(b ?? [])].sort());
+    const measuredNotApplicable = homeResult.checks
+      .filter((check) => check.status === "na")
+      .map((check) => check.id);
+    const measuredFailures = homeResult.checks
+      .filter((check) => check.status === "fail")
+      .map((check) => check.id);
+
+    const differences: string[] = [];
+    if (record.score !== homeResult.score) {
+      differences.push(`score: record ${record.score}, built homepage ${homeResult.score}`);
+    }
+    if (record.grade !== homeResult.grade) {
+      differences.push(`grade: record ${record.grade}, built homepage ${homeResult.grade}`);
+    }
+    if (record.checksRun !== homeResult.checksRun) {
+      differences.push(`checksRun: record ${record.checksRun}, built homepage ${homeResult.checksRun}`);
+    }
+    if (record.checksPassed !== homeResult.checksPassed) {
+      differences.push(
+        `checksPassed: record ${record.checksPassed}, built homepage ${homeResult.checksPassed}`
+      );
+    }
+    if (!sameIds(record.notApplicable, measuredNotApplicable)) {
+      differences.push(
+        `notApplicable: record ${JSON.stringify(record.notApplicable ?? [])}, built homepage ${JSON.stringify(measuredNotApplicable)}`
+      );
+    }
+    if (!sameIds(record.failures, measuredFailures)) {
+      differences.push(
+        `failures: record ${JSON.stringify(record.failures ?? [])}, built homepage ${JSON.stringify(measuredFailures)}`
+      );
+    }
+
+    if (differences.length > 0) {
+      console.log("\nself-audit record is stale — run npm run self-audit and rebuild");
+      console.log("  lib/self-audit.json does not match the built homepage:");
+      for (const difference of differences) console.log(`    ${difference}`);
+      console.log("  The homepage publishes these values, so they are a gate rather than a notice.");
+      recordStale = true;
+    } else {
+      console.log(
+        `\nself-audit record matches the built homepage: ${homeResult.score}/100 grade ${homeResult.grade}, ${homeResult.checksPassed}/${homeResult.checksRun} checks.`
+      );
+    }
+  }
+}
+
+/*
  * The success line names the floors separately, because a route group that carries
  * its own floor is not covered by a claim about the default one. An earlier version
  * printed "All indexable routes are at or above 90" while the 40 check pages were
@@ -260,10 +396,18 @@ if (failures.length > 0) {
     console.log("do not lower it silently: the number is published on /methodology/.");
     process.exitCode = 1;
   }
-} else {
+} else if (!recordStale) {
   console.log(`\n${defaulted} indexable route(s) are at or above ${threshold}.`);
   for (const group of custom) {
     console.log(`  plus ${group.route} and its siblings, measured against a floor of ${group.min}.`);
     break;
+  }
+}
+
+if (recordStale) {
+  if (warnOnly) {
+    console.log("\n--warn-only given, exiting 0 despite the stale self-audit record.");
+  } else {
+    process.exitCode = 1;
   }
 }

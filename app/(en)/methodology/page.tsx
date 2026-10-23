@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ProsePage from "@/app/components/ProsePage";
+import AuthorLine from "@/app/components/AuthorLine";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import {
@@ -19,6 +20,33 @@ import { og } from "@/lib/og";
 const TITLE = "Methodology — how the GEO score is calculated";
 const DESCRIPTION =
   "The complete scoring method: twelve weighted dimensions, every check with its exact rule and point value, the A-F bands, and what the score cannot tell you.";
+
+/**
+ * What changed in the rule set, newest first.
+ *
+ * WHY THIS LIST IS ON THIS PAGE: /study/ publishes scores produced by an older version of
+ * these rules, and a reader comparing that table against a scan run today is entitled to
+ * know why a number moved. A method that changes and does not say so makes every published
+ * score unverifiable after the fact, which is the failure this whole page is built against.
+ *
+ * The byline's date is read from the first entry rather than typed a second time, so the
+ * page cannot claim a revision that no entry lists. The 2026-10-23 date is recorded beside
+ * the hreflang rule in lib/geo/analyze.ts and lib/geo/catalog.ts; the 2026-10-03 entry is
+ * the change that introduced page-type exemptions and the renormalisation that goes with
+ * them. Editorial rewording does not appear here - only changes that can move a score.
+ */
+const METHOD_CHANGELOG = [
+  {
+    date: "2026-10-23",
+    change:
+      "hreflang is no longer scored when a page declares fewer than two language codes. It asks a page to declare alternate language versions, which a single-language site has none of, so the old rule cost such sites 2 points for a question that does not apply. The scanner fetches one page and cannot tell a single-language site from one that has not declared its translations, so absence is now marked not applicable and excluded from the score. A page that declares exactly one code still fails.",
+  },
+  {
+    date: "2026-10-03",
+    change:
+      "A check can be marked not applicable to a page type it cannot judge, and is then excluded from the score rather than failed. Six exemptions were published for legal, contact and article pages - a privacy policy is not a worse page for quoting nobody - and the remaining dimensions are renormalised, so a root path scored exactly what it scored before.",
+  },
+] as const;
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -57,6 +85,16 @@ export default function MethodologyPage() {
       }
       action={{ href: "/", label: "← Back to Scanner" }}
     >
+        {/*
+          The byline sits under the intro rather than in the header band: the header says what
+          the page is, and this says who is accountable for the method and which revision of
+          it is being published. The date is read from the top of the changelog below, so the
+          byline cannot claim a revision that no entry lists.
+        */}
+        <div className="mb-10">
+          <AuthorLine date={METHOD_CHANGELOG[0].date} label="Method last revised" />
+        </div>
+
         <article className="doc-article text-[17px] leading-[1.65] text-[var(--ink-2)]">
           <h2>How is the total score calculated?</h2>
           <p>
@@ -86,6 +124,55 @@ and   Σ dimension_weight = ${totalWeight}`}</pre>
             against the check it applies to below, and the tests assert that each one names a real
             check and that no exclusion applies to a homepage — which is what makes this change
             score-neutral for every scan the tool performed before page types existed.
+          </p>
+          <p>
+            There are two ways a check can reach that state, and the difference is worth knowing
+            when you read a score. <strong>Page-type exclusions</strong> are declared against the
+            check they apply to in the table the analyser executes and this page renders below: a
+            privacy policy is not asked for expert quotations or statistics because it is a
+            policy, and an article body is not asked for the site&rsquo;s About and Contact links
+            because a single-page fetch never sees the chrome around it.{" "}
+            <strong>Rule-level inapplicability</strong> is decided by the rule itself from what it
+            found on the page rather than from the kind of page it is: hreflang asks a page to
+            declare alternate language versions, a page that declares none cannot be judged on
+            that question, and one fetched page cannot tell a single-language site from a site
+            that has translations it has not declared. Neither kind is a failure and neither is a
+            discount. In both, the points leave the numerator and the denominator, the remaining
+            weights are renormalised, and the total stays a percentage of the checks that could
+            actually be assessed — which is why a perfect score means &ldquo;nothing that applies
+            to this page failed&rdquo;, never &ldquo;every rule in the catalogue passed&rdquo;.
+          </p>
+
+          {/*
+            The changelog is the other half of the not-applicable explanation: the exclusions
+            and the rules change, and a reader comparing this page with an old scan is owed
+            the record of when. It is placed here rather than at the foot of the page because
+            the reader who needs it is the one currently working out how the score was
+            calculated, not the one scrolling to the sources.
+          */}
+          <h2 id="what-changed" className="scroll-mt-28">What changed, and when</h2>
+          <p>
+            A method that never changes is not being maintained, and one that changes without
+            saying so cannot be checked after the fact. Every change that could move a score is
+            recorded here with its date and its reason, because a score is only comparable to
+            another score produced under the same rules:
+          </p>
+          <ul>
+            {METHOD_CHANGELOG.map((entry) => (
+              <li key={entry.date}>
+                <time dateTime={entry.date} className="font-mono text-[var(--ink-3)]">
+                  {entry.date}
+                </time>{" "}
+                — {entry.change}
+              </li>
+            ))}
+          </ul>
+          <p>
+            The list is short on purpose and it is the record of the method rather than of this
+            site: copy edits and new worked examples do not appear. The one entry a reader of{" "}
+            <Link href="/study/">the study</Link> has to know about is the first — that table was
+            measured before it, which is why the study page states both dates and leaves the rows
+            as measured instead of re-scoring them under the current rules.
           </p>
 
           <h2>What do the grades mean?</h2>

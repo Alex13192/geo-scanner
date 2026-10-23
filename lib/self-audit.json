@@ -1,0 +1,11 @@
+{
+  "measuredAt": "2026-10-23",
+  "score": 100,
+  "grade": "A",
+  "checksRun": 40,
+  "checksPassed": 39,
+  "notApplicable": [
+    "hreflang"
+  ],
+  "failures": []
+}

@@ -6,6 +6,7 @@ import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/componen
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
 import { CHECK_COPY } from "@/lib/geo/check-copy";
 import { guidePathForCheck } from "@/lib/geo/check-links";
+import { INSIGHTS, insightPath } from "@/lib/insights";
 import { MAX_FETCH_PAGES, MAX_LINKS_PER_SECTION } from "@/lib/llms-txt";
 import { og } from "@/lib/og";
 
@@ -139,11 +140,44 @@ const guidesList: { href: string; label: string }[] = [
   { href: "/docs/allow-ai-crawlers/", label: "Configuring robots.txt and WAF for AI crawlers" },
 ];
 
+/*
+ * The writing, built from the registry rather than listed by hand.
+ *
+ * The descriptions come from lib/insights.ts, which is also what the archive index and the
+ * sitemap read, so a piece cannot exist in one of those three places and be missing from the
+ * others. The author page is the last entry rather than a fourth group: it answers the same
+ * question - can I check who is saying this - and separating it would make a two-item section.
+ */
+const WRITING_ENTRIES: Entry[] = [
+  {
+    href: "/insights/",
+    label: "All writing",
+    description:
+      "Study results, rule explanations and stated limits, in one archive with the data behind each piece.",
+  },
+  ...INSIGHTS.map((insight) => ({
+    href: insightPath(insight.slug),
+    label: insight.title,
+    description: insight.dek,
+  })),
+  {
+    href: "/author/",
+    label: "Who writes this site",
+    description:
+      "The person accountable for the measurements, how the writing is produced and corrected, and how the site is funded.",
+  },
+];
+
 export default function ToolsIndexPage() {
   const runnableChecks = CHECK_CATALOG.filter((check) => !check.alias);
   const totalWeight = DIMENSION_CATALOG.reduce((sum, dimension) => sum + dimension.weight, 0);
   const totalEntries =
-    TOOL_ENTRIES.length + runnableChecks.length + DIMENSION_CATALOG.length + guidesList.length + 1;
+    TOOL_ENTRIES.length +
+    runnableChecks.length +
+    DIMENSION_CATALOG.length +
+    guidesList.length +
+    WRITING_ENTRIES.length +
+    1;
   const guidedChecks = runnableChecks.filter((check) => guidePathForCheck(check.id)).length;
 
   const groups: Group[] = [
@@ -200,6 +234,12 @@ export default function ToolsIndexPage() {
       what: "The guides",
       entries: guidesList.map((guide) => ({ ...guide, description: "" })),
     },
+    {
+      id: "writing",
+      purpose: "I want to check the claims rather than take the score on trust",
+      what: "The writing and the author",
+      entries: WRITING_ENTRIES,
+    },
   ];
 
   return (
@@ -213,7 +253,8 @@ export default function ToolsIndexPage() {
             {totalEntries} destinations: {TOOL_ENTRIES.length} tools that read a page you own,{" "}
             {runnableChecks.length} pages describing the individual rules,{" "}
             {DIMENSION_CATALOG.length} describing the dimensions those rules are scored in,{" "}
-            {guidesList.length} guides for the fixes that recur, and the method they all rest on.
+            {guidesList.length} guides for the fixes that recur, {INSIGHTS.length} pieces of
+            first-party writing, and the method they all rest on.
           </p>
           <p>
             The tools are free and need no account. The reference pages are free too, which is the

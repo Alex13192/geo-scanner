@@ -328,39 +328,65 @@ console.log("\n=== /report/ canonical ===");
 /* ---- Markdown twins: declared AND resolvable ---- */
 console.log("\n=== markdown twins ===");
 {
-  const page = await get("/checks/answer-first/");
-  if (page.error) bad("could not fetch a rule page", page.error);
-  else {
+  /*
+   * Follow one page's declared markdown alternate and assert that it resolves as markdown.
+   *
+   * WHY THIS IS A HELPER RATHER THAN A LOOP OVER PATHS: the homepage and the rule pages are
+   * declared by different mechanisms - a layout's metadata for the homepage, the check page's
+   * own metadata for a rule - and both have to be followed the same way. The scanner's
+   * markdown-alternate rule reads the DECLARATION only and never fetches the target; its
+   * catalogue note says so. Without this script the twin could be declared and 404 forever.
+   *
+   * WHY THE DECLARED HREF IS REBUILT AGAINST `base` RATHER THAN FETCHED AS WRITTEN: metadataBase
+   * makes the href absolute, which is correct for the convention, so it cannot be concatenated
+   * onto `base` - and the deployment under test can differ from the origin the page names. Taking
+   * the pathname and re-attaching it to the origin under test is what makes this script check the
+   * deployment it was pointed at. The first version did `twin.replace(base, "")`, which matched
+   * nothing against a local origin and produced "http://localhost:3111https://...".
+   */
+  const followTwin = async (label, path) => {
+    const page = await get(path);
+    if (page.error) {
+      bad(`could not fetch ${label}`, page.error);
+      return;
+    }
+
     const twin = page.body.match(
       /<link[^>]+rel="alternate"[^>]+type="text\/markdown"[^>]*href="([^"]+)"/i
     )?.[1];
-    if (!twin) bad("the rule page does not declare a markdown alternate");
-    else {
-      ok("declared", twin);
-      /*
-       * The declared href is absolute, because metadataBase makes it so - which is
-       * correct for the convention and means it cannot be concatenated onto `base`.
-       * Taking the pathname and re-attaching it to the origin under test is what makes
-       * this script check the deployment it was pointed at rather than whichever one
-       * the page happens to name. The first version did `twin.replace(base, "")`, which
-       * matched nothing against a local origin and produced
-       * "http://localhost:3111https://...".
-       */
-      let path = twin;
-      try {
-        path = new URL(twin, base).pathname;
-      } catch {
-        /* not a URL; use it as a path */
-      }
-      const { res, body, error } = await get(path);
-      if (error) bad("the declared twin is unreachable", error);
-      else if (res.status !== 200) bad("the declared twin did not return 200", `HTTP ${res.status}`);
-      else if (!(res.headers.get("content-type") || "").includes("text/markdown")) {
-        bad("the twin is not served as markdown", res.headers.get("content-type") || "(none)");
-      } else if (!/^#\s+\S/m.test(body)) bad("the twin has no markdown heading", "body may be HTML");
-      else ok("the twin resolves as markdown", `${body.length} bytes`);
+    if (!twin) {
+      bad(`${label} does not declare a markdown alternate`);
+      return;
     }
-  }
+    ok(`${label} declares a twin`, twin);
+
+    let twinPath = twin;
+    try {
+      twinPath = new URL(twin, base).pathname;
+    } catch {
+      /* not a URL; use it as a path */
+    }
+
+    const { res, body, error } = await get(twinPath);
+    if (error) bad(`${label}'s declared twin is unreachable`, error);
+    else if (res.status !== 200) {
+      bad(`${label}'s declared twin did not return 200`, `HTTP ${res.status}`);
+    } else if (!(res.headers.get("content-type") || "").includes("text/markdown")) {
+      bad(`${label}'s twin is not served as markdown`, res.headers.get("content-type") || "(none)");
+    } else if (!/^#\s+\S/m.test(body)) {
+      bad(`${label}'s twin has no markdown heading`, "body may be HTML");
+    } else {
+      ok(`${label}'s twin resolves as markdown`, `${body.length} bytes`);
+    }
+  };
+
+  /*
+   * THE HOMEPAGE IS THE ONE THAT WAS MISSING. The scanner's own homepage failed the
+   * markdown-alternate rule it applies to everybody else, so it is followed here as well as a
+   * rule page - a declaration nobody follows is how that failure stayed invisible.
+   */
+  await followTwin("the rule page", "/checks/answer-first/");
+  await followTwin("the homepage", "/");
 }
 
 /* ---- The new section is actually deployed ---- */

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
 import { CHECK_CATALOG, DIMENSION_CATALOG } from '@/lib/geo/catalog';
+import { INSIGHTS, insightPath } from '@/lib/insights';
 
 /**
  * Bump this date whenever you meaningfully change page content.
@@ -19,7 +20,7 @@ import { CHECK_CATALOG, DIMENSION_CATALOG } from '@/lib/geo/catalog';
  * is manual, so: any commit that changes `app/` or `lib/` content is a commit that
  * changes this line.
  */
-const LAST_MODIFIED = new Date('2026-10-14');
+const LAST_MODIFIED = new Date('2026-10-23');
 
 /**
  * NOTE ON TRAILING SLASHES
@@ -144,6 +145,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly',
       priority: 0.9,
+    },
+    /* The writing. Listed individually rather than as an index-only entry because each piece
+       is a standalone answer to a question nobody else has measured, and the archive page is
+       the entry point to them rather than a destination in its own right. Generated from
+       lib/insights.ts, so a piece that is published but missing here would have to be missing
+       from the archive index too - the two read the same array. */
+    {
+      url: `${SITE_URL}/insights/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    ...INSIGHTS.map((insight) => ({
+      url: SITE_URL + insightPath(insight.slug),
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+    /* The author page. Priority low because it is not what anyone searches for, listed because
+       it is the page a reader follows from a byline to decide whether to trust the writing -
+       and an unreachable accountability page is the shape of one that does not exist. */
+    {
+      url: `${SITE_URL}/author/`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly',
+      priority: 0.5,
     },
     {
       url: `${SITE_URL}/about/`,

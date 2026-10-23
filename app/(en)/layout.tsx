@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { ADSENSE_SCRIPT_SRC } from "@/lib/ads";
+import { AUTHOR, personNode } from "@/lib/author";
 import { OG_IMAGE } from "@/lib/og";
-import { BRAND, SITE_URL } from "@/lib/site";
+import { BRAND, BRAND_FULL, SITE_URL } from "@/lib/site";
 
 /**
  * The site's typefaces.
@@ -46,11 +47,22 @@ const geistMono = Geist_Mono({
  * Do NOT use `new Date()` here: a build-time date makes every deploy look like
  * a content change, which is the fastest way to have freshness ignored.
  */
-const LAST_UPDATED = "2026-10-04";
+const LAST_UPDATED = "2026-10-23";
 
-const TAGLINE = `${BRAND} \u2014 GEO Scanner for AI Search Visibility`;
+/**
+ * The homepage title doubles as the browser tab, the OG card and the Twitter card, so it is
+ * written once. Two constraints hold it here: it carries the full product name (the short brand
+ * alone is the string that gets confused with DataForSEO's "LLM Mentions API"), and it stays
+ * under 60 characters so it is not truncated in a result or a tab.
+ */
+const TAGLINE = `${BRAND_FULL} \u2014 AI search readiness audit`;
+/**
+ * The meta description makes the same distinction the title cannot: what the product does is
+ * audit readiness, and what it does not do is track mentions. Search snippets truncate around
+ * 160 characters, and a promise the scanner cannot keep is the worst thing to put in one.
+ */
 const DESCRIPTION =
-  "Check whether ChatGPT, Claude and Perplexity can crawl, read and cite your website. Free AI crawler audit and /llms.txt generator, no signup required.";
+  "Check whether ChatGPT, Claude and Perplexity can crawl, read and cite your site. A readiness audit, not a mention tracker. Free, no signup.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -62,7 +74,7 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND}`,
   },
   description: DESCRIPTION,
-  applicationName: BRAND,
+  applicationName: BRAND_FULL,
 
   // NOTE: `languages` is deliberately NOT set here.
   //
@@ -73,14 +85,17 @@ export const metadata: Metadata = {
   // making /docs/<slug>/ claim the homepage's alternates - and, once the German site
   // was removed, naming translations that no longer exist.
   //
-  // This comment used to say "see app/(en)/(home)/layout.tsx for the homepage". That
-  // file does not exist: the (home) route group holds page.tsx and no layout. The
-  // correction first written here claimed the homepage was app/(en)/page.tsx, which is
-  // also wrong - the group is real and the homepage lives at app/(en)/(home)/page.tsx.
-  // Both errors are the same error, which is why it is worth a line: a claim about the
-  // file tree that nobody opened the directory to check. It also described the mechanism
-  // below as Next "merging nested metadata objects", which is backwards, and the two
-  // halves behave differently enough to be worth stating correctly:
+  // This comment used to describe the file tree wrongly twice over: it said "see
+  // app/(en)/(home)/layout.tsx for the homepage" when that file did not exist, then
+  // corrected itself to claim the homepage was app/(en)/page.tsx, which was also wrong.
+  // The group is real, the homepage lives at app/(en)/(home)/page.tsx, and since the
+  // markdown twin was added there is now genuinely a layout in that group that declares
+  // its own alternates - canonical plus <link rel="alternate" type="text/markdown">.
+  // That is the route-specific exception, not a second default.
+  //
+  // It also described the mechanism below as Next "merging nested metadata objects",
+  // which is backwards, and the two halves behave differently enough to be worth
+  // stating correctly:
   //
   //   undeclared field  -> inherited from the parent (the /report/ canonical above)
   //   declared object   -> REPLACES the parent's wholesale, not deep-merged
@@ -130,9 +145,13 @@ export const metadata: Metadata = {
  *
  * WHY THIS MATTERS FOR A GEO PRODUCT SPECIFICALLY:
  * The whole point of this site is to teach brands how to be recognised as an
- * entity by LLMs, so this site must itself be a working example. Consistent
- * `name` across <title>, <h1>, llms.txt and this JSON-LD is what lets an LLM
- * bind the string "LLMention" to this domain.
+ * entity by LLMs, so this site must itself be a working example. The two names are
+ * split on purpose: the Organization keeps the short `BRAND` that readers see in the
+ * nav and say aloud, while `alternateName` carries the full `BRAND_FULL` used by the
+ * <title>, the SoftwareApplication node and llms.txt. A model that sees either string
+ * can reach this domain from the other; without that link, "LLMention" is close enough
+ * to DataForSEO's "LLM Mentions API" that the two can be merged into one entity, which
+ * is what `disambiguatingDescription` exists to prevent.
  */
 const jsonLd = {
   "@context": "https://schema.org",
@@ -141,13 +160,30 @@ const jsonLd = {
       "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,
       name: BRAND,
+      // The two names are one entity, not two products. The full name is the string a
+      // model is most likely to confuse with DataForSEO's product, so it is declared as
+      // an alias here rather than left to be inferred from the page title.
+      alternateName: [BRAND_FULL],
+      disambiguatingDescription:
+        "An independent GEO readiness audit. Not affiliated with, connected to, or partnered with DataForSEO's LLM Mentions API (llm.dataforseo.com), which measures brand mentions - a different measurement.",
       url: SITE_URL,
       logo: `${SITE_URL}/favicon.ico`,
       description: DESCRIPTION,
       // sameAs is what lets a model resolve the brand to a single entity instead
-      // of guessing whether the name and the domain are the same thing.
-      sameAs: ["https://github.com/Alex13192/geo-scanner"],
+      // of guessing whether the name and the domain are the same thing. Both URLs
+      // are accounts the project already publishes under; no profile is invented.
+      sameAs: [AUTHOR.github, AUTHOR.githubRepo],
+      /*
+       * The person is now a node of its own rather than being folded into the
+       * organisation. The comment that used to sit here said a named Person would be a
+       * stronger E-E-A-T signal and to swap it in "once one exists" - this is that swap.
+       * `founder` is the relation that binds the two: an organisation with no person
+       * attached is a logo, and a byline with no organisation attached is an orphan.
+       */
+      founder: { "@id": `${SITE_URL}/#author` },
+      author: { "@id": `${SITE_URL}/#author` },
     },
+    personNode(SITE_URL),
     {
       "@type": "WebSite",
       "@id": `${SITE_URL}/#website`,
@@ -158,23 +194,27 @@ const jsonLd = {
     },
     {
       // Declares who is accountable for the page and when it last changed.
-      // A named person would be a stronger E-E-A-T signal than the
-      // organisation; swap `author` for a Person node once one exists.
+      // The author is the Person node rather than the organisation: a page is written by
+      // somebody, and pointing at the collective noun was the weaker of the two claims.
       "@type": "WebPage",
       "@id": `${SITE_URL}/#webpage`,
       url: SITE_URL,
       name: BRAND,
       isPartOf: { "@id": `${SITE_URL}/#website` },
       about: { "@id": `${SITE_URL}/#organization` },
-      author: { "@id": `${SITE_URL}/#organization` },
+      author: { "@id": `${SITE_URL}/#author` },
       publisher: { "@id": `${SITE_URL}/#organization` },
       dateModified: LAST_UPDATED,
     },
     {
       "@type": "SoftwareApplication",
       "@id": `${SITE_URL}/#software`,
-      name: BRAND,
+      name: BRAND_FULL,
       url: SITE_URL,
+      // The public repository is the only profile this application has. It is what lets
+      // a model confirm the software exists and who publishes it, so it is the sameAs
+      // rather than a logo or a landing page that says the same thing.
+      sameAs: [AUTHOR.githubRepo],
       applicationCategory: "BusinessApplication",
       operatingSystem: "Web",
       publisher: { "@id": `${SITE_URL}/#organization` },

@@ -1,9 +1,11 @@
-import { BadgeCheck, Bot, Braces, Wrench } from "lucide-react";
+import { BadgeCheck, Bot, Braces, Minus, Wrench } from "lucide-react";
 import ScanForm from "./ScanForm";
 import ScoreRing from "@/app/components/ScoreRing";
 import SiteNav from "@/app/components/SiteNav";
 import { CHECK_COPY } from "@/lib/geo/check-copy";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
+import { FAQ_ITEMS, SELF_AUDIT, TAGLINE } from "@/lib/home-content";
+import { AUTHOR } from "@/lib/author";
 import { BLOCKED, NEWS, NEWS_BLOCKED, STUDY_ROWS } from "@/lib/study-data";
 import { CONTACT_EMAIL, SITE_HOST } from "@/lib/site";
 
@@ -32,32 +34,6 @@ import { CONTACT_EMAIL, SITE_HOST } from "@/lib/site";
  */
 
 /**
- * The site's own scan result, declared once.
- *
- * EVERY NUMBER HERE IS A CLAIM ABOUT THIS SITE, published on the site, and it is
- * the one claim the whole product rests on. Three rules keep it honest:
- *
- *   1. Re-run `npm run build && node scripts/check-built-pages.mts` after ANY
- *      homepage edit. The `/` line prints the score and the ids of the checks it
- *      failed; `verified` is the date of that run.
- *   2. `failures` names the real failures. It is not a bug list and it is not
- *      trimmed to protect the grade - this site's own copy explains both of the
- *      two it currently has, and the hero console below displays them.
- *   3. Nothing here may be a number for somebody else's domain. The scan console
- *      was drafted around a real brand's name and invented results, which would
- *      have been a fabricated claim about a third party on the page that
- *      criticises other tools for exactly that.
- */
-const SELF_AUDIT = {
-  score: 97,
-  grade: "A",
-  passed: 38,
-  run: 40,
-  verified: "4 October 2026",
-  failures: ["hreflang", "markdown-alternate"],
-};
-
-/**
  * The rows the hero console animates through.
  *
  * Titles come from CHECK_COPY, the same table the /checks/ reference pages are
@@ -75,43 +51,6 @@ const CONSOLE_CHECKS = [
   "markdown-alternate",
   "date-machine",
   "hreflang",
-];
-
-const TAGLINE =
-  "Check whether ChatGPT, Perplexity and Claude can crawl, read and cite your pages — and see exactly which of the 40 published checks you fail.";
-
-/**
- * Visible FAQ content.
- *
- * The SAME array also renders the FAQPage structured data at the bottom of this
- * page. That is deliberate: Google only accepts FAQ markup for questions and
- * answers that are actually visible to users, so the two must not drift.
- *
- * Written answer-first and factually. One of these answers deliberately tells
- * the reader that llms.txt is NOT a ranking factor - overselling it would be
- * both dishonest and bad GEO, since AI engines favour accurate sources.
- */
-const FAQ_ITEMS = [
-  {
-    q: "What is Generative Engine Optimization (GEO)?",
-    a: "GEO is the practice of making a website discoverable, parseable and citable by AI search engines such as ChatGPT, Perplexity, Claude and Google AI Overviews. Instead of ranking a blue link, the goal is to be quoted inside a generated answer.",
-  },
-  {
-    q: "How do I check whether AI crawlers can read my website?",
-    a: "Check your robots.txt for rules that block AI crawler user-agents such as GPTBot, ClaudeBot, PerplexityBot and Bytespider. LLMention reads robots.txt automatically and names exactly which of them are disallowed at your root. It cannot see your firewall rules — a request it makes comes from its own address, so check those in your CDN yourself.",
-  },
-  {
-    q: "Do I need an llms.txt file?",
-    a: "Not necessarily. llms.txt is an emerging convention rather than a standard: no crawler documentation we could open commits to reading it — OpenAI's help centre and Anthropic's crawler article both specify robots.txt instead. It is cheap to add and it does help documentation sites and coding agents, but treat it as one small signal, not a ranking factor.",
-  },
-  {
-    q: "Which AI crawlers should I allow in robots.txt?",
-    a: "Allow the crawlers behind the engines you want citations from: GPTBot and OAI-SearchBot for OpenAI, ClaudeBot and Claude-SearchBot for Anthropic, PerplexityBot for Perplexity, Google-Extended for Google, and Bingbot, whose index also feeds ChatGPT search. Blocking a crawler removes you from that engine's answers entirely.",
-  },
-  {
-    q: "Is GEO replacing SEO?",
-    a: "No. GEO and SEO share most of their foundations: crawlable pages, clear structure, accurate facts and genuine authority. GEO adds an emphasis on answer-shaped content, entity markup such as Schema.org JSON-LD, and machine-readable context files. A site that already does SEO well starts GEO from a strong position.",
-  },
 ];
 
 const CRAWLERS = [
@@ -159,7 +98,7 @@ const GEO_COMPARISON: [string, string, string][] = [
 const TOOLS = [
   {
     src: "/shots/report.webp",
-    alt: `The GEO audit report for ${SITE_HOST}: 97 out of 100, grade A, 38 of 40 checks passed, with all twelve weighted dimension scores below it.`,
+    alt: `The GEO audit report for ${SITE_HOST}, showing the twelve weighted dimension scores and the evidence behind each one.`,
     title: "The audit report",
     body: "Forty published checks across twelve weighted dimensions. Every dimension shows its own score and the evidence behind it, and every failure names the rule it broke.",
     href: `/report/?domain=${SITE_HOST}`,
@@ -175,7 +114,7 @@ const TOOLS = [
   },
   {
     src: "/shots/readiness-badge.webp",
-    alt: `The badge generator showing a live green 97 out of 100 badge for ${SITE_HOST}, with the Markdown and HTML embed snippets.`,
+    alt: `The badge generator showing a live green badge for ${SITE_HOST}, with the Markdown and HTML embed snippets.`,
     title: "The readiness badge",
     body: "A badge carrying the score from a real scan, in Markdown for a README or HTML for a footer. The number is read from the scan and cannot be typed in.",
     href: "/readiness-badge/",
@@ -269,6 +208,7 @@ const FACTS = [
 
 export default function HomePage() {
   const failing = new Set(SELF_AUDIT.failures);
+  const notApplicable = new Set(SELF_AUDIT.notApplicable);
 
   return (
     <div className="min-h-screen bg-[var(--surface-0)] font-sans text-[var(--ink-1)]">
@@ -298,13 +238,32 @@ export default function HomePage() {
             <p className="mt-4 text-sm text-[var(--ink-3)]">
               Free. No account. No email. The same {CHECKS_PUBLISHED} checks this site runs on itself.
             </p>
+            {/*
+              THE SCOPE OF THE PROMISE, SAID IN THE FIRST SCREEN.
+
+              The audit that prompted this line found the old announcement strip promising
+              "See where you rank in AI search" - a number this scanner does not compute and
+              cannot compute, because it never queries an engine about a brand. A reader who
+              searched for mention tracking arrived expecting one thing and got another, which
+              is a positioning failure no amount of schema markup repairs. The sentence below
+              states the narrower measurement, links to the page that explains the limits, and
+              keeps the FAQ answer and the About page saying the same thing.
+            */}
+            <p className="mx-auto mt-2 max-w-xl text-[13px] leading-relaxed text-[var(--ink-3)]">
+              A readiness audit: it measures whether your pages <em>can</em> be crawled and cited,
+              not whether ChatGPT already mentions your brand.{" "}
+              <a href="/about/" className="underline hover:text-[var(--ink-2)]">
+                What it does and does not do
+              </a>
+              .
+            </p>
           </div>
 
           {/*
             The animated scan console. It is the site's own scan, not a mock-up of
             somebody else's: the domain in the title bar is SITE_HOST, the check
-            titles come from CHECK_COPY, and the two FIX rows are the two checks
-            this site genuinely fails and explains further down the page.
+            titles come from CHECK_COPY, and the statuses are SELF_AUDIT's - including
+            the one check marked n/a because this site serves a single language.
           */}
           <div className="wrap pb-20">
             <div className="overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-1)] shadow-2xl">
@@ -326,6 +285,7 @@ export default function HomePage() {
                 <ul className="px-6 py-4 sm:px-8">
                   {CONSOLE_CHECKS.map((id) => {
                     const failed = failing.has(id);
+                    const excluded = notApplicable.has(id);
                     return (
                       <li
                         key={id}
@@ -333,6 +293,11 @@ export default function HomePage() {
                       >
                         {failed ? (
                           <Wrench className="h-4 w-4 shrink-0 text-[var(--warn)]" aria-hidden="true" />
+                        ) : excluded ? (
+                          <Minus
+                            className="h-4 w-4 shrink-0 text-[var(--ink-3)]"
+                            aria-hidden="true"
+                          />
                         ) : (
                           <BadgeCheck
                             className="h-4 w-4 shrink-0 text-[var(--ok)]"
@@ -356,10 +321,12 @@ export default function HomePage() {
                           className={`rounded-md px-2 py-1 text-[10.5px] font-semibold uppercase tracking-wide ${
                             failed
                               ? "bg-[var(--warn-bg)] text-[var(--warn)]"
-                              : "bg-[var(--ok-bg)] text-[var(--ok)]"
+                              : excluded
+                                ? "bg-[var(--surface-1)] text-[var(--ink-3)]"
+                                : "bg-[var(--ok-bg)] text-[var(--ok)]"
                           }`}
                         >
-                          {failed ? "fix" : "pass"}
+                          {failed ? "fix" : excluded ? "n/a" : "pass"}
                         </span>
                       </li>
                     );
@@ -413,8 +380,11 @@ export default function HomePage() {
                     </div>
                   </div>
                   <p className="text-center text-xs text-[var(--ink-3)]">
-                    {SELF_AUDIT.passed} of {SELF_AUDIT.run} checks passing · grade{" "}
+                    {SELF_AUDIT.passed} of {SELF_AUDIT.applicable} applicable checks passing · grade{" "}
                     {SELF_AUDIT.grade}
+                    {SELF_AUDIT.notApplicable.length > 0
+                      ? ` · ${SELF_AUDIT.notApplicable.length} not applicable`
+                      : ""}
                   </p>
                 </div>
               </div>
@@ -641,9 +611,11 @@ export default function HomePage() {
 
         {/* ========================= SELF-AUDIT ========================= */}
         {/*
-          The figure is dated rather than presented as a permanent claim, so it
-          stays a true statement about a point in time even after the page
-          changes. Re-run the scan after any homepage edit and update SELF_AUDIT.
+          The figure is measured rather than typed. lib/self-audit.json is written by
+          scripts/self-audit.mts from the built homepage, and scripts/check-built-pages.mts
+          fails the build when this panel and the built page disagree - so the paragraph
+          below cannot quote a score the site no longer earns, and the date is the last
+          measurement rather than the last edit.
         */}
         <section className="band band--alt">
           <div className="wrap py-20 md:py-24">
@@ -654,17 +626,25 @@ export default function HomePage() {
                 </h2>
                 <p className="max-w-2xl text-sm leading-relaxed text-[var(--ink-2)]">
                   LLMention audits its own homepage with the rules it applies to yours, and links
-                  the result rather than quoting a number you have to take on trust. Last verified
-                  on {SELF_AUDIT.verified}: {SELF_AUDIT.score} out of 100, grade {SELF_AUDIT.grade},{" "}
-                  {SELF_AUDIT.passed} of {SELF_AUDIT.run} checks passing. The two failures are both
-                  real rather than accidental. hreflang requires at least two language versions and
-                  this site was reduced to English only, so it fails a check it used to pass.
-                  markdown-alternate wants a markdown twin of the page, and this homepage does not
-                  have one: the rule pages have them generated from the same source as the HTML, and
-                  a hand-written copy of a page written in JSX would be a second version free to
-                  drift from the first. Both numbers are published instead of the rules being
-                  softened to protect a perfect score. Re-run it yourself — the report shows all
-                  twelve dimension scores, and every rule behind them is published.
+                  the result rather than quoting a number you have to take on trust. Measured on{" "}
+                  {SELF_AUDIT.verified}: {SELF_AUDIT.score} out of 100, grade {SELF_AUDIT.grade},{" "}
+                  {SELF_AUDIT.passed} of {SELF_AUDIT.applicable} applicable checks passing. One rule
+                  is marked not applicable rather than failed: hreflang asks a page to declare at
+                  least two language versions, and this site serves one language. Until October 2026
+                  that was scored as a failure, which penalised every single-language site for a rule
+                  that cannot tell one language from translations not declared yet; it is now excluded
+                  from the score, and the reason is published on the{" "}
+                  <a href="/methodology/" className="text-[var(--accent)] underline hover:opacity-75">
+                    methodology page
+                  </a>
+                  . The markdown twin this page used to lack is generated at{" "}
+                  <a href="/markdown/" className="text-[var(--accent)] underline hover:opacity-75">
+                    /markdown/
+                  </a>{" "}
+                  from the same content the page renders, so it cannot drift from it. A 100 here is a
+                  claim about the method, not about us — run the scan yourself and the report shows
+                  all twelve dimension scores, the evidence behind every check, and exactly which rule
+                  this site failed at the moment you looked.
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-center gap-5 self-center sm:flex-row">
@@ -711,7 +691,8 @@ export default function HomePage() {
             <div className="mt-14 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-1)]">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--surface-2)] px-6 py-4">
                 <span className="font-mono text-[13px] text-[var(--ink-2)]">
-                  {SITE_HOST} · {SELF_AUDIT.passed} of {SELF_AUDIT.run} checks passing
+                  {SITE_HOST} · {SELF_AUDIT.passed} of {SELF_AUDIT.applicable} applicable checks
+                  passing
                 </span>
                 <span className="text-xs font-semibold tracking-wide text-[var(--ok)]">
                   GRADE {SELF_AUDIT.grade} · {SELF_AUDIT.score} / 100
@@ -1015,9 +996,12 @@ export default function HomePage() {
               <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-[var(--ink-2)]">
                 <p>
                   LLMention is an independent tool that audits whether AI search engines can reach,
-                  parse and cite a website. It is not affiliated with OpenAI, Anthropic, Google or
-                  Perplexity, and it holds no data relationship with them. The scanner and the
-                  llms.txt generator are free and require no account.
+                  parse and cite a website. It is not a mention tracker: it never asks an engine
+                  whether your brand is being discussed. It is not affiliated with OpenAI, Anthropic,
+                  Google or Perplexity, and it holds no data relationship with them. Nor is it
+                  connected to DataForSEO&rsquo;s LLM Mentions API (<span className="font-mono text-xs">llm.dataforseo.com</span>),
+                  a different product whose name is close enough to be confused with this one. The
+                  scanner and the llms.txt generator are free and require no account.
                 </p>
                 <p>
                   The project publishes its scoring method in full, including the checks it runs,
@@ -1027,7 +1011,11 @@ export default function HomePage() {
                   ranking factors.
                 </p>
                 <p className="text-sm text-[var(--ink-3)]">
-                  Written and maintained by the LLMention team.{" "}
+                  Written and maintained by{" "}
+                  <a href={AUTHOR.path} className="text-[var(--accent)] underline hover:opacity-75">
+                    {AUTHOR.name}
+                  </a>
+                  , the person accountable for the measurements.{" "}
                   <a href="/about/" className="text-[var(--accent)] underline hover:opacity-75">
                     More about the project
                   </a>
@@ -1058,7 +1046,8 @@ export default function HomePage() {
               <ScanForm variant="compact" placeholder="yourdomain.com" />
             </div>
             <p className="mt-5 text-sm text-[var(--ink-3)]">
-              This site scores {SELF_AUDIT.score} / 100 on its own scanner —{" "}
+              This site scores {SELF_AUDIT.score} / 100 on its own scanner, self-measured on{" "}
+              {SELF_AUDIT.verified} —{" "}
               <a
                 href={`/report/?domain=${SITE_HOST}`}
                 className="text-[var(--accent)] underline hover:opacity-75"
@@ -1120,6 +1109,11 @@ export default function HomePage() {
                   </a>
                 </li>
                 <li>
+                  <a href="/insights/" className="hover:text-[var(--ink-1)]">
+                    Writing
+                  </a>
+                </li>
+                <li>
                   <a href="/llms.txt" className="hover:text-[var(--ink-1)]">
                     llms.txt
                   </a>
@@ -1133,6 +1127,11 @@ export default function HomePage() {
                 <li>
                   <a href="/about/" className="hover:text-[var(--ink-1)]">
                     About
+                  </a>
+                </li>
+                <li>
+                  <a href="/author/" className="hover:text-[var(--ink-1)]">
+                    Who writes this site
                   </a>
                 </li>
                 <li>

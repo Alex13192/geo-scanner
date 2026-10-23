@@ -456,8 +456,8 @@ export const CHECK_CATALOG: CatalogCheck[] = [
     id: "hreflang",
     dimension: "multilingual",
     points: 2,
-    rule: "At least 2 distinct hreflang language codes are declared. Repeated attributes for the same language do not count, and x-default is a default marker rather than a language, so a single-language site declaring `en` plus `x-default` does not satisfy this.",
-    note: "The codes are read from the attributes and the pages they point at are not fetched, so two hreflang tags naming language versions that were never built satisfy this check. It is a declaration check, and like the markdown alternate above it, it is one this scanner cannot close from a single fetch.",
+    rule: "At least 2 distinct hreflang language codes are declared. Repeated attributes for the same language do not count, and x-default is a default marker rather than a language, so a single-language site declaring `en` plus `x-default` does not satisfy this. A page that declares no hreflang at all is not scored on this rule: with one page fetched, the scanner cannot tell a single-language site from a multilingual one that has not declared its versions, so absence is marked not applicable rather than failed. Declaring exactly one code still fails.",
+    note: "The codes are read from the attributes and the pages they point at are not fetched, so two hreflang tags naming language versions that were never built satisfy this check. It is a declaration check, and like the markdown alternate above it, it is one this scanner cannot close from a single fetch. The rule changed on 2026-10-23: before that date, no declaration was scored as a failure, which cost every single-language site 2 points for a question it was never asked. The change is recorded on /methodology/, which is where a reader should check it rather than here.",
   },
   {
     id: "lang-region",
