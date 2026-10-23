@@ -469,12 +469,12 @@ console.log("\n=== localized pages ===");
 console.log("\n=== plain HTTP ===");
 {
   /*
-   * WHY THIS IS ASSERTED: measured on 2026-10-23, http://llmention-geo.com/ answered 200.
-   * HSTS only protects a browser that has already visited over HTTPS, so a first-time
-   * visitor and a crawler were served plaintext. The redirect now lives in proxy.ts because
-   * the deployment token cannot change the zone's "Always Use HTTPS" setting - which is
-   * still the better place for it, but a code-level redirect is one this repository can
-   * verify and keep.
+   * WHY THIS IS ASSERTED: measured on 2026-10-23, the production origin answered 200 over
+   * plain HTTP. HSTS only protects a browser that has already visited over HTTPS, so a
+   * first-time visitor and a crawler were served plaintext. The redirect now lives in
+   * proxy.ts because the deployment token cannot change the zone's "Always Use HTTPS"
+   * setting - which is still the better place for it, but a code-level redirect is one this
+   * repository can verify and keep.
    */
   const httpBase = base.replace(/^https:/, "http:");
   try {
