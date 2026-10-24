@@ -66,6 +66,7 @@ export async function generateMetadata({
       alternates: {
         canonical: "/zh/blog/",
         languages: LANGUAGES,
+        types: { "application/rss+xml": "/blog/rss.xml" },
       },
       /* No `type: "article"`: an archive is a list, not a dated piece. The English index omits
          it for the same reason. */
@@ -80,6 +81,7 @@ export async function generateMetadata({
       alternates: {
         canonical: "/ja/blog/",
         languages: LANGUAGES,
+        types: { "application/rss+xml": "/blog/rss.xml" },
       },
       ...social({ title: JA_TITLE, description: JA_DESCRIPTION, url: "/ja/blog/" }),
     };

@@ -22,6 +22,8 @@ export const metadata: Metadata = {
       ja: "/ja/blog/",
       "x-default": "/blog/",
     },
+    /* Feed readers and browsers discover the RSS feed without a visible link. */
+    types: { "application/rss+xml": "/blog/rss.xml" },
   },
   ...social({
     title: TITLE,
@@ -57,15 +59,20 @@ export default function InsightsIndexPage() {
           <div className="wrap py-14 md:py-20">
             <div className="max-w-3xl space-y-4">
               <span className="inline-block rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 font-mono text-xs font-semibold text-[var(--accent)]">
-                Writing
+                Blog
               </span>
               <h1 className="text-3xl font-semibold leading-[1.1] tracking-[-0.028em] md:text-5xl">
-                Writing and study notes
+                Notes from measuring AI search
               </h1>
               <p className="text-base leading-relaxed text-[var(--ink-2)] md:text-lg">
                 Six pieces from the run behind the scanner: the distribution nobody quotes, the
                 nine homepages that never answered, the markup gap in most of the sample, and the
                 two rules this site will not pretend to be stronger than they are.
+              </p>
+              <p className="font-mono text-xs">
+                <a href="/blog/rss.xml" className="text-[var(--accent)] hover:opacity-75">
+                  RSS feed →
+                </a>
               </p>
               <p className="font-mono text-xs text-[var(--ink-3)]">
                 Published 18 October 2026 · by{" "}

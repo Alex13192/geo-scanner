@@ -108,6 +108,12 @@ export default function ChineseReadingAFailedCheckPage() {
                 </span>
                 <span aria-hidden="true">·</span>
                 <time dateTime={insight.published}>发布于 {insight.published}</time>
+                {insight.updated ? (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>更新于 {insight.updated}</span>
+                  </>
+                ) : null}
                 <span aria-hidden="true">·</span>
                 <span>阅读约 {READ_MINUTES} 分钟</span>
               </p>

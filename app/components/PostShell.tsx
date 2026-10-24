@@ -92,7 +92,7 @@ export default function PostShell({
     headline: insight.title,
     description: insight.description,
     datePublished: insight.published,
-    dateModified: insight.published,
+    dateModified: insight.updated ?? insight.published,
     inLanguage: "en",
     author: {
       "@type": "Person",
@@ -154,6 +154,12 @@ export default function PostShell({
                 </span>
                 <span aria-hidden="true">·</span>
                 <time dateTime={insight.published}>{formatDate(insight.published)}</time>
+                {insight.updated ? (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>Updated {formatDate(insight.updated)}</span>
+                  </>
+                ) : null}
                 <span aria-hidden="true">·</span>
                 <span>{insight.readTime}</span>
               </p>

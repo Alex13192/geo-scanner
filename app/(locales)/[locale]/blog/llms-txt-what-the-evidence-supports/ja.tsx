@@ -115,6 +115,12 @@ export default function JapaneseLlmsTxtEvidencePage() {
                 </span>
                 <span aria-hidden="true">·</span>
                 <time dateTime={insight.published}>公開日 {insight.published}</time>
+                {insight.updated ? (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>更新日 {insight.updated}</span>
+                  </>
+                ) : null}
                 <span aria-hidden="true">·</span>
                 <span>{READ_MINUTES} 分で読めます</span>
               </p>

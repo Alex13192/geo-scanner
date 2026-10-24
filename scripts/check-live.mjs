@@ -511,6 +511,26 @@ console.log("\n=== plain HTTP ===");
   }
 }
 
+/* ---- the blog feed ---- */
+console.log("\n=== blog feed ===");
+{
+  /*
+   * WHY THIS IS ASSERTED: a feed that silently starts returning HTML (a redirect to the archive,
+   * a middleware rewrite) is invisible to readers until their reader app says "not a feed".
+   * The content-type and the <rss element are the two things a reader checks.
+   */
+  const { res, body, error } = await get("/blog/rss.xml");
+  if (error) bad("could not fetch /blog/rss.xml", error);
+  else if (res.status !== 200) bad("/blog/rss.xml is not served", `HTTP ${res.status}`);
+  else if (!(res.headers.get("content-type") || "").includes("rss+xml")) {
+    bad("/blog/rss.xml has the wrong content type", res.headers.get("content-type") || "(none)");
+  } else if (!body.includes("<rss") || !body.includes("/blog/")) {
+    bad("/blog/rss.xml is not a feed", "missing <rss or article links");
+  } else {
+    ok("/blog/rss.xml is a feed", `${(body.match(/<item>/g) || []).length} items`);
+  }
+}
+
 /* ---- HTML must not be cacheable past a deploy ---- */
 console.log("\n=== html cache headers ===");
 {

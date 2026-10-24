@@ -43,6 +43,12 @@ export type PostMeta = {
   category: InsightCategory;
   /** ISO date. All six were published on the launch day of this section. */
   published: string;
+  /**
+   * ISO date of the last substantive page revision. Absent on pages that have not been revised;
+   * when present it is shown as "Updated" and used as BlogPosting dateModified, so the field
+   * cannot claim freshness the content does not have.
+   */
+  updated?: string;
   readTime: string;
 };
 
@@ -64,6 +70,7 @@ export const INSIGHTS: Insight[] = [
     dek: "The study has one number everyone quotes and four it rarely does. This is the distribution behind them, including the nine rows that never produced a page at all.",
     category: "Study",
     published: "2026-10-18",
+    updated: "2026-10-24",
     readTime: "9 min read",
     figure: "0 of 30",
     figureLabel: "scored an A",
@@ -76,6 +83,7 @@ export const INSIGHTS: Insight[] = [
     dek: "Every news publisher in the sample turns away at least one of the crawlers behind ChatGPT, Claude, Perplexity and Doubao. That is a policy choice with a measurable cost, and it is not obviously the wrong one.",
     category: "Study",
     published: "2026-10-18",
+    updated: "2026-10-24",
     readTime: "8 min read",
     figure: "6 of 6",
     figureLabel: "news sites block a crawler",
@@ -88,6 +96,7 @@ export const INSIGHTS: Insight[] = [
     dek: "A 403 is not a page. Nine rows in the study describe an error response rather than a site, and counting them as zero would have produced a more dramatic and less true number.",
     category: "Method",
     published: "2026-10-18",
+    updated: "2026-10-24",
     readTime: "7 min read",
     figure: "9 of 30",
     figureLabel: "answered with an error",
@@ -100,6 +109,7 @@ export const INSIGHTS: Insight[] = [
     dek: "A model that cannot bind a name to a domain has to guess, and a guess is not a citation. The markup that fixes it is four lines of JSON, and most of the sample does not have it.",
     category: "Study",
     published: "2026-10-18",
+    updated: "2026-10-24",
     readTime: "9 min read",
     figure: "22 of 30",
     figureLabel: "declare no entity",
@@ -112,6 +122,7 @@ export const INSIGHTS: Insight[] = [
     dek: "The file is easy to add and hard to justify as a lever. This is the case for publishing one anyway, and the case against pretending it is more than it is.",
     category: "Explainer",
     published: "2026-10-18",
+    updated: "2026-10-24",
     readTime: "8 min read",
     figure: "3.3 / 100",
     figureLabel: "maximum points at stake",
@@ -124,6 +135,7 @@ export const INSIGHTS: Insight[] = [
     dek: "Most bad fixes come from reading a failure as an instruction. The rule pages publish what each check does not test for exactly this reason; this is how to use that.",
     category: "Method",
     published: "2026-10-18",
+    updated: "2026-10-24",
     readTime: "7 min read",
     figure: "3 questions",
     figureLabel: "before you rewrite anything",
