@@ -34,6 +34,7 @@
     "monitor": "node scripts/monitor/run.mts",
     "check:i18n": "node scripts/check-i18n.mts",
     "test:paywall": "node scripts/test-paywall.mts",
+    "paddle:provision": "node scripts/paddle-provision.mts",
     "check:prices": "node scripts/check-prices.mjs",
     "test:comments": "node scripts/test-comments.mts"
   },

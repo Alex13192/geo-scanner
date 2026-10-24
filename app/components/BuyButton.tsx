@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatUsd, getProduct } from "@/lib/pricing";
+import { openPaddleCheckout } from "@/lib/paddle-client";
 
 /**
  * The buy button.
@@ -38,13 +39,35 @@ export default function BuyButton({
         body: JSON.stringify({ product: productId }),
       });
       const data = (await res.json()) as {
+        mode?: "paddle";
         url?: string;
         fallback?: boolean;
         reference?: string;
         email?: string;
+        priceId?: string;
+        clientToken?: string;
+        environment?: "sandbox" | "production";
+        successUrl?: string;
         error?: string;
       };
 
+      if (
+        res.ok &&
+        data.mode === "paddle" &&
+        data.reference &&
+        data.priceId &&
+        data.clientToken &&
+        data.successUrl
+      ) {
+        await openPaddleCheckout({
+          reference: data.reference,
+          priceId: data.priceId,
+          clientToken: data.clientToken,
+          environment: data.environment === "sandbox" ? "sandbox" : "production",
+          successUrl: data.successUrl,
+        });
+        return;
+      }
       if (res.ok && data.url) {
         window.location.href = data.url;
         return;

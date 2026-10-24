@@ -61,13 +61,18 @@ const SECURITY_HEADERS = [
     value: [
       "default-src 'self'",
       // Next injects its hydration payload as inline script.
-      "script-src 'self' 'unsafe-inline' https:",
-      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-inline' https: https://cdn.paddle.com https://sandbox-cdn.paddle.com",
+      "style-src 'self' 'unsafe-inline' https://cdn.paddle.com https://sandbox-cdn.paddle.com",
       "img-src 'self' data: https:",
       "font-src 'self' data:",
       // The badge generator links to shields.io but does not load from it; images
       // in a copied snippet are fetched by whoever embeds the badge, not by us.
-      "connect-src 'self'",
+      // Paddle.js talks to the Billing API from the browser (live and sandbox).
+      "connect-src 'self' https://*.paddle.com",
+      // Paddle Checkout renders in an overlay iframe served by Paddle. Without this,
+      // an enforced policy would make the Buy button look dead; Report-Only would
+      // only log it, which is how the missing source would be found late.
+      "frame-src https://*.paddle.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
