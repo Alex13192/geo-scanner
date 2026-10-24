@@ -169,6 +169,11 @@ jobs:
       - name: Run the paywall tests
         run: npm run test:paywall
 
+      # THE COMMENT-FLOW TESTS. The comment box is a public write endpoint; these pin the path
+      # allow-list (only published article paths), the email rule, and the body/link caps.
+      - name: Run the comment tests
+        run: npm run test:comments
+
       - name: Type check
         run: npx tsc --noEmit
 

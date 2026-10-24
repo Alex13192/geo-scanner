@@ -121,6 +121,25 @@ export default function PrivacyPage() {
             exists: "when did this person ask us to stop" cannot be answered from a row that is gone.
           </p>
 
+          <h2>What a comment stores</h2>
+          <p>
+            Comments on the blog are anonymous. The name is optional, and the email address is
+            used once to send the confirmation link and is not stored — only a hash of it is kept,
+            so a duplicate submission can be recognised without holding the address.
+          </p>
+          <ul>
+            <li>The comment text and the optional name you chose.</li>
+            <li>The article path, so the comment appears under that article.</li>
+            <li>A confirmation token, so the link in the email can publish exactly one comment.</li>
+            <li>A hash of the email address, and the time of submission and confirmation.</li>
+            <li>A report count, so a comment enough readers flag can be hidden automatically.</li>
+          </ul>
+          <p>
+            Nothing is published until the confirmation link is opened. If it never is, the pending
+            comment is not shown to anyone and can be removed on request by writing to{" "}
+            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+          </p>
+
           <h2>The paid measurement report</h2>
           <p>
             The measurement report is ordered by email. It is one of the paid products on this site
