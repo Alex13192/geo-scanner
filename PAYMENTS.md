@@ -84,15 +84,24 @@ API key permissions needed: products / prices / notification-settings / client-t
 customers read. The script creates; it never edits an existing price (changing a price in Paddle must
 be a deliberate action, not a side effect of a re-run).
 
+**Tax category is `standard`, not `digital-goods`, and that is not a shortcut.** Paddle only accepts
+tax categories approved for the account. Creating a product with `digital-goods` on an account that
+has not been approved for it returns `product_tax_category_not_approved`; Paddle's own error page
+says `standard` and `saas` are always approved and the rest must be requested in the dashboard.
+Blocking the catalog on a tax-category request is the wrong order of operations for a first sale;
+request `digital-goods` later and update the products if the tax treatment matters enough.
+
 ---
 
 ## 4. Sandbox end-to-end
 
-The checkout domain must be approved **in the sandbox dashboard** (`llmention-geo.com`), and the
-default payment link set to `https://llmention-geo.com/`. Sandbox domains are usually approved
-automatically once submitted.
+**Sandbox does not require checkout-domain approval; live does.** The sandbox run below opened an
+overlay on `llmention-geo.com` from an account whose only approved domain was a different one, so
+that gate is a live-account condition, not a sandbox one. Live checkout still needs
+`llmention-geo.com` approved and the default payment link set to `https://llmention-geo.com/`.
 
-1. Configure the four sandbox secrets + `PADDLE_ENV=sandbox`, deploy.
+1. Configure the four sandbox secrets + `PADDLE_ENV=sandbox`, deploy. Setting a secret takes effect
+   on the Worker immediately; no rebuild is needed for the environment to change.
 2. `curl /api/health` → `configured:true`, `environment:"sandbox"`.
 3. Pricing page → Buy → Paddle overlay → test card `4242 4242 4242 4242`.
 4. `transaction.completed` arrives: signature OK → order `pending` → `paid`, `provider='paddle'`.
@@ -105,6 +114,32 @@ automatically once submitted.
 
 **Do not leave sandbox secrets on the production Worker.** While sandbox is configured, real
 visitors who click Buy get a sandbox checkout that only test cards can complete.
+
+### What the 2026-10-25 sandbox run actually proved
+
+The catalog was provisioned into the sandbox account that was already available (the same one the
+other product uses, because it is the only sandbox key in the workspace), then the sandbox secrets
+were briefly set on the live Worker and removed again:
+
+| Check | Result |
+|---|---|
+| `--apply` catalog creation | 2 products, 2 one-time USD prices, webhook destination, client token created; output in `../.keys/paddle-llmention-sandbox.json` |
+| `/api/checkout` | `mode:"paddle"`, real `pri_…`, `successUrl` on `/thanks/` |
+| Overlay in a headless browser | opened; line item `LLMention — Signal report`, subtotal **US$39.00**, Test Mode banner |
+| **test-card payment (`4242 4242 4242 4242`)** | **paid US$42.51 (US$39 + SG GST); Paddle transaction `txn_01m5qcffg4…` completed; redirected to `/thanks/?reference=LM-MVMMIPU8-TQAG5C`** |
+| Paddle's own `transaction.completed` | signature verified; D1 row `status=paid, provider='paddle'`; **buyer email resolved through the API** to `services@llmention-geo.com` |
+| hand-crafted replay / mismatch | replay `duplicate:true`; tampered amount `ignored:true`, order untouched |
+| secrets removed | `/api/health` back to `configured:false`; `/api/checkout` back to fallback; test order deleted from D1 |
+
+Two things that run was useful for beyond the green ticks:
+
+- **The checkout footer named the other brand.** The sandbox account's display name appeared in the
+  Paddle checkout ("your data will be shared with …"), which is exactly the buyer-confusion problem
+  that made a separate seller account the recommendation for LLMention. A sandbox test cannot fix
+  that; the live account must be LLMention's own.
+- **The sandbox catalog belongs to that account, not to LLMention's future live account.** Sandbox
+  and live ids are separate anyway, so nothing here is reused at go-live; it exists to test the
+  adapter, which it did.
 
 ---
 
