@@ -231,16 +231,16 @@ export default async function ChineseAuthorPage({
 
               <h2>他的职业背景是什么？</h2>
               <p>
-                Alex Xu 用 23 年时间构建和运营网络，其中大多数网络大到「一个爬虫或一个配置错误的边缘节点」并非抽象概念。他持有 Cisco CCIE（#13192，Routing &amp; Switching and Security，并通过了 Service Provider 笔试与实验考试）、CCNP 与 CCNA、Microsoft MCSE 和 Juniper JNCIS 认证，曾就读于 Shanghai Normal University。
+                Alex Xu 在网络工程领域有二十多年经验，其中大部分时间投入在大型企业与运营商网络——在那样的网络里,「一个爬虫或一个配置错误的边缘节点」并不是抽象概念。他持有 Cisco CCIE(Routing &amp; Switching and Security)、CCNP 与 CCNA、Microsoft MCSE 和 Juniper JNCIS 认证。
               </p>
               <p>
-                近期职位：Infosys 的 Global Technical Lead Engineer（2024–），负责一个覆盖 10+ 个数据中心、3,000+ 家零售门店和 60+ 个企业办公点的网络；LVMH 的 Senior Network Architect（2023–2024），主导大中华区与 APAC 范围内 8 个数据中心、2,000+ 家精品店的混合云与 SD-WAN 转型；Pearson 的 Senior Network Engineer（2013–2022），运营 16 个企业数据中心，以及 5,500+ 个 Pearson VUE 考试中心背后的网络；更早之前，在 Novartis，以及肯尼亚和中国的 Cisco 合作伙伴任职，包括运营商骨干网相关工作。
+                他的工作覆盖数据中心与广域网架构、混合云与 SD-WAN 转型、网络安全，以及面向超大型分布式组织的自动化。具体雇主、任职年份与规模数字不在此公布：本站由独立开发者运营，完整职业履历可应要求提供。
               </p>
               <p>
-                塑造本站检查项的专业方向也是这些：数据中心网络架构（VXLAN/EVPN、spine-leaf）、BGP/MPLS/SRv6、面向 AI 集群的组播与低延迟交换、网络安全（Zscaler、Palo Alto、FortiGate、Cisco ASA/Firepower），以及用 Python、Ansible 和 Nornir 做自动化。爬虫访问、边缘分发和机器可读结构，正是 GEO 中属于网络问题的部分；而它们出自一个在网络问题上花了二十年的人之手。
+                塑造本站检查项的专业方向也是这些：数据中心网络架构(VXLAN/EVPN、spine-leaf)、BGP/MPLS/SRv6、面向 AI 集群的组播与低延迟交换、网络安全(Zscaler、Palo Alto、FortiGate、Cisco ASA/Firepower),以及用 Python、Ansible 和 Nornir 做自动化。爬虫访问、边缘分发和机器可读结构，正是 GEO 中属于网络问题的部分；而它们出自一个在网络问题上花了二十年的人之手。
               </p>
               <p className="text-sm text-[var(--ink-3)]">
-                完整简历可应要求提供，请联系{" "}
+                完整简历(含雇主与教育经历)可应要求提供，请联系{" "}
                 <a href={`mailto:${AUTHOR.email}`}>{AUTHOR.email}</a>
                 。电话号码、邮寄地址和出生日期刻意不在此公布。
               </p>

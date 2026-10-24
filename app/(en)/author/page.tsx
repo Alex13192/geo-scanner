@@ -126,20 +126,17 @@ export default function AuthorPage() {
 
       <h2>What is his professional background?</h2>
       <p>
-        Alex Xu has spent 23 years building and operating networks, most of them large enough
-        that a crawler or a misconfigured edge is not an abstraction. He is a Cisco CCIE
-        (#13192, Routing &amp; Switching and Security, with the Service Provider written and lab
-        exams), CCNP and CCNA, Microsoft MCSE and Juniper JNCIS certified, and studied at
-        Shanghai Normal University.
+        Alex Xu has spent more than two decades in network engineering, most of it on large
+        enterprise and carrier networks where a crawler or a misconfigured edge is not an
+        abstraction. He is a Cisco CCIE (Routing &amp; Switching and Security), CCNP and CCNA,
+        Microsoft MCSE and Juniper JNCIS certified.
       </p>
       <p>
-        Recent roles: Global Technical Lead Engineer at Infosys (2024–), responsible for a
-        network spanning 10+ data centres, 3,000+ retail stores and 60+ corporate offices;
-        Senior Network Architect at LVMH (2023–2024), leading a hybrid-cloud and SD-WAN
-        transformation across 8 data centres and 2,000+ boutiques in Greater China and APAC;
-        Senior Network Engineer at Pearson (2013–2022), running 16 enterprise data centres and
-        the network behind 5,500+ Pearson VUE test centres; and earlier roles at Novartis and at
-        Cisco partners in Kenya and China, including carrier backbone work.
+        His work has spanned data-centre and WAN architecture, hybrid-cloud and SD-WAN
+        transformations, network security, and automation for very large, distributed
+        organisations. Specific employers, dates and scale figures are not published here: this
+        site is run by an independent developer, and the professional record is available on
+        request.
       </p>
       <p>
         The specialities that shape this site&rsquo;s checks are the same ones: data-centre
@@ -150,7 +147,7 @@ export default function AuthorPage() {
         written by someone who has spent two decades on network problems.
       </p>
       <p className="text-sm text-[var(--ink-3)]">
-        A full résumé is available on request at{" "}
+        A full résumé, including employers and education, is available on request at{" "}
         <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Phone number, postal address and
         date of birth are deliberately not published here.
       </p>
