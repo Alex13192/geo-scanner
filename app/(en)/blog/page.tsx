@@ -65,9 +65,10 @@ export default function InsightsIndexPage() {
                 Notes from measuring AI search
               </h1>
               <p className="text-base leading-relaxed text-[var(--ink-2)] md:text-lg">
-                Six pieces from the run behind the scanner: the distribution nobody quotes, the
-                nine homepages that never answered, the markup gap in most of the sample, and the
-                two rules this site will not pretend to be stronger than they are.
+                Pieces from the run behind the scanner: the distribution nobody quotes, the nine
+                homepages that never answered, the markup gap in most of the sample, the two rules
+                this site will not pretend to be stronger than they are, and the technical notes
+                that follow from measuring the same thing repeatedly.
               </p>
               <p className="font-mono text-xs">
                 <a href="/blog/rss.xml" className="text-[var(--accent)] hover:opacity-75">

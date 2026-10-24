@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/site';
 import { CHECK_CATALOG, DIMENSION_CATALOG } from '@/lib/geo/catalog';
-import { INSIGHTS, insightPath } from '@/lib/insights';
+import { INSIGHTS, insightLanguages, insightPath, insightsForLocale, type Insight } from '@/lib/insights';
 import { LOCALES, PREFIXED_LOCALES, homePath, pricingPath } from '@/lib/i18n/config';
 
 /**
@@ -76,8 +76,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   });
 
-  /* The writing is translated into English, Chinese and Japanese. */
-  const insightsAlternates = (slug: string) => ({
+  /*
+   * Alternates for the writing, limited to the languages a piece actually exists in. An
+   * English-first post is listed without a zh-Hans or ja alternate until its translations ship;
+   * advertising a translation that does not exist is the half-built hreflang this site already
+   * withdrew once. The archives themselves always exist in all three languages.
+   */
+  const insightAlternates = (insight: Insight) => {
+    const slug = `/${insight.slug}`;
+    const languages: Record<string, string> = {
+      en: `${SITE_URL}/blog${slug}/`,
+      'x-default': `${SITE_URL}/blog${slug}/`,
+    };
+    if (insightLanguages(insight).includes('zh')) languages['zh-Hans'] = `${SITE_URL}/zh/blog${slug}/`;
+    if (insightLanguages(insight).includes('ja')) languages.ja = `${SITE_URL}/ja/blog${slug}/`;
+    return { languages };
+  };
+
+  const archiveAlternates = (slug = '') => ({
     languages: {
       en: `${SITE_URL}/blog${slug}/`,
       'zh-Hans': `${SITE_URL}/zh/blog${slug}/`,
@@ -356,42 +372,42 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
-      alternates: insightsAlternates(''),
+      alternates: archiveAlternates(''),
     },
     ...INSIGHTS.map((insight) => ({
       url: SITE_URL + insightPath(insight.slug),
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
       priority: 0.7,
-      alternates: insightsAlternates(`/${insight.slug}`),
+      alternates: insightAlternates(insight),
     })),
     {
       url: `${SITE_URL}/zh/blog/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
-      alternates: insightsAlternates(''),
+      alternates: archiveAlternates(''),
     },
-    ...INSIGHTS.map((insight) => ({
+    ...insightsForLocale("zh").map((insight) => ({
       url: `${SITE_URL}/zh/blog/${insight.slug}/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
       priority: 0.6,
-      alternates: insightsAlternates(`/${insight.slug}`),
+      alternates: insightAlternates(insight),
     })),
     {
       url: `${SITE_URL}/ja/blog/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
-      alternates: insightsAlternates(''),
+      alternates: archiveAlternates(''),
     },
-    ...INSIGHTS.map((insight) => ({
+    ...insightsForLocale("ja").map((insight) => ({
       url: `${SITE_URL}/ja/blog/${insight.slug}/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
       priority: 0.5,
-      alternates: insightsAlternates(`/${insight.slug}`),
+      alternates: insightAlternates(insight),
     })),
     /* The author page. Priority low because it is not what anyone searches for, listed because
        it is the page a reader follows from a byline to decide whether to trust the writing -

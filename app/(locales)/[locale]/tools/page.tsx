@@ -16,7 +16,7 @@ import {
   ZH_DIMENSION_LABELS,
   ZH_DIMENSION_SUMMARIES,
 } from "@/lib/i18n/zh-copy";
-import { INSIGHTS, insightPath } from "@/lib/insights";
+import { insightsForLocale, insightPath } from "@/lib/insights";
 import { MAX_FETCH_PAGES, MAX_LINKS_PER_SECTION } from "@/lib/llms-txt";
 import { social } from "@/lib/og";
 
@@ -270,7 +270,7 @@ const WRITING_ENTRIES: Entry[] = [
     label: "全部写作",
     description: "研究结果、规则说明和明确写出的局限，汇成一个档案，每篇都附上其背后的数据。",
   },
-  ...INSIGHTS.map((insight) => {
+  ...insightsForLocale("zh").map((insight) => {
     const copy = zhInsightCopy(insight.slug);
     return {
       // insightPath() owns the English route shape; the prefix is the only localized part.

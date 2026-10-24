@@ -49,6 +49,13 @@ export type PostMeta = {
    * cannot claim freshness the content does not have.
    */
   updated?: string;
+  /**
+   * Which languages this piece exists in. Absent means all three (the six launch pieces were
+   * translated); an English-first daily post is `["en"]` until its translations land. The blog
+   * archive, sitemap and hreflang all read this, so a missing translation cannot be advertised
+   * as an existing page.
+   */
+  languages?: readonly ("en" | "zh" | "ja")[];
   readTime: string;
 };
 
@@ -62,6 +69,19 @@ export type Insight = PostMeta & {
 
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
+  {
+    slug: "robots-txt-lines-that-block-ai-crawlers",
+    title: "Which robots.txt lines actually block AI crawlers",
+    description:
+      "Five crawler tokens, the rule shapes that block them by accident, and a five-command test that separates a robots.txt block from a server-side refusal.",
+    dek: "Most sites that block an AI crawler did not mean to. This is the difference between a deliberate policy line, a wildcard that catches more than intended, and a 403 that has nothing to do with robots.txt.",
+    category: "Method",
+    published: "2026-10-24",
+    readTime: "11 min read",
+    figure: "5",
+    figureLabel: "crawler tokens the scanner tests",
+    languages: ["en"],
+  },
   {
     slug: "thirty-homepages-none-graded-a",
     title: "We scanned 30 homepages and none graded an A",
@@ -171,6 +191,16 @@ export function formatDate(iso: string): string {
 }
 
 export const INSIGHT_BASE = "/blog/";
+
+/** The languages a piece exists in. Absent means the three languages the site publishes. */
+export function insightLanguages(insight: Insight): readonly ("en" | "zh" | "ja")[] {
+  return insight.languages ?? (["en", "zh", "ja"] as const);
+}
+
+/** The pieces published in one language, for the localized archive and the sitemap. */
+export function insightsForLocale(locale: "en" | "zh" | "ja"): Insight[] {
+  return INSIGHTS.filter((insight) => insightLanguages(insight).includes(locale));
+}
 
 export function insightPath(slug: string): string {
   return `${INSIGHT_BASE}${slug}/`;

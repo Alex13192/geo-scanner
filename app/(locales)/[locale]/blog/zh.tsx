@@ -5,7 +5,7 @@ import Faq from "@/app/components/Faq";
 import { AUTHOR } from "@/lib/author";
 import { homePath } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { INSIGHTS, type InsightCategory } from "@/lib/insights";
+import { INSIGHTS, insightsForLocale, type InsightCategory } from "@/lib/insights";
 
 /**
  * `/zh/blog/` - the writing index, in Chinese.
@@ -161,7 +161,7 @@ export default function ChineseInsightsIndexPage() {
         <section className="band">
           <div className="wrap py-14 md:py-16">
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              {INSIGHTS.map((insight) => {
+              {insightsForLocale("zh").map((insight) => {
                 const copy = cardCopy(insight.slug);
                 return (
                   <Link

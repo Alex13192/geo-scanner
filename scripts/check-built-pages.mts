@@ -35,7 +35,7 @@ import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { SITE_HOST } from "../lib/site.ts";
 import { analyze } from "../lib/geo/analyze.ts";
-import { INSIGHTS, insightPath } from "../lib/insights.ts";
+import { INSIGHTS, insightPath, insightsForLocale } from "../lib/insights.ts";
 import { CHECK_CATALOG } from "../lib/geo/catalog.ts";
 import { PREFIXED_LOCALES } from "../lib/i18n/config.ts";
 
@@ -145,7 +145,7 @@ const ROUTES: Route[] = [
   ),
   /* The translated writing: the archive index and six essays. */
   { route: "/zh/blog/", file: "zh/blog.html", indexable: true, min: 60 },
-  ...INSIGHTS.map((insight) => ({
+  ...insightsForLocale("zh").map((insight) => ({
     route: `/zh/blog/${insight.slug}/`,
     file: `zh/blog/${insight.slug}.html`,
     indexable: true,
@@ -194,7 +194,7 @@ const ROUTES: Route[] = [
   })),
   /* Japanese writing: the archive and all six essays. */
   { route: "/ja/blog/", file: "ja/blog.html", indexable: true, min: 50 },
-  ...INSIGHTS.map((insight) => ({
+  ...insightsForLocale("ja").map((insight) => ({
     route: `/ja/blog/${insight.slug}/`,
     file: `ja/blog/${insight.slug}.html`,
     indexable: true,
