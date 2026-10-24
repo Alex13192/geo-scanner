@@ -503,48 +503,80 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="mt-14 grid gap-5 sm:grid-cols-3">
+            {/*
+              THE CARDS STACK, THEY DO NOT SIT IN A ROW. The mechanism is .stack-deck in
+              globals.css: each card is sticky at a slightly different bottom offset, so the
+              three collect into a deck while the page scrolls. No JavaScript, and the deck
+              becomes a normal vertical list below 1024px or under prefers-reduced-motion.
+            */}
+            <div className="stack-deck mt-14">
               <a
                 href="/docs/allow-ai-crawlers/"
-                className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 lift hover:shadow-lg"
+                className="stack-card group block lg:grid lg:grid-cols-[1.15fr_0.85fr]"
               >
-                <Bot className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
-                <h3 className="text-lg font-semibold tracking-tight">AI Crawler Passability</h3>
-                <p className="text-sm leading-relaxed text-[var(--ink-2)]">
-                  Reads robots.txt and reports which of GPTBot, PerplexityBot and ClaudeBot are
-                  disallowed at your root.
-                </p>
-                <span className="mt-auto pt-2 text-sm text-[var(--accent)]">
-                  How to allow AI crawlers →
-                </span>
+                <div className="flex flex-col gap-4 p-7 md:p-10 lg:justify-center">
+                  <Bot className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
+                  <h3 className="text-2xl font-semibold tracking-tight">AI Crawler Passability</h3>
+                  <p className="max-w-xl text-base leading-relaxed text-[var(--ink-2)]">
+                    Reads robots.txt and reports which of GPTBot, PerplexityBot and ClaudeBot are
+                    disallowed at your root.
+                  </p>
+                  <span className="pt-2 text-sm text-[var(--accent)]">
+                    How to allow AI crawlers →
+                  </span>
+                </div>
+                <div className="relative hidden items-center justify-center border-l border-[var(--line)] bg-[var(--surface-1)] lg:flex">
+                  <Bot
+                    className="h-44 w-44 text-[var(--accent)] opacity-[0.14]"
+                    aria-hidden="true"
+                  />
+                </div>
               </a>
 
               <a
                 href="/docs/schema-org-jsonld/"
-                className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 lift hover:shadow-lg"
+                className="stack-card group block lg:grid lg:grid-cols-[1.15fr_0.85fr]"
               >
-                <Braces className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
-                <h3 className="text-lg font-semibold tracking-tight">Entity &amp; Structured Data</h3>
-                <p className="text-sm leading-relaxed text-[var(--ink-2)]">
-                  Reads your JSON-LD and reports whether Organization, WebSite and sameAs bind your
-                  brand to one entity rather than three loose strings.
-                </p>
-                <span className="mt-auto pt-2 text-sm text-[var(--accent)]">
-                  Schema.org for GEO →
-                </span>
+                <div className="flex flex-col gap-4 p-7 md:p-10 lg:justify-center">
+                  <Braces className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
+                  <h3 className="text-2xl font-semibold tracking-tight">
+                    Entity &amp; Structured Data
+                  </h3>
+                  <p className="max-w-xl text-base leading-relaxed text-[var(--ink-2)]">
+                    Reads your JSON-LD and reports whether Organization, WebSite and sameAs bind
+                    your brand to one entity rather than three loose strings.
+                  </p>
+                  <span className="pt-2 text-sm text-[var(--accent)]">
+                    Schema.org for GEO →
+                  </span>
+                </div>
+                <div className="relative hidden items-center justify-center border-l border-[var(--line)] bg-[var(--surface-1)] lg:flex">
+                  <Braces
+                    className="h-44 w-44 text-[var(--accent)] opacity-[0.14]"
+                    aria-hidden="true"
+                  />
+                </div>
               </a>
 
               <a
                 href="/readiness-badge/"
-                className="flex flex-col gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-7 lift hover:shadow-lg"
+                className="stack-card group block lg:grid lg:grid-cols-[1.15fr_0.85fr]"
               >
-                <BadgeCheck className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
-                <h3 className="text-lg font-semibold tracking-tight">Dynamic Score Badge</h3>
-                <p className="text-sm leading-relaxed text-[var(--ink-2)]">
-                  Embed a badge carrying your verified GEO score in your GitHub README or site
-                  footer.
-                </p>
-                <span className="mt-auto pt-2 text-sm text-[var(--accent)]">Get the badge →</span>
+                <div className="flex flex-col gap-4 p-7 md:p-10 lg:justify-center">
+                  <BadgeCheck className="h-6 w-6 text-[var(--accent)]" aria-hidden="true" />
+                  <h3 className="text-2xl font-semibold tracking-tight">Dynamic Score Badge</h3>
+                  <p className="max-w-xl text-base leading-relaxed text-[var(--ink-2)]">
+                    Embed a badge carrying your verified GEO score in your GitHub README or site
+                    footer.
+                  </p>
+                  <span className="pt-2 text-sm text-[var(--accent)]">Get the badge →</span>
+                </div>
+                <div className="relative hidden items-center justify-center border-l border-[var(--line)] bg-[var(--surface-1)] lg:flex">
+                  <BadgeCheck
+                    className="h-44 w-44 text-[var(--accent)] opacity-[0.14]"
+                    aria-hidden="true"
+                  />
+                </div>
               </a>
             </div>
           </div>
@@ -568,21 +600,36 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="mt-14 grid gap-6 lg:grid-cols-3">
+            {/*
+              The same deck as the checks section, with the screenshot as the card's right
+              panel. .stack-card--media is taller because a 880x550 capture needs the room;
+              below 1024px the cards are static and the image sits under the text in the
+              normal flow.
+            */}
+            <div className="stack-deck mt-14">
               {TOOLS.map((tool) => (
                 <div
                   key={tool.href}
-                  className="flex flex-col overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-2)]"
+                  className="stack-card stack-card--media lg:grid lg:grid-cols-[0.95fr_1.05fr]"
                 >
+                  <div className="flex flex-col gap-3 p-7 md:p-10 lg:justify-center">
+                    <h3 className="text-2xl font-semibold tracking-tight">{tool.title}</h3>
+                    <p className="max-w-md text-base leading-relaxed text-[var(--ink-2)]">
+                      {tool.body}
+                    </p>
+                    <a
+                      href={tool.href}
+                      className="pt-2 text-sm font-medium text-[var(--accent)] hover:opacity-75"
+                    >
+                      {tool.linkLabel} →
+                    </a>
+                  </div>
                   {/*
-                    The screenshot sits on an inset grey mat rather than flush
-                    against the card. Two reasons: these are captures of
-                    light-on-white interfaces, so a white image on a white card
-                    has no edge of its own and reads as a smudge, and the mat is
-                    the difference between "a card with a picture in it" and "a
-                    window onto the tool".
+                    The screenshot sits on an inset grey mat rather than flush against the card.
+                    These are captures of light-on-white interfaces, so a white image on a white
+                    card has no edge of its own and reads as a smudge.
                   */}
-                  <div className="bg-[var(--surface-1)] p-5">
+                  <div className="bg-[var(--surface-1)] p-5 lg:flex lg:items-center lg:justify-center">
                     <img
                       src={tool.src}
                       width={880}
@@ -590,18 +637,8 @@ export default function HomePage() {
                       alt={tool.alt}
                       loading="lazy"
                       decoding="async"
-                      className="w-full rounded-lg border border-[var(--line)] shadow-sm"
+                      className="w-full rounded-lg border border-[var(--line)] shadow-sm lg:max-h-full lg:w-auto lg:max-w-full lg:object-contain"
                     />
-                  </div>
-                  <div className="flex flex-1 flex-col gap-3 p-7">
-                    <h3 className="text-lg font-semibold tracking-tight">{tool.title}</h3>
-                    <p className="text-sm leading-relaxed text-[var(--ink-2)]">{tool.body}</p>
-                    <a
-                      href={tool.href}
-                      className="mt-auto pt-2 text-sm font-medium text-[var(--accent)] hover:opacity-75"
-                    >
-                      {tool.linkLabel} →
-                    </a>
                   </div>
                 </div>
               ))}
