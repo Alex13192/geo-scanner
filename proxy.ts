@@ -36,6 +36,26 @@ import { LEGACY_HOST, SITE_HOST, SITE_URL } from "@/lib/site";
 /** Dead paths on this site: where a path used to be -> where it goes now. */
 const GONE: Record<string, string> = {
   /*
+   * LEGAL PAGES EXIST IN ENGLISH ONLY, BUT THE LOCALIZED STOREFRONTS EXIST IN FIVE LANGUAGES.
+   * Their footers link the English /terms/, /privacy/ and /refund/ and label them "(EN)", and the
+   * page says English prevails - so a localized legal URL was never published. It still gets typed:
+   * by a reviewer checking whether a German buyer can read the terms, by a translator, or by a stale
+   * link. A 404 on a legal page is the one 404 that reads as "there is no policy", which is why
+   * these resolve to the English document instead. Generated from one list so a sixth locale cannot
+   * half-exist; /de/impressum and /de/widerrufsrecht below predate the localized site and still
+   * point at the closest English page.
+   */
+  ...Object.fromEntries(
+    ["/zh", "/ja", "/es", "/de", "/fr"].flatMap((locale) =>
+      [
+        ["terms", "/terms/"],
+        ["privacy", "/privacy/"],
+        ["refund", "/refund/"],
+      ].map(([page, target]) => [`${locale}/${page}`, target])
+    )
+  ),
+
+  /*
    * The German half of the site was removed before the English-only decision and returned on
    * 2026-10-23 as one of five localized locales. `/de/` itself is therefore NOT in this table:
    * redirecting it to `/` would now break a real page. The old German deep paths that have no
