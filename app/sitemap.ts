@@ -79,10 +79,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   /* The writing is translated into English, Chinese and Japanese. */
   const insightsAlternates = (slug: string) => ({
     languages: {
-      en: `${SITE_URL}/insights${slug}/`,
-      'zh-Hans': `${SITE_URL}/zh/insights${slug}/`,
-      ja: `${SITE_URL}/ja/insights${slug}/`,
-      'x-default': `${SITE_URL}/insights${slug}/`,
+      en: `${SITE_URL}/blog${slug}/`,
+      'zh-Hans': `${SITE_URL}/zh/blog${slug}/`,
+      ja: `${SITE_URL}/ja/blog${slug}/`,
+      'x-default': `${SITE_URL}/blog${slug}/`,
     },
   });
 
