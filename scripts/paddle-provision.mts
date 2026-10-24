@@ -29,7 +29,15 @@ import { SITE_URL } from "../lib/site.ts";
 
 const WEBHOOK_URL = `${SITE_URL}/api/webhooks/checkout`;
 const SUBSCRIBED_EVENTS = ["transaction.completed", "adjustment.created", "adjustment.updated"];
-const TAX_CATEGORY = "digital-goods";
+/*
+ * `standard`, NOT `digital-goods`. Paddle only lets an account use tax categories that have been
+ * approved for it, and the developer docs are explicit that `standard` and `saas` are always
+ * approved while `digital-goods` is not: creating with it returns
+ * `product_tax_category_not_approved` on a new account. The category can be changed in the
+ * dashboard after approval; blocking the whole catalog on a tax-category request is the wrong
+ * order of operations for a first sale.
+ */
+const TAX_CATEGORY = "standard";
 const OUT_DIR = path.resolve(process.cwd(), "..", ".keys");
 
 const argv = process.argv.slice(2);
