@@ -7,7 +7,6 @@ import ReportPreview from "@/app/components/ReportPreview";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
 import { homePath } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { CONTACT_EMAIL, SITE_SCAN_PRICE_CNY } from "@/lib/site";
 import ReportMailFormZh from "./ReportMailFormZh";
 import ReportWidgetZh from "./ReportWidgetZh";
 
@@ -265,14 +264,8 @@ export default async function ChineseReportPage({
               </p>
               <ul>
                 <li>
-                  <strong>只分析首页。</strong>内页完全不在单 URL 扫描的范围内。当首页的数字不够时，
-                  可以选择<strong>站点扫描</strong>：首页加上 sitemap 里列出的页面——默认 5 个、
-                  最多 10 个——每个页面用同一套规则分别打分、分别报告，并说明站级问题。这是这个
-                  扫描器唯一收费的部分，每次扫描 {SITE_SCAN_PRICE_CNY} 元，通过支付宝 AI 按量付费
-                  流程支付。发邮件到{" "}
-                  <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-                  ，我们会执行并开票；或者在技能市场添加 LLMention GEO 技能，它会自己调用端点。
-                  上面的免费扫描不受影响，并且保持免费。
+                  <strong>只分析首页。</strong>内页完全不在单 URL 扫描的范围内。上面的免费扫描就是
+                  全部产品：不需要账号、不需要邮箱、不需要付费，并且保持免费。
                 </li>
                 <li>
                   <strong>请求被拒绝不等于被封禁。</strong>大型站点按 IP 验证爬虫，所以扫描器可能

@@ -80,8 +80,9 @@ export default function RefundPage() {
       <article className="doc-article text-[17px] leading-[1.65] text-[var(--ink-2)]">
         <h2>Before the bank is frozen — full refund</h2>
         <p>
-          You can cancel at any point before you approve and freeze the question bank. The refund is
-          full, and you do not have to give a reason.
+          You can cancel at any point before you approve and freeze the question bank — and in any
+          event for at least 14 days after payment. The refund is full, and you do not have to give a
+          reason.
         </p>
         <p>
           That window is not a formality. It is the point of the intake: you are the only person who
@@ -97,7 +98,7 @@ export default function RefundPage() {
         </p>
         <p>
           So from the moment the bank is frozen, the fee is non-refundable. The email that asks you to
-          approve the bank states this, and payment is taken after you have seen it.
+          approve the bank states this, and approving the bank is what makes the fee non-refundable.
         </p>
         <p>
           If you want a different question afterwards, that is a new bank and a new baseline. We will
@@ -131,7 +132,8 @@ export default function RefundPage() {
           withdraw from it without giving a reason.
         </p>
         <p>
-          A measurement report is a service, and it begins when you ask us to begin. Before anything
+          A measurement report is a made-to-order digital product, and its preparation begins when
+          you ask us to begin. Before anything
           starts, we will ask you to confirm in writing that you want the bank frozen now and that you
           understand you lose the right of withdrawal once the runs begin. If you do not confirm it,
           we will not start the measurement — and you keep your full 14-day right, and a full refund

@@ -7,7 +7,6 @@ import ReportPreview from "@/app/components/ReportPreview";
 import { social } from "@/lib/og";
 import { PRODUCTS, formatUsd } from "@/lib/pricing";
 import { languageAlternates, pricingPath } from "@/lib/i18n/config";
-import { CONTACT_EMAIL } from "@/lib/site";
 
 /**
  * Pricing.
@@ -31,7 +30,7 @@ export const dynamic = "force-dynamic";
 
 const TITLE = "Pricing";
 const DESCRIPTION =
-  "The scanner is free. Paid are one-time AI visibility measurements: 15 questions for $39, 30 questions and two engines for $99.";
+  "The scanner is free. Paid are standardised, one-time AI visibility measurements: 25–30 questions for $39, or 25–30 questions on two engines for $99.";
 const UPDATED = "23 October 2026";
 
 export const metadata: Metadata = {
@@ -74,7 +73,7 @@ export default function PricingPage() {
 
         <h2>What a paid report is</h2>
         <p>
-          A one-time measurement, delivered as a written report and a data workbook. It asks
+          A standardised, one-time digital product: a written report and a data workbook. It asks
           an AI engine the questions your buyers actually ask, records each answer verbatim,
           and counts how often your brand - and your competitors - appeared.
         </p>
@@ -140,16 +139,17 @@ export default function PricingPage() {
           <ReportPreview />
         </div>
 
-        <h2>Agencies and multi-brand work</h2>
+        <h2>Fixed scope, on purpose</h2>
         <p>
-          Several brands, white-label delivery, or a shape of work that is not listed here:
-          email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and describe it. Scope,
-          price and dates are confirmed in writing before anything starts.
+          Every Signal and Pro report is the same product: the same question count, the same
+          three runs per question, the same report and workbook, and the same delivery window.
+          Nothing bespoke is quoted through this page, so what you buy is what the two cards
+          above describe.
         </p>
 
         <h2>How an order works</h2>
         <ol>
-          <li>You pay for a report, or email us if you want a scope that is not listed.</li>
+          <li>You pay for a report.</li>
           <li>The order reference in the payment receipt is what the intake email quotes.</li>
           <li>
             Within one working day you receive the intake form: legal name, aliases,
@@ -181,9 +181,10 @@ export default function PricingPage() {
 
         <h2>Refunds</h2>
         <p>
-          A full refund until you approve and freeze the question bank: after that the
-          measurement runs have already been paid for. The full policy, including how to ask,
-          is on the <a href="/refund/">refund page</a>.
+          A full refund until you approve and freeze the question bank — and in any event for at
+          least 14 days after payment. Once the bank is frozen the measurement runs have already
+          been paid for. The full policy, including how to ask, is on the{" "}
+          <a href="/refund/">refund page</a>.
         </p>
       </article>
 
@@ -197,7 +198,7 @@ export default function PricingPage() {
             },
             {
               q: "Is there a checkout on this site?",
-              a: "The card checkout is being connected through a merchant of record. Until it is live, the buy button opens a prefilled order email with a reference, and payment is by bank transfer or a payment link we send back. No card is entered on this site.",
+              a: "The card checkout is being connected through a merchant of record. Until it is live, the buy button opens a prefilled order email with a reference. No card is entered on this site.",
             },
             {
               q: "When does the report stop being refundable?",

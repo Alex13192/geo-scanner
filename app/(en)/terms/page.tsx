@@ -36,6 +36,14 @@ import { CONTACT_EMAIL } from "@/lib/site";
  * before the first overseas invoice is issued - that is the one deadline this file cannot miss.
  */
 import { social } from "@/lib/og";
+import SellerIdentity from "@/app/components/SellerIdentity";
+
+/*
+ * Per request, for the same reason /refund/ and /pricing/ are: SellerIdentity reads OPERATOR_IDENTITY
+ * from the deployment, and a prerendered page would freeze the build-time fallback into the file that
+ * a payment reviewer opens.
+ */
+export const dynamic = "force-dynamic";
 
 const TITLE = "Terms of service";
 const DESCRIPTION =
@@ -90,7 +98,7 @@ export default function TermsPage() {
             times per question with web search on, and delivered within 5–10 working days of the bank
             being frozen. A <strong>Pro report</strong> at $99: the same bank and the same three runs,
             measured against two engines you choose, with an action list and one retest of the frozen
-            bank within 90 days. Multi-brand and agency work is quoted in writing.
+            bank within 90 days.
           </p>
           <p>
             Prices, what each includes and what neither includes are stated on the{" "}
@@ -103,9 +111,9 @@ export default function TermsPage() {
           <p>
             An order starts with the buy button on the pricing page, which opens the payment
             provider's hosted checkout. Until a card checkout is live, that button opens a prefilled
-            order email instead, and we confirm scope, price and dates in writing before anything is
-            charged. No card details are entered on this site; the payment provider is the merchant of
-            record and handles tax.
+            order email instead, and we confirm the order, the price and the delivery window in
+            writing before anything is charged. No card details are entered on this site; the payment
+            provider is the merchant of record and handles tax.
           </p>
           <p>
             What we need from you is the intake form and an approval of the question bank. Nothing is
@@ -117,10 +125,11 @@ export default function TermsPage() {
           <h2>Refunds and the right of withdrawal</h2>
           <p>
             Before you approve and freeze the question bank you can cancel, for a full refund and
-            without giving a reason. Once the bank is frozen the measurement has begun: every question
+            without giving a reason — and in any event for at least 14 days after payment. Once the
+            bank is frozen the measurement has begun: every question
             is put to a paid engine API three times, those calls cannot be unspent, and the fee is
             therefore non-refundable from that moment. The email that asks you to approve the bank
-            says so, and payment is taken after you have seen it.
+            says so, and approving the bank is what makes the fee non-refundable.
           </p>
           <p>
             If you are a consumer in the EU or the UK you normally have 14 days to withdraw from a
@@ -138,12 +147,12 @@ export default function TermsPage() {
 
           <h2>Who you are buying from, and which law applies</h2>
           <p>
-            LLMention is an independent project operated from Shanghai, China. The seller&apos;s name
-            and postal address are published on the <a href="/refund/">refunds page</a>. These terms
+            LLMention is an independent project operated from Shanghai, China. These terms
             are governed by the laws of the People&apos;s Republic of China, and disputes fall to the
             courts of the place of business. If you are a consumer, that choice of law does not deprive
             you of the protection of the mandatory rules of the country in which you live.
           </p>
+          <SellerIdentity />
 
           <h2>Scanning other people&apos;s sites</h2>
           <p>You may use the scanner on a domain if you own it or have permission to test it.</p>

@@ -142,10 +142,10 @@ export default function PrivacyPage() {
 
           <h2>The paid measurement report</h2>
           <p>
-            The measurement report is ordered by email. It is one of the paid products on this site
-            — the other is the multi-page site scan — and it is the only one that asks you for an
-            intake. It is described here because a buyer should be able to read what is held before
-            they send it, not after.
+            The measurement report is ordered through the payment provider's checkout. It is one of
+            the two paid products on this site, and it is the only one that asks you for an intake.
+            It is described here because a buyer should be able to read what is held before they
+            send it, not after.
           </p>
           <ul>
             <li>
@@ -155,10 +155,10 @@ export default function PrivacyPage() {
               intake is the material the report is built from rather than background information.
             </li>
             <li>
-              <strong>Payment details, handled by the payment channel.</strong> Payment is by bank
-              transfer or through a payment link. The details needed to move the money are handled by
-              the payment channel or the bank; no card number is entered on this site, and no card
-              data is stored by it.
+              <strong>Payment details, handled by the payment channel.</strong> Payment is
+              processed by the site's merchant of record. The details needed to move the money are
+              handled by that provider; no card number is entered on this site, and no card data is
+              stored by it.
             </li>
             <li>
               <strong>Delivery.</strong> The report and the data workbook are sent to the address the
@@ -270,8 +270,7 @@ export default function PrivacyPage() {
               <strong>Google</strong> serves the advertising described above.
             </li>
             <li>
-              <strong>The payment channel</strong> that handles a payment for a paid product — a bank
-              transfer or payment link for a report, the pay-as-you-go flow for a site scan —
+              <strong>The payment channel</strong> that handles a payment for a paid report
               processes the payment details for that transaction under its own terms and privacy
               policy. No card data reaches this site.
             </li>

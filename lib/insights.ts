@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "cloudflare-waf-ai-crawlers-403-meaning",
+    title: "Cloudflare WAF and AI crawlers: what a 403 actually means",
+    description:
+      "A 403 can be a WAF rule, bot management, a rate limit or the origin. Two requests with different User-Agents separate a crawler-targeted refusal from a broad one.",
+    dek: "Most accidental AI-crawler blocks are a 403 that was never about robots.txt. The two-probe test tells you which layer refused the request before you edit anything.",
+    category: "Method",
+    published: "2026-10-25",
+    readTime: "10 min read",
+    figure: "403",
+    figureLabel: "the status this article is about",
+    languages: ["en"],
+  },
+  {
     slug: "robots-txt-lines-that-block-ai-crawlers",
     title: "Which robots.txt lines actually block AI crawlers",
     description:

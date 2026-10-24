@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import PageFooter from "@/app/components/PageFooter";
-import { CONTACT_EMAIL, SITE_SCAN_PRICE_CNY } from "@/lib/site";
 import ReportMailForm from "./ReportMailForm";
 import ReportWidget from "./ReportWidget";
 import ReportPreview from "@/app/components/ReportPreview";
@@ -261,21 +260,8 @@ export default async function ReportPage({
             <ul className="list-disc pl-5 mt-3 space-y-1.5">
               <li>
                 <strong>Only the homepage is analysed.</strong> Interior pages are outside a
-                single-URL scan entirely. When a homepage number is not enough, a{" "}
-                <strong>site scan</strong> is available: the homepage plus pages the sitemap names
-                &mdash; capped at five by default, ten at most &mdash; each scored with these same
-                rules and reported separately, with the site-wide problems spelled out. It is the
-                only part of this scanner that costs money, {SITE_SCAN_PRICE_CNY} yuan per scan,
-                paid through the Alipay AI pay-as-you-go flow. Ask at{" "}
-                <a
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  className="text-[var(--accent)] hover:opacity-75 underline"
-                >
-                  {CONTACT_EMAIL}
-                </a>{" "}
-                and we will run it and invoice, or add the LLMention GEO skill from the skill
-                marketplace and it will call the endpoint itself. The free scan above is
-                unaffected and stays free.
+                single-URL scan entirely. The free scan above is the whole product: it needs no
+                account, no email and no payment, and it stays free.
               </li>
               <li>
                 <strong>A refused request is not proof of a block.</strong> Large sites verify
