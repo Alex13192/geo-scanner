@@ -167,7 +167,7 @@ export async function GET() {
     "",
     `${AUTHOR.name} (${AUTHOR.role}) writes and maintains ${BRAND}. The byline, the bio and the public account the work is published under are at ${SITE_URL}${AUTHOR.path}. The source is at ${AUTHOR.githubRepo}.`,
     "",
-    `Contact: ${CONTACT_EMAIL}. Writing on the method and the study: ${SITE_URL}/insights/ (${INSIGHTS.length} pieces).`,
+    `Contact: ${CONTACT_EMAIL}. Writing on the method and the study: ${SITE_URL}/blog/ (${INSIGHTS.length} pieces).`,
     ""
   );
 

@@ -347,7 +347,7 @@ the adapter version first.
 THE SYMPTOM IS THE IMPORTANT PART, BECAUSE NOTHING WAS BROKEN AT THE ORIGIN. After two deploys on
 2026-10-23, an external audit fetched llmention-geo.com and reported the pre-deploy site: the old
 announcement banner, 97/100, 38/40, "Last verified on 4 October", the old footer tagline, and no
-links to the pages that had just shipped (/self-audit/, /compare/, /author/, /insights/). The origin
+links to the pages that had just shipped (/self-audit/, /compare/, /author/, and the writing, now /blog/). The origin
 was serving the new version — verified with cache-busting requests, from two Cloudflare colos
 (AMS and LHR), and by a third-party metadata probe returning the new title.
 

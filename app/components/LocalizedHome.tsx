@@ -96,7 +96,7 @@ export default function LocalizedHome({
                   中文指南 →
                 </Link>
                 <Link
-                  href="/zh/insights/"
+                  href="/zh/blog/"
                   className="font-medium text-[var(--accent)] hover:opacity-75"
                 >
                   研究随笔 →
@@ -136,7 +136,7 @@ export default function LocalizedHome({
                   ガイド →
                 </Link>
                 <Link
-                  href="/ja/insights/"
+                  href="/ja/blog/"
                   className="font-medium text-[var(--accent)] hover:opacity-75"
                 >
                   研究ノート →

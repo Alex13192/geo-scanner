@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 /**
  * The author page.
  *
- * WHY IT IS A /insights/ ARTICLE RATHER THAN PART OF /about/: /about/ answers "what is this
+ * WHY IT IS A /blog/ ARTICLE RATHER THAN PART OF /about/: /about/ answers "what is this
  * product"; this page answers "who is accountable for the claims", which is a different
  * question a reader asks after reading one. It renders through PostShell because it is the
  * same kind of page as the pieces it stands behind - dated, bylined, with sources - and
@@ -81,7 +81,7 @@ export default function AuthorPage() {
       }}
       related={[
         {
-          href: "/insights/",
+          href: "/blog/",
           label: "All writing",
           note: "Six pieces on the study, the rules and their limits.",
         },

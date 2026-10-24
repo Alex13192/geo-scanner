@@ -114,7 +114,7 @@ export default function AboutPage() {
             </a>
             , so a disagreement with a result can be specific: say which check and which URL.
             The longer-form writing — what the study found, and where the method is weaker than
-            it looks — is at <Link href="/insights/">/insights/</Link>.
+            it looks — is at <Link href="/blog/">/blog/</Link>.
           </p>
 
           <h2>The name, and what it is not</h2>

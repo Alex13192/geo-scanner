@@ -150,7 +150,7 @@ const CACHEABLE = [
   "/tools/",
   "/answer-check/",
   "/author/",
-  "/insights/:path*",
+  "/blog/:path*",
   "/compare/:path*",
   "/self-audit/",
   "/monitor/",

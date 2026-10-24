@@ -182,7 +182,7 @@ const guidesList: { href: string; label: string }[] = [
  */
 const WRITING_ENTRIES: Entry[] = [
   {
-    href: "/insights/",
+    href: "/blog/",
     label: "All writing",
     description:
       "Study results, rule explanations and stated limits, in one archive with the data behind each piece.",

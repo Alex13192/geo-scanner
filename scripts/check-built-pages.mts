@@ -144,10 +144,10 @@ const ROUTES: Route[] = [
     (slug) => ({ route: `/zh/docs/${slug}/`, file: `zh/docs/${slug}.html`, indexable: true, min: 60 })
   ),
   /* The translated writing: the archive index and six essays. */
-  { route: "/zh/insights/", file: "zh/insights.html", indexable: true, min: 60 },
+  { route: "/zh/blog/", file: "zh/blog.html", indexable: true, min: 60 },
   ...INSIGHTS.map((insight) => ({
-    route: `/zh/insights/${insight.slug}/`,
-    file: `zh/insights/${insight.slug}.html`,
+    route: `/zh/blog/${insight.slug}/`,
+    file: `zh/blog/${insight.slug}.html`,
     indexable: true,
     min: 60,
   })),
@@ -193,15 +193,15 @@ const ROUTES: Route[] = [
     min: 50,
   })),
   /* Japanese writing: the archive and all six essays. */
-  { route: "/ja/insights/", file: "ja/insights.html", indexable: true, min: 50 },
+  { route: "/ja/blog/", file: "ja/blog.html", indexable: true, min: 50 },
   ...INSIGHTS.map((insight) => ({
-    route: `/ja/insights/${insight.slug}/`,
-    file: `ja/insights/${insight.slug}.html`,
+    route: `/ja/blog/${insight.slug}/`,
+    file: `ja/blog/${insight.slug}.html`,
     indexable: true,
     min: 50,
   })),
   /*
-   * THE WRITING. Added with /insights/ on 2026-10-18, for the reason this file exists: a page
+   * THE WRITING. Added with /blog/ on 2026-10-18, for the reason this file exists: a page
    * that is new must not skip the gate by being new. The articles are generated from the same
    * registry the sitemap reads, so one that is published and missing from this list would have
    * to be missing from the sitemap too.
@@ -210,10 +210,10 @@ const ROUTES: Route[] = [
    * easiest page type on the site to score well - if one falls below 90 it has lost content
    * rather than been written short, and that is exactly what should fail.
    */
-  { route: "/insights/", file: "insights.html", indexable: true },
+  { route: "/blog/", file: "blog.html", indexable: true },
   ...INSIGHTS.map((insight) => ({
     route: insightPath(insight.slug),
-    file: `insights/${insight.slug}.html`,
+    file: `blog/${insight.slug}.html`,
     indexable: true,
   })),
   /* The author page. Scored like any other page: it is the page a reader follows from a byline,

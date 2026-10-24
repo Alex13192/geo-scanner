@@ -1123,7 +1123,7 @@ export default function HomePage() {
                   </a>
                 </li>
                 <li>
-                  <a href="/insights/" className="hover:text-[var(--ink-1)]">
+                  <a href="/blog/" className="hover:text-[var(--ink-1)]">
                     Writing
                   </a>
                 </li>

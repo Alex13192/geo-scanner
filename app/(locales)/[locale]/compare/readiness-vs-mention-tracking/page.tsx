@@ -302,7 +302,7 @@ export default async function ChineseReadinessVsMentionsPage({
                   <h2>我应该从哪里开始？</h2>
                   <p>
                     在你最希望被引用的那个页面上运行免费审计。修掉它报告的问题，并记下哪些失败是真实的、哪些只是页面类型造成的假象——
-                    <Link href="/zh/insights/reading-a-failed-check/">
+                    <Link href="/zh/blog/reading-a-failed-check/">
                       读懂一次未通过的检查
                     </Link>
                     是做出这个判断的指南。然后，如果你有值得提及的内容，就针对固定基线建立一套提及测量。

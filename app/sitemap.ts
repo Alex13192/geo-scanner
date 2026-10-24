@@ -352,7 +352,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
        lib/insights.ts, so a piece that is published but missing here would have to be missing
        from the archive index too - the two read the same array. */
     {
-      url: `${SITE_URL}/insights/`,
+      url: `${SITE_URL}/blog/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly',
       priority: 0.9,
@@ -366,28 +366,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
       alternates: insightsAlternates(`/${insight.slug}`),
     })),
     {
-      url: `${SITE_URL}/zh/insights/`,
+      url: `${SITE_URL}/zh/blog/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly' as const,
       priority: 0.8,
       alternates: insightsAlternates(''),
     },
     ...INSIGHTS.map((insight) => ({
-      url: `${SITE_URL}/zh/insights/${insight.slug}/`,
+      url: `${SITE_URL}/zh/blog/${insight.slug}/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
       priority: 0.6,
       alternates: insightsAlternates(`/${insight.slug}`),
     })),
     {
-      url: `${SITE_URL}/ja/insights/`,
+      url: `${SITE_URL}/ja/blog/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
       alternates: insightsAlternates(''),
     },
     ...INSIGHTS.map((insight) => ({
-      url: `${SITE_URL}/ja/insights/${insight.slug}/`,
+      url: `${SITE_URL}/ja/blog/${insight.slug}/`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
       priority: 0.5,

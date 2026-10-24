@@ -276,6 +276,27 @@ console.log("\n=== withdrawn pages ===");
    * nothing to do with what is being checked - which is exactly what the first version of
    * this section did, reporting a failure against a redirect that works.
    */
+  /*
+   * The writing moved from /insights/ to /blog/ on 2026-10-24. These URLs were published and
+   * linked, so the redirect is part of the contract: a 404 would throw away the inbound links
+   * and the indexed history. Both the bare archive and an article are checked, plus a
+   * localized prefix, because the redirect pattern handles three prefixes.
+   */
+  for (const [from, to] of [
+    ["/insights/", "/blog/"],
+    ["/insights/thirty-homepages-none-graded-a/", "/blog/thirty-homepages-none-graded-a/"],
+    ["/zh/insights/", "/zh/blog/"],
+  ]) {
+    const moved = await get(from);
+    if (moved.error) bad(`could not fetch ${from}`, moved.error);
+    else if (moved.res.status !== 301) bad(`${from} does not redirect`, `HTTP ${moved.res.status}`);
+    else {
+      const target = (moved.res.headers.get("location") || "").replace(/^https?:\/\/[^/]+/, "");
+      if (target === to) ok(`${from} -> ${to}`, "HTTP 301");
+      else bad(`${from} redirects somewhere unexpected`, `301 -> ${target || "(no location)"}`);
+    }
+  }
+
   const { res, error } = await get("/de/widerrufsrecht/");
   if (error) bad("could not fetch /de/widerrufsrecht/", error);
   else {

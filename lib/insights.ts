@@ -9,7 +9,7 @@
  * over this array, the index maps over it, and each article imports its own entry to get
  * its metadata, so a slug, a title and a publication date cannot disagree with each other.
  *
- * WHAT IS NOT HERE: the body. Articles are JSX in `app/(en)/insights/<slug>/page.tsx`
+ * WHAT IS NOT HERE: the body. Articles are JSX in `app/(en)/blog/<slug>/page.tsx`
  * because the case for hand-written markup is the same as it is for /docs/: long-form
  * prose needs lists, tables, code and links in specific places, and a markdown file plus
  * a renderer would add a build step to get back what JSX already does.
@@ -158,7 +158,7 @@ export function formatDate(iso: string): string {
   return `${day} ${MONTHS[month - 1]} ${year}`;
 }
 
-export const INSIGHT_BASE = "/insights/";
+export const INSIGHT_BASE = "/blog/";
 
 export function insightPath(slug: string): string {
   return `${INSIGHT_BASE}${slug}/`;

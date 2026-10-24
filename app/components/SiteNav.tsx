@@ -165,12 +165,12 @@ const GROUPS: Group[] = [
       },
       {
         /*
-         * Writing was added with /insights/ on 2026-10-18. It is in Learn rather than beside
+         * Writing was added with /blog/ on 2026-10-18. It is in Learn rather than beside
          * the tools because the archive is not a product: a reader arrives there to decide
          * whether to trust the measurement, not to run one.
          */
-        href: "/insights/",
-        label: "Writing",
+        href: "/blog/",
+        label: "Blog",
         description: "What the study found, and where the method is weaker than it looks.",
         icon: PenLine,
       },

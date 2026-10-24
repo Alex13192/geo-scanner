@@ -109,7 +109,7 @@ type InterpretationCopy = {
 /**
  * Chinese copy for the three readings, keyed by the slug lib/insights.ts already owns.
  *
- * WHY THE TITLES ARE COPIED FROM THE /zh/insights/ CARDS RATHER THAN TRANSLATED AGAIN: on the
+ * WHY THE TITLES ARE COPIED FROM THE /zh/blog/ CARDS RATHER THAN TRANSLATED AGAIN: on the
  * English site the link text and the destination's title are the same registry field, so a
  * reader who clicks one sees what they clicked. The figures are not copied at all - they are
  * read from the registry below - and a missing key throws at import time instead of rendering a

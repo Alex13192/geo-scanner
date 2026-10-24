@@ -115,6 +115,22 @@ export function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  /*
+   * THE WRITING MOVED FROM /insights/ TO /blog/ ON 2026-10-24. The archive was always a blog;
+   * the path now says so. Old URLs are redirected rather than 404'd because they were published,
+   * linked from the homepage and the study, and some of them have been crawled - a 301 keeps the
+   * inbound links and the indexed history pointing at one canonical address per article.
+   * The locale prefixes move with it: /zh/insights/... -> /zh/blog/..., /ja/... likewise.
+   */
+  const legacyBlog = pathname.match(/^\/(zh\/|ja\/)?insights(\/.*)?$/);
+  if (legacyBlog) {
+    const locale = legacyBlog[1] ?? "";
+    const rest = legacyBlog[2] ?? "/";
+    const moved = request.nextUrl.clone();
+    moved.pathname = `/${locale}blog${rest === "/" ? "/" : rest}`;
+    return NextResponse.redirect(moved, 301);
+  }
+
   // trailingSlash is on, so both forms arrive. Normalise before lookup.
   const key = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
 

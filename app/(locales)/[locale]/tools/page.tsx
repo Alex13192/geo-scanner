@@ -31,7 +31,7 @@ import { social } from "@/lib/og";
  * index in two languages.
  *
  * WHY DESTINATIONS ARE SPLIT BY TRANSLATION STATE: /zh/docs/, /zh/methodology/, /zh/checks/,
- * /zh/insights/ and /zh/compare/ exist, so they are linked in Chinese. /report/,
+ * /zh/blog/ and /zh/compare/ exist, so they are linked in Chinese. /report/,
  * /answer-check/, /llms-txt-studio/, /readiness-badge/, /monitor/, /api-docs/ and
  * /dimensions/ are English, so their cards keep the English name, set hrefLang="en" and
  * append 「（英文）」. A Chinese label on an English page would send the reader one click into
@@ -199,7 +199,7 @@ const COMPARE_ENTRIES: Entry[] = [
 ];
 
 /*
- * The six article titles and deks are the strings /zh/insights/ already prints on its cards,
+ * The six article titles and deks are the strings /zh/blog/ already prints on its cards,
  * copied here so a reader who follows a card sees the same title on the article. Slugs, order
  * and the count still come from INSIGHTS, which is the registry the archive and the sitemap
  * read; only the copy is duplicated. A slug without copy throws at build time rather than
@@ -266,7 +266,7 @@ const METHOD_ENTRIES: Entry[] = [
  */
 const WRITING_ENTRIES: Entry[] = [
   {
-    href: "/zh/insights/",
+    href: "/zh/blog/",
     label: "全部写作",
     description: "研究结果、规则说明和明确写出的局限，汇成一个档案，每篇都附上其背后的数据。",
   },

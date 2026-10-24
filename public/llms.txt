@@ -87,25 +87,25 @@ relationship or shared operator between the two.
 
 ## Writing
 
-- [All writing](https://llmention-geo.com/insights/): First-party pieces on what the
+- [All writing](https://llmention-geo.com/blog/): First-party pieces on what the
   30-site study found, how the rules fail in practice, and where the method is weaker
   than it looks.
-- [We scanned 30 homepages and none graded an A](https://llmention-geo.com/insights/thirty-homepages-none-graded-a/):
+- [We scanned 30 homepages and none graded an A](https://llmention-geo.com/blog/thirty-homepages-none-graded-a/):
   The full grade distribution, the ceiling, and why the average is taken over the 21
   homepages that answered rather than all 30.
-- [Six news publishers, six blocking AI crawlers](https://llmention-geo.com/insights/six-news-publishers-blocking-ai-crawlers/):
+- [Six news publishers, six blocking AI crawlers](https://llmention-geo.com/blog/six-news-publishers-blocking-ai-crawlers/):
   Every news site in the sample turns away at least one tracked crawler; the measured
   status codes and the policy trade behind them.
-- [Nine homepages never answered the crawler](https://llmention-geo.com/insights/nine-homepages-never-answered/):
+- [Nine homepages never answered the crawler](https://llmention-geo.com/blog/nine-homepages-never-answered/):
   What a 401, 403, 429, 202 or 520 means for a score, and why those rows are published
   and excluded from the mean.
-- [22 of 30 sites leave AI guessing who they are](https://llmention-geo.com/insights/entity-markup-gap/):
+- [22 of 30 sites leave AI guessing who they are](https://llmention-geo.com/blog/entity-markup-gap/):
   The entity and sameAs coverage across the sample, with the smallest JSON-LD graph that
   passes both rules.
-- [llms.txt: what the evidence actually supports](https://llmention-geo.com/insights/llms-txt-what-the-evidence-supports/):
+- [llms.txt: what the evidence actually supports](https://llmention-geo.com/blog/llms-txt-what-the-evidence-supports/):
   Why the convention is checked, why it is capped at 3.3 of 100 points, and what the
   crawler documentation does and does not commit to.
-- [How to read a failed check and fix the right thing](https://llmention-geo.com/insights/reading-a-failed-check/):
+- [How to read a failed check and fix the right thing](https://llmention-geo.com/blog/reading-a-failed-check/):
   The three questions to ask before editing, and the difference between satisfying a rule
   and satisfying the reason it exists.
 

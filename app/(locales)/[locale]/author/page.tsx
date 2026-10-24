@@ -158,7 +158,7 @@ export default async function ChineseAuthorPage({
             ← 返回首页
           </Link>
           <Link
-            href="/zh/insights/"
+            href="/zh/blog/"
             className="text-[14px] font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--ink-1)]"
           >
             全部文章 →
@@ -371,7 +371,7 @@ export default async function ChineseAuthorPage({
               <ul className="mt-4 space-y-3">
                 <li>
                   <Link
-                    href="/zh/insights/"
+                    href="/zh/blog/"
                     className="text-[15px] font-medium text-[var(--accent)] hover:opacity-75"
                   >
                     全部文章

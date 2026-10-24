@@ -261,7 +261,7 @@ export default function ReadinessVsMentionsPage() {
           <p>
             Run the free audit on the page you most want cited. Fix what it reports, and note which
             failures were real rather than page-type artefacts -{" "}
-            <Link href="/insights/reading-a-failed-check/">reading a failed check</Link> is the
+            <Link href="/blog/reading-a-failed-check/">reading a failed check</Link> is the
             guide for that judgement. Then, if you have content worth mentioning, set up a mention
             measurement against the fixed baseline.
           </p>

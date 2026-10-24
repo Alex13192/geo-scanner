@@ -20,7 +20,7 @@ import { BRAND_FULL, CONTACT_EMAIL } from "@/lib/site";
  * table, the FAQ and the evidence block are copied from the English shell so the two pages
  * still read as one page in two languages.
  *
- * WHY THE LINKS ARE MIXED: /methodology/, /pricing/, /insights/ and /author/ have Chinese
+ * WHY THE LINKS ARE MIXED: /methodology/, /pricing/, /blog/ and /author/ have Chinese
  * versions and are linked in Chinese. The scanner CTA points at an English surface - the
  * scanner is still English-only - so it keeps hrefLang="en" and the （英文） marker that
  * tells a reader they are leaving the translation. The GitHub and arXiv links are external
@@ -153,7 +153,7 @@ export default async function ChineseAboutPage({
                   </a>
                   ，所以对结果的不同意见可以很具体：指出是哪一项检查、哪一个 URL。
                   篇幅更长的写作——研究报告发现了什么，以及这套方法在哪里比它看起来更弱——在{" "}
-                  <Link href="/zh/insights/">/zh/insights/</Link>。
+                  <Link href="/zh/blog/">/zh/blog/</Link>。
                 </p>
 
                 <h2>这个名字，以及它不是的东西</h2>

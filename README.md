@@ -27,7 +27,7 @@ and the executed method cannot drift apart.
 - Six languages: English plus 中文 (`/zh/`), 日本語 (`/ja/`), Español (`/es/`), Deutsch (`/de/`) and
   Français (`/fr/`). Home and pricing are fully translated; the deep documentation is English.
 - Who writes it, and how it is funded: `/author/`
-- First-party writing on the study and the rules: `/insights/`
+- First-party writing on the study and the rules: `/blog/`
 
 ## Run a scan without installing anything
 
@@ -141,7 +141,7 @@ content check and looked like a successful cutover.
 app/                 routes; (en)/ is the only locale, deliberately
   (en)/checks/       the rule reference, generated from the catalogue
   (en)/compare/      the three comparison pages, including vs DataForSEO's LLM Mentions API
-  (en)/insights/     dated first-party writing, generated from lib/insights.ts
+  (en)/blog/         dated first-party writing, generated from lib/insights.ts
   api/               scan and llms.txt endpoints, Node runtime inside the Worker
 lib/geo/             the scoring engine, the published catalogue, generated copy
 lib/monitoring/      the 25-question bank and the four-engine detector

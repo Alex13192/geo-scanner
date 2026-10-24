@@ -14,10 +14,10 @@ import { OG_IMAGE } from "@/lib/og";
 import { SITE_URL } from "@/lib/site";
 
 /**
- * The shell every /insights/<slug>/ article renders through.
+ * The shell every /blog/<slug>/ article renders through.
  *
  * WHY IT IS NOT ArticleShell WITH EXTRA PROPS: /docs/ is product documentation - the
- * reader arrives with a task and the page is a sequence of steps. /insights/ is
+ * reader arrives with a task and the page is a sequence of steps. /blog/ is
  * writing: it has a publication date, a byline, a source list and a place in an
  * archive, and the About page's claim that a person wrote it has to be visible rather
  * than inferred from structured data. Sharing one component would have meant a byline
@@ -119,7 +119,7 @@ export default function PostShell({
       <div className="border-b border-[var(--line)] bg-[var(--surface-1)]">
         <div className="wrap flex h-11 items-center">
           <Link
-            href="/insights/"
+            href="/blog/"
             className="text-[14px] font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--ink-1)]"
           >
             ← All writing
