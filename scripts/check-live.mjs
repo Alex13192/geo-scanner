@@ -297,6 +297,30 @@ console.log("\n=== withdrawn pages ===");
     }
   }
 
+  /*
+   * Legal pages exist in English only, and the localized storefronts say so by labelling the
+   * footer link "(EN)". A localized legal URL was never published, but it gets typed: a reviewer
+   * checking whether a German buyer can read the terms is the exact reader who will try one. A
+   * 404 there reads as "no policy", so proxy.ts maps fifteen of them to the English document and
+   * this asserts one per locale plus both other page names on one locale.
+   */
+  for (const [from, to] of [
+    ["/zh/terms/", "/terms/"],
+    ["/zh/refund/", "/refund/"],
+    ["/ja/privacy/", "/privacy/"],
+    ["/de/terms/", "/terms/"],
+    ["/fr/refund/", "/refund/"],
+  ]) {
+    const moved = await get(from);
+    if (moved.error) bad(`could not fetch ${from}`, moved.error);
+    else if (moved.res.status !== 301) bad(`${from} does not redirect`, `HTTP ${moved.res.status}`);
+    else {
+      const target = (moved.res.headers.get("location") || "").replace(/^https?:\/\/[^/]+/, "");
+      if (target === to) ok(`${from} -> ${to}`, "HTTP 301");
+      else bad(`${from} redirects somewhere unexpected`, `301 -> ${target || "(no location)"}`);
+    }
+  }
+
   const { res, error } = await get("/de/widerrufsrecht/");
   if (error) bad("could not fetch /de/widerrufsrecht/", error);
   else {
