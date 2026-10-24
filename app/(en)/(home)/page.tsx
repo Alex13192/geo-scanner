@@ -2,6 +2,7 @@ import { BadgeCheck, Bot, Braces, Minus, Wrench } from "lucide-react";
 import ScanForm from "./ScanForm";
 import ScoreRing from "@/app/components/ScoreRing";
 import SiteNav from "@/app/components/SiteNav";
+import { BadgeArt, CrawlerArt, EntityArt } from "@/app/components/CheckArt";
 import { CHECK_COPY } from "@/lib/geo/check-copy";
 import { CHECK_CATALOG, DIMENSION_CATALOG } from "@/lib/geo/catalog";
 import { FAQ_ITEMS, SELF_AUDIT, TAGLINE } from "@/lib/home-content";
@@ -525,11 +526,8 @@ export default function HomePage() {
                     How to allow AI crawlers →
                   </span>
                 </div>
-                <div className="relative hidden items-center justify-center border-l border-[var(--line)] bg-[var(--surface-1)] lg:flex">
-                  <Bot
-                    className="h-44 w-44 text-[var(--accent)] opacity-[0.14]"
-                    aria-hidden="true"
-                  />
+                <div className="relative hidden items-center justify-center border-l border-[var(--line)] bg-[var(--surface-1)] p-8 lg:flex">
+                  <CrawlerArt />
                 </div>
               </a>
 
@@ -550,11 +548,8 @@ export default function HomePage() {
                     Schema.org for GEO →
                   </span>
                 </div>
-                <div className="relative hidden items-center justify-center border-l border-[var(--line)] bg-[var(--surface-1)] lg:flex">
-                  <Braces
-                    className="h-44 w-44 text-[var(--accent)] opacity-[0.14]"
-                    aria-hidden="true"
-                  />
+                <div className="relative hidden items-center justify-center border-l border-[var(--line)] bg-[var(--surface-1)] p-8 lg:flex">
+                  <EntityArt />
                 </div>
               </a>
 
@@ -571,11 +566,8 @@ export default function HomePage() {
                   </p>
                   <span className="pt-2 text-sm text-[var(--accent)]">Get the badge →</span>
                 </div>
-                <div className="relative hidden items-center justify-center border-l border-[var(--line)] bg-[var(--surface-1)] lg:flex">
-                  <BadgeCheck
-                    className="h-44 w-44 text-[var(--accent)] opacity-[0.14]"
-                    aria-hidden="true"
-                  />
+                <div className="relative hidden items-center justify-center border-l border-[var(--line)] bg-[var(--surface-1)] p-8 lg:flex">
+                  <BadgeArt />
                 </div>
               </a>
             </div>
