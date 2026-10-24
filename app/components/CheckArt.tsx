@@ -1,3 +1,5 @@
+import { SITE_HOST } from "@/lib/site";
+
 /**
  * The three art panels on the "Three questions decide..." cards.
  *
@@ -147,7 +149,7 @@ export function BadgeArt() {
       </div>
       <div className="border-t border-[var(--line)] px-4 py-3">
         <p className="truncate font-mono text-[10.5px] text-[var(--ink-3)]">
-          [![GEO 100/100](llmention-geo.com/badge.svg)](llmention-geo.com/…)
+          [![GEO 100/100]({SITE_HOST}/badge.svg)]({SITE_HOST}/…)
         </p>
         <p className="mt-1.5 text-[10.5px] text-[var(--ink-3)]">
           The number is read from a live scan — it cannot be typed in.

@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "what-a-crawler-sees-without-javascript",
+    title: "What a crawler sees when your page needs JavaScript",
+    description:
+      "The browser and a non-rendering crawler receive different documents. Three curl checks and a no-JS reload show which one your article is in.",
+    dek: "A page that looks complete in a browser can be a shell in the fetch a crawler makes. The gap is cheap to measure and easy to miss, because every manual test runs JavaScript.",
+    category: "Explainer",
+    published: "2026-10-25",
+    readTime: "9 min read",
+    figure: "100",
+    figureLabel: "words the rule looks for",
+    languages: ["en"],
+  },
+  {
     slug: "cloudflare-waf-ai-crawlers-403-meaning",
     title: "Cloudflare WAF and AI crawlers: what a 403 actually means",
     description:
