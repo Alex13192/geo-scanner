@@ -609,6 +609,27 @@ console.log("\n=== blog feed ===");
   }
 }
 
+/* ---- localized pages must not double-prefix their own locale ---- */
+console.log("\n=== localized links ===");
+{
+  /*
+   * WHY THIS IS ASSERTED: a bad bulk replace once produced links like /zh/zh/report/, which 404
+   * from the Chinese study and self-audit pages. Ahrefs counted 33 of them. Nothing in the
+   * renderer fails when a locale segment is repeated, so the only way to keep it from coming
+   * back is to check the deployed HTML for the doubled prefix.
+   */
+  for (const page of ["/zh/study/", "/zh/self-audit/"]) {
+    const { body, error } = await get(page);
+    if (error) {
+      bad(`could not fetch ${page}`, error);
+      continue;
+    }
+    const doubled = (body.match(/\/zh\/zh\//g) || []).length;
+    if (doubled > 0) bad(`${page} links to a doubled locale prefix`, `${doubled} occurrences of /zh/zh/`);
+    else ok(`${page} has no doubled locale prefix`, "no /zh/zh/ links");
+  }
+}
+
 /* ---- HTML must not be cacheable past a deploy ---- */
 console.log("\n=== html cache headers ===");
 {
