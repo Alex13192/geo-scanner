@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { LocaleFooter, LocaleHeader } from "@/app/components/LocalizedChrome";
+import BlogArchiveIndex from "@/app/components/BlogArchiveIndex";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import { AUTHOR } from "@/lib/author";
 import { homePath } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { INSIGHTS, insightsForLocale, type InsightCategory } from "@/lib/insights";
+import { insightsForLocale, type InsightCategory } from "@/lib/insights";
 
 /**
  * `/zh/blog/` - the writing index, in Chinese.
@@ -194,6 +195,27 @@ export default function ChineseInsightsIndexPage() {
                 );
               })}
             </div>
+
+            <BlogArchiveIndex
+              items={insightsForLocale("zh").map((insight) => ({
+                slug: insight.slug,
+                title: cardCopy(insight.slug).title,
+                published: insight.published,
+                category: CATEGORY_ZH[insight.category],
+              }))}
+              basePath="/zh/blog/"
+              labels={{
+                heading: "全部文章",
+                description: "按时间倒序排列。可按分类、年份筛选，或搜索标题。",
+                search: "搜索标题…",
+                allCategories: "全部分类",
+                allYears: "全部年份",
+                count: "{n} / {total} 篇",
+                empty: "没有匹配的文章。",
+                category: "分类",
+                date: "年份",
+              }}
+            />
 
             {/* Prose under the grid, bounded to the same measure as the articles themselves. */}
             <div className="mx-auto mt-16 max-w-3xl space-y-6 text-[16px] leading-relaxed text-[var(--ink-2)]">

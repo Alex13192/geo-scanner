@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { LocaleFooter, LocaleHeader } from "@/app/components/LocalizedChrome";
+import BlogArchiveIndex from "@/app/components/BlogArchiveIndex";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
 import { AUTHOR } from "@/lib/author";
 import { homePath } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { INSIGHTS, insightsForLocale, type InsightCategory } from "@/lib/insights";
+import { insightsForLocale, type InsightCategory } from "@/lib/insights";
 
 /**
  * `/ja/blog/` - the writing archive, in Japanese.
@@ -183,6 +184,27 @@ export default function JapaneseInsightsIndexPage() {
                 );
               })}
             </div>
+
+            <BlogArchiveIndex
+              items={insightsForLocale("ja").map((insight) => ({
+                slug: insight.slug,
+                title: cardCopy(insight.slug).title,
+                published: insight.published,
+                category: CATEGORY_JA[insight.category],
+              }))}
+              basePath="/ja/blog/"
+              labels={{
+                heading: "すべての記事",
+                description: "新しい順。カテゴリ・年で絞り込むか、タイトルを検索できます。",
+                search: "タイトルを検索…",
+                allCategories: "すべてのカテゴリ",
+                allYears: "すべての年",
+                count: "{n} / {total} 件",
+                empty: "一致する記事がありません。",
+                category: "カテゴリ",
+                date: "年",
+              }}
+            />
 
             {/* 本文記事と同じ行長に揃えた、グリッド下の文章。 */}
             <div className="mx-auto mt-16 max-w-3xl space-y-6 text-[16px] leading-relaxed text-[var(--ink-2)]">

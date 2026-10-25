@@ -4,6 +4,7 @@ import PageFooter from "@/app/components/PageFooter";
 import SiteNav from "@/app/components/SiteNav";
 import Evidence, { GEO_PRIMARY_QUOTE, GEO_PRIMARY_SOURCES } from "@/app/components/Evidence";
 import Faq from "@/app/components/Faq";
+import BlogArchiveIndex from "@/app/components/BlogArchiveIndex";
 import { INSIGHTS, formatDate, insightPath } from "@/lib/insights";
 import { social } from "@/lib/og";
 
@@ -118,6 +119,32 @@ export default function InsightsIndexPage() {
               ))}
             </div>
 
+            {/*
+              The directory under the grid. The grid shows recent pieces; this is how a reader
+              finds the one from three weeks ago once the blog publishes on a schedule.
+            */}
+            <BlogArchiveIndex
+              items={INSIGHTS.map((insight) => ({
+                slug: insight.slug,
+                title: insight.title,
+                published: insight.published,
+                category: insight.category,
+              }))}
+              basePath="/blog/"
+              labels={{
+                heading: "All posts",
+                description:
+                  "Every piece, newest first. Filter by category or year, or search a title.",
+                search: "Search titles…",
+                allCategories: "All categories",
+                allYears: "All years",
+                count: "{n} of {total} posts",
+                empty: "No posts match that filter.",
+                category: "Category",
+                date: "Year",
+              }}
+            />
+
             {/* Prose under the grid, bounded to the same measure as the articles themselves. */}
             <div className="mx-auto mt-16 max-w-3xl space-y-6 text-[16px] leading-relaxed text-[var(--ink-2)]">
               <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--ink-1)]">
@@ -133,7 +160,8 @@ export default function InsightsIndexPage() {
                 The standard is one sentence long: <strong>delete the piece and ask what the
                 reader lost</strong>. If the answer is a number they could not get elsewhere, or
                 a step they can run themselves, it stays. If the answer is nothing, it does not
-                get published — which is why there are six pieces and not thirty.
+                get published — which is why every piece has to earn its place rather than fill
+                a calendar.
               </p>
               <p>
                 The figures the archive turns on are all from one run over 30 homepages:{" "}
