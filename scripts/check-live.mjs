@@ -338,6 +338,22 @@ console.log("\n=== withdrawn pages ===");
     }
   }
 
+  /*
+   * `robots-ai-blocked` is an alias of the access rule, not a routable page. Older links to it
+   * must reach the guide that explains both outcomes instead of a 404.
+   */
+  {
+    const alias = await get("/checks/robots-ai-blocked/");
+    if (alias.error) bad("could not fetch /checks/robots-ai-blocked/", alias.error);
+    else if (alias.res.status !== 301) {
+      bad("/checks/robots-ai-blocked/ is not redirected", `HTTP ${alias.res.status}`);
+    } else {
+      const target = (alias.res.headers.get("location") || "").replace(/^https?:\/\/[^/]+/, "");
+      if (target === "/docs/allow-ai-crawlers/") ok("/checks/robots-ai-blocked/ → the guide", "HTTP 301");
+      else bad("/checks/robots-ai-blocked/ redirects somewhere unexpected", target || "(no location)");
+    }
+  }
+
   const { res, error } = await get("/de/widerrufsrecht/");
   if (error) bad("could not fetch /de/widerrufsrecht/", error);
   else {

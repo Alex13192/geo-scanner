@@ -198,7 +198,7 @@ grep -iE "^HTTP/|^cf-mitigated:|^server:|^cf-ray:" /tmp/browser.headers`}</pre>
         refuses a crawler-shaped request, it repeats the URL with a browser-shaped User-Agent. If
         that second request is served, the refusal is aimed at identified crawlers and the AI
         crawler access check fails under{" "}
-        <Link href="/checks/robots-ai-blocked/">the blocked outcome</Link>. If both requests are
+        <Link href="/docs/allow-ai-crawlers/">the blocked outcome</Link>. If both requests are
         refused, the refusal is about the scanning address rather than the site, and the check
         scores 2 of 6 as unverified instead of failing a site for somebody else&rsquo;s network
         policy.

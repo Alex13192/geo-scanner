@@ -135,6 +135,14 @@ export function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  /* The blocked outcome is an alias of the access rule, not a second rule page. Old links to the
+   * alias URL should land on the guide that explains both outcomes rather than on a 404. */
+  if (pathname === "/checks/robots-ai-blocked" || pathname === "/checks/robots-ai-blocked/") {
+    const moved = request.nextUrl.clone();
+    moved.pathname = "/docs/allow-ai-crawlers/";
+    return NextResponse.redirect(moved, 301);
+  }
+
   /*
    * A locale prefix that appears twice is one bad link away from being a 404 again. The Chinese
    * study and self-audit pages linked to /zh/zh/report/ for a while (Ahrefs found 33 of them),

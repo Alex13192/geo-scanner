@@ -215,7 +215,7 @@ export default function Page() {
         The scanner handles this explicitly. When the homepage refuses a crawler-shaped request,
         it repeats the same URL with a browser-shaped User-Agent. If the browser-shaped request is
         served, the refusal is aimed at identified crawlers and the check fails under{" "}
-        <Link href="/checks/robots-ai-blocked/">the blocked rule</Link>. If both are refused, the
+        <Link href="/docs/allow-ai-crawlers/">the blocked rule</Link>. If both are refused, the
         refusal is about the scanning address rather than the site, and the check scores 2 of 6 as
         unverified rather than failing you for something that may not be yours.
       </p>
