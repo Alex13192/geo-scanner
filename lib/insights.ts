@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "sameas-which-profiles-help-entity-resolution",
+    title: "sameAs: which profiles actually help an entity resolve",
+    description:
+      "A hierarchy from registries to noise, the self-reference and dead-link mistakes that make the list worthless, and how to audit every URL you claim.",
+    dek: "sameAs is a list of claims, not a link dump. What counts as corroboration, what counts as padding, and why the scanner's two-point check does not fetch a single profile.",
+    category: "Explainer",
+    published: "2026-10-26",
+    readTime: "10 min read",
+    figure: "2",
+    figureLabel: "points for a non-empty sameAs",
+    languages: ["en"],
+  },
+  {
     slug: "entity-graph-organization-website-softwareapplication",
     title: "The entity graph: Organization vs WebSite vs SoftwareApplication",
     description:
