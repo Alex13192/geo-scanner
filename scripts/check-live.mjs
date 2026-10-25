@@ -371,6 +371,40 @@ console.log("\n=== the old hostname ===");
   }
 }
 
+/* ---- the www hostname ---- */
+console.log("\n=== the www hostname ===");
+{
+  /*
+   * WHY THIS IS TESTED LIKE THE OLD HOSTNAME: www was the one hostname that did NOT answer.
+   * The apex had a Workers custom domain and www had no DNS record at all, so a browser got
+   * NXDOMAIN before the redirect branch in proxy.ts could run. The fix is a second custom
+   * domain in wrangler.jsonc (Cloudflare creates the record) plus the redirect that already
+   * existed. This assertion is what distinguishes "the record exists" from "the redirect
+   * works": a record that resolves but serves the site on both hosts is the duplicate-content
+   * outcome the redirect exists to prevent.
+   */
+  const host = new URL(base).hostname;
+  const www = `www.${host}`;
+
+  if (["localhost", "127.0.0.1"].includes(host)) {
+    console.log(`  skip  ${www} — needs a run against a deployed origin`);
+  } else {
+    for (const path of ["/", "/pricing/", "/report/?domain=example.com"]) {
+      const res = await fetch(`https://${www}${path}`, { redirect: "manual" });
+      const location = res.headers.get("location") || "";
+      if (res.status !== 301) {
+        bad(`${www}${path} does not redirect permanently`, `HTTP ${res.status}`);
+      } else if (!location.startsWith(`${base}/`)) {
+        bad(`${www}${path} redirects somewhere other than this site`, location);
+      } else {
+        const arrived = location.slice(base.length);
+        if (arrived === path) ok(`${www}${path} → ${arrived}`);
+        else bad(`${www}${path} arrived changed`, `${arrived} (expected ${path})`);
+      }
+    }
+  }
+}
+
 /* ---- /report/ must not claim to be the homepage ---- */
 console.log("\n=== /report/ canonical ===");
 {

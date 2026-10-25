@@ -111,6 +111,28 @@
     },
 
     /*
+     * THE WWW HOSTNAME, WHICH PEOPLE TYPE WHETHER OR NOT THE SITE PUBLISHES IT.
+     *
+     * It answered nothing until now: the apex had a custom_domain and www had no DNS record at
+     * all, so a browser got NXDOMAIN before any redirect code could run. proxy.ts has carried a
+     * www -> apex branch since the dark-theme change, and it was unreachable for the least
+     * satisfying reason - no traffic can arrive at a hostname that does not resolve.
+     *
+     * A second custom_domain is right rather than a route: Cloudflare creates the DNS record and
+     * the certificate as part of the attach, which is the same mechanism that created the apex
+     * record. A route would need a DNS record to exist first, and that record is a dashboard
+     * change this repository cannot make.
+     *
+     * The redirect itself stays in proxy.ts, so the pairing (origin -> 301 -> apex) is testable
+     * in this repository rather than hidden in a dashboard Redirect Rule. Certificate issuance
+     * can take a minute after the first deploy; the hostname may answer 522 until it lands.
+     */
+    {
+      "pattern": "www.llmention-geo.com",
+      "custom_domain": true
+    },
+
+    /*
      * THE OLD HOSTNAME, WHICH MUST KEEP ANSWERING.
      *
      * It is not kept out of sentiment. The reason it is a redirect rather than a deletion:
