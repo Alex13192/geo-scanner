@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "entity-graph-organization-website-softwareapplication",
+    title: "The entity graph: Organization vs WebSite vs SoftwareApplication",
+    description:
+      "Three nodes that answer three different questions, the @id relations that make them a graph, and the mistakes that pass validation while saying nothing.",
+    dek: "Most entity markup is three disconnected blocks. The part that makes it a graph is the identifiers and relations — and the part most sites skip is deciding what the product is.",
+    category: "Explainer",
+    published: "2026-10-25",
+    readTime: "10 min read",
+    figure: "3",
+    figureLabel: "nodes most product sites need",
+    languages: ["en"],
+  },
+  {
     slug: "llms-full-txt-and-context-budgets",
     title: "llms-full.txt and context budgets",
     description:
