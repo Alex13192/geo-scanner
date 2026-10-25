@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "faqpage-schema-after-rich-results",
+    title: "FAQPage schema after the rich-result changes",
+    description:
+      "The rich result was restricted in 2023; the markup still has a job. What a FAQPage is good for now, how to write one honestly, and what the scanner does not compare.",
+    dek: "Most sites kept their FAQPage markup after the rich result went away without asking what it still does. The answer is smaller and more useful than the old one.",
+    category: "Explainer",
+    published: "2026-10-26",
+    readTime: "9 min read",
+    figure: "3",
+    figureLabel: "points for a FAQPage node",
+    languages: ["en"],
+  },
+  {
     slug: "sameas-which-profiles-help-entity-resolution",
     title: "sameAs: which profiles actually help an entity resolve",
     description:
