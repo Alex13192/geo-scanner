@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "llms-txt-what-it-changes",
+    title: "llms.txt: what it changes and what it does not",
+    description:
+      "The convention, the four properties the scanner checks, the 3.3-point ceiling, and the five mistakes that make a context file worse than none.",
+    dek: "llms.txt is cheap to publish and easy to over-claim. This is what it can do, what it cannot, and how to tell whether yours is worth the bytes.",
+    category: "Explainer",
+    published: "2026-10-25",
+    readTime: "10 min read",
+    figure: "3.3",
+    figureLabel: "points of 100 at most",
+    languages: ["en"],
+  },
+  {
     slug: "what-a-crawler-sees-without-javascript",
     title: "What a crawler sees when your page needs JavaScript",
     description:
