@@ -190,7 +190,13 @@ const jsonLd = {
        * attached is a logo, and a byline with no organisation attached is an orphan.
        */
       founder: { "@id": `${SITE_URL}/#author` },
-      author: { "@id": `${SITE_URL}/#author` },
+      /*
+       * NO `author` PROPERTY HERE. An earlier version added one, but `author` is a property of
+       * CreativeWork, not of Organization: schema.org validation rejects it on every page that
+       * carries this graph. Ahrefs reported 93 pages with structured-data validation errors from
+       * this one line. The person is still attached through `founder`, and /author/ and the
+       * article pages carry their own WebPage/BlogPosting author relations.
+       */
     },
     personNode(SITE_URL),
     {
