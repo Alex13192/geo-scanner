@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "llms-full-txt-and-context-budgets",
+    title: "llms-full.txt and context budgets",
+    description:
+      "The optional corpus half of the llms.txt proposal: token arithmetic, what belongs in the file, three ways to stay inside a budget, and when not to publish one.",
+    dek: "A full corpus is offered as the generous version of llms.txt. It is also the version that pays a context bill on every request — and most sites never do the arithmetic.",
+    category: "Explainer",
+    published: "2026-10-25",
+    readTime: "9 min read",
+    figure: "~25k",
+    figureLabel: "tokens in a 100 KB corpus",
+    languages: ["en"],
+  },
+  {
     slug: "llms-txt-what-it-changes",
     title: "llms.txt: what it changes and what it does not",
     description:
