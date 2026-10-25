@@ -321,6 +321,23 @@ console.log("\n=== withdrawn pages ===");
     }
   }
 
+  /*
+   * A locale prefix that appears twice was published by mistake (the Chinese study and
+   * self-audit pages linked to /zh/zh/report/). The pages are fixed, but the malformed URL can
+   * still be in crawl history, so it must 301 to the single-prefix path rather than 404.
+   */
+  {
+    const doubled = await get("/zh/zh/report/?domain=example.com");
+    if (doubled.error) bad("could not fetch the doubled-locale URL", doubled.error);
+    else if (doubled.res.status !== 301) {
+      bad("/zh/zh/report/ does not redirect", `HTTP ${doubled.res.status}`);
+    } else {
+      const target = (doubled.res.headers.get("location") || "").replace(/^https?:\/\/[^/]+/, "");
+      if (target.startsWith("/zh/report/")) ok("/zh/zh/report/ → /zh/report/", "HTTP 301");
+      else bad("/zh/zh/report/ redirects somewhere unexpected", target || "(no location)");
+    }
+  }
+
   const { res, error } = await get("/de/widerrufsrecht/");
   if (error) bad("could not fetch /de/widerrufsrecht/", error);
   else {

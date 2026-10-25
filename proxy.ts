@@ -136,6 +136,22 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   /*
+   * A locale prefix that appears twice is one bad link away from being a 404 again. The Chinese
+   * study and self-audit pages linked to /zh/zh/report/ for a while (Ahrefs found 33 of them),
+   * and even after the pages were fixed the old URLs are still in crawl history and in whatever
+   * someone copied. Redirect the doubled form to the single-prefix one instead of letting it
+   * 404: the target exists, and a 301 is the honest answer to a path that was published by
+   * mistake.
+   */
+  const doubledLocale = pathname.match(/^\/(zh|ja|es|de|fr|en)\/\1(?=\/|$)/);
+  if (doubledLocale) {
+    const locale = doubledLocale[1];
+    const moved = request.nextUrl.clone();
+    moved.pathname = pathname.replace(new RegExp(`^/${locale}/${locale}`), `/${locale}`);
+    return NextResponse.redirect(moved, 301);
+  }
+
+  /*
    * THE WRITING MOVED FROM /insights/ TO /blog/ ON 2026-10-24. The archive was always a blog;
    * the path now says so. Old URLs are redirected rather than 404'd because they were published,
    * linked from the homepage and the study, and some of them have been crawled - a 301 keeps the
