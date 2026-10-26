@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "tables-lists-and-prose-only-facts",
+    title: "Tables, lists and the cost of prose-only facts",
+    description:
+      "Structure makes a fact liftable, and every structure also makes a claim about its content. When a table or list helps, when it lies, and what the scanner's two rules actually verify.",
+    dek: "A paragraph can hold five facts and be cited for none of them cleanly. A list item is one claim; a table row is a tuple. The trade is real in both directions.",
+    category: "Method",
+    published: "2026-10-27",
+    readTime: "10 min read",
+    figure: "3",
+    figureLabel: "points for a list and a table",
+    languages: ["en"],
+  },
+  {
     slug: "answer-first-writing-measured-positions",
     title: "Answer-first writing: measured positions",
     description:
