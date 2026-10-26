@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "statistics-without-sources-citation-trap",
+    title: "Statistics without sources: the citation trap",
+    description:
+      "The scanner counts numbers and counts authority links; it never checks one against the other. Seven shapes of the trap, six questions a citable figure must answer, and how to audit a page.",
+    dek: "A number is the most quotable thing on a page and the easiest to fake. Both rules that touch statistics are presence checks, and the rule pages say so.",
+    category: "Method",
+    published: "2026-10-27",
+    readTime: "10 min read",
+    figure: "0",
+    figureLabel: "numbers the scan verifies against a source",
+    languages: ["en"],
+  },
+  {
     slug: "tables-lists-and-prose-only-facts",
     title: "Tables, lists and the cost of prose-only facts",
     description:
