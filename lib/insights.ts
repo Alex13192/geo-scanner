@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "datepublished-datemodified-ai-freshness",
+    title: "datePublished, dateModified and AI freshness",
+    description:
+      "The three dates a page claims, the precedence the scanner uses, and the build-timestamp habit that makes freshness mean nothing.",
+    dek: "A page's dates are claims about its own history. The easiest way to make them worthless is to move one on every deploy.",
+    category: "Explainer",
+    published: "2026-10-26",
+    readTime: "10 min read",
+    figure: "12",
+    figureLabel: "months for a full freshness pass",
+    languages: ["en"],
+  },
+  {
     slug: "faqpage-schema-after-rich-results",
     title: "FAQPage schema after the rich-result changes",
     description:
