@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "answer-first-writing-measured-positions",
+    title: "Answer-first writing: measured positions",
+    description:
+      "A scoped measurement of 16 articles and 101 heading-paragraph pairs: how often the answer arrives in the first 80 words, and what the number does not prove.",
+    dek: "Answer-first is a claim about position, so it can be measured. This is the measurement taken here — 101 pairs, 90% short openers — and the limits of a sample written to the rule.",
+    category: "Method",
+    published: "2026-10-26",
+    readTime: "8 min read",
+    figure: "91/101",
+    figureLabel: "openers under 80 words",
+    languages: ["en"],
+  },
+  {
     slug: "how-answer-engines-pick-the-span-they-quote",
     title: "How answer engines pick the span they quote",
     description:
