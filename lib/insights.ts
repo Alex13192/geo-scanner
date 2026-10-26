@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "how-answer-engines-pick-the-span-they-quote",
+    title: "How answer engines pick the span they quote",
+    description:
+      "The unit of competition is the passage, not the page. Headings, opening sentences and liftable structures, plus the scanner rules that measure them and what those rules admit.",
+    dek: "An engine quotes a sentence or a paragraph, not a URL. The author's half of that decision is making the passage findable, self-contained and checkable.",
+    category: "Explainer",
+    published: "2026-10-26",
+    readTime: "11 min read",
+    figure: "60",
+    figureLabel: "percent short openers for a full pass",
+    languages: ["en"],
+  },
+  {
     slug: "datepublished-datemodified-ai-freshness",
     title: "datePublished, dateModified and AI freshness",
     description:
