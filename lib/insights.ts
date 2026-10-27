@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "heading-hierarchy-for-extraction",
+    title: "Heading hierarchy for extraction, not just SEO",
+    description:
+      "Headings are the boundaries a parser uses to cut a page into passages and the labels it gives them. The outline failures that pass every counter, and the scanner rules that count them.",
+    dek: "One H1, real H2 sections, landmarks — but the reason is extraction, not a checklist. What a heading does for a passage, and what it does not.",
+    category: "Explainer",
+    published: "2026-10-27",
+    readTime: "9 min read",
+    figure: "1",
+    figureLabel: "H1 the outline rule wants",
+    languages: ["en"],
+  },
+  {
     slug: "quotations-attribution-trust-signals",
     title: "Quotations, attribution and trust signals",
     description:
