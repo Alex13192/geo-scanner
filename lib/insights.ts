@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "quotations-attribution-trust-signals",
+    title: "Quotations, attribution and trust signals",
+    description:
+      "A blockquote is typography; a citation is a source. The two rules that check both are presence checks, and what makes a quote checkable.",
+    dek: "The scanner passes any blockquote and any byline-shaped string. Neither is evidence. What a quotation needs, and the trust signals around it.",
+    category: "Method",
+    published: "2026-10-27",
+    readTime: "9 min read",
+    figure: "3",
+    figureLabel: "points for any blockquote",
+    languages: ["en"],
+  },
+  {
     slug: "statistics-without-sources-citation-trap",
     title: "Statistics without sources: the citation trap",
     description:
