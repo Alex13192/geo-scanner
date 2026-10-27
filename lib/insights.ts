@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "hreflang-for-machine-translated-sites",
+    title: "Hreflang for a site that machine-translates",
+    description:
+      "A cluster is a reciprocal declaration, not a quality signal. What machine translation adds to the failure list, what partial translation should declare, and what the scanner cannot fetch.",
+    dek: "Cheap translation and a loop-generated cluster look complete. The failure is a declaration that names pages which do not exist, and a single fetch cannot catch it.",
+    category: "Method",
+    published: "2026-10-28",
+    readTime: "10 min read",
+    figure: "2",
+    figureLabel: "points for two distinct language codes",
+    languages: ["en"],
+  },
+  {
     slug: "sitemap-lastmod-false-freshness",
     title: "Sitemap lastmod: why false freshness is worse than none",
     description:
