@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "canonical-urls-split-citations",
+    title: "Canonical URLs: the mistakes that split citations",
+    description:
+      "A canonical is a hint, not a redirect, and the scanner only checks that the tag exists. The nine address mistakes that split signals, and how to audit the four signals together.",
+    dek: "The interesting failures are not in the tag but in the address it names. A canonical that points at a redirect, a 404 or another language is worse than none.",
+    category: "Method",
+    published: "2026-10-27",
+    readTime: "10 min read",
+    figure: "1",
+    figureLabel: "point for a rel=canonical tag",
+    languages: ["en"],
+  },
+  {
     slug: "heading-hierarchy-for-extraction",
     title: "Heading hierarchy for extraction, not just SEO",
     description:
