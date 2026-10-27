@@ -21,7 +21,7 @@ import { LOCALES, PREFIXED_LOCALES, homePath, pricingPath } from '@/lib/i18n/con
  * is manual, so: any commit that changes `app/` or `lib/` content is a commit that
  * changes this line.
  */
-const LAST_MODIFIED = new Date('2026-10-27');
+const LAST_MODIFIED = new Date('2026-10-28');
 
 /**
  * NOTE ON TRAILING SLASHES

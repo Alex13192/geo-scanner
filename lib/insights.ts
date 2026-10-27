@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "sitemap-lastmod-false-freshness",
+    title: "Sitemap lastmod: why false freshness is worse than none",
+    description:
+      "Computed, frozen and future dates, the incident that made this site test its lastmod, and why comparing against git beats file mtimes.",
+    dek: "A lastmod is a promise that something changed. A field that always claims freshness teaches the crawler to ignore it, and the loss is quiet.",
+    category: "Method",
+    published: "2026-10-28",
+    readTime: "10 min read",
+    figure: "27",
+    figureLabel: "rule pages hit by a stale lastmod",
+    languages: ["en"],
+  },
+  {
     slug: "canonical-urls-split-citations",
     title: "Canonical URLs: the mistakes that split citations",
     description:
