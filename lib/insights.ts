@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "three-runs-per-question",
+    title: "Three runs per question: why \"2 of 3\" beats a percentage",
+    description:
+      "A percentage from three runs borrows the authority of a survey. Why the count carries the denominator, what three runs can and cannot claim, and how to keep a run log honest.",
+    dek: "Three runs are the smallest set with a majority and a visible split. The result is x of n, never a rate, because the denominator is the finding.",
+    category: "Method",
+    published: "2026-10-29",
+    readTime: "10 min read",
+    figure: "2/3",
+    figureLabel: "the form the measurement is reported in",
+    languages: ["en"],
+  },
+  {
     slug: "meta-descriptions-ai-engine",
     title: "Meta descriptions: does an AI engine read them?",
     description:
