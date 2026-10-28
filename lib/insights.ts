@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "markdown-alternates-llm-readable",
+    title: "Markdown alternates: serving LLM-readable content",
+    description:
+      "A rel=alternate text/markdown link is cheap and unscoped easily. Separate URLs versus content negotiation, the drift failure, and how to test a twin.",
+    dek: "The declaration is one point and never followed. The twin behind it is the work: generated from the same source, scoped to the pages that exist, and tested against the page.",
+    category: "Method",
+    published: "2026-10-28",
+    readTime: "9 min read",
+    figure: "1",
+    figureLabel: "point for a text/markdown alternate",
+    languages: ["en"],
+  },
+  {
     slug: "hreflang-for-machine-translated-sites",
     title: "Hreflang for a site that machine-translates",
     description:
