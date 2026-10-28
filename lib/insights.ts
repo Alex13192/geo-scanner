@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "refused-vs-blocked-waf-robots",
+    title: "Refused vs blocked: telling WAF from robots.txt",
+    description:
+      "Blocked is policy, refused is the server, aborted is the response. The three findings the scanner keeps separate, the 30-site sample's nine blocked rows, and the order to test them in.",
+    dek: "The same symptom has three causes and three fixes. Editing robots.txt for a WAF refusal is the most common waste in this category.",
+    category: "Method",
+    published: "2026-10-29",
+    readTime: "10 min read",
+    figure: "9",
+    figureLabel: "blocked rows in the 30-site sample",
+    languages: ["en"],
+  },
+  {
     slug: "three-runs-per-question",
     title: "Three runs per question: why \"2 of 3\" beats a percentage",
     description:
