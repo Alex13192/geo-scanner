@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "content-signal-and-robots-policies",
+    title: "Content-Signal and robots.txt content policies",
+    description:
+      "A statement of position inside robots.txt, not a gate. The three signals, the contradiction that makes the file say two things, and the one-point rule that scores it.",
+    dek: "Content-Signal lets a site distinguish search, AI input and training. It does not block anything, and a line that disagrees with the robots rules is worse than no line.",
+    category: "Method",
+    published: "2026-10-28",
+    readTime: "9 min read",
+    figure: "1",
+    figureLabel: "point of 16 for a content-signal line",
+    languages: ["en"],
+  },
+  {
     slug: "markdown-alternates-llm-readable",
     title: "Markdown alternates: serving LLM-readable content",
     description:
