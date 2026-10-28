@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "meta-descriptions-ai-engine",
+    title: "Meta descriptions: does an AI engine read them?",
+    description:
+      "No provider documents it, so the honest answer is unknown. What descriptions do for search and previews, what the 50-160 rule checks, and a 40-page audit of this site.",
+    dek: "The question is unanswerable from outside, and the useful response is not a guess. Write the summary for the reader, measure the length, and do not let it stand in for the page.",
+    category: "Method",
+    published: "2026-10-28",
+    readTime: "9 min read",
+    figure: "33/40",
+    figureLabel: "sampled descriptions in range",
+    languages: ["en"],
+  },
+  {
     slug: "content-signal-and-robots-policies",
     title: "Content-Signal and robots.txt content policies",
     description:
