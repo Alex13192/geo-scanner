@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "redirect-chains-and-crawler-budget",
+    title: "Redirect chains and crawler budget",
+    description:
+      "Every hop is a request that returns no content. The shapes that produce chains, the status codes that matter, and a measured check of five legacy URLs that each take one hop.",
+    dek: "A redirect is for addresses the site cannot edit. When internal links depend on one, the site pays the hop on every crawl and every click.",
+    category: "Method",
+    published: "2026-10-29",
+    readTime: "9 min read",
+    figure: "1",
+    figureLabel: "hop for the legacy URLs tested",
+    languages: ["en"],
+  },
+  {
     slug: "refused-vs-blocked-waf-robots",
     title: "Refused vs blocked: telling WAF from robots.txt",
     description:
