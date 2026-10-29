@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "cache-headers-what-an-auditor-sees",
+    title: "Cache headers and what an auditor actually sees",
+    description:
+      "The deploy changes the origin, not the copies already held by caches. What s-maxage and stale-while-revalidate permit, and why this site's HTML now revalidates every time.",
+    dek: "An external audit read the old page after a deploy because the headers allowed it. The fix was not a harder purge; it was to stop granting permission to be stale.",
+    category: "Method",
+    published: "2026-10-29",
+    readTime: "9 min read",
+    figure: "0",
+    figureLabel: "max-age on HTML after the fix",
+    languages: ["en"],
+  },
+  {
     slug: "redirect-chains-and-crawler-budget",
     title: "Redirect chains and crawler budget",
     description:
