@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "paywalls-consent-walls-citation-loss",
+    title: "Paywalls, consent walls and citation loss",
+    description:
+      "A page that is named but not read is a weak citation. How hard and soft walls differ in the response, why a consent banner should gate trackers rather than text, and how to test it.",
+    dek: "A paywall is a business decision; a consent wall is a legal workflow. Both can hide the body, and the citation cost is the same.",
+    category: "Method",
+    published: "2026-10-30",
+    readTime: "9 min read",
+    figure: "0",
+    figureLabel: "gated article pages on this site",
+    languages: ["en"],
+  },
+  {
     slug: "core-web-vitals-and-ai-crawlers",
     title: "Core Web Vitals and AI crawlers: what is actually connected",
     description:
