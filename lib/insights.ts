@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "core-web-vitals-and-ai-crawlers",
+    title: "Core Web Vitals and AI crawlers: what is actually connected",
+    description:
+      "LCP, INP and CLS measure a person in a browser; an AI crawler fetches HTML and does not run Lighthouse. The shared causes that are real, and the four overclaims to avoid.",
+    dek: "Both are about pages being fast, so a sentence connecting them sounds plausible. The connection is shared causes, not a shared score.",
+    category: "Method",
+    published: "2026-10-30",
+    readTime: "9 min read",
+    figure: "3",
+    figureLabel: "Core Web Vitals metrics",
+    languages: ["en"],
+  },
+  {
     slug: "ttfb-edge-caching-prerendered-html",
     title: "TTFB, edge caching and prerendered HTML",
     description:
