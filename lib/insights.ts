@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "ttfb-edge-caching-prerendered-html",
+    title: "TTFB, edge caching and prerendered HTML",
+    description:
+      "A prerendered page is a build artifact, not a cache. Measured TTFB from one network, the x-nextjs-cache MISS, and the four reasons the same HTML renders again per request.",
+    dek: "Prerendered does not mean cached. The build answer and the runtime answer are different, and TTFB plus a cache-status header shows which one a reader got.",
+    category: "Method",
+    published: "2026-10-29",
+    readTime: "9 min read",
+    figure: "MISS",
+    figureLabel: "x-nextjs-cache on repeated requests",
+    languages: ["en"],
+  },
+  {
     slug: "cache-headers-what-an-auditor-sees",
     title: "Cache headers and what an auditor actually sees",
     description:
