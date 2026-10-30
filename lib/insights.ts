@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "what-i-would-measure-next",
+    title: "What I would measure next (and what this tool still cannot tell you)",
+    description:
+      "The limits in one list: citation, causation, training, demand, quality, rendering, site-wide behaviour. What this series measured, and the seven measurements worth doing next.",
+    dek: "The honest close to the series: what the tool cannot see, what was actually measured, and the next round of questions that could be answered without overclaiming.",
+    category: "Method",
+    published: "2026-10-30",
+    readTime: "9 min read",
+    figure: "30",
+    figureLabel: "pieces in this series",
+    languages: ["en"],
+  },
+  {
     slug: "30-site-sample-not-a-benchmark",
     title: "A 30-site sample is not a benchmark: reading the study correctly",
     description:
