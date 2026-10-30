@@ -70,6 +70,19 @@ export type Insight = PostMeta & {
 /** Newest first. The index and the sitemap both read this order. */
 export const INSIGHTS: Insight[] = [
   {
+    slug: "30-site-sample-not-a-benchmark",
+    title: "A 30-site sample is not a benchmark: reading the study correctly",
+    description:
+      "A convenience sample of homepages scanned once describes those rows on that date. What the study supports, what it cannot, and the one-sentence template for quoting it honestly.",
+    dek: "A small sample is useful when it is described as one. The damage starts when 30 hand-picked homepages become \"the industry average\".",
+    category: "Method",
+    published: "2026-10-30",
+    readTime: "9 min read",
+    figure: "30",
+    figureLabel: "homepages in the convenience sample",
+    languages: ["en"],
+  },
+  {
     slug: "paywalls-consent-walls-citation-loss",
     title: "Paywalls, consent walls and citation loss",
     description:
